@@ -8,7 +8,14 @@ import type { SetValues } from '@/lib/metrics';
 export const getActiveWorkout = () =>
   db.query.workouts.findFirst({
     where: isNull(workouts.finishedAt),
-    columns: { id: true, dayName: true, programName: true, startedAt: true },
+    columns: {
+      id: true,
+      dayName: true,
+      programName: true,
+      startedAt: true,
+      pausedAt: true,
+      pausedMs: true,
+    },
   });
 
 export const getWorkout = (id: number) =>
@@ -211,7 +218,40 @@ export function finishWorkout(id: number) {
         .where(and(eq(workoutSets.workoutExerciseId, weId), isNull(workoutSets.completedAt)))
         .run();
     }
-    tx.update(workouts).set({ finishedAt: Date.now() }).where(eq(workouts.id, id)).run();
+    const now = Date.now();
+    const w = tx
+      .select({ pausedAt: workouts.pausedAt, pausedMs: workouts.pausedMs })
+      .from(workouts)
+      .where(eq(workouts.id, id))
+      .get();
+    // Finishing while paused closes the pause first.
+    const pausedMs = (w?.pausedMs ?? 0) + (w?.pausedAt ? now - w.pausedAt : 0);
+    tx.update(workouts)
+      .set({ finishedAt: now, pausedAt: null, pausedMs })
+      .where(eq(workouts.id, id))
+      .run();
+  });
+}
+
+export async function pauseWorkout(id: number) {
+  await db
+    .update(workouts)
+    .set({ pausedAt: Date.now() })
+    .where(and(eq(workouts.id, id), isNull(workouts.pausedAt), isNull(workouts.finishedAt)));
+}
+
+export function resumeWorkout(id: number) {
+  db.transaction((tx) => {
+    const w = tx
+      .select({ pausedAt: workouts.pausedAt, pausedMs: workouts.pausedMs })
+      .from(workouts)
+      .where(eq(workouts.id, id))
+      .get();
+    if (!w?.pausedAt) return;
+    tx.update(workouts)
+      .set({ pausedAt: null, pausedMs: w.pausedMs + (Date.now() - w.pausedAt) })
+      .where(eq(workouts.id, id))
+      .run();
   });
 }
 

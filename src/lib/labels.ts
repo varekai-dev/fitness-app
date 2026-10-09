@@ -1,4 +1,6 @@
-import type { MuscleGroup, TrackingType } from '@/db/schema';
+import type { MuscleGroup, Targets, TrackingType } from '@/db/schema';
+
+import { formatDuration } from './metrics';
 
 export const MUSCLE_GROUP_LABELS: Record<MuscleGroup, string> = {
   chest: 'Груди',
@@ -55,3 +57,17 @@ export function startOfWeek(ms: number) {
 
 /** 0 = Monday … 6 = Sunday. */
 export const weekdayIndex = (ms: number) => (new Date(ms).getDay() + 6) % 7;
+
+/** e.g. "3 × 8–12 · відпочинок 1:30". */
+export function formatTargets(t: Targets) {
+  let what = '';
+  if (t.targetRepsMin !== null || t.targetRepsMax !== null) {
+    what =
+      t.targetRepsMin !== null && t.targetRepsMax !== null && t.targetRepsMin !== t.targetRepsMax
+        ? `${t.targetRepsMin}–${t.targetRepsMax}`
+        : String(t.targetRepsMin ?? t.targetRepsMax);
+  } else if (t.targetDurationSec !== null) what = formatDuration(t.targetDurationSec);
+  else if (t.targetDistanceKm !== null) what = `${t.targetDistanceKm} км`;
+  const sets = what ? `${t.targetSets} × ${what}` : `${t.targetSets} підх.`;
+  return t.restSec > 0 ? `${sets} · відпочинок ${formatDuration(t.restSec)}` : sets;
+}

@@ -3,9 +3,8 @@ import { useLocalSearchParams } from 'expo-router';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Elapsed } from '@/components/elapsed';
-import { RestTimerCard } from '@/components/rest-timer-card';
 import { SetRow } from '@/components/set-row';
+import { WorkoutPlayer } from '@/components/workout-player';
 import {
   Button,
   Card,
@@ -17,12 +16,10 @@ import {
   ScreenHeader,
   Text,
 } from '@/components/ui';
-import type { Targets } from '@/db/schema';
 import {
   addSet,
   deleteSet,
   deleteWorkout,
-  finishWorkout,
   getExerciseHistory,
   getLastSets,
   getWorkout,
@@ -31,9 +28,8 @@ import {
   type WorkoutDetail,
 } from '@/db/workouts';
 import { useDbQuery } from '@/hooks/use-db-query';
-import { useRestTimer } from '@/hooks/use-rest-timer';
-import { formatDate } from '@/lib/labels';
-import { formatDuration, formatSet, isBetter, setMetric } from '@/lib/metrics';
+import { formatDate, formatTargets } from '@/lib/labels';
+import { formatDuration, formatSet, isBetter, setMetric, workoutDurationMs } from '@/lib/metrics';
 import { computeProgress, recordBefore } from '@/lib/progress';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
@@ -56,24 +52,9 @@ async function loadWorkout(id: number) {
   return { workout, extras };
 }
 
-function formatTargets(t: Targets) {
-  let what = '';
-  if (t.targetRepsMin !== null || t.targetRepsMax !== null) {
-    what =
-      t.targetRepsMin !== null && t.targetRepsMax !== null && t.targetRepsMin !== t.targetRepsMax
-        ? `${t.targetRepsMin}–${t.targetRepsMax}`
-        : String(t.targetRepsMin ?? t.targetRepsMax);
-  } else if (t.targetDurationSec !== null) what = formatDuration(t.targetDurationSec);
-  else if (t.targetDistanceKm !== null) what = `${t.targetDistanceKm} км`;
-  const sets = what ? `${t.targetSets} × ${what}` : `${t.targetSets} підх.`;
-  return t.restSec > 0 ? `${sets} · відпочинок ${formatDuration(t.restSec)}` : sets;
-}
-
 export default function WorkoutScreen() {
   const id = Number(useLocalSearchParams<{ id: string }>().id);
   const { data } = useDbQuery(() => loadWorkout(id), [id]);
-  const timer = useRestTimer();
-  const insets = useSafeAreaInsets();
 
   if (data === undefined) return <Loading />;
   if (data === null) {
@@ -84,134 +65,88 @@ export default function WorkoutScreen() {
       </View>
     );
   }
+  if (data.workout.finishedAt === null) {
+    return <WorkoutPlayer workout={data.workout} extras={data.extras} />;
+  }
+  return <FinishedWorkout workout={data.workout} extras={data.extras} />;
+}
 
-  const { workout, extras } = data;
-  const active = workout.finishedAt === null;
-  const allSets = workout.exercises.flatMap((e) => e.sets);
-  const doneSets = allSets.filter((s) => s.completedAt !== null).length;
-
-  const finish = () => {
-    const pending = allSets.length - doneSets;
-    const doFinish = () => {
-      timer.stop();
-      finishWorkout(workout.id);
-      goBack();
-    };
-    if (pending === 0) return doFinish();
-    Alert.alert('Завершити тренування?', `Невідмічені підходи (${pending}) не збережуться.`, [
-      { text: 'Скасувати', style: 'cancel' },
-      { text: 'Завершити', onPress: doFinish },
-    ]);
-  };
+/** A past workout: every exercise and set is editable in place. */
+function FinishedWorkout({
+  workout,
+  extras,
+}: {
+  workout: WorkoutDetail;
+  extras: NonNullable<Awaited<ReturnType<typeof loadWorkout>>>['extras'];
+}) {
+  const insets = useSafeAreaInsets();
+  const doneSets = workout.exercises.reduce((n, e) => n + e.sets.length, 0);
 
   const remove = () =>
-    Alert.alert(
-      active ? 'Скасувати тренування?' : 'Видалити тренування?',
-      'Усі записані підходи буде видалено.',
-      [
-        { text: 'Ні', style: 'cancel' },
-        {
-          text: active ? 'Скасувати тренування' : 'Видалити',
-          style: 'destructive',
-          onPress: async () => {
-            timer.stop();
-            await deleteWorkout(workout.id);
-            goBack();
-          },
+    Alert.alert('Видалити тренування?', 'Усі записані підходи буде видалено.', [
+      { text: 'Ні', style: 'cancel' },
+      {
+        text: 'Видалити',
+        style: 'destructive',
+        onPress: async () => {
+          await deleteWorkout(workout.id);
+          goBack();
         },
-      ],
-    );
+      },
+    ]);
 
   return (
     <KeyboardAvoidingView
       style={styles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScreenHeader
-        title={active ? 'Активне тренування' : 'Тренування'}
-        right={
-          active ? (
-            <Button title="Завершити" small onPress={finish} />
-          ) : (
-            <Button title="Видалити" small variant="danger" onPress={remove} />
-          )
-        }
+        title="Тренування"
+        right={<Button title="Видалити" small variant="danger" onPress={remove} />}
       />
       <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: insets.bottom + (timer.running ? 280 : 48) },
-        ]}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 48 }]}
         keyboardShouldPersistTaps="handled">
         <View style={styles.titleBlock}>
           <Text variant="overline">{workout.programName}</Text>
           <Text variant="title">{workout.dayName}</Text>
-          {!active && <Text variant="caption">{formatDate(workout.startedAt)}</Text>}
+          <Text variant="caption">{formatDate(workout.startedAt)}</Text>
         </View>
 
         <Row style={styles.stats}>
           <View style={styles.stat}>
             <Text variant="muted" style={styles.statLabel}>
-              {active ? 'МИНУЛО' : 'ТРИВАЛІСТЬ'}
+              ТРИВАЛІСТЬ
             </Text>
-            {active ? (
-              <Elapsed since={workout.startedAt} style={styles.statValue} />
-            ) : (
-              <Text variant="heading" style={styles.statValue}>
-                {formatDuration((workout.finishedAt! - workout.startedAt) / 1000)}
-              </Text>
-            )}
+            <Text variant="heading" style={styles.statValue}>
+              {formatDuration(workoutDurationMs(workout, workout.startedAt) / 1000)}
+            </Text>
           </View>
           <View style={styles.stat}>
             <Text variant="muted" style={styles.statLabel}>
               ПІДХОДИ
             </Text>
             <Text variant="heading" style={[styles.statValue, styles.accent]}>
-              {active ? `${doneSets} / ${allSets.length}` : String(doneSets)}
+              {String(doneSets)}
             </Text>
           </View>
         </Row>
-        {active && allSets.length > 0 && (
-          <View style={styles.progressTrack}>
-            <View
-              style={[styles.progressFill, { width: `${(doneSets / allSets.length) * 100}%` }]}
-            />
-          </View>
-        )}
 
         {workout.exercises.map((we, i) => (
           <ExerciseBlock
             key={we.id}
             index={i}
             we={we}
-            active={active}
+            active={false}
             last={extras[i].last}
             record={extras[i].record}
-            onSetDone={() => timer.start(we.restSec, we.exercise.name)}
+            onSetDone={() => {}}
           />
         ))}
 
-        {active ? (
-          <>
-            <Button title="Завершити тренування" trailingIcon="arrow-forward" onPress={finish} />
-            <Button title="Скасувати тренування" variant="ghost" onPress={remove} />
-          </>
-        ) : (
-          <Text variant="muted" style={styles.hint}>
-            Довге натискання на номер підходу — видалити його.
-          </Text>
-        )}
+        <Text variant="muted" style={styles.hint}>
+          Довге натискання на номер підходу — видалити його.
+        </Text>
       </ScrollView>
-
-      {timer.running && (
-        <RestTimerCard
-          remainingSec={timer.remainingSec}
-          totalSec={timer.totalSec}
-          label={timer.label}
-          bottomInset={insets.bottom}
-          onExtend={() => timer.extend(15)}
-          onSkip={timer.stop}
-        />
-      )}
     </KeyboardAvoidingView>
   );
 }

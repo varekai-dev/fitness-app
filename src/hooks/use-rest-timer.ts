@@ -9,6 +9,8 @@ import { cancelRestEnd, scheduleRestEnd } from '@/lib/rest-notifications';
  */
 export function useRestTimer() {
   const [endAt, setEndAt] = useState<number | null>(null);
+  // Remaining ms while paused; endAt is null then.
+  const [pausedLeft, setPausedLeft] = useState<number | null>(null);
   const [label, setLabel] = useState('');
   const [totalSec, setTotalSec] = useState(0);
   const [now, setNow] = useState(() => Date.now());
@@ -31,35 +33,56 @@ export function useRestTimer() {
 
   const start = (seconds: number, exerciseName: string) => {
     if (seconds <= 0) return;
-    const end = Date.now() + seconds * 1000;
     setNow(Date.now());
-    setEndAt(end);
+    setEndAt(Date.now() + seconds * 1000);
+    setPausedLeft(null);
     setTotalSec(seconds);
     setLabel(exerciseName);
     scheduleRestEnd(seconds, exerciseName);
   };
 
   const extend = (seconds: number) => {
-    if (endAt === null) return;
-    const end = endAt + seconds * 1000;
-    setEndAt(end);
+    if (pausedLeft !== null) {
+      setPausedLeft(pausedLeft + seconds * 1000);
+    } else if (endAt !== null) {
+      const end = endAt + seconds * 1000;
+      setEndAt(end);
+      scheduleRestEnd(Math.ceil((end - Date.now()) / 1000), label);
+    } else return;
     setTotalSec((t) => t + seconds);
-    scheduleRestEnd(Math.ceil((end - Date.now()) / 1000), label);
   };
 
-  const stop = () => {
+  const pause = () => {
+    if (endAt === null) return;
+    setPausedLeft(Math.max(0, endAt - Date.now()));
     setEndAt(null);
     cancelRestEnd();
   };
 
-  const remainingSec = endAt === null ? 0 : Math.max(0, Math.ceil((endAt - now) / 1000));
+  const resume = () => {
+    if (pausedLeft === null) return;
+    setNow(Date.now());
+    setEndAt(Date.now() + pausedLeft);
+    setPausedLeft(null);
+    scheduleRestEnd(Math.ceil(pausedLeft / 1000), label);
+  };
+
+  const stop = () => {
+    setEndAt(null);
+    setPausedLeft(null);
+    cancelRestEnd();
+  };
+
+  const leftMs = pausedLeft ?? (endAt === null ? 0 : Math.max(0, endAt - now));
   return {
-    running: endAt !== null,
-    remainingSec,
+    running: endAt !== null || pausedLeft !== null,
+    remainingSec: Math.ceil(leftMs / 1000),
     totalSec,
     label,
     start,
     extend,
+    pause,
+    resume,
     stop,
   };
 }

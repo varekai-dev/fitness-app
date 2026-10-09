@@ -98,6 +98,9 @@ export const workouts = sqliteTable(
     dayName: text('day_name').notNull(),
     startedAt: integer('started_at').notNull(),
     finishedAt: integer('finished_at'),
+    // Set while paused; paused time is excluded from the workout duration.
+    pausedAt: integer('paused_at'),
+    pausedMs: integer('paused_ms').notNull().default(0),
   },
   (t) => [index('workouts_program_idx').on(t.programId, t.finishedAt)],
 );

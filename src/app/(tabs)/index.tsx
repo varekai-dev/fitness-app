@@ -89,10 +89,10 @@ export default function HomeScreen() {
 
       {activeWorkout ? (
         <HeroCard
-          overline="Тренування триває"
+          overline={activeWorkout.pausedAt ? 'Тренування на паузі' : 'Тренування триває'}
           title={activeWorkout.dayName}
           subtitle={activeWorkout.programName}
-          meta={<Elapsed since={activeWorkout.startedAt} style={styles.heroElapsed} />}
+          meta={<Elapsed workout={activeWorkout} style={styles.heroElapsed} />}
           actionIcon="play"
           onAction={() =>
             router.push({

@@ -8,6 +8,13 @@
       "when": 1791581871918,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1791585379087,
+      "tag": "0001_workout_pause",
+      "breakpoints": true
     }
   ]
 }

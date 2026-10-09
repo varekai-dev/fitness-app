@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { Card, Text } from '@/components/ui';
 import type { listFinishedWorkouts } from '@/db/workouts';
 import { formatShortDate } from '@/lib/labels';
-import { formatDuration } from '@/lib/metrics';
+import { formatDuration, workoutDurationMs } from '@/lib/metrics';
 import { colors, radius, spacing } from '@/theme';
 
 type FinishedWorkout = Awaited<ReturnType<typeof listFinishedWorkouts>>[number];
@@ -13,9 +13,7 @@ type FinishedWorkout = Awaited<ReturnType<typeof listFinishedWorkouts>>[number];
 export function WorkoutSummaryCard({ workout }: { workout: FinishedWorkout }) {
   const totalSets = workout.exercises.reduce((n, e) => n + e.sets.length, 0);
   const done = workout.exercises.filter((e) => e.sets.length > 0);
-  const minutes = formatDuration(
-    ((workout.finishedAt ?? workout.startedAt) - workout.startedAt) / 1000,
-  );
+  const minutes = formatDuration(workoutDurationMs(workout, workout.startedAt) / 1000);
   return (
     <Card
       style={styles.card}

@@ -61,6 +61,7 @@ export function SetRow({
   set,
   type,
   showCheck,
+  locked = false,
   isPR,
   onSave,
   onToggle,
@@ -70,6 +71,8 @@ export function SetRow({
   set: WorkoutSet;
   type: TrackingType;
   showCheck: boolean;
+  /** Disables ticking sets off, e.g. while the workout is paused. */
+  locked?: boolean;
   isPR: boolean;
   onSave: (values: SetValues) => void;
   onToggle: (values: SetValues) => void;
@@ -104,8 +107,9 @@ export function SetRow({
       {showCheck ? (
         <Pressable
           onPress={() => onToggle(toValues(inputs))}
+          disabled={locked}
           hitSlop={6}
-          style={[styles.check, done && styles.checkDone]}>
+          style={[styles.check, done && styles.checkDone, locked && styles.locked]}>
           <Ionicons
             name="checkmark"
             size={22}
@@ -164,4 +168,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceRaised,
   },
   checkDone: { backgroundColor: colors.accent },
+  locked: { opacity: 0.35 },
 });

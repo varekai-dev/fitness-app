@@ -126,3 +126,12 @@ export function parseDuration(input: string): number | null {
   if (parts.length === 0 || parts.length > 3 || parts.some((p) => !/^\d+$/.test(p))) return null;
   return parts.reduce((acc, p) => acc * 60 + Number(p), 0);
 }
+
+/** Active workout time in ms, excluding pauses. `now` is ignored once finished or paused. */
+export function workoutDurationMs(
+  w: { startedAt: number; finishedAt?: number | null; pausedAt: number | null; pausedMs: number },
+  now: number,
+) {
+  const end = w.finishedAt ?? w.pausedAt ?? now;
+  return Math.max(0, end - w.startedAt - w.pausedMs);
+}
