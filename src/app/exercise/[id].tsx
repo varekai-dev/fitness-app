@@ -33,6 +33,7 @@ import {
 import { formatMetric, formatSet, METRIC_INFO } from '@/lib/metrics';
 import { computeProgress } from '@/lib/progress';
 import { colors, spacing } from '@/theme';
+import { exerciseImageSource } from '@/lib/exercise-images';
 
 export default function ExerciseDetailScreen() {
   const id = Number(useLocalSearchParams<{ id: string }>().id);
@@ -85,7 +86,7 @@ export default function ExerciseDetailScreen() {
         <View style={styles.hero}>
           {exercise.imageUri ? (
             <Image
-              source={{ uri: exercise.imageUri }}
+              source={exerciseImageSource(exercise.imageUri)}
               style={StyleSheet.absoluteFill}
               contentFit="cover"
             />

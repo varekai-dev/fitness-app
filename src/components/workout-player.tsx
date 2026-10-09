@@ -40,6 +40,7 @@ import { useRestTimer } from '@/hooks/use-rest-timer';
 import { formatTargets } from '@/lib/labels';
 import { formatDuration, formatSet, isBetter, setMetric, type SetValues } from '@/lib/metrics';
 import { colors, fontSize, radius, spacing } from '@/theme';
+import { exerciseImageSource } from '@/lib/exercise-images';
 
 type WorkoutExercise = WorkoutDetail['exercises'][number];
 type Extra = { last: Awaited<ReturnType<typeof getLastSets>>; record: number | null };
@@ -310,7 +311,7 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
         <View style={styles.hero}>
           {current.exercise.imageUri ? (
             <Image
-              source={{ uri: current.exercise.imageUri }}
+              source={exerciseImageSource(current.exercise.imageUri)}
               style={styles.fill}
               contentFit="cover"
               transition={200}

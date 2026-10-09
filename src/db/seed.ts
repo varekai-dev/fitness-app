@@ -1,5 +1,7 @@
 import { and, count, eq, isNull } from 'drizzle-orm';
 
+import { bundledImageUri, DEFAULT_EXERCISE_IMAGES } from '@/lib/exercise-images';
+
 import { db, sqlite, type Tx } from './client';
 import {
   exercises,
@@ -217,6 +219,18 @@ function insertProgram(seed: ProgramSeed) {
   });
 }
 
+/** Bundled photos for library exercises that don't have one yet; user photos are kept. */
+function addDefaultImages() {
+  db.transaction((tx) => {
+    for (const [name, key] of Object.entries(DEFAULT_EXERCISE_IMAGES)) {
+      tx.update(exercises)
+        .set({ imageUri: bundledImageUri(key) })
+        .where(and(eq(exercises.name, name), isNull(exercises.imageUri)))
+        .run();
+    }
+  });
+}
+
 /**
  * One-off content seeds tracked with SQLite's user_version, so each runs once per
  * install and a program the user deleted is not recreated.
@@ -228,5 +242,9 @@ export function runContentSeeds() {
   if (version < 1) {
     insertProgram(DUMBBELL_6_DAY);
     sqlite.execSync('PRAGMA user_version = 1');
+  }
+  if (version < 2) {
+    addDefaultImages();
+    sqlite.execSync('PRAGMA user_version = 2');
   }
 }

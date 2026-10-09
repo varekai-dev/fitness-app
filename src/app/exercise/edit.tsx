@@ -16,6 +16,7 @@ import { youtubeSearchUrl } from '@/db/seed';
 import { deleteStoredImage, downloadImage, pickImageFromLibrary, takePhoto } from '@/lib/images';
 import { MUSCLE_GROUP_LABELS, TRACKING_TYPE_LABELS } from '@/lib/labels';
 import { radius } from '@/theme';
+import { exerciseImageSource } from '@/lib/exercise-images';
 
 export default function EditExerciseScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
@@ -128,7 +129,9 @@ export default function EditExerciseScreen() {
       )}
 
       <Text variant="caption">Фото</Text>
-      {imageUri && <Image source={{ uri: imageUri }} style={styles.image} contentFit="cover" />}
+      {imageUri && (
+        <Image source={exerciseImageSource(imageUri)} style={styles.image} contentFit="cover" />
+      )}
       <Row>
         <Button
           title="Галерея"

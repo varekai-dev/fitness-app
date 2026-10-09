@@ -29,3 +29,7 @@ npx drizzle-kit generate
 ```
 
 Міграції застосовуються автоматично при запуску застосунку.
+
+## Зображення вправ
+
+Фото вправ у `assets/exercises/` взяті з [free-exercise-db](https://github.com/yuhonas/free-exercise-db) (The Unlicense, public domain).

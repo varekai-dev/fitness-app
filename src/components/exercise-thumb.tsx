@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { StyleSheet, View } from 'react-native';
 
 import { colors, radius } from '@/theme';
+import { exerciseImageSource } from '@/lib/exercise-images';
 
 export function ExerciseThumb({ uri, size = 44 }: { uri: string | null; size?: number }) {
   const box = {
@@ -17,7 +18,7 @@ export function ExerciseThumb({ uri, size = 44 }: { uri: string | null; size?: n
       </View>
     );
   }
-  return <Image source={{ uri }} style={[styles.image, box]} contentFit="cover" />;
+  return <Image source={exerciseImageSource(uri)} style={[styles.image, box]} contentFit="cover" />;
 }
 
 const styles = StyleSheet.create({
