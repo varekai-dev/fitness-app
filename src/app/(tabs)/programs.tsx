@@ -13,11 +13,13 @@ import {
   SectionHeader,
   Text,
 } from '@/components/ui';
+import { useTabBarSpace } from '@/components/floating-tab-bar';
 import { createProgram, listPrograms } from '@/db/programs';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 export default function ProgramsScreen() {
+  const tabBarSpace = useTabBarSpace();
   const { data } = useDbQuery(listPrograms);
   const [name, setName] = useState('');
 
@@ -32,7 +34,7 @@ export default function ProgramsScreen() {
   };
 
   return (
-    <Screen title="Програми" mode="root">
+    <Screen title="Програми" mode="root" bottomSpace={tabBarSpace}>
       <View style={styles.create}>
         <TextInput
           style={styles.createInput}

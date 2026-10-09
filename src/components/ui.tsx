@@ -124,6 +124,7 @@ export function Screen({
   mode,
   headerRight,
   header = true,
+  bottomSpace,
 }: {
   children: ReactNode;
   title?: string;
@@ -131,6 +132,8 @@ export function Screen({
   headerRight?: ReactNode;
   /** Set false when the screen draws its own top area. */
   header?: boolean;
+  /** Extra bottom padding, e.g. to clear the floating tab bar. */
+  bottomSpace?: number;
 }) {
   const insets = useSafeAreaInsets();
   return (
@@ -138,7 +141,11 @@ export function Screen({
       {header && <ScreenHeader title={title} mode={mode} right={headerRight} />}
       <ScrollView
         style={styles.flex}
-        contentContainerStyle={[styles.screen, !header && { paddingTop: insets.top + spacing.sm }]}
+        contentContainerStyle={[
+          styles.screen,
+          !header && { paddingTop: insets.top + spacing.sm },
+          bottomSpace !== undefined && { paddingBottom: bottomSpace },
+        ]}
         keyboardShouldPersistTaps="handled">
         {children}
       </ScrollView>

@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
+import { useTabBarSpace } from '@/components/floating-tab-bar';
 import { Elapsed } from '@/components/elapsed';
 import { WorkoutSummaryCard } from '@/components/workout-summary-card';
 import {
@@ -36,6 +37,7 @@ async function loadHome() {
 }
 
 export default function HomeScreen() {
+  const tabBarSpace = useTabBarSpace();
   const { data } = useDbQuery(loadHome);
   const [pickedDayId, setPickedDayId] = useState<number | null>(null);
   const [starting, setStarting] = useState(false);
@@ -72,7 +74,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <Screen header={false}>
+    <Screen header={false} bottomSpace={tabBarSpace}>
       <View style={styles.greeting}>
         <Text variant="caption">{formatLongDate(loadedAt)}</Text>
         <Text variant="title">

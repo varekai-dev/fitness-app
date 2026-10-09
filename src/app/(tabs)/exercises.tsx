@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
+import { useTabBarSpace } from '@/components/floating-tab-bar';
 import { ExerciseThumb } from '@/components/exercise-thumb';
 import {
   Card,
@@ -22,6 +23,7 @@ import { MUSCLE_GROUP_LABELS, TRACKING_TYPE_LABELS } from '@/lib/labels';
 import { colors, spacing } from '@/theme';
 
 export default function ExercisesScreen() {
+  const tabBarSpace = useTabBarSpace();
   const { data } = useDbQuery(listExercises);
   const [group, setGroup] = useState<MuscleGroup | null>(null);
   const [search, setSearch] = useState('');
@@ -47,7 +49,7 @@ export default function ExercisesScreen() {
         }
       />
       <FlatList
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarSpace }]}
         keyboardShouldPersistTaps="handled"
         data={filtered}
         keyExtractor={(e) => String(e.id)}
