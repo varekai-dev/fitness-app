@@ -2,20 +2,14 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState, type ReactNode } from 'react';
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, StyleSheet, View } from 'react-native';
+import Animated, { interpolate, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Elapsed } from '@/components/elapsed';
 import { ExerciseThumb } from '@/components/exercise-thumb';
 import { PlayerSetEditor } from '@/components/player-set-editor';
+import { PlayerSheet, SheetItem } from '@/components/player-sheet';
 import {
   Button,
   CircleButton,
@@ -65,6 +59,15 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
   const insets = useSafeAreaInsets();
   const timer = useRestTimer();
   const exercises = workout.exercises;
+  const [collapsedHeight, setCollapsedHeight] = useState(420);
+  const sheetProgress = useSharedValue(0);
+  // Photo drifts up and zooms in slightly as the sheet opens.
+  const heroStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: interpolate(sheetProgress.get(), [0, 1], [0, -40]) },
+      { scale: interpolate(sheetProgress.get(), [0, 1], [1, 1.08]) },
+    ],
+  }));
   const [currentId, setCurrentId] = useState<number | null>(
     () => exercises[nextIncomplete(exercises, 0) ?? 0]?.id ?? null,
   );
@@ -305,30 +308,42 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
     <KeyboardAvoidingView
       style={styles.root}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xxl }}
-        keyboardShouldPersistTaps="handled">
-        <View style={styles.hero}>
-          {current.exercise.imageUri ? (
-            <Image
-              source={exerciseImageSource(current.exercise.imageUri)}
-              style={styles.fill}
-              contentFit="cover"
-              transition={200}
-            />
-          ) : (
-            <LinearGradient
-              colors={[colors.accentGradientEnd, colors.accent, '#3A1608', colors.background]}
-              locations={[0, 0.35, 0.8, 1]}
-              style={[styles.fill, styles.heroPlaceholder]}>
-              <Ionicons name="barbell" size={110} color="rgba(255,255,255,0.9)" />
-            </LinearGradient>
-          )}
+      <Animated.View style={[styles.hero, { bottom: collapsedHeight - 40 }, heroStyle]}>
+        {current.exercise.imageUri ? (
+          <Image
+            source={exerciseImageSource(current.exercise.imageUri)}
+            style={styles.fill}
+            contentFit="cover"
+            transition={200}
+          />
+        ) : (
+          <LinearGradient
+            colors={[colors.accentGradientEnd, colors.accent, '#3A1608', colors.background]}
+            locations={[0, 0.35, 0.8, 1]}
+            style={[styles.fill, styles.heroPlaceholder]}>
+            <Ionicons name="barbell" size={110} color="rgba(255,255,255,0.9)" />
+          </LinearGradient>
+        )}
+      </Animated.View>
+
+      <View style={[styles.topBar, { top: insets.top + spacing.sm }]}>
+        <CircleButton icon="chevron-back" background="rgba(0,0,0,0.35)" onPress={goBack} />
+        <View style={styles.clock}>
+          <Ionicons
+            name={paused ? 'pause' : 'time-outline'}
+            size={14}
+            color={paused ? colors.accent : colors.text}
+          />
+          <Elapsed workout={workout} style={styles.clockText} />
         </View>
+      </View>
 
-        <View style={styles.sheet}>
-          <View style={styles.handle} />
-
+      <PlayerSheet
+        topInset={insets.top + 64}
+        bottomInset={insets.bottom}
+        onCollapsedHeight={setCollapsedHeight}
+        progress={sheetProgress}
+        header={
           <View style={styles.player}>
             <View style={styles.cardIcons}>
               <CardIcon icon={paused ? 'play' : 'pause'} onPress={togglePause} />
@@ -336,13 +351,17 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
             </View>
             {body}
           </View>
-
-          {queue.length > 0 && <SectionHeader title="Далі" />}
-          {queue.map((we) => {
-            const done = isDone(we);
-            return (
+        }>
+        {queue.length > 0 && (
+          <SheetItem progress={sheetProgress} index={0}>
+            <SectionHeader title={`Далі · ${queue.length}`} />
+          </SheetItem>
+        )}
+        {queue.map((we, i) => {
+          const done = isDone(we);
+          return (
+            <SheetItem key={we.id} progress={sheetProgress} index={i + 1}>
               <Pressable
-                key={we.id}
                 onPress={() => {
                   timer.stop();
                   setCurrentId(we.id);
@@ -363,24 +382,14 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
                 </View>
                 {done && <Ionicons name="checkmark-circle" size={22} color={colors.accent} />}
               </Pressable>
-            );
-          })}
+            </SheetItem>
+          );
+        })}
 
+        <SheetItem progress={sheetProgress} index={queue.length + 1}>
           <Button title="Скасувати тренування" variant="ghost" onPress={discard} />
-        </View>
-      </ScrollView>
-
-      <View style={[styles.topBar, { top: insets.top + spacing.sm }]}>
-        <CircleButton icon="chevron-back" background="rgba(0,0,0,0.35)" onPress={goBack} />
-        <View style={styles.clock}>
-          <Ionicons
-            name={paused ? 'pause' : 'time-outline'}
-            size={14}
-            color={paused ? colors.accent : colors.text}
-          />
-          <Elapsed workout={workout} style={styles.clockText} />
-        </View>
-      </View>
+        </SheetItem>
+      </PlayerSheet>
     </KeyboardAvoidingView>
   );
 }
@@ -438,24 +447,8 @@ const styles = StyleSheet.create({
   fill: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 },
   pressed: { opacity: 0.75 },
   emptyActions: { padding: spacing.lg, gap: spacing.sm },
-  hero: { height: 300, backgroundColor: colors.surface },
+  hero: { position: 'absolute', left: 0, right: 0, top: 0, backgroundColor: colors.surface },
   heroPlaceholder: { alignItems: 'center', justifyContent: 'center', paddingBottom: 40 },
-  sheet: {
-    marginTop: -40,
-    backgroundColor: colors.background,
-    borderTopLeftRadius: radius.lg + 10,
-    borderTopRightRadius: radius.lg + 10,
-    padding: spacing.md,
-    paddingTop: spacing.sm,
-    gap: spacing.md,
-  },
-  handle: {
-    alignSelf: 'center',
-    width: 40,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: colors.border,
-  },
   player: {
     backgroundColor: colors.accent,
     borderRadius: radius.lg + 6,

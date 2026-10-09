@@ -4,6 +4,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { Text } from '@/components/ui';
 import { db } from '@/db/client';
@@ -56,25 +57,28 @@ export default function RootLayout() {
   if (!ready) return null;
 
   return (
-    <ThemeProvider value={theme}>
-      <StatusBar style="light" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.background },
-        }}>
-        <Stack.Screen name="exercise/edit" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="pick-exercise" options={{ presentation: 'modal' }} />
-        <Stack.Screen
-          name="workout/[id]"
-          options={{ presentation: 'fullScreenModal', gestureEnabled: false }}
-        />
-      </Stack>
-    </ThemeProvider>
+    <GestureHandlerRootView style={styles.root}>
+      <ThemeProvider value={theme}>
+        <StatusBar style="light" />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.background },
+          }}>
+          <Stack.Screen name="exercise/edit" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="pick-exercise" options={{ presentation: 'modal' }} />
+          <Stack.Screen
+            name="workout/[id]"
+            options={{ presentation: 'fullScreenModal', gestureEnabled: false }}
+          />
+        </Stack>
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1 },
   error: {
     flex: 1,
     padding: 24,
