@@ -1,12 +1,21 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Button, Card, EmptyState, Field, Loading, Row, Screen, Text } from '@/components/ui';
+import {
+  Badge,
+  Card,
+  CircleButton,
+  EmptyState,
+  Loading,
+  Screen,
+  SectionHeader,
+  Text,
+} from '@/components/ui';
 import { createProgram, listPrograms } from '@/db/programs';
 import { useDbQuery } from '@/hooks/use-db-query';
-import { colors, spacing } from '@/theme';
+import { colors, fontSize, radius, spacing } from '@/theme';
 
 export default function ProgramsScreen() {
   const { data } = useDbQuery(listPrograms);
@@ -23,35 +32,54 @@ export default function ProgramsScreen() {
   };
 
   return (
-    <Screen>
-      <Row>
-        <Field
-          containerStyle={styles.flex}
+    <Screen title="Програми" mode="root">
+      <View style={styles.create}>
+        <TextInput
+          style={styles.createInput}
           value={name}
           onChangeText={setName}
           placeholder="Назва нової програми"
+          placeholderTextColor={colors.textMuted}
           onSubmitEditing={create}
           returnKeyType="done"
         />
-        <Button title="Створити" icon="add" onPress={create} disabled={!name.trim()} />
-      </Row>
+        <CircleButton
+          icon="add"
+          size={40}
+          background={name.trim() ? colors.accent : colors.surfaceRaised}
+          color={name.trim() ? colors.accentText : colors.textMuted}
+          disabled={!name.trim()}
+          onPress={create}
+        />
+      </View>
 
+      <SectionHeader title="Мої програми" />
       {data.length === 0 ? (
-        <EmptyState icon="list" title="Програм ще немає" hint="Програма — це набір днів (наприклад, Push / Pull / Legs), які йдуть по колу." />
+        <EmptyState
+          icon="calendar"
+          title="Програм ще немає"
+          hint="Програма — це набір днів (наприклад, Push / Pull / Legs), які йдуть по колу."
+        />
       ) : (
         data.map((p) => (
-          <Card key={p.id} onPress={() => router.push({ pathname: '/program/[id]', params: { id: p.id } })} style={styles.item}>
-            <View style={styles.flex}>
-              <Text variant="heading">{p.name}</Text>
-              <Text variant="caption">{p.days.length} дн.</Text>
+          <Card
+            key={p.id}
+            onPress={() => router.push({ pathname: '/program/[id]', params: { id: p.id } })}
+            style={styles.item}>
+            <View style={[styles.icon, p.isActive && styles.iconActive]}>
+              <Ionicons
+                name="calendar"
+                size={24}
+                color={p.isActive ? colors.accentText : colors.accent}
+              />
             </View>
-            {p.isActive && (
-              <View style={styles.badge}>
-                <Text variant="caption" style={styles.badgeText}>
-                  Активна
-                </Text>
-              </View>
-            )}
+            <View style={styles.flex}>
+              <Text variant="body" numberOfLines={1}>
+                {p.name}
+              </Text>
+              <Text variant="muted">{p.days.length} дн. по колу</Text>
+              {p.isActive && <Badge label="Активна" />}
+            </View>
             <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           </Card>
         ))
@@ -61,8 +89,36 @@ export default function ProgramsScreen() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  item: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  badge: { backgroundColor: colors.accent, borderRadius: 999, paddingHorizontal: spacing.sm, paddingVertical: 2 },
-  badgeText: { color: colors.accentText, fontWeight: '600' },
+  flex: { flex: 1, gap: 3 },
+  create: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.pill,
+    paddingLeft: spacing.lg,
+    paddingRight: spacing.xs,
+    paddingVertical: spacing.xs,
+  },
+  createInput: {
+    flex: 1,
+    color: colors.text,
+    fontSize: fontSize.md,
+    paddingVertical: spacing.sm,
+  },
+  item: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.sm,
+    paddingRight: spacing.lg,
+  },
+  icon: {
+    width: 64,
+    height: 64,
+    borderRadius: radius.md,
+    backgroundColor: colors.accentSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconActive: { backgroundColor: colors.accent },
 });

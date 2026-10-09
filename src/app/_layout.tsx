@@ -57,14 +57,11 @@ export default function RootLayout() {
       <StatusBar style="light" />
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.text,
-          headerBackButtonDisplayMode: 'minimal',
+          headerShown: false,
           contentStyle: { backgroundColor: colors.background },
         }}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="exercise/edit" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="pick-exercise" options={{ presentation: 'modal', title: 'Додати вправу' }} />
+        <Stack.Screen name="pick-exercise" options={{ presentation: 'modal' }} />
         <Stack.Screen
           name="workout/[id]"
           options={{ presentation: 'fullScreenModal', gestureEnabled: false }}

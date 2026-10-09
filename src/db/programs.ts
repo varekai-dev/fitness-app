@@ -37,7 +37,18 @@ export const getProgram = (id: number) =>
 export const getActiveProgram = () =>
   db.query.programs.findFirst({
     where: and(eq(programs.isActive, true), isNull(programs.archivedAt)),
-    with: { days: { orderBy: [asc(programDays.position)] } },
+    with: {
+      days: {
+        orderBy: [asc(programDays.position)],
+        with: {
+          exercises: {
+            orderBy: [asc(programDayExercises.position)],
+            columns: { id: true, targetSets: true },
+            with: { exercise: { columns: { name: true } } },
+          },
+        },
+      },
+    },
   });
 
 export const getProgramDay = (id: number) =>
@@ -164,11 +175,32 @@ export function defaultTargets(type: TrackingType): Targets {
     case 'weight_reps':
     case 'weighted_reps':
     case 'reps':
-      return { targetSets: 3, targetRepsMin: 8, targetRepsMax: 12, targetDurationSec: null, targetDistanceKm: null, restSec: 90 };
+      return {
+        targetSets: 3,
+        targetRepsMin: 8,
+        targetRepsMax: 12,
+        targetDurationSec: null,
+        targetDistanceKm: null,
+        restSec: 90,
+      };
     case 'duration':
-      return { targetSets: 3, targetRepsMin: null, targetRepsMax: null, targetDurationSec: 60, targetDistanceKm: null, restSec: 60 };
+      return {
+        targetSets: 3,
+        targetRepsMin: null,
+        targetRepsMax: null,
+        targetDurationSec: 60,
+        targetDistanceKm: null,
+        restSec: 60,
+      };
     case 'distance_duration':
-      return { targetSets: 1, targetRepsMin: null, targetRepsMax: null, targetDurationSec: null, targetDistanceKm: null, restSec: 90 };
+      return {
+        targetSets: 1,
+        targetRepsMin: null,
+        targetRepsMax: null,
+        targetDurationSec: null,
+        targetDistanceKm: null,
+        restSec: 90,
+      };
   }
 }
 
@@ -205,11 +237,7 @@ export async function moveDayExercise(programDayId: number, id: number, directio
     columns: { id: true },
   });
   reorder(rows, id, direction, (tx, rowId, position) =>
-    tx
-      .update(programDayExercises)
-      .set({ position })
-      .where(eq(programDayExercises.id, rowId))
-      .run(),
+    tx.update(programDayExercises).set({ position }).where(eq(programDayExercises.id, rowId)).run(),
   );
 }
 

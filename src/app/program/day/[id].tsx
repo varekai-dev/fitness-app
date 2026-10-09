@@ -1,10 +1,24 @@
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet } from 'react-native';
 
 import { ExerciseThumb } from '@/components/exercise-thumb';
 import { TargetsEditor } from '@/components/targets-editor';
-import { Button, Card, EmptyState, Field, IconButton, Loading, Row, Screen, Text } from '@/components/ui';
+import {
+  Button,
+  Card,
+  CircleButton,
+  EmptyState,
+  Field,
+  goBack,
+  IconButton,
+  IndexMarker,
+  Loading,
+  Row,
+  Screen,
+  SectionHeader,
+  Text,
+} from '@/components/ui';
 import {
   deleteDay,
   getProgramDay,
@@ -21,7 +35,13 @@ export default function ProgramDayScreen() {
   const { data: day } = useDbQuery(() => getProgramDay(id).then((d) => d ?? null), [id]);
 
   if (day === undefined) return <Loading />;
-  if (day === null) return <EmptyState icon="alert-circle" title="День не знайдено" />;
+  if (day === null) {
+    return (
+      <Screen title="День">
+        <EmptyState icon="alert-circle" title="День не знайдено" />
+      </Screen>
+    );
+  }
 
   const remove = () =>
     Alert.alert('Видалити день?', 'Минулі тренування цього дня залишаться в історії.', [
@@ -31,45 +51,60 @@ export default function ProgramDayScreen() {
         style: 'destructive',
         onPress: async () => {
           await deleteDay(id);
-          router.back();
+          goBack();
         },
       },
     ]);
 
   return (
-    <Screen>
-      <Stack.Screen options={{ title: day.name }} />
-      <Text variant="caption">{day.program.name}</Text>
+    <Screen
+      title={day.name}
+      headerRight={<CircleButton icon="trash-outline" color={colors.danger} onPress={remove} />}>
+      <Text variant="overline">{day.program.name}</Text>
       <DayNameField key={day.name} id={id} name={day.name} />
 
+      <SectionHeader title={`Послідовність вправ · ${day.exercises.length}`} />
       {day.exercises.length === 0 && <EmptyState icon="barbell" title="Додай вправи в цей день" />}
       {day.exercises.map((e, i) => (
-        <Card key={e.id}>
+        <Card key={e.id} style={styles.card}>
           <Row>
-            <ExerciseThumb uri={e.exercise.imageUri} size={36} />
-            <Text variant="heading" style={styles.flex} numberOfLines={2}>
+            <IndexMarker n={i + 1} />
+            <ExerciseThumb uri={e.exercise.imageUri} size={44} />
+            <Text variant="body" style={styles.flex} numberOfLines={2}>
               {e.exercise.name}
             </Text>
-            <IconButton icon="chevron-up" disabled={i === 0} onPress={() => moveDayExercise(id, e.id, -1)} />
+            <IconButton
+              icon="chevron-up"
+              size={18}
+              disabled={i === 0}
+              onPress={() => moveDayExercise(id, e.id, -1)}
+            />
             <IconButton
               icon="chevron-down"
+              size={18}
               disabled={i === day.exercises.length - 1}
               onPress={() => moveDayExercise(id, e.id, 1)}
             />
-            <IconButton icon="close" color={colors.danger} onPress={() => removeDayExercise(e.id)} />
+            <IconButton
+              icon="close-circle"
+              size={20}
+              color={colors.textMuted}
+              onPress={() => removeDayExercise(e.id)}
+            />
           </Row>
-          <TargetsEditor type={e.exercise.trackingType} targets={e} onSave={(t) => updateDayExercise(e.id, t)} />
+          <TargetsEditor
+            type={e.exercise.trackingType}
+            targets={e}
+            onSave={(t) => updateDayExercise(e.id, t)}
+          />
         </Card>
       ))}
 
       <Button
         title="Додати вправу"
         icon="add"
-        variant="secondary"
         onPress={() => router.push({ pathname: '/pick-exercise', params: { dayId: id } })}
       />
-      <View style={styles.spacer} />
-      <Button title="Видалити день" variant="danger" icon="trash-outline" onPress={remove} />
     </Screen>
   );
 }
@@ -81,10 +116,18 @@ function DayNameField({ id, name }: { id: number; name: string }) {
     if (trimmed && trimmed !== name) renameDay(id, trimmed);
     else setValue(name);
   };
-  return <Field label="Назва дня" value={value} onChangeText={setValue} onEndEditing={save} returnKeyType="done" />;
+  return (
+    <Field
+      label="Назва дня"
+      value={value}
+      onChangeText={setValue}
+      onEndEditing={save}
+      returnKeyType="done"
+    />
+  );
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  spacer: { height: spacing.lg },
+  card: { gap: spacing.md },
 });

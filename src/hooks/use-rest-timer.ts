@@ -10,6 +10,7 @@ import { cancelRestEnd, scheduleRestEnd } from '@/lib/rest-notifications';
 export function useRestTimer() {
   const [endAt, setEndAt] = useState<number | null>(null);
   const [label, setLabel] = useState('');
+  const [totalSec, setTotalSec] = useState(0);
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -33,6 +34,7 @@ export function useRestTimer() {
     const end = Date.now() + seconds * 1000;
     setNow(Date.now());
     setEndAt(end);
+    setTotalSec(seconds);
     setLabel(exerciseName);
     scheduleRestEnd(seconds, exerciseName);
   };
@@ -41,6 +43,7 @@ export function useRestTimer() {
     if (endAt === null) return;
     const end = endAt + seconds * 1000;
     setEndAt(end);
+    setTotalSec((t) => t + seconds);
     scheduleRestEnd(Math.ceil((end - Date.now()) / 1000), label);
   };
 
@@ -50,5 +53,13 @@ export function useRestTimer() {
   };
 
   const remainingSec = endAt === null ? 0 : Math.max(0, Math.ceil((endAt - now) / 1000));
-  return { running: endAt !== null, remainingSec, label, start, extend, stop };
+  return {
+    running: endAt !== null,
+    remainingSec,
+    totalSec,
+    label,
+    start,
+    extend,
+    stop,
+  };
 }

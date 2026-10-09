@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { router } from 'expo-router';
 import type { ComponentProps, ReactNode } from 'react';
 import {
   ActivityIndicator,
@@ -13,12 +14,14 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 export type IconName = ComponentProps<typeof Ionicons>['name'];
 
-type TextVariant = 'title' | 'heading' | 'body' | 'secondary' | 'muted' | 'caption';
+type TextVariant =
+  'hero' | 'title' | 'heading' | 'body' | 'secondary' | 'muted' | 'caption' | 'overline';
 
 export function Text({
   variant = 'body',
@@ -38,16 +41,108 @@ export function Text({
   );
 }
 
-export function Screen({ children, scroll = true }: { children: ReactNode; scroll?: boolean }) {
-  if (!scroll) return <View style={styles.screen}>{children}</View>;
+/** Round dark button used for back/close and toolbar actions. */
+export function CircleButton({
+  icon,
+  onPress,
+  color = colors.text,
+  background = colors.surface,
+  size = 44,
+  disabled,
+}: {
+  icon: IconName;
+  onPress: () => void;
+  color?: string;
+  background?: string;
+  size?: number;
+  disabled?: boolean;
+}) {
   return (
-    <ScrollView
-      style={styles.screenScroll}
-      contentContainerStyle={styles.screen}
-      keyboardShouldPersistTaps="handled"
-      contentInsetAdjustmentBehavior="automatic">
-      {children}
-    </ScrollView>
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      hitSlop={6}
+      style={({ pressed }) => [
+        styles.circle,
+        { width: size, height: size, backgroundColor: background },
+        (pressed || disabled) && styles.pressed,
+      ]}>
+      <Ionicons name={icon} size={size * 0.45} color={color} />
+    </Pressable>
+  );
+}
+
+type HeaderMode = 'root' | 'back' | 'modal';
+
+/** Falls back to home when the screen was opened without history (e.g. a deep link). */
+export function goBack() {
+  if (router.canGoBack()) router.back();
+  else router.replace('/');
+}
+
+/**
+ * In-screen header: round back button and a large left-aligned title.
+ * Native headers are hidden app-wide so every screen shares this look.
+ */
+export function ScreenHeader({
+  title,
+  mode = 'back',
+  right,
+  onBack,
+}: {
+  title?: string;
+  mode?: HeaderMode;
+  right?: ReactNode;
+  onBack?: () => void;
+}) {
+  const insets = useSafeAreaInsets();
+  // iOS page sheets start below the status bar, so they need no inset.
+  const top = mode === 'modal' ? spacing.lg : insets.top + spacing.sm;
+  return (
+    <View style={[styles.header, { paddingTop: top }]}>
+      {mode !== 'root' && (
+        <CircleButton
+          icon={mode === 'modal' ? 'close' : 'chevron-back'}
+          onPress={onBack ?? goBack}
+        />
+      )}
+      {title !== undefined && (
+        <RNText
+          style={[styles.headerTitle, mode === 'root' && styles.headerTitleRoot]}
+          numberOfLines={1}>
+          {title}
+        </RNText>
+      )}
+      <View style={styles.headerRight}>{right}</View>
+    </View>
+  );
+}
+
+export function Screen({
+  children,
+  title,
+  mode,
+  headerRight,
+  header = true,
+}: {
+  children: ReactNode;
+  title?: string;
+  mode?: HeaderMode;
+  headerRight?: ReactNode;
+  /** Set false when the screen draws its own top area. */
+  header?: boolean;
+}) {
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={styles.screenRoot}>
+      {header && <ScreenHeader title={title} mode={mode} right={headerRight} />}
+      <ScrollView
+        style={styles.flex}
+        contentContainerStyle={[styles.screen, !header && { paddingTop: insets.top + spacing.sm }]}
+        keyboardShouldPersistTaps="handled">
+        {children}
+      </ScrollView>
+    </View>
   );
 }
 
@@ -70,23 +165,27 @@ export function Card({
   );
 }
 
-type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
+type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'light';
 
 export function Button({
   title,
   onPress,
   variant = 'primary',
   icon,
+  trailingIcon,
   disabled,
   loading,
+  small,
   style,
 }: {
   title: string;
   onPress: () => void;
   variant?: ButtonVariant;
   icon?: IconName;
+  trailingIcon?: IconName;
   disabled?: boolean;
   loading?: boolean;
+  small?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
   const fg = BUTTON_FG[variant];
@@ -96,8 +195,8 @@ export function Button({
       disabled={disabled || loading}
       style={({ pressed }) => [
         styles.button,
+        small && styles.buttonSmall,
         { backgroundColor: BUTTON_BG[variant] },
-        variant === 'secondary' && styles.buttonBorder,
         (pressed || disabled) && styles.pressed,
         style,
       ]}>
@@ -105,8 +204,11 @@ export function Button({
         <ActivityIndicator color={fg} />
       ) : (
         <>
-          {icon && <Ionicons name={icon} size={18} color={fg} />}
-          <RNText style={[styles.buttonText, { color: fg }]}>{title}</RNText>
+          {icon && <Ionicons name={icon} size={small ? 15 : 18} color={fg} />}
+          <RNText style={[styles.buttonText, small && styles.buttonTextSmall, { color: fg }]}>
+            {title}
+          </RNText>
+          {trailingIcon && <Ionicons name={trailingIcon} size={small ? 15 : 18} color={fg} />}
         </>
       )}
     </Pressable>
@@ -115,15 +217,17 @@ export function Button({
 
 const BUTTON_BG: Record<ButtonVariant, string> = {
   primary: colors.accent,
-  secondary: colors.surfaceRaised,
-  danger: colors.surfaceRaised,
+  secondary: colors.surface,
+  danger: colors.surface,
   ghost: 'transparent',
+  light: colors.text,
 };
 const BUTTON_FG: Record<ButtonVariant, string> = {
   primary: colors.accentText,
   secondary: colors.text,
   danger: colors.danger,
   ghost: colors.accent,
+  light: colors.background,
 };
 
 export function IconButton({
@@ -144,7 +248,7 @@ export function IconButton({
       onPress={onPress}
       disabled={disabled}
       hitSlop={8}
-      style={({ pressed }) => [styles.iconButton, (pressed || disabled) && styles.pressed]}>
+      style={({ pressed }) => [styles.iconButton, (pressed || disabled) && styles.dimmed]}>
       <Ionicons name={icon} size={size} color={color} />
     </Pressable>
   );
@@ -162,12 +266,21 @@ export function Field({
 }) {
   return (
     <View style={[styles.field, containerStyle]}>
-      {label && <Text variant="secondary">{label}</Text>}
+      {label && <Text variant="caption">{label}</Text>}
       <TextInput
         placeholderTextColor={colors.textMuted}
         style={[styles.input, props.multiline && styles.inputMultiline, style]}
         {...props}
       />
+    </View>
+  );
+}
+
+export function SearchField(props: TextInputProps) {
+  return (
+    <View style={styles.search}>
+      <Ionicons name="search" size={18} color={colors.textMuted} />
+      <TextInput placeholderTextColor={colors.textMuted} style={styles.searchInput} {...props} />
     </View>
   );
 }
@@ -185,6 +298,19 @@ export function Chip({
     <Pressable onPress={onPress} style={[styles.chip, selected && styles.chipSelected]}>
       <RNText style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</RNText>
     </Pressable>
+  );
+}
+
+/** Horizontally scrolling row of chips, edge to edge. */
+export function ChipScroller({ children }: { children: ReactNode }) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.chipScroller}
+      contentContainerStyle={styles.chipScrollerContent}>
+      {children}
+    </ScrollView>
   );
 }
 
@@ -208,6 +334,54 @@ export function ChipGroup<T extends string>({
   );
 }
 
+/** Small rounded label, e.g. "АКТИВНА" or "PR". */
+export function Badge({
+  label,
+  tone = 'accent',
+}: {
+  label: string;
+  tone?: 'accent' | 'muted' | 'warning';
+}) {
+  const color =
+    tone === 'accent' ? colors.accent : tone === 'warning' ? colors.warning : colors.textSecondary;
+  return (
+    <View style={[styles.badge, { borderColor: color }]}>
+      <RNText style={[styles.badgeText, { color }]}>{label}</RNText>
+    </View>
+  );
+}
+
+/** Metric tile with an icon, value and caption, as on the home stats row. */
+export function StatTile({
+  icon,
+  value,
+  unit,
+  label,
+  style,
+}: {
+  icon: IconName;
+  value: string;
+  unit?: string;
+  label: string;
+  style?: StyleProp<ViewStyle>;
+}) {
+  return (
+    <View style={[styles.stat, style]}>
+      <Ionicons name={icon} size={22} color={colors.accent} />
+      <RNText style={styles.statValue} numberOfLines={1}>
+        {value}
+        {unit ? <RNText style={styles.statUnit}> {unit}</RNText> : null}
+      </RNText>
+      <Text variant="muted">{label}</Text>
+    </View>
+  );
+}
+
+/** Orange "01", "02"… marker for ordered sequences. */
+export function IndexMarker({ n }: { n: number }) {
+  return <RNText style={styles.indexMarker}>{String(n).padStart(2, '0')}</RNText>;
+}
+
 export function SectionHeader({ title, action }: { title: string; action?: ReactNode }) {
   return (
     <View style={styles.sectionHeader}>
@@ -217,11 +391,21 @@ export function SectionHeader({ title, action }: { title: string; action?: React
   );
 }
 
-export function EmptyState({ icon, title, hint }: { icon: IconName; title: string; hint?: string }) {
+export function EmptyState({
+  icon,
+  title,
+  hint,
+}: {
+  icon: IconName;
+  title: string;
+  hint?: string;
+}) {
   return (
     <View style={styles.empty}>
-      <Ionicons name={icon} size={40} color={colors.textMuted} />
-      <Text variant="secondary" style={styles.center}>
+      <View style={styles.emptyIcon}>
+        <Ionicons name={icon} size={28} color={colors.accent} />
+      </View>
+      <Text variant="body" style={styles.center}>
         {title}
       </Text>
       {hint && (
@@ -246,62 +430,176 @@ export const Row = ({ children, style }: { children: ReactNode; style?: StylePro
 );
 
 const styles = StyleSheet.create({
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '700' },
-  heading: { color: colors.text, fontSize: fontSize.lg, fontWeight: '600' },
-  body: { color: colors.text, fontSize: fontSize.md },
+  hero: {
+    color: colors.text,
+    fontSize: fontSize.hero,
+    fontWeight: '800',
+    letterSpacing: -1,
+  },
+  title: {
+    color: colors.text,
+    fontSize: fontSize.xxl,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  heading: { color: colors.text, fontSize: fontSize.lg, fontWeight: '700' },
+  body: { color: colors.text, fontSize: fontSize.md, fontWeight: '500' },
   secondary: { color: colors.textSecondary, fontSize: fontSize.md },
   muted: { color: colors.textMuted, fontSize: fontSize.sm },
   caption: { color: colors.textSecondary, fontSize: fontSize.sm },
-  screenScroll: { flex: 1, backgroundColor: colors.background },
-  screen: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxl * 2, flexGrow: 1, backgroundColor: colors.background },
+  overline: {
+    color: colors.accent,
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  flex: { flex: 1 },
+  screenRoot: { flex: 1, backgroundColor: colors.background },
+  screen: {
+    padding: spacing.lg,
+    gap: spacing.lg,
+    paddingBottom: spacing.xxl * 2,
+    flexGrow: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.sm,
+    backgroundColor: colors.background,
+  },
+  headerTitle: {
+    flex: 1,
+    color: colors.text,
+    fontSize: fontSize.lg + 1,
+    fontWeight: '700',
+  },
+  headerTitleRoot: {
+    fontSize: fontSize.xxl,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  circle: {
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.lg,
     gap: spacing.sm,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
-  pressed: { opacity: 0.6 },
+  pressed: { opacity: 0.7 },
+  dimmed: { opacity: 0.35 },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    minHeight: 48,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radius.md,
+    minHeight: 52,
+    paddingHorizontal: spacing.xl,
+    borderRadius: radius.pill,
   },
-  buttonBorder: { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
-  buttonText: { fontSize: fontSize.md, fontWeight: '600' },
+  buttonSmall: { minHeight: 36, paddingHorizontal: spacing.lg },
+  buttonText: { fontSize: fontSize.md, fontWeight: '700' },
+  buttonTextSmall: { fontSize: fontSize.sm },
   iconButton: { padding: spacing.xs },
   field: { gap: spacing.xs },
   input: {
-    backgroundColor: colors.surfaceRaised,
+    backgroundColor: colors.surface,
     color: colors.text,
     fontSize: fontSize.md,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md + 2,
+  },
+  inputMultiline: { minHeight: 96, textAlignVertical: 'top' },
+  search: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.lg,
+  },
+  searchInput: {
+    flex: 1,
+    color: colors.text,
+    fontSize: fontSize.md,
     paddingVertical: spacing.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
-  inputMultiline: { minHeight: 88, textAlignVertical: 'top' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  chipScroller: { marginHorizontal: -spacing.lg, flexGrow: 0 },
+  chipScrollerContent: { paddingHorizontal: spacing.lg, gap: spacing.sm },
   chip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: 999,
-    backgroundColor: colors.surfaceRaised,
-    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm + 2,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+  },
+  chipSelected: { backgroundColor: colors.accent },
+  chipText: { color: colors.text, fontSize: fontSize.sm, fontWeight: '600' },
+  chipTextSelected: { color: colors.accentText },
+  badge: {
+    borderWidth: 1,
+    borderRadius: radius.sm / 2,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    alignSelf: 'flex-start',
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+  stat: {
+    flex: 1,
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.lg,
+    borderWidth: 1,
     borderColor: colors.border,
   },
-  chipSelected: { backgroundColor: colors.accent, borderColor: colors.accent },
-  chipText: { color: colors.textSecondary, fontSize: fontSize.sm, fontWeight: '500' },
-  chipTextSelected: { color: colors.accentText },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  empty: { alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.xxl },
+  statValue: { color: colors.text, fontSize: fontSize.xl, fontWeight: '800' },
+  statUnit: {
+    color: colors.textSecondary,
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+  },
+  indexMarker: {
+    color: colors.accent,
+    fontSize: fontSize.md,
+    fontWeight: '800',
+    width: 26,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  empty: { alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.xl },
+  emptyIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: radius.pill,
+    backgroundColor: colors.accentSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.xs,
+  },
   center: { textAlign: 'center' },
-  loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
+  loading: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.background,
+  },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
 });

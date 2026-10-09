@@ -5,11 +5,15 @@ import { StyleSheet, View } from 'react-native';
 import { colors, radius } from '@/theme';
 
 export function ExerciseThumb({ uri, size = 44 }: { uri: string | null; size?: number }) {
-  const box = { width: size, height: size };
+  const box = {
+    width: size,
+    height: size,
+    borderRadius: size > 48 ? radius.md : radius.sm,
+  };
   if (!uri) {
     return (
       <View style={[styles.placeholder, box]}>
-        <Ionicons name="barbell-outline" size={size / 2} color={colors.textMuted} />
+        <Ionicons name="barbell" size={size * 0.45} color={colors.accent} />
       </View>
     );
   }
@@ -18,10 +22,9 @@ export function ExerciseThumb({ uri, size = 44 }: { uri: string | null; size?: n
 
 const styles = StyleSheet.create({
   placeholder: {
-    borderRadius: radius.sm,
-    backgroundColor: colors.surfaceRaised,
+    backgroundColor: colors.accentSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  image: { borderRadius: radius.sm, backgroundColor: colors.surfaceRaised },
+  image: { backgroundColor: colors.surfaceRaised },
 });

@@ -115,10 +115,7 @@ export const workoutExercises = sqliteTable(
     position: integer('position').notNull(),
     ...targetColumns(),
   },
-  (t) => [
-    index('we_workout_idx').on(t.workoutId),
-    index('we_exercise_idx').on(t.exerciseId),
-  ],
+  (t) => [index('we_workout_idx').on(t.workoutId), index('we_exercise_idx').on(t.exerciseId)],
 );
 
 export const workoutSets = sqliteTable(
@@ -143,7 +140,10 @@ export const programsRelations = relations(programs, ({ many }) => ({
 }));
 
 export const programDaysRelations = relations(programDays, ({ one, many }) => ({
-  program: one(programs, { fields: [programDays.programId], references: [programs.id] }),
+  program: one(programs, {
+    fields: [programDays.programId],
+    references: [programs.id],
+  }),
   exercises: many(programDayExercises),
 }));
 
@@ -163,7 +163,10 @@ export const workoutsRelations = relations(workouts, ({ many }) => ({
 }));
 
 export const workoutExercisesRelations = relations(workoutExercises, ({ one, many }) => ({
-  workout: one(workouts, { fields: [workoutExercises.workoutId], references: [workouts.id] }),
+  workout: one(workouts, {
+    fields: [workoutExercises.workoutId],
+    references: [workouts.id],
+  }),
   exercise: one(exercises, {
     fields: [workoutExercises.exerciseId],
     references: [exercises.id],
@@ -188,5 +191,10 @@ export type WorkoutExercise = typeof workoutExercises.$inferSelect;
 export type WorkoutSet = typeof workoutSets.$inferSelect;
 export type Targets = Pick<
   ProgramDayExercise,
-  'targetSets' | 'targetRepsMin' | 'targetRepsMax' | 'targetDurationSec' | 'targetDistanceKm' | 'restSec'
+  | 'targetSets'
+  | 'targetRepsMin'
+  | 'targetRepsMax'
+  | 'targetDurationSec'
+  | 'targetDistanceKm'
+  | 'restSec'
 >;

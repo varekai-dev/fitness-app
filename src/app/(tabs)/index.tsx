@@ -1,24 +1,38 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { Alert, StyleSheet } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { Elapsed } from '@/components/elapsed';
 import { WorkoutSummaryCard } from '@/components/workout-summary-card';
-import { Button, Card, Chip, EmptyState, Loading, Row, Screen, SectionHeader, Text } from '@/components/ui';
+import {
+  Button,
+  Card,
+  Chip,
+  ChipScroller,
+  EmptyState,
+  Loading,
+  Row,
+  Screen,
+  SectionHeader,
+  StatTile,
+  Text,
+} from '@/components/ui';
 import { getActiveProgram, getNextDayId } from '@/db/programs';
 import { getActiveWorkout, listFinishedWorkouts, startWorkout } from '@/db/workouts';
 import { useDbQuery } from '@/hooks/use-db-query';
+import { formatLongDate, startOfWeek, WEEKDAY_SHORT, weekdayIndex } from '@/lib/labels';
 import { prepareRestNotifications } from '@/lib/rest-notifications';
-import { spacing } from '@/theme';
+import { colors, fontSize, radius, spacing } from '@/theme';
 
 async function loadHome() {
-  const [activeWorkout, program, recent] = await Promise.all([
+  const [activeWorkout, program, finished] = await Promise.all([
     getActiveWorkout(),
     getActiveProgram(),
     listFinishedWorkouts(),
   ]);
   const nextDayId = program ? await getNextDayId(program.id) : null;
-  return { activeWorkout, program, nextDayId, recent: recent.slice(0, 3) };
+  return { activeWorkout, program, nextDayId, finished, loadedAt: Date.now() };
 }
 
 export default function HomeScreen() {
@@ -27,11 +41,20 @@ export default function HomeScreen() {
   const [starting, setStarting] = useState(false);
 
   if (!data) return <Loading />;
-  const { activeWorkout, program, nextDayId, recent } = data;
+  const { activeWorkout, program, nextDayId, finished, loadedAt } = data;
   // A manual pick may point to another program's day after switching programs.
   const selectedDay =
-    program?.days.find((d) => d.id === pickedDayId) ?? program?.days.find((d) => d.id === nextDayId);
-  const selectedDayId = selectedDay?.id ?? null;
+    program?.days.find((d) => d.id === pickedDayId) ??
+    program?.days.find((d) => d.id === nextDayId);
+
+  const weekStart = startOfWeek(loadedAt);
+  const thisWeek = finished.filter((w) => w.startedAt >= weekStart);
+  const trainedDays = new Set(thisWeek.map((w) => weekdayIndex(w.startedAt)));
+  const weekSets = thisWeek.reduce(
+    (n, w) => n + w.exercises.reduce((m, e) => m + e.sets.length, 0),
+    0,
+  );
+  const today = weekdayIndex(loadedAt);
 
   const start = async () => {
     if (!selectedDay) return;
@@ -49,79 +72,272 @@ export default function HomeScreen() {
   };
 
   return (
-    <Screen>
+    <Screen header={false}>
+      <View style={styles.greeting}>
+        <Text variant="caption">{formatLongDate(loadedAt)}</Text>
+        <Text variant="title">
+          Тренуйся сьогодні,{'\n'}прогресуй завтра{' '}
+          <Ionicons name="flash" size={26} color={colors.accent} />
+        </Text>
+      </View>
+
+      <Row style={styles.stats}>
+        <StatTile icon="flame" value={String(thisWeek.length)} label="За тиждень" />
+        <StatTile icon="layers" value={String(weekSets)} unit="підх." label="Об'єм тижня" />
+        <StatTile icon="trophy" value={String(finished.length)} label="Усього" />
+      </Row>
+
       {activeWorkout ? (
-        <Card>
-          <Row>
-            <Text variant="caption">Тренування триває ·</Text>
-            <Elapsed since={activeWorkout.startedAt} />
-          </Row>
-          <Text variant="title">{activeWorkout.dayName}</Text>
-          <Text variant="secondary">{activeWorkout.programName}</Text>
-          <Button
-            title="Продовжити"
-            icon="play"
-            onPress={() =>
-              router.push({ pathname: '/workout/[id]', params: { id: activeWorkout.id } })
-            }
-          />
-        </Card>
+        <HeroCard
+          overline="Тренування триває"
+          title={activeWorkout.dayName}
+          subtitle={activeWorkout.programName}
+          meta={<Elapsed since={activeWorkout.startedAt} style={styles.heroElapsed} />}
+          actionIcon="play"
+          onAction={() =>
+            router.push({
+              pathname: '/workout/[id]',
+              params: { id: activeWorkout.id },
+            })
+          }
+        />
       ) : !program ? (
         <Card>
           <EmptyState
-            icon="list"
+            icon="calendar"
             title="Немає активної програми"
             hint="Створи програму з днями тренувань, щоб почати."
           />
-          <Button title="До програм" onPress={() => router.navigate('/programs')} />
+          <Button
+            title="До програм"
+            trailingIcon="arrow-forward"
+            onPress={() => router.navigate('/programs')}
+          />
         </Card>
-      ) : program.days.length === 0 ? (
+      ) : program.days.length === 0 || !selectedDay ? (
         <Card>
           <EmptyState icon="calendar" title={`У програмі «${program.name}» ще немає днів`} />
           <Button
             title="Редагувати програму"
-            onPress={() => router.push({ pathname: '/program/[id]', params: { id: program.id } })}
+            trailingIcon="arrow-forward"
+            onPress={() =>
+              router.push({
+                pathname: '/program/[id]',
+                params: { id: program.id },
+              })
+            }
           />
         </Card>
       ) : (
-        <Card>
-          <Text variant="caption">
-            {selectedDayId !== nextDayId ? 'Обраний день' : 'Наступне'} · {program.name}
-          </Text>
-          <Text variant="title">{selectedDay?.name}</Text>
+        <>
           {program.days.length > 1 && (
-            <Row style={styles.days}>
+            <ChipScroller>
               {program.days.map((d) => (
                 <Chip
                   key={d.id}
                   label={d.name}
-                  selected={d.id === selectedDayId}
+                  selected={d.id === selectedDay.id}
                   onPress={() => setPickedDayId(d.id)}
                 />
               ))}
-            </Row>
+            </ChipScroller>
           )}
-          <Button title="Почати тренування" icon="play" onPress={start} loading={starting} />
-        </Card>
+          <HeroCard
+            overline={selectedDay.id === nextDayId ? 'Наступне тренування' : 'Обраний день'}
+            title={selectedDay.name}
+            subtitle={program.name}
+            meta={
+              <Row style={styles.heroMeta}>
+                <Ionicons name="barbell-outline" size={14} color={colors.accentText} />
+                <Text variant="caption" style={styles.heroText}>
+                  {selectedDay.exercises.length} вправ ·{' '}
+                  {selectedDay.exercises.reduce((n, e) => n + e.targetSets, 0)} підходів
+                </Text>
+              </Row>
+            }
+            details={selectedDay.exercises.slice(0, 4).map((e) => e.exercise.name)}
+            moreCount={Math.max(0, selectedDay.exercises.length - 4)}
+            actionIcon="arrow-forward"
+            actionLoading={starting}
+            onAction={start}
+          />
+        </>
       )}
+
+      <Card>
+        <Row style={styles.spaceBetween}>
+          <Text variant="heading">Цей тиждень</Text>
+          <Row style={styles.streak}>
+            <Text variant="caption" style={{ color: colors.accent }}>
+              {trainedDays.size} дн.
+            </Text>
+            <Ionicons name="flame" size={14} color={colors.accent} />
+          </Row>
+        </Row>
+        <Row style={styles.week}>
+          {WEEKDAY_SHORT.map((label, i) => {
+            const done = trainedDays.has(i);
+            return (
+              <View key={label} style={styles.weekDay}>
+                <Text variant="muted" style={i === today && styles.today}>
+                  {label}
+                </Text>
+                <View
+                  style={[
+                    styles.weekDot,
+                    done && styles.weekDotDone,
+                    i === today && !done && styles.weekDotToday,
+                  ]}>
+                  {done && <Ionicons name="checkmark" size={14} color={colors.accentText} />}
+                </View>
+              </View>
+            );
+          })}
+        </Row>
+      </Card>
 
       <SectionHeader
         title="Останні тренування"
         action={
-          recent.length > 0 ? (
-            <Button title="Усі" variant="ghost" onPress={() => router.navigate('/history')} />
+          finished.length > 0 ? (
+            <Button title="Усі" variant="ghost" small onPress={() => router.navigate('/history')} />
           ) : undefined
         }
       />
-      {recent.length === 0 ? (
+      {finished.length === 0 ? (
         <EmptyState icon="time" title="Ще немає завершених тренувань" />
       ) : (
-        recent.map((w) => <WorkoutSummaryCard key={w.id} workout={w} />)
+        finished.slice(0, 3).map((w) => <WorkoutSummaryCard key={w.id} workout={w} />)
       )}
     </Screen>
   );
 }
 
+function HeroCard({
+  overline,
+  title,
+  subtitle,
+  meta,
+  details,
+  moreCount = 0,
+  actionIcon,
+  actionLoading,
+  onAction,
+}: {
+  overline: string;
+  title: string;
+  subtitle: string;
+  meta?: ReactNode;
+  details?: string[];
+  moreCount?: number;
+  actionIcon: 'play' | 'arrow-forward';
+  actionLoading?: boolean;
+  onAction: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onAction}
+      disabled={actionLoading}
+      style={({ pressed }) => [styles.hero, pressed && styles.pressed]}>
+      <View style={styles.heroGlow} />
+      <Text variant="caption" style={styles.heroText}>
+        {overline}
+      </Text>
+      <Text variant="title" style={styles.heroTitle}>
+        {title}
+      </Text>
+      <Text variant="caption" style={styles.heroSubtle}>
+        {subtitle}
+      </Text>
+      {meta}
+      {details && details.length > 0 && (
+        <View style={styles.heroDetails}>
+          {details.map((d, i) => (
+            <Row key={`${d}-${i}`}>
+              <Text variant="muted" style={styles.heroIndex}>
+                {String(i + 1).padStart(2, '0')}
+              </Text>
+              <Text variant="body" style={styles.heroText} numberOfLines={1}>
+                {d}
+              </Text>
+            </Row>
+          ))}
+          {moreCount > 0 && (
+            <Text variant="caption" style={styles.heroSubtle}>
+              + ще {moreCount}
+            </Text>
+          )}
+        </View>
+      )}
+      <View style={styles.heroAction}>
+        <Ionicons name={actionIcon} size={24} color={colors.accent} />
+      </View>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
-  days: { flexWrap: 'wrap', marginVertical: spacing.sm },
+  greeting: { gap: spacing.xs, marginTop: spacing.sm },
+  stats: { gap: spacing.sm, alignItems: 'stretch' },
+  spaceBetween: { justifyContent: 'space-between' },
+  streak: { gap: 2 },
+  pressed: { opacity: 0.85 },
+  hero: {
+    backgroundColor: colors.accent,
+    borderRadius: radius.lg,
+    padding: spacing.xl,
+    gap: spacing.xs,
+    overflow: 'hidden',
+    minHeight: 200,
+  },
+  heroGlow: {
+    position: 'absolute',
+    right: -60,
+    top: -60,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: colors.accentGradientEnd,
+    opacity: 0.6,
+  },
+  heroText: { color: colors.accentText },
+  heroSubtle: { color: 'rgba(255,255,255,0.75)' },
+  heroTitle: {
+    color: colors.accentText,
+    fontSize: fontSize.xxl + 4,
+    marginTop: spacing.xs,
+  },
+  heroMeta: { marginTop: spacing.sm },
+  heroElapsed: {
+    color: colors.accentText,
+    fontSize: fontSize.xl,
+    fontWeight: '800',
+    marginTop: spacing.sm,
+  },
+  heroDetails: { marginTop: spacing.md, gap: spacing.xs, paddingRight: 72 },
+  heroIndex: { color: 'rgba(255,255,255,0.6)', fontWeight: '700', width: 22 },
+  heroAction: {
+    position: 'absolute',
+    right: spacing.lg,
+    bottom: spacing.lg,
+    width: 56,
+    height: 56,
+    borderRadius: radius.pill,
+    backgroundColor: colors.text,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  week: { justifyContent: 'space-between', marginTop: spacing.sm },
+  weekDay: { alignItems: 'center', gap: spacing.sm },
+  today: { color: colors.text, fontWeight: '700' },
+  weekDot: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surfaceRaised,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  weekDotDone: { backgroundColor: colors.accent },
+  weekDotToday: { borderWidth: 1.5, borderColor: colors.accent },
 });

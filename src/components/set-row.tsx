@@ -8,7 +8,12 @@ import type { SetValues } from '@/lib/metrics';
 import { formatDuration, formatNumber, parseDecimal, parseDuration } from '@/lib/metrics';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
-type Inputs = { weight: string; reps: string; duration: string; distance: string };
+type Inputs = {
+  weight: string;
+  reps: string;
+  duration: string;
+  distance: string;
+};
 
 const toInputs = (s: SetValues): Inputs => ({
   weight: s.weightKg === null ? '' : formatNumber(s.weightKg),
@@ -27,7 +32,10 @@ const toValues = (i: Inputs): SetValues => {
   };
 };
 
-const FIELDS: Record<TrackingType, { key: keyof Inputs; label: string; decimal?: boolean; time?: boolean }[]> = {
+const FIELDS: Record<
+  TrackingType,
+  { key: keyof Inputs; label: string; decimal?: boolean; time?: boolean }[]
+> = {
   weight_reps: [
     { key: 'weight', label: 'кг', decimal: true },
     { key: 'reps', label: 'повт' },
@@ -81,11 +89,13 @@ export function SetRow({
             value={inputs[f.key]}
             onChangeText={(v) => setInputs((prev) => ({ ...prev, [f.key]: v }))}
             onEndEditing={() => onSave(toValues(inputs))}
-            keyboardType={f.decimal ? 'decimal-pad' : f.time ? 'numbers-and-punctuation' : 'number-pad'}
+            keyboardType={
+              f.decimal ? 'decimal-pad' : f.time ? 'numbers-and-punctuation' : 'number-pad'
+            }
             selectTextOnFocus
             placeholder="—"
             placeholderTextColor={colors.textMuted}
-            style={styles.input}
+            style={[styles.input, done && showCheck && styles.inputDone]}
           />
           <Text variant="muted">{f.label}</Text>
         </View>
@@ -96,7 +106,11 @@ export function SetRow({
           onPress={() => onToggle(toValues(inputs))}
           hitSlop={6}
           style={[styles.check, done && styles.checkDone]}>
-          <Ionicons name="checkmark" size={20} color={done ? colors.accentText : colors.textMuted} />
+          <Ionicons
+            name="checkmark"
+            size={22}
+            color={done ? colors.accentText : colors.textMuted}
+          />
         </Pressable>
       ) : (
         <Pressable onPress={onDelete} hitSlop={6} style={styles.check}>
@@ -113,27 +127,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.xs,
-    borderRadius: radius.sm,
   },
-  rowDone: { backgroundColor: 'rgba(74, 222, 128, 0.08)' },
-  index: { width: 22, alignItems: 'center' },
-  cell: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  rowDone: { opacity: 0.9 },
+  index: {
+    width: 28,
+    height: 28,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surfaceRaised,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cell: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
   input: {
     flex: 1,
     minWidth: 0,
     backgroundColor: colors.surfaceRaised,
     color: colors.text,
     fontSize: fontSize.lg,
-    fontWeight: '600',
+    fontWeight: '700',
     textAlign: 'center',
-    borderRadius: radius.sm,
-    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
+    paddingVertical: spacing.sm + 2,
   },
+  inputDone: { backgroundColor: colors.accentSoft, color: colors.accent },
   check: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.sm,
+    width: 44,
+    height: 44,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.surfaceRaised,

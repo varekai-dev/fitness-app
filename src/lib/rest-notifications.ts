@@ -30,7 +30,10 @@ export async function scheduleRestEnd(seconds: number, exerciseName: string) {
   await cancelRestEnd();
   if (seconds <= 0) return;
   scheduledId = await Notifications.scheduleNotificationAsync({
-    content: { title: 'Відпочинок завершено', body: `Наступний підхід: ${exerciseName}` },
+    content: {
+      title: 'Відпочинок завершено',
+      body: `Наступний підхід: ${exerciseName}`,
+    },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
       seconds,

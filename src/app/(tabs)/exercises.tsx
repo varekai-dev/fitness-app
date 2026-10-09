@@ -4,7 +4,17 @@ import { useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
 import { ExerciseThumb } from '@/components/exercise-thumb';
-import { Button, Card, Chip, EmptyState, Field, Loading, Row, Text } from '@/components/ui';
+import {
+  Card,
+  Chip,
+  ChipScroller,
+  CircleButton,
+  EmptyState,
+  Loading,
+  ScreenHeader,
+  SearchField,
+  Text,
+} from '@/components/ui';
 import { listExercises } from '@/db/exercises';
 import { MUSCLE_GROUPS, type MuscleGroup } from '@/db/schema';
 import { useDbQuery } from '@/hooks/use-db-query';
@@ -23,55 +33,89 @@ export default function ExercisesScreen() {
   );
 
   return (
-    <FlatList
-      style={styles.list}
-      contentContainerStyle={styles.content}
-      keyboardShouldPersistTaps="handled"
-      data={filtered}
-      keyExtractor={(e) => String(e.id)}
-      ListHeaderComponent={
-        <View style={styles.header}>
-          <Button
-            title="Нова вправа"
+    <View style={styles.root}>
+      <ScreenHeader
+        title="Вправи"
+        mode="root"
+        right={
+          <CircleButton
             icon="add"
-            variant="secondary"
+            background={colors.accent}
+            color={colors.accentText}
             onPress={() => router.push('/exercise/edit')}
           />
-          <Field placeholder="Пошук" value={search} onChangeText={setSearch} clearButtonMode="while-editing" />
-          <Row style={styles.chips}>
-            <Chip label="Усі" selected={group === null} onPress={() => setGroup(null)} />
-            {MUSCLE_GROUPS.map((g) => (
-              <Chip key={g} label={MUSCLE_GROUP_LABELS[g]} selected={g === group} onPress={() => setGroup(g)} />
-            ))}
-          </Row>
-        </View>
-      }
-      renderItem={({ item }) => (
-        <Card
-          onPress={() => router.push({ pathname: '/exercise/[id]', params: { id: item.id } })}
-          style={styles.item}>
-          <ExerciseThumb uri={item.imageUri} />
-          <View style={styles.itemText}>
-            <Text variant="heading" numberOfLines={1}>
-              {item.name}
-            </Text>
-            <Text variant="caption">
-              {MUSCLE_GROUP_LABELS[item.muscleGroup]} · {TRACKING_TYPE_LABELS[item.trackingType]}
+        }
+      />
+      <FlatList
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        data={filtered}
+        keyExtractor={(e) => String(e.id)}
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <SearchField
+              placeholder="Пошук вправ…"
+              value={search}
+              onChangeText={setSearch}
+              clearButtonMode="while-editing"
+            />
+            <ChipScroller>
+              <Chip label="Усі" selected={group === null} onPress={() => setGroup(null)} />
+              {MUSCLE_GROUPS.map((g) => (
+                <Chip
+                  key={g}
+                  label={MUSCLE_GROUP_LABELS[g]}
+                  selected={g === group}
+                  onPress={() => setGroup(g)}
+                />
+              ))}
+            </ChipScroller>
+            <Text variant="heading">
+              {group ? MUSCLE_GROUP_LABELS[group] : 'Усі вправи'} · {filtered.length}
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-        </Card>
-      )}
-      ListEmptyComponent={<EmptyState icon="barbell" title="Нічого не знайдено" />}
-    />
+        }
+        renderItem={({ item }) => (
+          <Card
+            onPress={() =>
+              router.push({
+                pathname: '/exercise/[id]',
+                params: { id: item.id },
+              })
+            }
+            style={styles.item}>
+            <ExerciseThumb uri={item.imageUri} size={56} />
+            <View style={styles.itemText}>
+              <Text variant="body" numberOfLines={1}>
+                {item.name}
+              </Text>
+              <Text variant="muted">
+                {MUSCLE_GROUP_LABELS[item.muscleGroup]} ·{' '}
+                <Text variant="muted" style={styles.accent}>
+                  {TRACKING_TYPE_LABELS[item.trackingType]}
+                </Text>
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+          </Card>
+        )}
+        ListEmptyComponent={<EmptyState icon="barbell" title="Нічого не знайдено" />}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  list: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg, gap: spacing.sm },
-  header: { gap: spacing.md, marginBottom: spacing.sm },
-  chips: { flexWrap: 'wrap' },
-  item: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md },
+  root: { flex: 1, backgroundColor: colors.background },
+  content: { padding: spacing.lg, paddingTop: spacing.sm, gap: spacing.sm },
+  header: { gap: spacing.lg, marginBottom: spacing.xs },
+  item: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.sm,
+    paddingRight: spacing.lg,
+  },
   itemText: { flex: 1, gap: 2 },
+  accent: { color: colors.accent },
 });

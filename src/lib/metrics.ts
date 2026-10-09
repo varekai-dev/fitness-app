@@ -19,10 +19,18 @@ export type MetricInfo = {
 export const METRIC_INFO: Record<TrackingType, MetricInfo> = {
   weight_reps: { label: 'Розрахунковий 1ПМ', unit: 'кг', higherIsBetter: true },
   // Body weight is not tracked, so the estimate covers only the added weight.
-  weighted_reps: { label: '1ПМ додаткової ваги', unit: 'кг', higherIsBetter: true },
+  weighted_reps: {
+    label: '1ПМ додаткової ваги',
+    unit: 'кг',
+    higherIsBetter: true,
+  },
   reps: { label: 'Макс. повторень', unit: 'повт', higherIsBetter: true },
   duration: { label: 'Макс. час', unit: 'с', higherIsBetter: true },
-  distance_duration: { label: 'Найкращий темп', unit: 'хв/км', higherIsBetter: false },
+  distance_duration: {
+    label: 'Найкращий темп',
+    unit: 'хв/км',
+    higherIsBetter: false,
+  },
 };
 
 /** The single number a set is judged by for charts and PRs, or null if the set has no usable data. */

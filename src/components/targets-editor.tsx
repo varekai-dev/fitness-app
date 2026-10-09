@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Field, Row } from '@/components/ui';
+import { Text } from '@/components/ui';
 import type { Targets, TrackingType } from '@/db/schema';
 import { parseDecimal } from '@/lib/metrics';
-import { spacing } from '@/theme';
+import { colors, fontSize, radius, spacing } from '@/theme';
 
 const str = (v: number | null) => (v === null ? '' : String(v));
 const int = (s: string) => {
@@ -47,41 +47,77 @@ export function TargetsEditor({
     onSave(next);
   };
 
-  const num = { keyboardType: 'number-pad' as const, onEndEditing: save, selectTextOnFocus: true };
   const hasReps = type === 'weight_reps' || type === 'weighted_reps' || type === 'reps';
 
   return (
-    <View style={styles.container}>
-      <Row style={styles.row}>
-        <Field label="Підходи" value={sets} onChangeText={setSets} containerStyle={styles.cell} {...num} />
-        {hasReps && (
-          <>
-            <Field label="Повт. від" value={repsMin} onChangeText={setRepsMin} containerStyle={styles.cell} {...num} />
-            <Field label="до" value={repsMax} onChangeText={setRepsMax} containerStyle={styles.cell} {...num} />
-          </>
-        )}
-        {type === 'duration' && (
-          <Field label="Час, с" value={duration} onChangeText={setDuration} containerStyle={styles.cell} {...num} />
-        )}
-        {type === 'distance_duration' && (
-          <Field
-            label="Км"
-            value={distance}
-            onChangeText={setDistance}
-            containerStyle={styles.cell}
-            {...num}
-            keyboardType="decimal-pad"
-          />
-        )}
-        <Field label="Відпочинок, с" value={rest} onChangeText={setRest} containerStyle={styles.cellWide} {...num} />
-      </Row>
+    <View style={styles.row}>
+      <Cell label="Підходи" value={sets} onChange={setSets} onSave={save} />
+      {hasReps && (
+        <>
+          <Cell label="Повт. від" value={repsMin} onChange={setRepsMin} onSave={save} />
+          <Cell label="до" value={repsMax} onChange={setRepsMax} onSave={save} />
+        </>
+      )}
+      {type === 'duration' && (
+        <Cell label="Час, с" value={duration} onChange={setDuration} onSave={save} />
+      )}
+      {type === 'distance_duration' && (
+        <Cell label="Км" value={distance} onChange={setDistance} onSave={save} decimal />
+      )}
+      <Cell label="Відпоч., с" value={rest} onChange={setRest} onSave={save} />
+    </View>
+  );
+}
+
+function Cell({
+  label,
+  value,
+  onChange,
+  onSave,
+  decimal,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  onSave: () => void;
+  decimal?: boolean;
+}) {
+  return (
+    <View style={styles.cell}>
+      <TextInput
+        value={value}
+        onChangeText={onChange}
+        onEndEditing={onSave}
+        keyboardType={decimal ? 'decimal-pad' : 'number-pad'}
+        selectTextOnFocus
+        placeholder="—"
+        placeholderTextColor={colors.textMuted}
+        style={styles.input}
+      />
+      <Text variant="muted" style={styles.label}>
+        {label}
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { gap: spacing.sm },
-  row: { alignItems: 'flex-end' },
-  cell: { flex: 1 },
-  cellWide: { flex: 1.5 },
+  row: { flexDirection: 'row', gap: spacing.sm },
+  cell: {
+    flex: 1,
+    alignItems: 'center',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: spacing.sm,
+  },
+  input: {
+    alignSelf: 'stretch',
+    color: colors.text,
+    fontSize: fontSize.lg,
+    fontWeight: '800',
+    textAlign: 'center',
+    paddingVertical: 2,
+  },
+  label: { fontSize: 10 },
 });

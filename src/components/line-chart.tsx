@@ -37,7 +37,8 @@ export function LineChart({
   }
   const innerW = Math.max(width - PAD.left - PAD.right, 1);
   const innerH = HEIGHT - PAD.top - PAD.bottom;
-  const sx = (x: number) => PAD.left + (maxX === minX ? innerW / 2 : ((x - minX) / (maxX - minX)) * innerW);
+  const sx = (x: number) =>
+    PAD.left + (maxX === minX ? innerW / 2 : ((x - minX) / (maxX - minX)) * innerW);
   const sy = (y: number) => PAD.top + innerH - ((y - minY) / (maxY - minY)) * innerH;
   const coords = points.map((p) => `${sx(p.x)},${sy(p.y)}`).join(' ');
 
@@ -46,10 +47,24 @@ export function LineChart({
       {width > 0 && (
         <Svg width={width} height={HEIGHT}>
           {[maxY, (maxY + minY) / 2, minY].map((v) => (
-            <Line key={`g${v}`} x1={PAD.left} x2={width - PAD.right} y1={sy(v)} y2={sy(v)} stroke={colors.border} strokeWidth={1} />
+            <Line
+              key={`g${v}`}
+              x1={PAD.left}
+              x2={width - PAD.right}
+              y1={sy(v)}
+              y2={sy(v)}
+              stroke={colors.border}
+              strokeWidth={1}
+            />
           ))}
           {[maxY, minY].map((v) => (
-            <SvgText key={`l${v}`} x={PAD.left - 6} y={sy(v) + 4} fill={colors.textMuted} fontSize={fontSize.sm - 2} textAnchor="end">
+            <SvgText
+              key={`l${v}`}
+              x={PAD.left - 6}
+              y={sy(v) + 4}
+              fill={colors.textMuted}
+              fontSize={fontSize.sm - 2}
+              textAnchor="end">
               {formatY(v)}
             </SvgText>
           ))}
@@ -57,12 +72,23 @@ export function LineChart({
             {formatX(minX)}
           </SvgText>
           {maxX !== minX && (
-            <SvgText x={width - PAD.right} y={HEIGHT - 6} fill={colors.textMuted} fontSize={fontSize.sm - 2} textAnchor="end">
+            <SvgText
+              x={width - PAD.right}
+              y={HEIGHT - 6}
+              fill={colors.textMuted}
+              fontSize={fontSize.sm - 2}
+              textAnchor="end">
               {formatX(maxX)}
             </SvgText>
           )}
           {points.length > 1 && (
-            <Polyline points={coords} fill="none" stroke={colors.textSecondary} strokeWidth={2} />
+            <Polyline
+              points={coords}
+              fill="none"
+              stroke={colors.accent}
+              strokeWidth={2.5}
+              strokeLinejoin="round"
+            />
           )}
           {points.map((p) => (
             <Circle
@@ -70,7 +96,9 @@ export function LineChart({
               cx={sx(p.x)}
               cy={sy(p.y)}
               r={p.highlight ? 5 : 3.5}
-              fill={p.highlight ? colors.accent : colors.textSecondary}
+              fill={p.highlight ? colors.text : colors.accent}
+              stroke={colors.accent}
+              strokeWidth={p.highlight ? 2.5 : 0}
             />
           ))}
         </Svg>

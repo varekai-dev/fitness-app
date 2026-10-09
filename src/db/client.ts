@@ -3,7 +3,9 @@ import { openDatabaseSync } from 'expo-sqlite';
 
 import * as schema from './schema';
 
-export const sqlite = openDatabaseSync('fitness.db', { enableChangeListener: true });
+export const sqlite = openDatabaseSync('fitness.db', {
+  enableChangeListener: true,
+});
 sqlite.execSync('PRAGMA foreign_keys = ON;');
 
 /**

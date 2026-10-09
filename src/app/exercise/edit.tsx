@@ -1,9 +1,9 @@
 import { Image } from 'expo-image';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, StyleSheet } from 'react-native';
 
-import { Button, ChipGroup, Field, Loading, Row, Screen, Text } from '@/components/ui';
+import { Button, ChipGroup, Field, goBack, Loading, Row, Screen, Text } from '@/components/ui';
 import {
   createExercise,
   exerciseHasHistory,
@@ -79,7 +79,8 @@ export default function EditExerciseScreen() {
       if (!trimmed) throw new Error('Вкажи назву');
       if (!muscleGroup) throw new Error('Обери групу м’язів');
       const yt = youtubeUrl.trim();
-      if (yt && !/^https?:\/\//i.test(yt)) throw new Error('YouTube-посилання має починатися з https://');
+      if (yt && !/^https?:\/\//i.test(yt))
+        throw new Error('YouTube-посилання має починатися з https://');
       const input = {
         name: trimmed,
         muscleGroup,
@@ -91,33 +92,70 @@ export default function EditExerciseScreen() {
       if (id === null) await createExercise(input);
       else await updateExercise(id, input);
       if (originalImageUri !== imageUri) deleteStoredImage(originalImageUri);
-      router.back();
+      goBack();
     });
 
   return (
-    <Screen>
-      <Stack.Screen options={{ title: id === null ? 'Нова вправа' : 'Редагувати вправу' }} />
-      <Field label="Назва" value={name} onChangeText={setName} placeholder="Наприклад, Dumbbell Curl" />
+    <Screen mode="modal" title={id === null ? 'Нова вправа' : 'Редагувати вправу'}>
+      <Field
+        label="Назва"
+        value={name}
+        onChangeText={setName}
+        placeholder="Наприклад, Dumbbell Curl"
+      />
 
-      <Text variant="secondary">Група м’язів</Text>
-      <ChipGroup options={MUSCLE_GROUPS} value={muscleGroup} onChange={setMuscleGroup} labels={MUSCLE_GROUP_LABELS} />
+      <Text variant="caption">Група м’язів</Text>
+      <ChipGroup
+        options={MUSCLE_GROUPS}
+        value={muscleGroup}
+        onChange={setMuscleGroup}
+        labels={MUSCLE_GROUP_LABELS}
+      />
 
-      <Text variant="secondary">Що записуємо</Text>
+      <Text variant="caption">Що записуємо</Text>
       {typeLocked ? (
         <Text variant="muted">
-          {TRACKING_TYPE_LABELS[trackingType]} — не можна змінити, бо вправа вже використовується в програмі чи історії.
+          {TRACKING_TYPE_LABELS[trackingType]} — не можна змінити, бо вправа вже використовується в
+          програмі чи історії.
         </Text>
       ) : (
-        <ChipGroup options={TRACKING_TYPES} value={trackingType} onChange={setTrackingType} labels={TRACKING_TYPE_LABELS} />
+        <ChipGroup
+          options={TRACKING_TYPES}
+          value={trackingType}
+          onChange={setTrackingType}
+          labels={TRACKING_TYPE_LABELS}
+        />
       )}
 
-      <Text variant="secondary">Фото</Text>
+      <Text variant="caption">Фото</Text>
       {imageUri && <Image source={{ uri: imageUri }} style={styles.image} contentFit="cover" />}
       <Row>
-        <Button title="Галерея" icon="images" variant="secondary" style={styles.flex} disabled={busy}
-          onPress={() => withBusy(async () => { const uri = await pickImageFromLibrary(); if (uri) replaceImage(uri); })} />
-        <Button title="Камера" icon="camera" variant="secondary" style={styles.flex} disabled={busy}
-          onPress={() => withBusy(async () => { const uri = await takePhoto(); if (uri) replaceImage(uri); })} />
+        <Button
+          title="Галерея"
+          icon="images"
+          variant="secondary"
+          style={styles.flex}
+          disabled={busy}
+          onPress={() =>
+            withBusy(async () => {
+              const uri = await pickImageFromLibrary();
+              if (uri) replaceImage(uri);
+            })
+          }
+        />
+        <Button
+          title="Камера"
+          icon="camera"
+          variant="secondary"
+          style={styles.flex}
+          disabled={busy}
+          onPress={() =>
+            withBusy(async () => {
+              const uri = await takePhoto();
+              if (uri) replaceImage(uri);
+            })
+          }
+        />
       </Row>
       <Row>
         <Field
@@ -128,10 +166,22 @@ export default function EditExerciseScreen() {
           autoCapitalize="none"
           keyboardType="url"
         />
-        <Button title="Завантажити" variant="secondary" disabled={busy || !imageUrlInput.trim()}
-          onPress={() => withBusy(async () => { replaceImage(await downloadImage(imageUrlInput)); setImageUrlInput(''); })} />
+        <Button
+          title="Завантажити"
+          small
+          variant="secondary"
+          disabled={busy || !imageUrlInput.trim()}
+          onPress={() =>
+            withBusy(async () => {
+              replaceImage(await downloadImage(imageUrlInput));
+              setImageUrlInput('');
+            })
+          }
+        />
       </Row>
-      {imageUri && <Button title="Прибрати фото" variant="danger" onPress={() => replaceImage(null)} />}
+      {imageUri && (
+        <Button title="Прибрати фото" variant="danger" onPress={() => replaceImage(null)} />
+      )}
 
       <Field
         label="YouTube"
@@ -142,12 +192,22 @@ export default function EditExerciseScreen() {
         keyboardType="url"
       />
       {!youtubeUrl && name.trim() !== '' && (
-        <Button title="Підставити пошук на YouTube" variant="ghost" onPress={() => setYoutubeUrl(youtubeSearchUrl(name.trim()))} />
+        <Button
+          title="Підставити пошук на YouTube"
+          variant="ghost"
+          onPress={() => setYoutubeUrl(youtubeSearchUrl(name.trim()))}
+        />
       )}
 
-      <Field label="Нотатки" value={notes} onChangeText={setNotes} multiline placeholder="Техніка, налаштування тренажера…" />
+      <Field
+        label="Нотатки"
+        value={notes}
+        onChangeText={setNotes}
+        multiline
+        placeholder="Техніка, налаштування тренажера…"
+      />
 
-      <Button title="Зберегти" onPress={save} loading={busy} />
+      <Button title="Зберегти" trailingIcon="checkmark" onPress={save} loading={busy} />
     </Screen>
   );
 }

@@ -1,11 +1,22 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Elapsed } from '@/components/elapsed';
+import { RestTimerCard } from '@/components/rest-timer-card';
 import { SetRow } from '@/components/set-row';
-import { Button, Card, EmptyState, IconButton, Loading, Row, Text } from '@/components/ui';
+import {
+  Button,
+  Card,
+  EmptyState,
+  goBack,
+  IndexMarker,
+  Loading,
+  Row,
+  ScreenHeader,
+  Text,
+} from '@/components/ui';
 import type { Targets } from '@/db/schema';
 import {
   addSet,
@@ -24,7 +35,7 @@ import { useRestTimer } from '@/hooks/use-rest-timer';
 import { formatDate } from '@/lib/labels';
 import { formatDuration, formatSet, isBetter, setMetric } from '@/lib/metrics';
 import { computeProgress, recordBefore } from '@/lib/progress';
-import { colors, spacing } from '@/theme';
+import { colors, fontSize, radius, spacing } from '@/theme';
 
 async function loadWorkout(id: number) {
   const workout = await getWorkout(id);
@@ -36,7 +47,10 @@ async function loadWorkout(id: number) {
         getExerciseHistory(we.exerciseId),
       ]);
       const progress = computeProgress(we.exercise.trackingType, history);
-      return { last, record: recordBefore(progress, we.exercise.trackingType, workout.startedAt) };
+      return {
+        last,
+        record: recordBefore(progress, we.exercise.trackingType, workout.startedAt),
+      };
     }),
   );
   return { workout, extras };
@@ -65,7 +79,7 @@ export default function WorkoutScreen() {
   if (data === null) {
     return (
       <View style={styles.screen}>
-        <Stack.Screen options={{ title: '' }} />
+        <ScreenHeader title="Тренування" />
         <EmptyState icon="alert-circle" title="Тренування не знайдено" />
       </View>
     );
@@ -73,16 +87,15 @@ export default function WorkoutScreen() {
 
   const { workout, extras } = data;
   const active = workout.finishedAt === null;
+  const allSets = workout.exercises.flatMap((e) => e.sets);
+  const doneSets = allSets.filter((s) => s.completedAt !== null).length;
 
   const finish = () => {
-    const pending = workout.exercises.reduce(
-      (n, e) => n + e.sets.filter((s) => s.completedAt === null).length,
-      0,
-    );
+    const pending = allSets.length - doneSets;
     const doFinish = () => {
       timer.stop();
       finishWorkout(workout.id);
-      router.back();
+      goBack();
     };
     if (pending === 0) return doFinish();
     Alert.alert('Завершити тренування?', `Невідмічені підходи (${pending}) не збережуться.`, [
@@ -103,38 +116,72 @@ export default function WorkoutScreen() {
           onPress: async () => {
             timer.stop();
             await deleteWorkout(workout.id);
-            router.back();
+            goBack();
           },
         },
       ],
     );
 
   return (
-    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <Stack.Screen
-        options={{
-          title: workout.dayName,
-          headerLeft: () => <IconButton icon="chevron-down" color={colors.text} onPress={() => router.back()} />,
-          headerRight: () =>
-            active ? (
-              <Button title="Завершити" variant="ghost" onPress={finish} />
-            ) : (
-              <IconButton icon="trash-outline" color={colors.danger} onPress={remove} />
-            ),
-        }}
+    <KeyboardAvoidingView
+      style={styles.screen}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScreenHeader
+        title={active ? 'Активне тренування' : 'Тренування'}
+        right={
+          active ? (
+            <Button title="Завершити" small onPress={finish} />
+          ) : (
+            <Button title="Видалити" small variant="danger" onPress={remove} />
+          )
+        }
       />
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 120 }]}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: insets.bottom + (timer.running ? 280 : 48) },
+        ]}
         keyboardShouldPersistTaps="handled">
-        <Row style={styles.meta}>
-          <Text variant="caption">{workout.programName}</Text>
-          <Text variant="caption">·</Text>
-          {active ? <Elapsed since={workout.startedAt} /> : <Text variant="caption">{formatDate(workout.startedAt)} · {formatDuration((workout.finishedAt! - workout.startedAt) / 1000)}</Text>}
+        <View style={styles.titleBlock}>
+          <Text variant="overline">{workout.programName}</Text>
+          <Text variant="title">{workout.dayName}</Text>
+          {!active && <Text variant="caption">{formatDate(workout.startedAt)}</Text>}
+        </View>
+
+        <Row style={styles.stats}>
+          <View style={styles.stat}>
+            <Text variant="muted" style={styles.statLabel}>
+              {active ? 'МИНУЛО' : 'ТРИВАЛІСТЬ'}
+            </Text>
+            {active ? (
+              <Elapsed since={workout.startedAt} style={styles.statValue} />
+            ) : (
+              <Text variant="heading" style={styles.statValue}>
+                {formatDuration((workout.finishedAt! - workout.startedAt) / 1000)}
+              </Text>
+            )}
+          </View>
+          <View style={styles.stat}>
+            <Text variant="muted" style={styles.statLabel}>
+              ПІДХОДИ
+            </Text>
+            <Text variant="heading" style={[styles.statValue, styles.accent]}>
+              {active ? `${doneSets} / ${allSets.length}` : String(doneSets)}
+            </Text>
+          </View>
         </Row>
+        {active && allSets.length > 0 && (
+          <View style={styles.progressTrack}>
+            <View
+              style={[styles.progressFill, { width: `${(doneSets / allSets.length) * 100}%` }]}
+            />
+          </View>
+        )}
 
         {workout.exercises.map((we, i) => (
           <ExerciseBlock
             key={we.id}
+            index={i}
             we={we}
             active={active}
             last={extras[i].last}
@@ -145,8 +192,8 @@ export default function WorkoutScreen() {
 
         {active ? (
           <>
-            <Button title="Завершити тренування" icon="flag" onPress={finish} />
-            <Button title="Скасувати тренування" variant="danger" onPress={remove} />
+            <Button title="Завершити тренування" trailingIcon="arrow-forward" onPress={finish} />
+            <Button title="Скасувати тренування" variant="ghost" onPress={remove} />
           </>
         ) : (
           <Text variant="muted" style={styles.hint}>
@@ -156,30 +203,28 @@ export default function WorkoutScreen() {
       </ScrollView>
 
       {timer.running && (
-        <View style={[styles.timer, { paddingBottom: insets.bottom + spacing.md }]}>
-          <View style={styles.flex}>
-            <Text variant="caption">Відпочинок · {timer.label}</Text>
-            <Text variant="title">{formatDuration(timer.remainingSec)}</Text>
-          </View>
-          <Pressable style={styles.timerButton} onPress={() => timer.extend(15)}>
-            <Text variant="body">+15 с</Text>
-          </Pressable>
-          <Pressable style={styles.timerButton} onPress={timer.stop}>
-            <Ionicons name="play-skip-forward" size={18} color={colors.text} />
-          </Pressable>
-        </View>
+        <RestTimerCard
+          remainingSec={timer.remainingSec}
+          totalSec={timer.totalSec}
+          label={timer.label}
+          bottomInset={insets.bottom}
+          onExtend={() => timer.extend(15)}
+          onSkip={timer.stop}
+        />
       )}
     </KeyboardAvoidingView>
   );
 }
 
 function ExerciseBlock({
+  index,
   we,
   active,
   last,
   record,
   onSetDone,
 }: {
+  index: number;
   we: WorkoutDetail['exercises'][number];
   active: boolean;
   last: Awaited<ReturnType<typeof getLastSets>>;
@@ -198,14 +243,28 @@ function ExerciseBlock({
     }
   }
   const prSetId = best !== null && isBetter(type, best, record) ? bestId : null;
+  const allDone = we.sets.length > 0 && we.sets.every((s) => s.completedAt !== null);
 
   return (
-    <Card>
-      <Text variant="heading">{we.exercise.name}</Text>
-      <Text variant="caption">Ціль: {formatTargets(we)}</Text>
-      <Text variant="muted">
-        {last ? `Минулого разу: ${last.sets.map((s) => formatSet(type, s)).join(', ')}` : 'Минулого разу: —'}
-      </Text>
+    <Card style={[styles.exercise, active && allDone && styles.exerciseDone]}>
+      <Row>
+        <IndexMarker n={index + 1} />
+        <View style={styles.flex}>
+          <Text variant="heading" numberOfLines={2}>
+            {we.exercise.name}
+          </Text>
+          <Text variant="muted">{formatTargets(we)}</Text>
+        </View>
+        {active && allDone && <Ionicons name="checkmark-circle" size={24} color={colors.accent} />}
+      </Row>
+      <View style={styles.last}>
+        <Ionicons name="time-outline" size={14} color={colors.textMuted} />
+        <Text variant="muted" style={styles.flex} numberOfLines={2}>
+          {last
+            ? `Минулого разу: ${last.sets.map((s) => formatSet(type, s)).join(', ')}`
+            : 'Минулого разу: —'}
+        </Text>
+      </View>
       {we.sets.map((s, i) => (
         <SetRow
           key={s.id}
@@ -224,35 +283,58 @@ function ExerciseBlock({
           onDelete={() => deleteSet(s.id)}
         />
       ))}
-      <Button title="Додати підхід" icon="add" variant="ghost" onPress={() => addSet(we.id, !active)} />
+      <Button
+        title="Додати підхід"
+        icon="add"
+        variant="ghost"
+        small
+        onPress={() => addSet(we.id, !active)}
+      />
     </Card>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg, gap: spacing.md },
-  meta: { gap: spacing.xs },
-  hint: { textAlign: 'center' },
-  flex: { flex: 1 },
-  timer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
+  content: { padding: spacing.lg, paddingTop: spacing.sm, gap: spacing.md },
+  titleBlock: {
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginVertical: spacing.sm,
+  },
+  stats: { gap: spacing.sm },
+  stat: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    gap: 2,
+  },
+  statLabel: { fontSize: 10, letterSpacing: 0.8 },
+  statValue: { color: colors.text, fontSize: fontSize.lg, fontWeight: '800' },
+  accent: { color: colors.accent },
+  progressTrack: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.surface,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: colors.accent,
+    borderRadius: 3,
+  },
+  exercise: { gap: spacing.sm },
+  exerciseDone: { borderWidth: 1, borderColor: colors.accent },
+  last: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+    gap: spacing.xs,
     backgroundColor: colors.surfaceRaised,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs + 2,
   },
-  timerButton: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: 999,
-    backgroundColor: colors.surface,
-  },
+  flex: { flex: 1 },
+  hint: { textAlign: 'center' },
 });

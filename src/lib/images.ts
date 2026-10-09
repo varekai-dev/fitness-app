@@ -36,7 +36,8 @@ export async function takePhoto() {
 
 /** Downloads an image once so it works offline. */
 export async function downloadImage(url: string) {
-  if (!/^https?:\/\//i.test(url.trim())) throw new Error('Посилання має починатися з http:// або https://');
+  if (!/^https?:\/\//i.test(url.trim()))
+    throw new Error('Посилання має починатися з http:// або https://');
   const file = await File.downloadFileAsync(url.trim(), newImageFile());
   return file.uri;
 }

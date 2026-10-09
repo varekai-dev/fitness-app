@@ -2,12 +2,7 @@ import { and, asc, desc, eq, isNotNull, isNull, lt, max } from 'drizzle-orm';
 
 import { db } from './client';
 import { getProgramDay } from './programs';
-import {
-  workoutExercises,
-  workouts,
-  workoutSets,
-  type Targets,
-} from './schema';
+import { workoutExercises, workouts, workoutSets, type Targets } from './schema';
 import type { SetValues } from '@/lib/metrics';
 
 export const getActiveWorkout = () =>
@@ -81,7 +76,9 @@ export async function getExerciseHistory(exerciseId: number) {
   const rows = await db.query.workoutExercises.findMany({
     where: eq(workoutExercises.exerciseId, exerciseId),
     with: {
-      workout: { columns: { id: true, startedAt: true, finishedAt: true, dayName: true } },
+      workout: {
+        columns: { id: true, startedAt: true, finishedAt: true, dayName: true },
+      },
       sets: { orderBy: [asc(workoutSets.position)] },
     },
   });
@@ -142,7 +139,12 @@ export async function startWorkout(programDayId: number) {
       };
       const we = tx
         .insert(workoutExercises)
-        .values({ workoutId: workout.id, exerciseId: e.exerciseId, position, ...targets })
+        .values({
+          workoutId: workout.id,
+          exerciseId: e.exerciseId,
+          position,
+          ...targets,
+        })
         .returning({ id: workoutExercises.id })
         .get();
 
