@@ -1,7 +1,15 @@
-import { count } from 'drizzle-orm';
+import { and, count, eq, isNull } from 'drizzle-orm';
 
-import { db } from './client';
-import { exercises, type MuscleGroup, type NewExercise, type TrackingType } from './schema';
+import { db, sqlite, type Tx } from './client';
+import {
+  exercises,
+  programDayExercises,
+  programDays,
+  programs,
+  type MuscleGroup,
+  type NewExercise,
+  type TrackingType,
+} from './schema';
 
 export const youtubeSearchUrl = (name: string) =>
   `https://www.youtube.com/results?search_query=${encodeURIComponent(name + ' exercise form')}`;
@@ -71,4 +79,154 @@ export async function seedIfEmpty() {
     youtubeUrl: youtubeSearchUrl(name),
   }));
   await db.insert(exercises).values(rows);
+}
+
+type ProgramSeed = {
+  name: string;
+  restSec: number;
+  days: {
+    name: string;
+    // [exercise name, sets, reps min, reps max, muscle group if it has to be created]
+    exercises: [string, number, number, number, MuscleGroup?][];
+  }[];
+};
+
+/**
+ * "Dumbbell Only Workout: 6 Day Dumbbell Workout Split" by Muscle & Strength.
+ * Names match the library where the exercise is the same movement.
+ */
+const DUMBBELL_6_DAY: ProgramSeed = {
+  name: '6 Day Dumbbell Split',
+  // The program asks for 45–60 s between sets.
+  restSec: 60,
+  days: [
+    {
+      name: 'Push A',
+      exercises: [
+        ['Dumbbell Bench Press', 5, 8, 12],
+        ['Decline Dumbbell Bench Press', 3, 8, 12],
+        ['Dumbbell Floor Press', 3, 8, 12, 'chest'],
+        ['Seated Dumbbell Press', 4, 8, 12],
+        ['Dumbbell Lateral Raise', 3, 8, 12],
+        ['Seated Dumbbell Triceps Extension', 3, 8, 12],
+      ],
+    },
+    {
+      name: 'Pull A',
+      exercises: [
+        ['Bent-Over Dumbbell Row', 4, 8, 12],
+        ['Chest Supported Dumbbell Row', 4, 8, 12, 'back'],
+        ['Dumbbell Pullover', 3, 10, 15],
+        ['Dumbbell Rear Delt Fly', 3, 10, 15],
+        ['Dumbbell Curl', 3, 12, 15],
+        ['Zottman Curl', 3, 12, 15, 'biceps'],
+      ],
+    },
+    {
+      name: 'Legs A',
+      exercises: [
+        ['Dumbbell Squat', 4, 8, 12],
+        ['Dumbbell Stiff-Leg Deadlift', 4, 8, 12],
+        ['Dumbbell Goblet Squat', 4, 8, 12],
+        ['Dumbbell Hip Thrust', 4, 8, 12, 'legs'],
+        ['Dumbbell Calf Raise', 4, 15, 20],
+      ],
+    },
+    {
+      name: 'Push B',
+      exercises: [
+        ['Incline Dumbbell Bench Press', 5, 8, 12],
+        ['Dumbbell Fly', 3, 8, 12],
+        ['Standing Dumbbell Press', 4, 8, 12],
+        ['Arnold Press', 3, 8, 12],
+        ['Dumbbell Lateral Raise', 3, 8, 12],
+        ['Lying Dumbbell Triceps Extension', 3, 8, 12],
+      ],
+    },
+    {
+      name: 'Pull B',
+      exercises: [
+        ['One-Arm Dumbbell Row', 5, 8, 12],
+        ['Reverse Grip Dumbbell Row', 4, 8, 12, 'back'],
+        ['Dumbbell Pullover', 4, 8, 12],
+        ['Hammer Curl', 3, 10, 15],
+        ['Reverse Curl', 3, 10, 15, 'biceps'],
+      ],
+    },
+    {
+      name: 'Legs B',
+      exercises: [
+        ['Dumbbell Deadlift', 4, 8, 12, 'legs'],
+        ['Dumbbell Split Squat', 4, 8, 12, 'legs'],
+        ['Dumbbell Goblet Squat', 3, 8, 12],
+        ['Dumbbell Hip Thrust', 3, 10, 15, 'legs'],
+        ['Dumbbell Calf Raise', 4, 20, 20],
+      ],
+    },
+  ],
+};
+
+function findOrCreateExercise(tx: Tx, name: string, group?: MuscleGroup) {
+  const existing = tx
+    .select({ id: exercises.id })
+    .from(exercises)
+    .where(and(eq(exercises.name, name), isNull(exercises.archivedAt)))
+    .get();
+  if (existing) return existing.id;
+  // The user may have deleted a library exercise; recreate it in its usual group.
+  const muscleGroup = group ?? SEED.find(([n]) => n === name)?.[1] ?? 'chest';
+  return tx
+    .insert(exercises)
+    .values({ name, muscleGroup, trackingType: 'weight_reps', youtubeUrl: youtubeSearchUrl(name) })
+    .returning({ id: exercises.id })
+    .get().id;
+}
+
+function insertProgram(seed: ProgramSeed) {
+  db.transaction((tx) => {
+    const hasActive = tx
+      .select({ id: programs.id })
+      .from(programs)
+      .where(and(eq(programs.isActive, true), isNull(programs.archivedAt)))
+      .get();
+    const program = tx
+      .insert(programs)
+      .values({ name: seed.name, isActive: !hasActive })
+      .returning({ id: programs.id })
+      .get();
+    seed.days.forEach((day, dayPos) => {
+      const d = tx
+        .insert(programDays)
+        .values({ programId: program.id, name: day.name, position: dayPos })
+        .returning({ id: programDays.id })
+        .get();
+      day.exercises.forEach(([name, sets, min, max, group], pos) => {
+        tx.insert(programDayExercises)
+          .values({
+            programDayId: d.id,
+            exerciseId: findOrCreateExercise(tx, name, group),
+            position: pos,
+            targetSets: sets,
+            targetRepsMin: min,
+            targetRepsMax: max,
+            restSec: seed.restSec,
+          })
+          .run();
+      });
+    });
+  });
+}
+
+/**
+ * One-off content seeds tracked with SQLite's user_version, so each runs once per
+ * install and a program the user deleted is not recreated.
+ */
+export function runContentSeeds() {
+  const { user_version: version } = sqlite.getFirstSync<{ user_version: number }>(
+    'PRAGMA user_version',
+  )!;
+  if (version < 1) {
+    insertProgram(DUMBBELL_6_DAY);
+    sqlite.execSync('PRAGMA user_version = 1');
+  }
 }

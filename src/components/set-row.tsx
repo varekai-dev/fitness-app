@@ -8,21 +8,21 @@ import type { SetValues } from '@/lib/metrics';
 import { formatDuration, formatNumber, parseDecimal, parseDuration } from '@/lib/metrics';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
-type Inputs = {
+export type Inputs = {
   weight: string;
   reps: string;
   duration: string;
   distance: string;
 };
 
-const toInputs = (s: SetValues): Inputs => ({
+export const toInputs = (s: SetValues): Inputs => ({
   weight: s.weightKg === null ? '' : formatNumber(s.weightKg),
   reps: s.reps === null ? '' : String(s.reps),
   duration: s.durationSec === null ? '' : formatDuration(s.durationSec),
   distance: s.distanceKm === null ? '' : formatNumber(s.distanceKm),
 });
 
-const toValues = (i: Inputs): SetValues => {
+export const toValues = (i: Inputs): SetValues => {
   const reps = parseDecimal(i.reps);
   return {
     weightKg: parseDecimal(i.weight),
@@ -32,7 +32,7 @@ const toValues = (i: Inputs): SetValues => {
   };
 };
 
-const FIELDS: Record<
+export const FIELDS: Record<
   TrackingType,
   { key: keyof Inputs; label: string; decimal?: boolean; time?: boolean }[]
 > = {

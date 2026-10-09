@@ -7,7 +7,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/ui';
 import { db } from '@/db/client';
-import { seedIfEmpty } from '@/db/seed';
+import { runContentSeeds, seedIfEmpty } from '@/db/seed';
 import { colors } from '@/theme';
 import migrations from '../../drizzle/migrations';
 
@@ -33,7 +33,10 @@ export default function RootLayout() {
   useEffect(() => {
     if (!success) return;
     seedIfEmpty()
-      .then(() => setReady(true))
+      .then(() => {
+        runContentSeeds();
+        setReady(true);
+      })
       .catch(setSeedError);
   }, [success]);
 
