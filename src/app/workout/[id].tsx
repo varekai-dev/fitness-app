@@ -1,8 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams } from 'expo-router';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useDialog } from '@/components/dialog';
 import { SetRow } from '@/components/set-row';
 import { WorkoutPlayer } from '@/components/workout-player';
 import {
@@ -86,19 +87,24 @@ function FinishedWorkout({
 }) {
   const insets = useSafeAreaInsets();
   const doneSets = workout.exercises.reduce((n, e) => n + e.sets.length, 0);
+  const dialog = useDialog();
 
   const remove = () =>
-    Alert.alert('Видалити тренування?', 'Усі записані підходи буде видалено.', [
-      { text: 'Ні', style: 'cancel' },
-      {
-        text: 'Видалити',
-        style: 'destructive',
-        onPress: async () => {
-          await deleteWorkout(workout.id);
-          goBack();
+    dialog.show({
+      title: 'Видалити тренування?',
+      message: 'Усі записані підходи буде видалено.',
+      buttons: [
+        { text: 'Ні', style: 'cancel' },
+        {
+          text: 'Видалити',
+          style: 'destructive',
+          onPress: async () => {
+            await deleteWorkout(workout.id);
+            goBack();
+          },
         },
-      },
-    ]);
+      ],
+    });
 
   return (
     <KeyboardAvoidingView
@@ -170,6 +176,7 @@ function FinishedWorkout({
           Довге натискання на номер підходу — видалити його.
         </Text>
       </ScrollView>
+      {dialog.element}
     </KeyboardAvoidingView>
   );
 }

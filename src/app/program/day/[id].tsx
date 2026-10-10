@@ -1,7 +1,8 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
+import { useDialog } from '@/components/dialog';
 import { ExerciseThumb } from '@/components/exercise-thumb';
 import { TargetsEditor } from '@/components/targets-editor';
 import {
@@ -33,6 +34,7 @@ import { colors, spacing } from '@/theme';
 export default function ProgramDayScreen() {
   const id = Number(useLocalSearchParams<{ id: string }>().id);
   const { data: day } = useDbQuery(() => getProgramDay(id).then((d) => d ?? null), [id]);
+  const dialog = useDialog();
 
   if (day === undefined) return <Loading />;
   if (day === null) {
@@ -44,17 +46,21 @@ export default function ProgramDayScreen() {
   }
 
   const remove = () =>
-    Alert.alert('Видалити день?', 'Минулі тренування цього дня залишаться в історії.', [
-      { text: 'Скасувати', style: 'cancel' },
-      {
-        text: 'Видалити',
-        style: 'destructive',
-        onPress: async () => {
-          await deleteDay(id);
-          goBack();
+    dialog.show({
+      title: 'Видалити день?',
+      message: 'Минулі тренування цього дня залишаться в історії.',
+      buttons: [
+        { text: 'Скасувати', style: 'cancel' },
+        {
+          text: 'Видалити',
+          style: 'destructive',
+          onPress: async () => {
+            await deleteDay(id);
+            goBack();
+          },
         },
-      },
-    ]);
+      ],
+    });
 
   return (
     <Screen
@@ -105,6 +111,7 @@ export default function ProgramDayScreen() {
         icon="add"
         onPress={() => router.push({ pathname: '/pick-exercise', params: { dayId: id } })}
       />
+      {dialog.element}
     </Screen>
   );
 }

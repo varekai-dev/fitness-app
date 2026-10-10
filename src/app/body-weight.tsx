@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { useDialog } from '@/components/dialog';
 import { LineChart } from '@/components/line-chart';
 import {
   Button,
@@ -26,6 +27,7 @@ export default function BodyWeightScreen() {
   const { data } = useDbQuery(listBodyWeights);
   // null until the user types, so the field shows the latest weight to adjust.
   const [input, setInput] = useState<string | null>(null);
+  const dialog = useDialog();
 
   if (!data) return <Loading />;
   const latest = data.at(-1);
@@ -40,10 +42,14 @@ export default function BodyWeightScreen() {
   };
 
   const remove = (id: number, label: string) =>
-    Alert.alert('Видалити запис?', label, [
-      { text: 'Скасувати', style: 'cancel' },
-      { text: 'Видалити', style: 'destructive', onPress: () => deleteBodyWeight(id) },
-    ]);
+    dialog.show({
+      title: 'Видалити запис?',
+      message: label,
+      buttons: [
+        { text: 'Скасувати', style: 'cancel' },
+        { text: 'Видалити', style: 'destructive', onPress: () => deleteBodyWeight(id) },
+      ],
+    });
 
   // Change over the last 30 days, measured from the earliest entry inside that window.
   const monthAgo = latest ? latest.measuredAt - 30 * DAY_MS : 0;
@@ -136,6 +142,7 @@ export default function BodyWeightScreen() {
           })}
         </>
       )}
+      {dialog.element}
     </Screen>
   );
 }

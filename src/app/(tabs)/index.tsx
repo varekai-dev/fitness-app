@@ -1,10 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useTabBarSpace } from '@/components/floating-tab-bar';
 import { ActivityCalendar } from '@/components/activity-calendar';
+import { useDialog } from '@/components/dialog';
 import { Elapsed } from '@/components/elapsed';
 import { Sparkline } from '@/components/line-chart';
 import { WorkoutSummaryCard } from '@/components/workout-summary-card';
@@ -47,6 +48,7 @@ export default function HomeScreen() {
   const { data } = useDbQuery(loadHome);
   const [pickedDayId, setPickedDayId] = useState<number | null>(null);
   const [starting, setStarting] = useState(false);
+  const dialog = useDialog();
 
   if (!data) return <Loading />;
   const { activeWorkout, program, nextDayId, finished, bodyWeights, loadedAt } = data;
@@ -74,7 +76,7 @@ export default function HomeScreen() {
       setPickedDayId(null);
       router.push({ pathname: '/workout/[id]', params: { id } });
     } catch (e) {
-      Alert.alert('Помилка', (e as Error).message);
+      dialog.show({ title: 'Помилка', message: (e as Error).message, icon: 'alert-circle' });
     } finally {
       setStarting(false);
     }
@@ -229,6 +231,7 @@ export default function HomeScreen() {
             <WorkoutSummaryCard key={w.id} workout={w} kcal={estimateKcal(w, bodyWeights)} />
           ))
       )}
+      {dialog.element}
     </Screen>
   );
 }

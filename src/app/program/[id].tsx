@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 
 import {
   Badge,
@@ -27,6 +27,7 @@ import {
   renameProgram,
   setActiveProgram,
 } from '@/db/programs';
+import { useDialog } from '@/components/dialog';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
@@ -34,6 +35,7 @@ export default function ProgramScreen() {
   const id = Number(useLocalSearchParams<{ id: string }>().id);
   const { data: program } = useDbQuery(() => getProgram(id).then((p) => p ?? null), [id]);
   const [dayName, setDayName] = useState('');
+  const dialog = useDialog();
 
   if (program === undefined) return <Loading />;
   if (program === null) {
@@ -53,10 +55,10 @@ export default function ProgramScreen() {
   };
 
   const remove = () =>
-    Alert.alert(
-      'Видалити програму?',
-      'Якщо за нею вже були тренування, програма піде в архів, а історія залишиться.',
-      [
+    dialog.show({
+      title: 'Видалити програму?',
+      message: 'Якщо за нею вже були тренування, програма піде в архів, а історія залишиться.',
+      buttons: [
         { text: 'Скасувати', style: 'cancel' },
         {
           text: 'Видалити',
@@ -64,17 +66,18 @@ export default function ProgramScreen() {
           onPress: async () => {
             const result = await removeProgram(id);
             if (result === 'workout_in_progress') {
-              Alert.alert(
-                'Неможливо',
-                'Спершу заверши або скасуй поточне тренування за цією програмою.',
-              );
+              dialog.show({
+                title: 'Неможливо',
+                message: 'Спершу заверши або скасуй поточне тренування за цією програмою.',
+                icon: 'alert-circle',
+              });
               return;
             }
             goBack();
           },
         },
       ],
-    );
+    });
 
   return (
     <Screen
@@ -148,6 +151,7 @@ export default function ProgramScreen() {
           onPress={createDay}
         />
       </View>
+      {dialog.element}
     </Screen>
   );
 }

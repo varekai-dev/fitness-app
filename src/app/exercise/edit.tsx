@@ -1,8 +1,9 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
+import { useDialog } from '@/components/dialog';
 import { Button, ChipGroup, Field, goBack, Loading, Row, Screen, Text } from '@/components/ui';
 import {
   createExercise,
@@ -33,6 +34,7 @@ export default function EditExerciseScreen() {
   const [originalImageUri, setOriginalImageUri] = useState<string | null>(null);
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [busy, setBusy] = useState(false);
+  const dialog = useDialog();
 
   useEffect(() => {
     if (id === null) return;
@@ -68,7 +70,7 @@ export default function EditExerciseScreen() {
     try {
       await fn();
     } catch (e) {
-      Alert.alert('Помилка', (e as Error).message);
+      dialog.show({ title: 'Помилка', message: (e as Error).message, icon: 'alert-circle' });
     } finally {
       setBusy(false);
     }
@@ -211,6 +213,7 @@ export default function EditExerciseScreen() {
       />
 
       <Button title="Зберегти" trailingIcon="checkmark" onPress={save} loading={busy} />
+      {dialog.element}
     </Screen>
   );
 }

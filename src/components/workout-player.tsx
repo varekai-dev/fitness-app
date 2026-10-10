@@ -3,10 +3,11 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as WebBrowser from 'expo-web-browser';
 import { useState, type ComponentProps, type ReactNode } from 'react';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { interpolate, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useDialog } from '@/components/dialog';
 import { Elapsed } from '@/components/elapsed';
 import { Glass } from '@/components/glass';
 import { ExerciseThumb } from '@/components/exercise-thumb';
@@ -87,6 +88,7 @@ export function WorkoutPlayer({
   );
   // Workout exercise whose video replaces the photo; switching exercises closes it.
   const [videoFor, setVideoFor] = useState<number | null>(null);
+  const dialog = useDialog();
 
   const paused = workout.pausedAt !== null;
   const index = Math.max(
@@ -105,29 +107,35 @@ export function WorkoutPlayer({
       finishWorkout(workout.id);
       goBack();
     };
-    Alert.alert(
-      'Завершити тренування?',
-      pending > 0 ? `Невиконані підходи (${pending}) не збережуться.` : 'Усі підходи виконано.',
-      [
+    dialog.show({
+      title: 'Завершити тренування?',
+      message:
+        pending > 0 ? `Невиконані підходи (${pending}) не збережуться.` : 'Усі підходи виконано.',
+      icon: 'flag',
+      buttons: [
         { text: 'Скасувати', style: 'cancel' },
         { text: 'Завершити', onPress: doFinish },
       ],
-    );
+    });
   };
 
   const discard = () =>
-    Alert.alert('Скасувати тренування?', 'Усі записані підходи буде видалено.', [
-      { text: 'Ні', style: 'cancel' },
-      {
-        text: 'Скасувати тренування',
-        style: 'destructive',
-        onPress: async () => {
-          timer.stop();
-          await deleteWorkout(workout.id);
-          goBack();
+    dialog.show({
+      title: 'Скасувати тренування?',
+      message: 'Усі записані підходи буде видалено.',
+      buttons: [
+        { text: 'Ні', style: 'cancel' },
+        {
+          text: 'Скасувати',
+          style: 'destructive',
+          onPress: async () => {
+            timer.stop();
+            await deleteWorkout(workout.id);
+            goBack();
+          },
         },
-      },
-    ]);
+      ],
+    });
 
   const togglePause = async () => {
     if (paused) {
@@ -147,6 +155,7 @@ export function WorkoutPlayer({
           <Button title="Завершити" onPress={finish} />
           <Button title="Скасувати тренування" variant="ghost" onPress={discard} />
         </View>
+        {dialog.element}
       </View>
     );
   }
@@ -265,10 +274,15 @@ export function WorkoutPlayer({
   };
 
   const undoSet = (setId: number, label: string) =>
-    Alert.alert('Повернути підхід?', `${label} — знову стане невиконаним.`, [
-      { text: 'Ні', style: 'cancel' },
-      { text: 'Повернути', onPress: () => setCompleted(setId, false) },
-    ]);
+    dialog.show({
+      title: 'Повернути підхід?',
+      message: `${label} — знову стане невиконаним.`,
+      icon: 'arrow-undo',
+      buttons: [
+        { text: 'Ні', style: 'cancel' },
+        { text: 'Повернути', onPress: () => setCompleted(setId, false) },
+      ],
+    });
 
   // Queue: everything after the current exercise, then wrap to the ones before it.
   const queue = [...exercises.slice(index + 1), ...exercises.slice(0, index)];
@@ -510,6 +524,7 @@ export function WorkoutPlayer({
           <Button title="Скасувати тренування" variant="ghost" onPress={discard} />
         </SheetItem>
       </PlayerSheet>
+      {dialog.element}
     </View>
   );
 }

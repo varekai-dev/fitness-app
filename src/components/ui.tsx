@@ -184,7 +184,7 @@ export function Card({
   );
 }
 
-type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'light';
+type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'destructive' | 'ghost' | 'light';
 
 export function Button({
   title,
@@ -238,6 +238,7 @@ const BUTTON_BG: Record<ButtonVariant, string> = {
   primary: colors.accent,
   secondary: colors.surface,
   danger: colors.surface,
+  destructive: colors.danger,
   ghost: 'transparent',
   light: colors.text,
 };
@@ -245,6 +246,7 @@ const BUTTON_FG: Record<ButtonVariant, string> = {
   primary: colors.accentText,
   secondary: colors.text,
   danger: colors.danger,
+  destructive: colors.text,
   ghost: colors.accent,
   light: colors.background,
 };

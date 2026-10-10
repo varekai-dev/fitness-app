@@ -2,9 +2,10 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useDialog } from '@/components/dialog';
 import { LineChart } from '@/components/line-chart';
 import {
   Badge,
@@ -42,6 +43,7 @@ export default function ExerciseDetailScreen() {
     const [exercise, history] = await Promise.all([getExercise(id), getExerciseHistory(id)]);
     return { exercise, history };
   }, [id]);
+  const dialog = useDialog();
 
   if (!data) return <Loading />;
   const { exercise, history } = data;
@@ -60,25 +62,30 @@ export default function ExerciseDetailScreen() {
   const latest = progress.at(-1);
 
   const remove = () =>
-    Alert.alert('Видалити вправу?', exercise.name, [
-      { text: 'Скасувати', style: 'cancel' },
-      {
-        text: 'Видалити',
-        style: 'destructive',
-        onPress: async () => {
-          const result = await removeExercise(id);
-          if (typeof result === 'object') {
-            Alert.alert(
-              'Вправа використовується',
-              `Спершу прибери її з програм: ${result.blockedBy.join(', ')}.`,
-            );
-            return;
-          }
-          if (result === 'deleted') deleteStoredImage(exercise.imageUri);
-          goBack();
+    dialog.show({
+      title: 'Видалити вправу?',
+      message: exercise.name,
+      buttons: [
+        { text: 'Скасувати', style: 'cancel' },
+        {
+          text: 'Видалити',
+          style: 'destructive',
+          onPress: async () => {
+            const result = await removeExercise(id);
+            if (typeof result === 'object') {
+              dialog.show({
+                title: 'Вправа використовується',
+                message: `Спершу прибери її з програм: ${result.blockedBy.join(', ')}.`,
+                icon: 'alert-circle',
+              });
+              return;
+            }
+            if (result === 'deleted') deleteStoredImage(exercise.imageUri);
+            goBack();
+          },
         },
-      },
-    ]);
+      ],
+    });
 
   return (
     <View style={styles.root}>
@@ -196,6 +203,7 @@ export default function ExerciseDetailScreen() {
           onPress={() => router.push({ pathname: '/exercise/edit', params: { id } })}
         />
       </View>
+      {dialog.element}
     </View>
   );
 }
