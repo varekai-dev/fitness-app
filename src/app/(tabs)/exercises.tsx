@@ -7,6 +7,7 @@ import { useTabBarSpace } from '@/components/floating-tab-bar';
 import { Backdrop } from '@/components/glass';
 import { useDialog } from '@/components/dialog';
 import { ExerciseThumb } from '@/components/exercise-thumb';
+import { MuscleIcon } from '@/components/muscle-icon';
 import { confirmRemoveExercise } from '@/components/remove-dialogs';
 import { SwipeToDelete } from '@/components/swipe-to-delete';
 import {
@@ -105,6 +106,7 @@ export default function ExercisesScreen() {
                   </Text>
                 </Text>
               </View>
+              <MuscleIcon group={item.muscleGroup} size={40} />
               <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </Card>
           );

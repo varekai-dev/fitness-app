@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDialog } from '@/components/dialog';
 import { confirmRemoveExercise } from '@/components/remove-dialogs';
 import { LineChart } from '@/components/line-chart';
+import { MuscleIcon } from '@/components/muscle-icon';
 import {
   Badge,
   Button,
@@ -90,6 +91,15 @@ export default function ExerciseDetailScreen() {
         </View>
 
         <View style={styles.content}>
+          <Card>
+            <Row style={styles.muscles}>
+              <MuscleIcon group={exercise.muscleGroup} size={72} />
+              <View>
+                <Text variant="overline">Що качає</Text>
+                <Text variant="heading">{MUSCLE_GROUP_LABELS[exercise.muscleGroup]}</Text>
+              </View>
+            </Row>
+          </Card>
           {exercise.youtubeUrl && (
             <Button
               title="Дивитись техніку на YouTube"
@@ -209,6 +219,7 @@ const styles = StyleSheet.create({
   heroTitle: { padding: spacing.lg, gap: spacing.sm },
   badges: { flexWrap: 'wrap' },
   content: { padding: spacing.lg, gap: spacing.lg },
+  muscles: { gap: spacing.lg },
   stats: { gap: spacing.sm, alignItems: 'stretch' },
   spaceBetween: { justifyContent: 'space-between' },
   topBar: {

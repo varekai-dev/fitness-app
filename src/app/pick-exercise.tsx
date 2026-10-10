@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
 import { ExerciseThumb } from '@/components/exercise-thumb';
+import { MuscleIcon } from '@/components/muscle-icon';
 import {
   Button,
   Card,
@@ -59,6 +60,7 @@ export default function PickExerciseScreen() {
               <Text variant="body">{item.name}</Text>
               <Text variant="caption">{MUSCLE_GROUP_LABELS[item.muscleGroup]}</Text>
             </View>
+            <MuscleIcon group={item.muscleGroup} size={40} />
           </Card>
         )}
         ListEmptyComponent={<EmptyState icon="search" title="Нічого не знайдено" />}
@@ -76,6 +78,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
     padding: spacing.sm,
+    paddingRight: spacing.lg,
   },
   flex: { flex: 1 },
 });

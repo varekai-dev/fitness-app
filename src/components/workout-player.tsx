@@ -13,6 +13,7 @@ import { Elapsed } from '@/components/elapsed';
 import { Glass } from '@/components/glass';
 import { ExerciseThumb } from '@/components/exercise-thumb';
 import { PlayerSetEditor, Transport } from '@/components/player-set-editor';
+import { MuscleIcon } from '@/components/muscle-icon';
 import { PlayerSheet, SheetItem } from '@/components/player-sheet';
 import { RestRing } from '@/components/rest-ring';
 import { YoutubePlayer, youtubeVideoId } from '@/components/youtube-player';
@@ -441,6 +442,11 @@ export function WorkoutPlayer({
             <Ionicons name="barbell" size={110} color={colors.accentText} />
           </LinearGradient>
         )}
+        {!showVideo && (
+          <Glass tint="rgba(0,0,0,0.55)" style={styles.muscles}>
+            <MuscleIcon group={current.exercise.muscleGroup} size={64} />
+          </Glass>
+        )}
       </Animated.View>
 
       <View style={[styles.topBar, { top: insets.top + spacing.sm }]}>
@@ -580,6 +586,15 @@ const styles = StyleSheet.create({
   hero: { position: 'absolute', left: 0, right: 0, top: 0, backgroundColor: colors.surface },
   videoWrap: { backgroundColor: '#000', justifyContent: 'center', paddingBottom: 40 },
   heroPlaceholder: { alignItems: 'center', justifyContent: 'center', paddingBottom: 40 },
+  // Sits just above the part of the photo the sheet covers.
+  muscles: {
+    position: 'absolute',
+    right: spacing.lg,
+    bottom: 40 + spacing.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+  },
   player: {
     backgroundColor: colors.surface,
     borderTopLeftRadius: radius.lg + 10,
