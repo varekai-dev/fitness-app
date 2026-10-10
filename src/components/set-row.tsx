@@ -85,6 +85,12 @@ export function SetRow({
     <View style={[styles.row, done && showCheck && styles.rowDone]}>
       <Pressable onLongPress={onDelete} hitSlop={6} style={styles.index}>
         <Text variant="caption">{index + 1}</Text>
+        {/* Pinned to the number so a record doesn't narrow this row's fields. */}
+        {isPR && (
+          <View style={styles.pr}>
+            <Ionicons name="trophy" size={10} color={colors.accentText} />
+          </View>
+        )}
       </Pressable>
       {FIELDS[type].map((f) => (
         <View key={f.key} style={styles.cell}>
@@ -103,7 +109,6 @@ export function SetRow({
           <Text variant="muted">{f.label}</Text>
         </View>
       ))}
-      {isPR && <Ionicons name="trophy" size={16} color={colors.warning} />}
       {showCheck ? (
         <Pressable
           onPress={() => onToggle(toValues(inputs))}
@@ -157,6 +162,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     borderRadius: radius.md,
     paddingVertical: spacing.sm + 2,
+  },
+  pr: {
+    position: 'absolute',
+    top: -5,
+    right: -6,
+    width: 16,
+    height: 16,
+    borderRadius: radius.pill,
+    backgroundColor: colors.warning,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   inputDone: { backgroundColor: colors.accentSoft, color: colors.accent },
   check: {
