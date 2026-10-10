@@ -388,7 +388,7 @@ export function StatTile({
   );
 }
 
-/** Orange "01", "02"… marker for ordered sequences. */
+/** Accent "01", "02"… marker for ordered sequences. */
 export function IndexMarker({ n }: { n: number }) {
   return <RNText style={styles.indexMarker}>{String(n).padStart(2, '0')}</RNText>;
 }
@@ -498,9 +498,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   card: {
-    backgroundColor: colors.glass,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.glassBorder,
+    backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.lg,
     gap: spacing.sm,
@@ -555,9 +553,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm + 2,
     borderRadius: radius.pill,
-    backgroundColor: colors.glass,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.glassBorder,
+    backgroundColor: colors.surface,
   },
   chipSelected: { backgroundColor: colors.accent },
   chipText: { color: colors.text, fontSize: fontSize.sm, fontWeight: '600' },
@@ -582,9 +578,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.sm,
     borderRadius: radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.glassBorder,
-    backgroundColor: colors.glass,
+    backgroundColor: colors.surface,
   },
   statValue: { color: colors.text, fontSize: fontSize.xl, fontWeight: '800' },
   statUnit: {

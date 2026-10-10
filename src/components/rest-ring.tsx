@@ -35,7 +35,7 @@ export function RestRing({ remainingSec, totalSec }: { remainingSec: number; tot
           cx={SIZE / 2}
           cy={SIZE / 2}
           r={R}
-          stroke="rgba(255,255,255,0.25)"
+          stroke={colors.onAccentFaint}
           strokeWidth={STROKE}
           fill="none"
         />
@@ -43,7 +43,7 @@ export function RestRing({ remainingSec, totalSec }: { remainingSec: number; tot
           cx={SIZE / 2}
           cy={SIZE / 2}
           r={R}
-          stroke={colors.text}
+          stroke={colors.accentText}
           strokeWidth={STROKE}
           strokeLinecap="round"
           strokeDasharray={LENGTH}
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   ring: { position: 'absolute', transform: [{ rotate: '-90deg' }] },
   time: { color: colors.accentText, fontSize: 52 },
   label: {
-    color: 'rgba(255,255,255,0.8)',
+    color: colors.onAccentMuted,
     fontSize: fontSize.xs,
     fontWeight: '700',
     letterSpacing: 1,

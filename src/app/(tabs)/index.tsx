@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   heroText: { color: colors.accentText },
-  heroSubtle: { color: 'rgba(255,255,255,0.75)' },
+  heroSubtle: { color: colors.onAccentMuted },
   heroTitle: {
     color: colors.accentText,
     fontSize: fontSize.xxl + 4,
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   heroDetails: { marginTop: spacing.md, gap: spacing.xs, paddingRight: 72 },
-  heroIndex: { color: 'rgba(255,255,255,0.6)', fontWeight: '700', width: 22 },
+  heroIndex: { color: colors.onAccentMuted, fontWeight: '700', width: 22 },
   heroAction: {
     position: 'absolute',
     right: spacing.lg,
@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: radius.pill,
-    backgroundColor: colors.text,
+    backgroundColor: colors.accentText,
     alignItems: 'center',
     justifyContent: 'center',
   },

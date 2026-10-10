@@ -47,17 +47,17 @@ export function Glass({
   );
 }
 
-/** Soft orange glows behind a screen, so translucent surfaces have something to show. */
+/** Soft accent glows behind a screen, so translucent surfaces have something to show. */
 export function Backdrop() {
   return (
     <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
       <Defs>
         <RadialGradient id="glowTop" cx="85%" cy="0%" r="70%">
-          <Stop offset="0" stopColor={colors.accent} stopOpacity={0.28} />
+          <Stop offset="0" stopColor={colors.accent} stopOpacity={0.16} />
           <Stop offset="1" stopColor={colors.accent} stopOpacity={0} />
         </RadialGradient>
         <RadialGradient id="glowSide" cx="0%" cy="60%" r="55%">
-          <Stop offset="0" stopColor={colors.accentGradientEnd} stopOpacity={0.12} />
+          <Stop offset="0" stopColor={colors.accentGradientEnd} stopOpacity={0.08} />
           <Stop offset="1" stopColor={colors.accentGradientEnd} stopOpacity={0} />
         </RadialGradient>
       </Defs>

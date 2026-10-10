@@ -90,9 +90,6 @@ export function PlayerSheet({
   const backdropStyle = useAnimatedStyle(() => ({
     opacity: interpolate(progress.get(), [0, 1], [0, 0.6]),
   }));
-  const headerStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: interpolate(progress.get(), [0, 1], [1, 0.96]) }],
-  }));
   // The sheet's own background only shows once it starts opening.
   const surfaceStyle = useAnimatedStyle(() => ({
     opacity: interpolate(progress.get(), [0, 0.3], [0, 1], Extrapolation.CLAMP),
@@ -105,16 +102,11 @@ export function PlayerSheet({
         <Animated.View pointerEvents="none" style={[styles.surface, surfaceStyle]} />
         <GestureDetector gesture={pan}>
           <View onLayout={(e) => setHeaderH(e.nativeEvent.layout.height)}>
-            {/* The handle scales with the card so it stays on the card's top edge. */}
-            <Animated.View style={headerStyle}>
-              {header}
-              <Pressable
-                hitSlop={12}
-                style={styles.handleArea}
-                onPress={() => snap(!expanded.get())}>
-                <View style={styles.handle} />
-              </Pressable>
-            </Animated.View>
+            {header}
+            {/* Overlaid on the card's top edge. */}
+            <Pressable hitSlop={12} style={styles.handleArea} onPress={() => snap(!expanded.get())}>
+              <View style={styles.handle} />
+            </Pressable>
           </View>
         </GestureDetector>
         <ScrollView
@@ -171,7 +163,6 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: radius.lg + 10,
     borderTopRightRadius: radius.lg + 10,
   },
-  // Overlaid on the card's top edge.
   handleArea: {
     position: 'absolute',
     top: 0,
@@ -180,6 +171,6 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
     paddingHorizontal: spacing.lg,
   },
-  handle: { width: 40, height: 5, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.5)' },
+  handle: { width: 40, height: 5, borderRadius: 3, backgroundColor: 'rgba(20,20,20,0.3)' },
   content: { paddingHorizontal: spacing.md, gap: spacing.md },
 });

@@ -23,7 +23,7 @@ export function useTabBarSpace() {
 
 /**
  * Floating pill tab bar: glass background, outline icons, and an
- * orange bubble that springs to the active tab. `icons` maps route names to the
+ * accent bubble that springs to the active tab. `icons` maps route names to the
  * base Ionicons name; the outline variant is used for inactive tabs.
  */
 export function FloatingTabBar({

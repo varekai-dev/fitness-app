@@ -56,7 +56,7 @@ function nextIncomplete(exercises: WorkoutExercise[], from: number) {
 }
 
 /**
- * Active workout as a "player": the current exercise's photo on top and an orange
+ * Active workout as a "player": the current exercise's photo on top and an accent
  * card that walks through sets one by one — enter what you did, tap "next set",
  * rest with a countdown, repeat. Remaining exercises are queued below.
  */
@@ -418,10 +418,10 @@ export function WorkoutPlayer({
           />
         ) : (
           <LinearGradient
-            colors={[colors.accentGradientEnd, colors.accent, '#3A1608', colors.background]}
+            colors={[colors.accentGradientEnd, colors.accent, '#2E3110', colors.background]}
             locations={[0, 0.35, 0.8, 1]}
             style={[styles.fill, styles.heroPlaceholder]}>
-            <Ionicons name="barbell" size={110} color="rgba(255,255,255,0.9)" />
+            <Ionicons name="barbell" size={110} color={colors.accentText} />
           </LinearGradient>
         )}
       </Animated.View>
@@ -578,12 +578,12 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: colors.onAccentFaint,
     alignItems: 'center',
     justifyContent: 'center',
   },
   // Overline and title stay clear of the skip-exercise button in the corner.
-  overline: { color: 'rgba(255,255,255,0.8)', fontWeight: '600', paddingRight: 44 },
+  overline: { color: colors.onAccentMuted, fontWeight: '600', paddingRight: 44 },
   title: { color: colors.accentText, paddingRight: 44 },
   // Centred text keeps equal room on both sides of the corner button.
   centered: { textAlign: 'center', paddingHorizontal: 44 },
@@ -594,16 +594,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: colors.onAccentFaint,
   },
   extendText: { color: colors.accentText, fontWeight: '700' },
   hint: {
-    color: 'rgba(255,255,255,0.7)',
+    color: colors.onAccentMuted,
     fontSize: 11,
     textAlign: 'center',
     marginTop: spacing.xs,
   },
-  subtle: { color: 'rgba(255,255,255,0.8)' },
+  subtle: { color: colors.onAccentMuted },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.sm },
   chip: {
     flexDirection: 'row',
@@ -614,20 +614,20 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: colors.onAccentFaint,
   },
-  chipDone: { backgroundColor: colors.text },
-  chipCurrent: { borderWidth: 1.5, borderColor: colors.text },
-  chipText: { color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: '700' },
+  chipDone: { backgroundColor: colors.accentText },
+  chipCurrent: { borderWidth: 1.5, borderColor: colors.accentText },
+  chipText: { color: colors.accentText, fontSize: 12, fontWeight: '700' },
   chipTextDone: { color: colors.accent },
   track: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.35)',
+    backgroundColor: colors.onAccentFaint,
     marginTop: spacing.lg,
     overflow: 'hidden',
   },
-  trackFill: { height: '100%', backgroundColor: colors.text, borderRadius: 3 },
+  trackFill: { height: '100%', backgroundColor: colors.accentText, borderRadius: 3 },
   trackLabels: { justifyContent: 'space-between' },
   actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
   pill: {
@@ -639,8 +639,8 @@ const styles = StyleSheet.create({
     minHeight: 52,
     borderRadius: radius.pill,
   },
-  pillPrimary: { backgroundColor: colors.text },
-  pillSecondary: { backgroundColor: 'rgba(255,255,255,0.25)' },
+  pillPrimary: { backgroundColor: colors.accentText },
+  pillSecondary: { backgroundColor: colors.onAccentFaint },
   pillText: { fontWeight: '800', fontSize: fontSize.sm },
   queueItem: {
     flexDirection: 'row',

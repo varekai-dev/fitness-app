@@ -37,7 +37,7 @@ function step(key: keyof Inputs, value: string, direction: 1 | -1): string {
 }
 
 /**
- * Big inputs with −/+ steppers for the set in progress, shown inside the orange
+ * Big inputs with −/+ steppers for the set in progress, shown inside the accent
  * player card. Keyed by set id, so it starts from that set's prefilled values.
  * `children` renders below the inputs and gets a reader for the values entered.
  */
@@ -74,7 +74,7 @@ export function PlayerSetEditor({
                 }
                 selectTextOnFocus
                 placeholder="—"
-                placeholderTextColor="rgba(255,255,255,0.5)"
+                placeholderTextColor={colors.onAccentMuted}
                 style={styles.value}
               />
               <Text variant="caption" style={styles.unit}>
@@ -177,7 +177,7 @@ function HoldButton({ icon, holdIcon, label, onPress, onHold, disabled }: MainBu
           cx={RING / 2}
           cy={RING / 2}
           r={RING_R}
-          stroke={colors.text}
+          stroke={colors.accentText}
           strokeWidth={RING_STROKE}
           strokeLinecap="round"
           strokeDasharray={RING_LENGTH}
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: colors.onAccentFaint,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingVertical: 2,
   },
-  unit: { color: 'rgba(255,255,255,0.8)', fontSize: 11, marginTop: -2 },
+  unit: { color: colors.onAccentMuted, fontSize: 11, marginTop: -2 },
   transport: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: colors.onAccentFaint,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: radius.pill,
-    backgroundColor: colors.text,
+    backgroundColor: colors.accentText,
     alignItems: 'center',
     justifyContent: 'center',
   },
