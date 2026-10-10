@@ -86,13 +86,16 @@ export async function seedIfEmpty() {
   await db.insert(exercises).values(rows);
 }
 
+/** For exercises that aren't weight × reps, e.g. timed holds. */
+type SeedTracking = { type: TrackingType; durationSec?: number };
+
 type ProgramSeed = {
   name: string;
   restSec: number;
   days: {
     name: string;
-    // [exercise name, sets, reps min, reps max, muscle group if it has to be created]
-    exercises: [string, number, number, number, MuscleGroup?][];
+    // [exercise name, sets, reps min, reps max, muscle group if it has to be created, tracking]
+    exercises: [string, number, number | null, number | null, MuscleGroup?, SeedTracking?][];
   }[];
 };
 
@@ -171,7 +174,133 @@ const DUMBBELL_6_DAY: ProgramSeed = {
   ],
 };
 
-function findOrCreateExercise(tx: Tx, name: string, group?: MuscleGroup) {
+/**
+ * "Dumbbell Only Workout: 5 Day Dumbbell Workout Split" by Muscle & Strength,
+ * from the page the user saved. Names match the library where the exercise is
+ * the same movement. Unilateral sets ("8-10 each") keep the per-side target.
+ */
+const DUMBBELL_5_DAY: ProgramSeed = {
+  name: '5 Day Dumbbell Split',
+  // The program asks for rest periods "right around the 45 second mark".
+  restSec: 45,
+  days: [
+    {
+      name: 'Chest, Shoulders & Triceps',
+      exercises: [
+        ['Dumbbell Bench Press', 5, 8, 10],
+        ['Incline Dumbbell Bench Press', 4, 8, 10],
+        ['Dumbbell Floor Press', 3, 8, 12, 'chest'],
+        ['Standing Dumbbell Press', 4, 8, 10],
+        ['Dumbbell Lateral Raise', 3, 8, 12],
+        ['Dumbbell Kickback', 3, 8, 12],
+      ],
+    },
+    {
+      name: 'Legs & Core A',
+      exercises: [
+        ['Dumbbell Goblet Squat', 4, 8, 10],
+        ['Dumbbell Stiff-Leg Deadlift', 4, 8, 10],
+        ['Dumbbell Rear Lunge', 4, 8, 10, 'legs'],
+        ['Dumbbell Frog Squat', 3, 8, 12, 'legs'],
+        ['Dumbbell Calf Raise', 4, 20, 20],
+        ['Weighted Crunch', 3, 20, 20, 'abs', { type: 'weighted_reps' }],
+        ['Side Plank', 3, null, null, 'abs', { type: 'duration', durationSec: 20 }],
+      ],
+    },
+    {
+      name: 'Back & Biceps',
+      exercises: [
+        ['Bent-Over Dumbbell Row', 4, 8, 12],
+        ['Tripod Dumbbell Row', 4, 8, 12, 'back'],
+        ['Dumbbell Pullover', 3, 8, 12],
+        ['Reverse Grip Dumbbell Row', 4, 8, 12, 'back'],
+        ['Dumbbell Curl', 3, 10, 15],
+        ['Hammer Curl', 3, 10, 15],
+      ],
+    },
+    {
+      name: 'Legs & Core B',
+      exercises: [
+        ['Dumbbell Squat', 4, 8, 10],
+        ['Dumbbell Deadlift', 4, 8, 10, 'legs'],
+        ['Dumbbell Split Squat', 3, 8, 12, 'legs'],
+        ['Dumbbell Hip Thrust', 4, 10, 15, 'legs'],
+        ['Dumbbell Calf Raise', 4, 20, 20],
+        ['Dumbbell Side Bend', 3, 15, 15],
+        ['Plank', 3, null, null, 'abs', { type: 'duration', durationSec: 20 }],
+      ],
+    },
+    {
+      name: 'Upper Body',
+      exercises: [
+        ['One-Arm Dumbbell Row', 4, 8, 10],
+        ['Arnold Press', 4, 8, 10],
+        ['Incline Dumbbell Bench Press', 4, 8, 12],
+        ['Chest Supported Dumbbell Row', 3, 8, 12, 'back'],
+        ['Dumbbell Pinwheel Curl', 2, 8, 12, 'biceps'],
+        ['Seated Dumbbell Triceps Extension', 3, 8, 12],
+        ['Dumbbell Shrug', 3, 12, 15],
+      ],
+    },
+  ],
+};
+
+/**
+ * "Dumbbell Only Workout: 3 Day Full Body Dumbbell Workout" by Muscle & Strength,
+ * from the page the user saved. Names match the library where the exercise is
+ * the same movement.
+ */
+const DUMBBELL_3_DAY: ProgramSeed = {
+  name: '3 Day Full Body Dumbbell',
+  // The program asks for 60 seconds between sets.
+  restSec: 60,
+  days: [
+    {
+      name: 'Full Body A',
+      exercises: [
+        ['Dumbbell Squat', 3, 10, 10],
+        ['Dumbbell Stiff-Leg Deadlift', 3, 10, 10],
+        ['Bent-Over Dumbbell Row', 3, 10, 10],
+        ['Dumbbell Bench Press', 3, 10, 10],
+        ['Dumbbell Lateral Raise', 2, 8, 8],
+        ['Dumbbell Curl', 2, 8, 8],
+        ['Lying Dumbbell Triceps Extension', 2, 8, 8],
+      ],
+    },
+    {
+      name: 'Full Body B',
+      exercises: [
+        ['Dumbbell Lunge', 3, 10, 10],
+        ['Dumbbell Hamstring Curl', 3, 10, 10, 'legs'],
+        ['Dumbbell Deadlift', 3, 10, 10, 'legs'],
+        // "Dumbbell Military Press": the standing overhead press.
+        ['Standing Dumbbell Press', 3, 10, 10],
+        ['Dumbbell Fly', 2, 8, 8],
+        ['Hammer Curl', 2, 8, 8],
+        ['Seated Dumbbell Triceps Extension', 2, 8, 8],
+      ],
+    },
+    {
+      name: 'Full Body C',
+      exercises: [
+        ['Dumbbell Step-Up', 3, 10, 10],
+        ['Dumbbell Stiff-Leg Deadlift', 3, 10, 10],
+        ['One-Arm Dumbbell Row', 3, 10, 10],
+        ['Reverse Grip Dumbbell Press', 3, 10, 10, 'chest'],
+        ['Dumbbell Rear Delt Fly', 2, 8, 8],
+        ['Zottman Curl', 2, 8, 8, 'biceps'],
+        ['Close-Grip Dumbbell Press', 2, 8, 8],
+      ],
+    },
+  ],
+};
+
+function findOrCreateExercise(
+  tx: Tx,
+  name: string,
+  group?: MuscleGroup,
+  trackingType: TrackingType = 'weight_reps',
+) {
   const existing = tx
     .select({ id: exercises.id })
     .from(exercises)
@@ -182,7 +311,7 @@ function findOrCreateExercise(tx: Tx, name: string, group?: MuscleGroup) {
   const muscleGroup = group ?? SEED.find(([n]) => n === name)?.[1] ?? 'chest';
   return tx
     .insert(exercises)
-    .values({ name, muscleGroup, trackingType: 'weight_reps', youtubeUrl: defaultYoutubeUrl(name) })
+    .values({ name, muscleGroup, trackingType, youtubeUrl: defaultYoutubeUrl(name) })
     .returning({ id: exercises.id })
     .get().id;
 }
@@ -205,15 +334,16 @@ function insertProgram(seed: ProgramSeed) {
         .values({ programId: program.id, name: day.name, position: dayPos })
         .returning({ id: programDays.id })
         .get();
-      day.exercises.forEach(([name, sets, min, max, group], pos) => {
+      day.exercises.forEach(([name, sets, min, max, group, tracking], pos) => {
         tx.insert(programDayExercises)
           .values({
             programDayId: d.id,
-            exerciseId: findOrCreateExercise(tx, name, group),
+            exerciseId: findOrCreateExercise(tx, name, group, tracking?.type),
             position: pos,
             targetSets: sets,
             targetRepsMin: min,
             targetRepsMax: max,
+            targetDurationSec: tracking?.durationSec ?? null,
             restSec: seed.restSec,
           })
           .run();
@@ -273,5 +403,13 @@ export function runContentSeeds() {
   if (version < 3) {
     addDefaultVideos();
     sqlite.execSync('PRAGMA user_version = 3');
+  }
+  if (version < 4) {
+    insertProgram(DUMBBELL_5_DAY);
+    sqlite.execSync('PRAGMA user_version = 4');
+  }
+  if (version < 5) {
+    insertProgram(DUMBBELL_3_DAY);
+    sqlite.execSync('PRAGMA user_version = 5');
   }
 }
