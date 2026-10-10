@@ -173,12 +173,14 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
 
   const completeSet = async (values: SetValues) => {
     if (!currentSet) return;
-    await updateSet(currentSet.id, values);
-    await setCompleted(currentSet.id, true);
-
     const remainingHere = current.sets.filter(
       (s) => s.completedAt === null && s.id !== currentSet.id,
     );
+    // The next set starts from what was just done, so repeating it is one tap.
+    if (remainingHere.length > 0) await updateSet(remainingHere[0].id, values);
+    await updateSet(currentSet.id, values);
+    await setCompleted(currentSet.id, true);
+
     const remainingAll = allSets.filter((s) => s.completedAt === null && s.id !== currentSet.id);
     if (remainingAll.length === 0) {
       timer.stop();
