@@ -45,6 +45,10 @@ Docs: https://docs.expo.dev/eas/index.md
 - Before every commit, bump `expo.version` in `app.json` (semver): patch (`1.0.0` → `1.0.1`) for fixes and small changes, minor (`1.0.1` → `1.1.0`) for new features. Include the bump in the same commit.
 - Do not edit `android.versionCode`: EAS manages it remotely (`appVersionSource: "remote"` + `autoIncrement` in `eas.json`) and increments it on every build.
 
+## iOS Simulator
+
+Always use the **iPhone 17 Pro Max** simulator: boot it (`xcrun simctl boot "iPhone 17 Pro Max"`) rather than whichever device happens to be open, and shut other simulators down first.
+
 ## README screenshots
 
 `README.md` shows screenshots from `docs/screenshots/`. When a change visibly alters one of these screens, retake that screenshot in the same commit:
@@ -60,7 +64,7 @@ Docs: https://docs.expo.dev/eas/index.md
 | `history.png` | History tab | `/history` |
 | `body-weight.png` | Body weight | `/body-weight` |
 
-How to retake (iOS Simulator with the app open in Expo Go and the dev server running):
+How to retake (iPhone 17 Pro Max simulator with the app open in Expo Go and the dev server running):
 
 1. Clean status bar: `xcrun simctl status_bar booted override --time "9:41" --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularMode notSupported`.
 2. Open the screen with a deep link: `xcrun simctl openurl booted "exp://<dev-server-host>:8081/--<route>"`. For the home tab add a query (`/--/?home=1`), since a bare `/` keeps the current screen. Wait for it to load.
