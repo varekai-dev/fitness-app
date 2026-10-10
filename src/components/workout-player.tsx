@@ -8,6 +8,7 @@ import Animated, { interpolate, useAnimatedStyle, useSharedValue } from 'react-n
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Elapsed } from '@/components/elapsed';
+import { Glass } from '@/components/glass';
 import { ExerciseThumb } from '@/components/exercise-thumb';
 import { PlayerSetEditor, Transport } from '@/components/player-set-editor';
 import { PlayerSheet, SheetItem } from '@/components/player-sheet';
@@ -414,14 +415,14 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
         <CircleButton icon="chevron-back" background="rgba(0,0,0,0.35)" onPress={goBack} />
         <View style={styles.topRight}>
           <View style={styles.clockRow}>
-            <View style={styles.clock}>
+            <Glass tint="rgba(0,0,0,0.35)" style={styles.clock}>
               <Ionicons
                 name={paused ? 'pause' : 'time-outline'}
                 size={14}
                 color={paused ? colors.accent : colors.text}
               />
               <Elapsed workout={workout} style={styles.clockText} />
-            </View>
+            </Glass>
           </View>
           {youtubeUrl && (
             <CircleButton
@@ -647,7 +648,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    backgroundColor: 'rgba(0,0,0,0.35)',
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,

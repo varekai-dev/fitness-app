@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Backdrop, Glass } from '@/components/glass';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 export type IconName = ComponentProps<typeof Ionicons>['name'];
@@ -41,18 +42,19 @@ export function Text({
   );
 }
 
-/** Round dark button used for back/close and toolbar actions. */
+/** Round glass button used for back/close and toolbar actions. */
 export function CircleButton({
   icon,
   onPress,
   color = colors.text,
-  background = colors.surface,
+  background,
   size = 44,
   disabled,
 }: {
   icon: IconName;
   onPress: () => void;
   color?: string;
+  /** Tints the glass, e.g. darker over photos. */
   background?: string;
   size?: number;
   disabled?: boolean;
@@ -62,12 +64,13 @@ export function CircleButton({
       onPress={onPress}
       disabled={disabled}
       hitSlop={6}
-      style={({ pressed }) => [
-        styles.circle,
-        { width: size, height: size, backgroundColor: background },
-        (pressed || disabled) && styles.pressed,
-      ]}>
-      <Ionicons name={icon} size={size * 0.45} color={color} />
+      style={({ pressed }) => (pressed || disabled) && styles.pressed}>
+      <Glass
+        interactive
+        tint={background}
+        style={[styles.circle, { width: size, height: size, borderRadius: size / 2 }]}>
+        <Ionicons name={icon} size={size * 0.45} color={color} />
+      </Glass>
     </Pressable>
   );
 }
@@ -138,6 +141,7 @@ export function Screen({
   const insets = useSafeAreaInsets();
   return (
     <View style={styles.screenRoot}>
+      <Backdrop />
       {header && <ScreenHeader title={title} mode={mode} right={headerRight} />}
       <ScrollView
         style={styles.flex}
@@ -475,7 +479,6 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.sm,
-    backgroundColor: colors.background,
   },
   headerTitle: {
     flex: 1,
@@ -495,7 +498,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.glass,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.glassBorder,
     borderRadius: radius.lg,
     padding: spacing.lg,
     gap: spacing.sm,
@@ -517,7 +522,9 @@ const styles = StyleSheet.create({
   iconButton: { padding: spacing.xs },
   field: { gap: spacing.xs },
   input: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.glass,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.glassBorder,
     color: colors.text,
     fontSize: fontSize.md,
     borderRadius: radius.md,
@@ -529,7 +536,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.glass,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.glassBorder,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.lg,
   },
@@ -546,7 +555,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm + 2,
     borderRadius: radius.pill,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.glass,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.glassBorder,
   },
   chipSelected: { backgroundColor: colors.accent },
   chipText: { color: colors.text, fontSize: fontSize.sm, fontWeight: '600' },
@@ -571,8 +582,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.sm,
     borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.glassBorder,
+    backgroundColor: colors.glass,
   },
   statValue: { color: colors.text, fontSize: fontSize.xl, fontWeight: '800' },
   statUnit: {

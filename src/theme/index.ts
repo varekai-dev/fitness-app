@@ -3,6 +3,9 @@ export const colors = {
   surface: '#212121',
   surfaceRaised: '#2B2B2B',
   border: '#2F2F2F',
+  // Translucent surfaces that let the screen backdrop show through.
+  glass: 'rgba(255, 255, 255, 0.06)',
+  glassBorder: 'rgba(255, 255, 255, 0.1)',
   text: '#FFFFFF',
   textSecondary: '#A3A3A3',
   textMuted: '#666666',

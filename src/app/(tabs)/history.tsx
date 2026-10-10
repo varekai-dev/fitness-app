@@ -1,6 +1,7 @@
 import { FlatList, StyleSheet, View } from 'react-native';
 
 import { useTabBarSpace } from '@/components/floating-tab-bar';
+import { Backdrop } from '@/components/glass';
 import { WorkoutSummaryCard } from '@/components/workout-summary-card';
 import { EmptyState, Loading, ScreenHeader } from '@/components/ui';
 import { listFinishedWorkouts } from '@/db/workouts';
@@ -13,6 +14,7 @@ export default function HistoryScreen() {
   if (!data) return <Loading />;
   return (
     <View style={styles.root}>
+      <Backdrop />
       <ScreenHeader title="Історія" mode="root" />
       <FlatList
         contentContainerStyle={[styles.content, { paddingBottom: tabBarSpace }]}

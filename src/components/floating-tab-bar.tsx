@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { useEffect, useState } from 'react';
@@ -7,6 +6,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Glass } from '@/components/glass';
 import type { IconName } from '@/components/ui';
 import { colors, radius, spacing } from '@/theme';
 
@@ -22,7 +22,7 @@ export function useTabBarSpace() {
 }
 
 /**
- * Floating pill tab bar: translucent blurred background, outline icons, and an
+ * Floating pill tab bar: glass background, outline icons, and an
  * orange bubble that springs to the active tab. `icons` maps route names to the
  * base Ionicons name; the outline variant is used for inactive tabs.
  */
@@ -47,37 +47,37 @@ export function FloatingTabBar({
     <View
       style={[styles.wrapper, { bottom: Math.max(insets.bottom, spacing.md) }]}
       pointerEvents="box-none">
-      <View style={styles.bar} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
-        <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
-        <View style={styles.tint} />
-        {width > 0 && <Animated.View style={[styles.bubble, bubbleStyle]} />}
-        {state.routes.map((route, index) => {
-          const focused = state.index === index;
-          const { options } = descriptors[route.key];
-          const icon = icons[route.name] ?? 'ellipse';
-          const onPress = () => {
-            const event = navigation.emit({
-              type: 'tabPress',
-              target: route.key,
-              canPreventDefault: true,
-            });
-            if (!focused && !event.defaultPrevented) {
-              Haptics.selectionAsync();
-              navigation.navigate(route.name, route.params);
-            }
-          };
-          return (
-            <Pressable
-              key={route.key}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: focused }}
-              accessibilityLabel={options.title ?? route.name}
-              onPress={onPress}
-              style={styles.item}>
-              <TabIcon name={icon} focused={focused} />
-            </Pressable>
-          );
-        })}
+      <View onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+        <Glass style={styles.bar}>
+          {width > 0 && <Animated.View style={[styles.bubble, bubbleStyle]} />}
+          {state.routes.map((route, index) => {
+            const focused = state.index === index;
+            const { options } = descriptors[route.key];
+            const icon = icons[route.name] ?? 'ellipse';
+            const onPress = () => {
+              const event = navigation.emit({
+                type: 'tabPress',
+                target: route.key,
+                canPreventDefault: true,
+              });
+              if (!focused && !event.defaultPrevented) {
+                Haptics.selectionAsync();
+                navigation.navigate(route.name, route.params);
+              }
+            };
+            return (
+              <Pressable
+                key={route.key}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: focused }}
+                accessibilityLabel={options.title ?? route.name}
+                onPress={onPress}
+                style={styles.item}>
+                <TabIcon name={icon} focused={focused} />
+              </Pressable>
+            );
+          })}
+        </Glass>
       </View>
     </View>
   );
@@ -108,16 +108,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.12)',
-  },
-  tint: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(30,30,30,0.6)',
   },
   bubble: {
     position: 'absolute',

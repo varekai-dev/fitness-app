@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
 import { useTabBarSpace } from '@/components/floating-tab-bar';
+import { Backdrop } from '@/components/glass';
 import { ExerciseThumb } from '@/components/exercise-thumb';
 import {
   Card,
@@ -36,6 +37,7 @@ export default function ExercisesScreen() {
 
   return (
     <View style={styles.root}>
+      <Backdrop />
       <ScreenHeader
         title="Вправи"
         mode="root"
