@@ -1,6 +1,6 @@
 import type { MuscleGroup, Targets, TrackingType } from '@/db/schema';
 
-import { formatDuration } from './metrics';
+import { formatDuration, formatNumber } from './metrics';
 
 export const MUSCLE_GROUP_LABELS: Record<MuscleGroup, string> = {
   chest: 'Груди',
@@ -82,4 +82,11 @@ export function formatTargets(t: Targets) {
   const what = targetValue(t);
   const sets = what ? `${t.targetSets} × ${what}` : `${t.targetSets} підх.`;
   return t.restSec > 0 ? `${sets} · відпочинок ${formatDuration(t.restSec)}` : sets;
+}
+
+/** Signed change in kilograms with one decimal: "+0.4", "−1.2" or "0". */
+export function formatWeightDelta(kg: number) {
+  const rounded = Math.round(kg * 10) / 10;
+  if (rounded === 0) return '0';
+  return `${rounded > 0 ? '+' : '−'}${formatNumber(Math.abs(rounded), 1)}`;
 }

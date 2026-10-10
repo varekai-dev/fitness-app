@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
-import Svg, { Circle, Line, Polyline, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Line, Polygon, Polyline, Text as SvgText } from 'react-native-svg';
 
 import { colors, fontSize } from '@/theme';
 
@@ -101,6 +101,47 @@ export function LineChart({
               strokeWidth={p.highlight ? 2.5 : 0}
             />
           ))}
+        </Svg>
+      )}
+    </View>
+  );
+}
+
+/** Axis-free trend line with a soft fill, for compact cards. Needs two points or more. */
+export function Sparkline({ points, height = 56 }: { points: ChartPoint[]; height?: number }) {
+  const [width, setWidth] = useState(0);
+  if (points.length < 2) return null;
+
+  const xs = points.map((p) => p.x);
+  const ys = points.map((p) => p.y);
+  const [minX, maxX] = [Math.min(...xs), Math.max(...xs)];
+  const [minY, maxY] = [Math.min(...ys), Math.max(...ys)];
+  const pad = 4; // keeps the stroke and end dot inside the box
+  const sx = (x: number) =>
+    pad + (maxX === minX ? 0 : ((x - minX) / (maxX - minX)) * (width - 2 * pad));
+  const sy = (y: number) =>
+    maxY === minY ? height / 2 : pad + (1 - (y - minY) / (maxY - minY)) * (height - 2 * pad);
+  const line = points.map((p) => `${sx(p.x)},${sy(p.y)}`).join(' ');
+  const last = points[points.length - 1];
+
+  return (
+    <View style={{ height, width: '100%' }} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+      {width > 0 && (
+        <Svg width={width} height={height}>
+          <Polygon
+            points={`${sx(minX)},${height} ${line} ${sx(maxX)},${height}`}
+            fill={colors.accent}
+            opacity={0.15}
+          />
+          <Polyline
+            points={line}
+            fill="none"
+            stroke={colors.accent}
+            strokeWidth={2.5}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+          <Circle cx={sx(last.x)} cy={sy(last.y)} r={4} fill={colors.accent} />
         </Svg>
       )}
     </View>

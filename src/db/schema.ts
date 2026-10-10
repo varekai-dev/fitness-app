@@ -138,6 +138,17 @@ export const workoutSets = sqliteTable(
   (t) => [index('ws_we_idx').on(t.workoutExerciseId)],
 );
 
+/** Body weight log: at most one entry per local day, see saveBodyWeight. */
+export const bodyWeights = sqliteTable(
+  'body_weights',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    measuredAt: integer('measured_at').notNull(),
+    weightKg: real('weight_kg').notNull(),
+  },
+  (t) => [index('body_weights_measured_idx').on(t.measuredAt)],
+);
+
 export const programsRelations = relations(programs, ({ many }) => ({
   days: many(programDays),
 }));
@@ -192,6 +203,7 @@ export type ProgramDayExercise = typeof programDayExercises.$inferSelect;
 export type Workout = typeof workouts.$inferSelect;
 export type WorkoutExercise = typeof workoutExercises.$inferSelect;
 export type WorkoutSet = typeof workoutSets.$inferSelect;
+export type BodyWeight = typeof bodyWeights.$inferSelect;
 export type Targets = Pick<
   ProgramDayExercise,
   | 'targetSets'

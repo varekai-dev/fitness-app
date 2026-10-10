@@ -5,6 +5,7 @@ import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { useTabBarSpace } from '@/components/floating-tab-bar';
 import { Elapsed } from '@/components/elapsed';
+import { Sparkline } from '@/components/line-chart';
 import { WorkoutSummaryCard } from '@/components/workout-summary-card';
 import {
   Button,
@@ -19,21 +20,31 @@ import {
   StatTile,
   Text,
 } from '@/components/ui';
+import { listBodyWeights } from '@/db/body-weight';
 import { getActiveProgram, getNextDayId } from '@/db/programs';
 import { getActiveWorkout, listFinishedWorkouts, startWorkout } from '@/db/workouts';
 import { useDbQuery } from '@/hooks/use-db-query';
-import { formatLongDate, startOfWeek, WEEKDAY_SHORT, weekdayIndex } from '@/lib/labels';
+import {
+  formatLongDate,
+  formatShortDate,
+  formatWeightDelta,
+  startOfWeek,
+  WEEKDAY_SHORT,
+  weekdayIndex,
+} from '@/lib/labels';
+import { formatNumber } from '@/lib/metrics';
 import { prepareRestNotifications } from '@/lib/rest-notifications';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 async function loadHome() {
-  const [activeWorkout, program, finished] = await Promise.all([
+  const [activeWorkout, program, finished, bodyWeights] = await Promise.all([
     getActiveWorkout(),
     getActiveProgram(),
     listFinishedWorkouts(),
+    listBodyWeights(),
   ]);
   const nextDayId = program ? await getNextDayId(program.id) : null;
-  return { activeWorkout, program, nextDayId, finished, loadedAt: Date.now() };
+  return { activeWorkout, program, nextDayId, finished, bodyWeights, loadedAt: Date.now() };
 }
 
 export default function HomeScreen() {
@@ -43,7 +54,9 @@ export default function HomeScreen() {
   const [starting, setStarting] = useState(false);
 
   if (!data) return <Loading />;
-  const { activeWorkout, program, nextDayId, finished, loadedAt } = data;
+  const { activeWorkout, program, nextDayId, finished, bodyWeights, loadedAt } = data;
+  const weight = bodyWeights.at(-1);
+  const prevWeight = bodyWeights.at(-2);
   // A manual pick may point to another program's day after switching programs.
   const selectedDay =
     program?.days.find((d) => d.id === pickedDayId) ??
@@ -198,6 +211,38 @@ export default function HomeScreen() {
         </Row>
       </Card>
 
+      <Card onPress={() => router.push('/body-weight')}>
+        <Row style={styles.spaceBetween}>
+          <Row>
+            <Ionicons name="scale-outline" size={20} color={colors.accent} />
+            <Text variant="heading">Вага тіла</Text>
+          </Row>
+          <Row>
+            {weight ? (
+              <View style={styles.weightValue}>
+                <Text variant="heading">{formatNumber(weight.weightKg, 1)} кг</Text>
+                <Text variant="muted">
+                  {prevWeight
+                    ? `${formatWeightDelta(weight.weightKg - prevWeight.weightKg)} кг · `
+                    : ''}
+                  {formatShortDate(weight.measuredAt)}
+                </Text>
+              </View>
+            ) : (
+              <Text variant="muted">Додати</Text>
+            )}
+            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+          </Row>
+        </Row>
+        {bodyWeights.length === 1 ? (
+          <Text variant="muted">Графік з’явиться після зважування в інший день.</Text>
+        ) : (
+          <Sparkline
+            points={bodyWeights.slice(-30).map((w) => ({ x: w.measuredAt, y: w.weightKg }))}
+          />
+        )}
+      </Card>
+
       <SectionHeader
         title="Останні тренування"
         action={
@@ -283,6 +328,7 @@ const styles = StyleSheet.create({
   stats: { gap: spacing.sm, alignItems: 'stretch' },
   spaceBetween: { justifyContent: 'space-between' },
   streak: { gap: 2 },
+  weightValue: { alignItems: 'flex-end' },
   pressed: { opacity: 0.85 },
   hero: {
     backgroundColor: colors.accent,
