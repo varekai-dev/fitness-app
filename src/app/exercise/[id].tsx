@@ -6,6 +6,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useDialog } from '@/components/dialog';
+import { confirmRemoveExercise } from '@/components/remove-dialogs';
 import { LineChart } from '@/components/line-chart';
 import {
   Badge,
@@ -21,10 +22,9 @@ import {
   StatTile,
   Text,
 } from '@/components/ui';
-import { getExercise, removeExercise } from '@/db/exercises';
+import { getExercise } from '@/db/exercises';
 import { getExerciseHistory } from '@/db/workouts';
 import { useDbQuery } from '@/hooks/use-db-query';
-import { deleteStoredImage } from '@/lib/images';
 import {
   formatDate,
   formatShortDate,
@@ -61,31 +61,7 @@ export default function ExerciseDetailScreen() {
   const record = progress.filter((p) => p.isPR).at(-1);
   const latest = progress.at(-1);
 
-  const remove = () =>
-    dialog.show({
-      title: 'Видалити вправу?',
-      message: exercise.name,
-      buttons: [
-        { text: 'Скасувати', style: 'cancel' },
-        {
-          text: 'Видалити',
-          style: 'destructive',
-          onPress: async () => {
-            const result = await removeExercise(id);
-            if (typeof result === 'object') {
-              dialog.show({
-                title: 'Вправа використовується',
-                message: `Спершу прибери її з програм: ${result.blockedBy.join(', ')}.`,
-                icon: 'alert-circle',
-              });
-              return;
-            }
-            if (result === 'deleted') deleteStoredImage(exercise.imageUri);
-            goBack();
-          },
-        },
-      ],
-    });
+  const remove = () => confirmRemoveExercise(dialog.show, exercise, { onRemoved: goBack });
 
   return (
     <View style={styles.root}>

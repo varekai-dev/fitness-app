@@ -1,4 +1,4 @@
-import { and, count, eq, isNull, or } from 'drizzle-orm';
+import { and, count, eq, inArray, isNull, or } from 'drizzle-orm';
 
 import { bundledImageUri, DEFAULT_EXERCISE_IMAGES } from '@/lib/exercise-images';
 import {
@@ -82,6 +82,7 @@ export async function seedIfEmpty() {
     muscleGroup,
     trackingType,
     youtubeUrl: defaultYoutubeUrl(name),
+    builtIn: true,
   }));
   await db.insert(exercises).values(rows);
 }
@@ -311,7 +312,13 @@ function findOrCreateExercise(
   const muscleGroup = group ?? SEED.find(([n]) => n === name)?.[1] ?? 'chest';
   return tx
     .insert(exercises)
-    .values({ name, muscleGroup, trackingType, youtubeUrl: defaultYoutubeUrl(name) })
+    .values({
+      name,
+      muscleGroup,
+      trackingType,
+      youtubeUrl: defaultYoutubeUrl(name),
+      builtIn: true,
+    })
     .returning({ id: exercises.id })
     .get().id;
 }
@@ -325,7 +332,7 @@ function insertProgram(seed: ProgramSeed) {
       .get();
     const program = tx
       .insert(programs)
-      .values({ name: seed.name, isActive: !hasActive })
+      .values({ name: seed.name, isActive: !hasActive, builtIn: true })
       .returning({ id: programs.id })
       .get();
     seed.days.forEach((day, dayPos) => {
@@ -385,6 +392,30 @@ function addDefaultVideos() {
 }
 
 /**
+ * Flags library exercises and programs seeded before `built_in` existed, matched
+ * by name, so only what the user created can be swiped away from the lists.
+ */
+function markBuiltIn() {
+  const seeds = [DUMBBELL_6_DAY, DUMBBELL_5_DAY, DUMBBELL_3_DAY];
+  const exerciseNames = [
+    ...SEED.map(([name]) => name),
+    ...seeds.flatMap((p) => p.days.flatMap((d) => d.exercises.map(([name]) => name))),
+  ];
+  db.transaction((tx) => {
+    tx.update(exercises).set({ builtIn: true }).where(inArray(exercises.name, exerciseNames)).run();
+    tx.update(programs)
+      .set({ builtIn: true })
+      .where(
+        inArray(
+          programs.name,
+          seeds.map((p) => p.name),
+        ),
+      )
+      .run();
+  });
+}
+
+/**
  * One-off content seeds tracked with SQLite's user_version, so each runs once per
  * install and a program the user deleted is not recreated.
  */
@@ -411,5 +442,9 @@ export function runContentSeeds() {
   if (version < 5) {
     insertProgram(DUMBBELL_3_DAY);
     sqlite.execSync('PRAGMA user_version = 5');
+  }
+  if (version < 6) {
+    markBuiltIn();
+    sqlite.execSync('PRAGMA user_version = 6');
   }
 }

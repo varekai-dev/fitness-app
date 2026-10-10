@@ -5,7 +5,10 @@ import { FlatList, StyleSheet, View } from 'react-native';
 
 import { useTabBarSpace } from '@/components/floating-tab-bar';
 import { Backdrop } from '@/components/glass';
+import { useDialog } from '@/components/dialog';
 import { ExerciseThumb } from '@/components/exercise-thumb';
+import { confirmRemoveExercise } from '@/components/remove-dialogs';
+import { SwipeToDelete } from '@/components/swipe-to-delete';
 import {
   Card,
   Chip,
@@ -28,6 +31,7 @@ export default function ExercisesScreen() {
   const { data } = useDbQuery(listExercises);
   const [group, setGroup] = useState<MuscleGroup | null>(null);
   const [search, setSearch] = useState('');
+  const dialog = useDialog();
 
   if (!data) return <Loading />;
   const q = search.trim().toLowerCase();
@@ -79,32 +83,44 @@ export default function ExercisesScreen() {
             </Text>
           </View>
         }
-        renderItem={({ item }) => (
-          <Card
-            onPress={() =>
-              router.push({
-                pathname: '/exercise/[id]',
-                params: { id: item.id },
-              })
-            }
-            style={styles.item}>
-            <ExerciseThumb uri={item.imageUri} size={56} />
-            <View style={styles.itemText}>
-              <Text variant="body" numberOfLines={1}>
-                {item.name}
-              </Text>
-              <Text variant="muted">
-                {MUSCLE_GROUP_LABELS[item.muscleGroup]} ·{' '}
-                <Text variant="muted" style={styles.accent}>
-                  {TRACKING_TYPE_LABELS[item.trackingType]}
+        renderItem={({ item }) => {
+          const card = (
+            <Card
+              onPress={() =>
+                router.push({
+                  pathname: '/exercise/[id]',
+                  params: { id: item.id },
+                })
+              }
+              style={styles.item}>
+              <ExerciseThumb uri={item.imageUri} size={56} />
+              <View style={styles.itemText}>
+                <Text variant="body" numberOfLines={1}>
+                  {item.name}
                 </Text>
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-          </Card>
-        )}
+                <Text variant="muted">
+                  {MUSCLE_GROUP_LABELS[item.muscleGroup]} ·{' '}
+                  <Text variant="muted" style={styles.accent}>
+                    {TRACKING_TYPE_LABELS[item.trackingType]}
+                  </Text>
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+            </Card>
+          );
+          // Only exercises the user made can be swiped away; library ones from their screen.
+          return item.builtIn ? (
+            card
+          ) : (
+            <SwipeToDelete
+              onDelete={(close) => confirmRemoveExercise(dialog.show, item, { onKept: close })}>
+              {card}
+            </SwipeToDelete>
+          );
+        }}
         ListEmptyComponent={<EmptyState icon="barbell" title="Нічого не знайдено" />}
       />
+      {dialog.element}
     </View>
   );
 }

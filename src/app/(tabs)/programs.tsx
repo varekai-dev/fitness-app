@@ -13,7 +13,10 @@ import {
   SectionHeader,
   Text,
 } from '@/components/ui';
+import { useDialog } from '@/components/dialog';
 import { useTabBarSpace } from '@/components/floating-tab-bar';
+import { confirmRemoveProgram } from '@/components/remove-dialogs';
+import { SwipeToDelete } from '@/components/swipe-to-delete';
 import { createProgram, listPrograms } from '@/db/programs';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { colors, fontSize, radius, spacing } from '@/theme';
@@ -22,6 +25,7 @@ export default function ProgramsScreen() {
   const tabBarSpace = useTabBarSpace();
   const { data } = useDbQuery(listPrograms);
   const [name, setName] = useState('');
+  const dialog = useDialog();
 
   if (!data) return <Loading />;
 
@@ -63,29 +67,42 @@ export default function ProgramsScreen() {
           hint="Програма — це набір днів (наприклад, Push / Pull / Legs), які йдуть по колу."
         />
       ) : (
-        data.map((p) => (
-          <Card
-            key={p.id}
-            onPress={() => router.push({ pathname: '/program/[id]', params: { id: p.id } })}
-            style={styles.item}>
-            <View style={[styles.icon, p.isActive && styles.iconActive]}>
-              <Ionicons
-                name="calendar"
-                size={24}
-                color={p.isActive ? colors.accentText : colors.accent}
-              />
-            </View>
-            <View style={styles.flex}>
-              <Text variant="body" numberOfLines={1}>
-                {p.name}
-              </Text>
-              <Text variant="muted">{p.days.length} дн. по колу</Text>
-              {p.isActive && <Badge label="Активна" />}
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-          </Card>
-        ))
+        data.map((p) => {
+          const card = (
+            <Card
+              key={p.id}
+              onPress={() => router.push({ pathname: '/program/[id]', params: { id: p.id } })}
+              style={styles.item}>
+              <View style={[styles.icon, p.isActive && styles.iconActive]}>
+                <Ionicons
+                  name="calendar"
+                  size={24}
+                  color={p.isActive ? colors.accentText : colors.accent}
+                />
+              </View>
+              <View style={styles.flex}>
+                <Text variant="body" numberOfLines={1}>
+                  {p.name}
+                </Text>
+                <Text variant="muted">{p.days.length} дн. по колу</Text>
+                {p.isActive && <Badge label="Активна" />}
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+            </Card>
+          );
+          // Only programs the user made can be swiped away; built-in ones from their screen.
+          return p.builtIn ? (
+            card
+          ) : (
+            <SwipeToDelete
+              key={p.id}
+              onDelete={(close) => confirmRemoveProgram(dialog.show, p.id, { onKept: close })}>
+              {card}
+            </SwipeToDelete>
+          );
+        })
       )}
+      {dialog.element}
     </Screen>
   );
 }

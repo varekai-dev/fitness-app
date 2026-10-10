@@ -32,6 +32,8 @@ export const exercises = sqliteTable('exercises', {
   notes: text('notes'),
   imageUri: text('image_uri'),
   youtubeUrl: text('youtube_url'),
+  // Shipped with the app rather than created by the user.
+  builtIn: integer('built_in', { mode: 'boolean' }).notNull().default(false),
   archivedAt: integer('archived_at'),
   createdAt: integer('created_at').notNull().$defaultFn(now),
 });
@@ -40,6 +42,7 @@ export const programs = sqliteTable('programs', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),
   isActive: integer('is_active', { mode: 'boolean' }).notNull().default(false),
+  builtIn: integer('built_in', { mode: 'boolean' }).notNull().default(false),
   archivedAt: integer('archived_at'),
   createdAt: integer('created_at').notNull().$defaultFn(now),
 });

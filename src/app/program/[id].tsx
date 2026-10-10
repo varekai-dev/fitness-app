@@ -19,15 +19,9 @@ import {
   SectionHeader,
   Text,
 } from '@/components/ui';
-import {
-  addDay,
-  getProgram,
-  moveDay,
-  removeProgram,
-  renameProgram,
-  setActiveProgram,
-} from '@/db/programs';
+import { addDay, getProgram, moveDay, renameProgram, setActiveProgram } from '@/db/programs';
 import { useDialog } from '@/components/dialog';
+import { confirmRemoveProgram } from '@/components/remove-dialogs';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
@@ -54,30 +48,7 @@ export default function ProgramScreen() {
     setDayName('');
   };
 
-  const remove = () =>
-    dialog.show({
-      title: 'Видалити програму?',
-      message: 'Якщо за нею вже були тренування, програма піде в архів, а історія залишиться.',
-      buttons: [
-        { text: 'Скасувати', style: 'cancel' },
-        {
-          text: 'Видалити',
-          style: 'destructive',
-          onPress: async () => {
-            const result = await removeProgram(id);
-            if (result === 'workout_in_progress') {
-              dialog.show({
-                title: 'Неможливо',
-                message: 'Спершу заверши або скасуй поточне тренування за цією програмою.',
-                icon: 'alert-circle',
-              });
-              return;
-            }
-            goBack();
-          },
-        },
-      ],
-    });
+  const remove = () => confirmRemoveProgram(dialog.show, id, { onRemoved: goBack });
 
   return (
     <Screen
