@@ -29,6 +29,7 @@ import { useDbQuery } from '@/hooks/use-db-query';
 import { estimateKcal } from '@/lib/calories';
 import { formatLongDate, formatShortDate, formatWeightDelta, startOfWeek } from '@/lib/labels';
 import { formatNumber } from '@/lib/metrics';
+import { dailyPhrase } from '@/lib/motivation';
 import { prepareRestNotifications } from '@/lib/rest-notifications';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
@@ -87,7 +88,7 @@ export default function HomeScreen() {
       <View style={styles.greeting}>
         <Text variant="caption">{formatLongDate(loadedAt)}</Text>
         <Text variant="title">
-          Тренуйся сьогодні,{'\n'}прогресуй завтра{' '}
+          {dailyPhrase(new Date(loadedAt))}{' '}
           <Ionicons name="flash" size={26} color={colors.accent} />
         </Text>
       </View>
