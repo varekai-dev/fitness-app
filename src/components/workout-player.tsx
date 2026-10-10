@@ -11,6 +11,7 @@ import { Elapsed } from '@/components/elapsed';
 import { ExerciseThumb } from '@/components/exercise-thumb';
 import { PlayerSetEditor } from '@/components/player-set-editor';
 import { PlayerSheet, SheetItem } from '@/components/player-sheet';
+import { YoutubePlayer, youtubeVideoId } from '@/components/youtube-player';
 import {
   Button,
   CircleButton,
@@ -72,6 +73,8 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
   const [currentId, setCurrentId] = useState<number | null>(
     () => exercises[nextIncomplete(exercises, 0) ?? 0]?.id ?? null,
   );
+  // Workout exercise whose video replaces the photo; switching exercises closes it.
+  const [videoFor, setVideoFor] = useState<number | null>(null);
 
   const paused = workout.pausedAt !== null;
   const index = Math.max(
@@ -137,6 +140,14 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
   }
 
   const extra = extras[index];
+  const youtubeUrl = current.exercise.youtubeUrl;
+  const videoId = youtubeVideoId(youtubeUrl);
+  const showVideo = videoId !== null && videoFor === current.id;
+  // Search links and other pages can't be embedded, so they open in the browser.
+  const toggleVideo = () => {
+    if (!videoId) WebBrowser.openBrowserAsync(youtubeUrl!);
+    else setVideoFor(showVideo ? null : current.id);
+  };
   const type = current.exercise.trackingType;
   const currentSet = current.sets.find((s) => s.completedAt === null) ?? null;
   const setNumber = currentSet ? current.sets.indexOf(currentSet) + 1 : current.sets.length;
@@ -310,7 +321,11 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
       style={styles.root}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Animated.View style={[styles.hero, { bottom: collapsedHeight - 40 }, heroStyle]}>
-        {current.exercise.imageUri ? (
+        {showVideo ? (
+          <View style={[styles.fill, styles.videoWrap, { paddingTop: insets.top + 60 }]}>
+            <YoutubePlayer videoId={videoId} />
+          </View>
+        ) : current.exercise.imageUri ? (
           <Image
             source={exerciseImageSource(current.exercise.imageUri)}
             style={styles.fill}
@@ -340,11 +355,11 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
               <Elapsed workout={workout} style={styles.clockText} />
             </View>
           </View>
-          {current.exercise.youtubeUrl && (
+          {youtubeUrl && (
             <CircleButton
-              icon="logo-youtube"
+              icon={showVideo ? 'image-outline' : 'logo-youtube'}
               background="rgba(0,0,0,0.35)"
-              onPress={() => WebBrowser.openBrowserAsync(current.exercise.youtubeUrl!)}
+              onPress={toggleVideo}
             />
           )}
         </View>
@@ -460,6 +475,7 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.75 },
   emptyActions: { padding: spacing.lg, gap: spacing.sm },
   hero: { position: 'absolute', left: 0, right: 0, top: 0, backgroundColor: colors.surface },
+  videoWrap: { backgroundColor: '#000', justifyContent: 'center', paddingBottom: 40 },
   heroPlaceholder: { alignItems: 'center', justifyContent: 'center', paddingBottom: 40 },
   player: {
     backgroundColor: colors.accent,
