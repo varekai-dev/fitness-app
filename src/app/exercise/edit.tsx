@@ -12,7 +12,7 @@ import {
   updateExercise,
 } from '@/db/exercises';
 import { MUSCLE_GROUPS, TRACKING_TYPES, type MuscleGroup, type TrackingType } from '@/db/schema';
-import { youtubeSearchUrl } from '@/db/seed';
+import { youtubeSearchUrl } from '@/lib/exercise-videos';
 import { deleteStoredImage, downloadImage, pickImageFromLibrary, takePhoto } from '@/lib/images';
 import { MUSCLE_GROUP_LABELS, TRACKING_TYPE_LABELS } from '@/lib/labels';
 import { radius } from '@/theme';

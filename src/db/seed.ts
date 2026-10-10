@@ -1,6 +1,12 @@
-import { and, count, eq, isNull } from 'drizzle-orm';
+import { and, count, eq, isNull, or } from 'drizzle-orm';
 
 import { bundledImageUri, DEFAULT_EXERCISE_IMAGES } from '@/lib/exercise-images';
+import {
+  defaultYoutubeUrl,
+  DEFAULT_EXERCISE_VIDEOS,
+  youtubeSearchUrl,
+  youtubeWatchUrl,
+} from '@/lib/exercise-videos';
 
 import { db, sqlite, type Tx } from './client';
 import {
@@ -12,9 +18,6 @@ import {
   type NewExercise,
   type TrackingType,
 } from './schema';
-
-export const youtubeSearchUrl = (name: string) =>
-  `https://www.youtube.com/results?search_query=${encodeURIComponent(name + ' exercise form')}`;
 
 const SEED: [name: string, muscleGroup: MuscleGroup, trackingType: TrackingType][] = [
   // Chest
@@ -78,7 +81,7 @@ export async function seedIfEmpty() {
     name,
     muscleGroup,
     trackingType,
-    youtubeUrl: youtubeSearchUrl(name),
+    youtubeUrl: defaultYoutubeUrl(name),
   }));
   await db.insert(exercises).values(rows);
 }
@@ -179,7 +182,7 @@ function findOrCreateExercise(tx: Tx, name: string, group?: MuscleGroup) {
   const muscleGroup = group ?? SEED.find(([n]) => n === name)?.[1] ?? 'chest';
   return tx
     .insert(exercises)
-    .values({ name, muscleGroup, trackingType: 'weight_reps', youtubeUrl: youtubeSearchUrl(name) })
+    .values({ name, muscleGroup, trackingType: 'weight_reps', youtubeUrl: defaultYoutubeUrl(name) })
     .returning({ id: exercises.id })
     .get().id;
 }
@@ -232,6 +235,26 @@ function addDefaultImages() {
 }
 
 /**
+ * Form videos for library exercises. Replaces only the old YouTube search links
+ * (or an empty field), so links the user set themselves are kept.
+ */
+function addDefaultVideos() {
+  db.transaction((tx) => {
+    for (const [name, id] of Object.entries(DEFAULT_EXERCISE_VIDEOS)) {
+      tx.update(exercises)
+        .set({ youtubeUrl: youtubeWatchUrl(id) })
+        .where(
+          and(
+            eq(exercises.name, name),
+            or(isNull(exercises.youtubeUrl), eq(exercises.youtubeUrl, youtubeSearchUrl(name))),
+          ),
+        )
+        .run();
+    }
+  });
+}
+
+/**
  * One-off content seeds tracked with SQLite's user_version, so each runs once per
  * install and a program the user deleted is not recreated.
  */
@@ -246,5 +269,9 @@ export function runContentSeeds() {
   if (version < 2) {
     addDefaultImages();
     sqlite.execSync('PRAGMA user_version = 2');
+  }
+  if (version < 3) {
+    addDefaultVideos();
+    sqlite.execSync('PRAGMA user_version = 3');
   }
 }

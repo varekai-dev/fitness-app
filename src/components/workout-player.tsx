@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as WebBrowser from 'expo-web-browser';
 import { useState, type ReactNode } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { interpolate, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
@@ -328,13 +329,24 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
 
       <View style={[styles.topBar, { top: insets.top + spacing.sm }]}>
         <CircleButton icon="chevron-back" background="rgba(0,0,0,0.35)" onPress={goBack} />
-        <View style={styles.clock}>
-          <Ionicons
-            name={paused ? 'pause' : 'time-outline'}
-            size={14}
-            color={paused ? colors.accent : colors.text}
-          />
-          <Elapsed workout={workout} style={styles.clockText} />
+        <View style={styles.topRight}>
+          <View style={styles.clockRow}>
+            <View style={styles.clock}>
+              <Ionicons
+                name={paused ? 'pause' : 'time-outline'}
+                size={14}
+                color={paused ? colors.accent : colors.text}
+              />
+              <Elapsed workout={workout} style={styles.clockText} />
+            </View>
+          </View>
+          {current.exercise.youtubeUrl && (
+            <CircleButton
+              icon="logo-youtube"
+              background="rgba(0,0,0,0.35)"
+              onPress={() => WebBrowser.openBrowserAsync(current.exercise.youtubeUrl!)}
+            />
+          )}
         </View>
       </View>
 
@@ -528,9 +540,12 @@ const styles = StyleSheet.create({
     left: spacing.lg,
     right: spacing.lg,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
   },
+  // Clock row matches the back button's height so both stay vertically centred.
+  topRight: { alignItems: 'flex-end', gap: spacing.sm },
+  clockRow: { height: 44, justifyContent: 'center' },
   clock: {
     flexDirection: 'row',
     alignItems: 'center',
