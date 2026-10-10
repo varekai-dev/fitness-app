@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Elapsed } from '@/components/elapsed';
 import { ExerciseThumb } from '@/components/exercise-thumb';
-import { PlayerSetEditor } from '@/components/player-set-editor';
+import { PlayerSetEditor, Transport } from '@/components/player-set-editor';
 import { PlayerSheet, SheetItem } from '@/components/player-sheet';
 import { YoutubePlayer, youtubeVideoId } from '@/components/youtube-player';
 import {
@@ -171,6 +171,61 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
     setCurrentId(exercises[nextIdx ?? (index + 1) % exercises.length].id);
   };
 
+  // Back steps through history: reopen this exercise's latest set, or once none is
+  // done here, return to the exercise worked on before (else the one above).
+  const lastDoneHere = current.sets
+    .filter((s) => s.completedAt !== null)
+    .reduce<(typeof current.sets)[number] | null>(
+      (a, s) => (a && a.completedAt! > s.completedAt! ? a : s),
+      null,
+    );
+  let prevExerciseId: number | null = index > 0 ? exercises[index - 1].id : null;
+  let latest = 0;
+  for (const e of exercises) {
+    if (e.id === current.id) continue;
+    for (const s of e.sets) {
+      if (s.completedAt !== null && s.completedAt > latest) {
+        latest = s.completedAt;
+        prevExerciseId = e.id;
+      }
+    }
+  }
+  const goBackStep = () => {
+    timer.stop();
+    if (lastDoneHere) setCompleted(lastDoneHere.id, false);
+    else if (prevExerciseId !== null) setCurrentId(prevExerciseId);
+  };
+  const back = {
+    icon: 'play-skip-back' as const,
+    label: lastDoneHere ? 'Попередній підхід' : 'Попередня вправа',
+    onPress: goBackStep,
+    disabled: !lastDoneHere && prevExerciseId === null,
+  };
+  const nextExercise = {
+    icon: 'play-skip-forward' as const,
+    label: 'Наступна вправа',
+    onPress: goToNextExercise,
+    disabled: exercises.length < 2,
+  };
+  // Tap pauses or resumes; holding fills a ring, turns into stop and asks to finish.
+  const pauseStop = {
+    icon: paused ? ('play' as const) : ('pause' as const),
+    holdIcon: 'stop' as const,
+    label: paused ? 'Продовжити' : 'Пауза',
+    onPress: togglePause,
+    onHold: finish,
+  };
+  const transport = (
+    <>
+      <Transport left={back} main={pauseStop} right={nextExercise} />
+      {paused && (
+        <Text variant="caption" style={styles.hint}>
+          Утримуйте кнопку, щоб завершити тренування
+        </Text>
+      )}
+    </>
+  );
+
   const completeSet = async (values: SetValues) => {
     if (!currentSet) return;
     const remainingHere = current.sets.filter(
@@ -219,6 +274,18 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
       ? doneSets / allSets.length
       : 0;
 
+  const progressBar = (
+    <>
+      <Track progress={progress} />
+      <Row style={styles.trackLabels}>
+        <Elapsed workout={workout} style={styles.subtle} />
+        <Text variant="caption" style={styles.subtle}>
+          {doneSets} / {allSets.length} підх.
+        </Text>
+      </Row>
+    </>
+  );
+
   let body: ReactNode;
   if (resting) {
     body = (
@@ -233,6 +300,7 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
           Далі: {current.exercise.name} · підхід {setNumber} з {current.sets.length}
         </Text>
         <Track progress={progress} />
+        {transport}
         <View style={styles.actions}>
           <PillButton label="+15 с" onPress={() => timer.extend(15)} />
           <PillButton label="Пропустити" icon="play-skip-forward" primary onPress={timer.stop} />
@@ -282,38 +350,33 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
         )}
 
         {currentSet ? (
-          <PlayerSetEditor
-            key={currentSet.id}
-            set={currentSet}
-            type={type}
-            locked={paused}
-            onCompleteSet={completeSet}
-            onNextExercise={goToNextExercise}
-            canNextExercise={exercises.length > 1}
-          />
-        ) : workoutDone ? (
-          <View style={styles.actions}>
-            <PillButton label="Ще підхід" icon="add" onPress={() => addSet(current.id, false)} />
-            <PillButton label="Завершити" icon="flag" primary onPress={finish} />
-          </View>
+          <PlayerSetEditor key={currentSet.id} set={currentSet} type={type}>
+            {(values) => (
+              <>
+                {progressBar}
+                {transport}
+                <View style={styles.actions}>
+                  <PillButton
+                    label="Підхід виконано"
+                    icon="checkmark"
+                    primary
+                    disabled={paused}
+                    onPress={() => completeSet(values())}
+                  />
+                </View>
+              </>
+            )}
+          </PlayerSetEditor>
         ) : (
-          <View style={styles.actions}>
-            <PillButton label="Ще підхід" icon="add" onPress={() => addSet(current.id, false)} />
-            <PillButton
-              label="Наступна вправа"
-              icon="play-forward"
-              primary
-              onPress={goToNextExercise}
-            />
-          </View>
+          <>
+            {progressBar}
+            {transport}
+            <View style={styles.actions}>
+              <PillButton label="Ще підхід" icon="add" onPress={() => addSet(current.id, false)} />
+              {workoutDone && <PillButton label="Завершити" icon="flag" primary onPress={finish} />}
+            </View>
+          </>
         )}
-        <Track progress={progress} />
-        <Row style={styles.trackLabels}>
-          <Elapsed workout={workout} style={styles.subtle} />
-          <Text variant="caption" style={styles.subtle}>
-            {doneSets} / {allSets.length} підх.
-          </Text>
-        </Row>
       </>
     );
   }
@@ -374,10 +437,6 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
         progress={sheetProgress}
         header={
           <View style={styles.player}>
-            <View style={styles.cardIcons}>
-              <CardIcon icon={paused ? 'play' : 'pause'} onPress={togglePause} />
-              <CardIcon icon="stop" onPress={finish} />
-            </View>
             {body}
           </View>
         }>
@@ -431,36 +490,28 @@ function Track({ progress }: { progress: number }) {
   );
 }
 
-function CardIcon({ icon, onPress }: { icon: 'play' | 'pause' | 'stop'; onPress: () => void }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      hitSlop={6}
-      style={({ pressed }) => [styles.cardIcon, pressed && styles.pressed]}>
-      <Ionicons name={icon} size={16} color={colors.accentText} />
-    </Pressable>
-  );
-}
-
 function PillButton({
   label,
   icon,
   primary,
+  disabled,
   onPress,
 }: {
   label: string;
-  icon?: 'add' | 'flag' | 'play-forward' | 'play-skip-forward';
+  icon?: 'add' | 'checkmark' | 'flag' | 'play-skip-forward';
   primary?: boolean;
+  disabled?: boolean;
   onPress: () => void;
 }) {
   const color = primary ? colors.accent : colors.accentText;
   return (
     <Pressable
       onPress={onPress}
+      disabled={disabled}
       style={({ pressed }) => [
         styles.pill,
         primary ? styles.pillPrimary : styles.pillSecondary,
-        pressed && styles.pressed,
+        (pressed || disabled) && styles.pressed,
       ]}>
       <Text variant="body" style={[styles.pillText, { color }]}>
         {label}
@@ -485,23 +536,8 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     gap: spacing.xs,
   },
-  cardIcons: {
-    position: 'absolute',
-    top: spacing.lg,
-    right: spacing.lg,
-    flexDirection: 'row',
-    gap: spacing.sm,
-    zIndex: 1,
-  },
-  cardIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: radius.pill,
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  overline: { color: 'rgba(255,255,255,0.8)', fontWeight: '600', paddingRight: 84 },
+  overline: { color: 'rgba(255,255,255,0.8)', fontWeight: '600' },
+  hint: { color: 'rgba(255,255,255,0.7)', fontSize: 11, textAlign: 'center', marginTop: spacing.xs },
   title: { color: colors.accentText, paddingRight: 8 },
   countdown: { color: colors.accentText, fontSize: 64, marginVertical: spacing.xs },
   subtle: { color: 'rgba(255,255,255,0.8)' },
