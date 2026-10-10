@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useCallback, useRef, useState } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { Button, Text, type IconName } from '@/components/ui';
 import { colors, radius, spacing } from '@/theme';
@@ -24,7 +24,8 @@ export type DialogOptions = {
  * In-app replacement for `Alert.alert`, drawn in the app's own style.
  * Render `element` anywhere in the screen and call `show`. A button's `onPress`
  * runs only once the dialog has fully closed, so it can navigate away or open
- * another dialog without fighting the closing animation.
+ * another dialog without fighting the closing animation. That wait is iOS only:
+ * React Native never calls `onDismiss` on Android, where the action runs at once.
  */
 export function useDialog() {
   const [options, setOptions] = useState<DialogOptions | null>(null);
@@ -37,8 +38,9 @@ export function useDialog() {
   }, []);
 
   const close = (action?: () => void) => {
-    pending.current = action ?? null;
     setVisible(false);
+    if (Platform.OS === 'ios') pending.current = action ?? null;
+    else action?.();
   };
 
   const onDismiss = () => {
