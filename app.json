@@ -2,7 +2,7 @@
   "expo": {
     "name": "Fitness",
     "slug": "fitness",
-    "version": "1.7.0",
+    "version": "1.7.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "fitness",
@@ -15,7 +15,7 @@
       "package": "com.serhijsav.fitness",
       "versionCode": 1,
       "adaptiveIcon": {
-        "backgroundColor": "#FF6B2C",
+        "backgroundColor": "#EAF46B",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"

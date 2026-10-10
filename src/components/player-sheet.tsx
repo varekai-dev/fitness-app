@@ -172,5 +172,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   handle: { width: 40, height: 5, borderRadius: 3, backgroundColor: 'rgba(20,20,20,0.3)' },
-  content: { paddingHorizontal: spacing.md, gap: spacing.md },
+  content: { paddingHorizontal: spacing.md, paddingTop: spacing.xl, gap: spacing.md },
 });
