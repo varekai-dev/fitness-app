@@ -44,3 +44,27 @@ Docs: https://docs.expo.dev/eas/index.md
 
 - Before every commit, bump `expo.version` in `app.json` (semver): patch (`1.0.0` → `1.0.1`) for fixes and small changes, minor (`1.0.1` → `1.1.0`) for new features. Include the bump in the same commit.
 - Do not edit `android.versionCode`: EAS manages it remotely (`appVersionSource: "remote"` + `autoIncrement` in `eas.json`) and increments it on every build.
+
+## README screenshots
+
+`README.md` shows screenshots from `docs/screenshots/`. When a change visibly alters one of these screens, retake that screenshot in the same commit:
+
+| File | Screen | Route |
+|---|---|---|
+| `home.png` | Home tab | `/` |
+| `workout.png` | Workout player (active workout) | `/workout/<id>` |
+| `programs.png` | Programs tab | `/programs` |
+| `program.png` | Program editor | `/program/<id>` |
+| `exercises.png` | Exercises tab | `/exercises` |
+| `exercise.png` | Exercise detail | `/exercise/<id>` |
+| `history.png` | History tab | `/history` |
+| `body-weight.png` | Body weight | `/body-weight` |
+
+How to retake (iOS Simulator with the app open in Expo Go and the dev server running):
+
+1. Clean status bar: `xcrun simctl status_bar booted override --time "9:41" --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularMode notSupported`.
+2. Open the screen with a deep link: `xcrun simctl openurl booted "exp://<dev-server-host>:8081/--<route>"`. For the home tab add a query (`/--/?home=1`), since a bare `/` keeps the current screen. Wait for it to load.
+3. Capture and shrink: `xcrun simctl io booted screenshot shot.png && magick shot.png -resize 390x -strip docs/screenshots/<file>`.
+4. Reset the status bar: `xcrun simctl status_bar booted clear`.
+
+No Expo dev overlays may be visible: the floating dev tools button and the Element Inspector must be off (restarting Expo Go clears the inspector). Look at each screenshot before committing it.
