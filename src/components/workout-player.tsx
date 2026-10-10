@@ -1,5 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
+import { useKeepAwake } from 'expo-keep-awake';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as WebBrowser from 'expo-web-browser';
 import { useState, type ComponentProps, type ReactNode } from 'react';
@@ -89,6 +90,8 @@ export function WorkoutPlayer({
   // Workout exercise whose video replaces the photo; switching exercises closes it.
   const [videoFor, setVideoFor] = useState<number | null>(null);
   const dialog = useDialog();
+  // The player is glanced at between sets, so the screen shouldn't lock mid-workout.
+  useKeepAwake();
 
   const paused = workout.pausedAt !== null;
   const index = Math.max(
