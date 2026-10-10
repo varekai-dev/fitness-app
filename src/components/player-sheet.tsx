@@ -21,8 +21,10 @@ const tick = () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
 /**
  * Draggable sheet for the workout player. Collapsed, only `header` (the player
- * card) shows at the bottom; dragging up or tapping the handle reveals `children`.
- * `progress` (0 collapsed → 1 expanded) lets the parent animate along with it.
+ * card) shows, flush with the bottom edge, so it should pad itself for the bottom
+ * inset. Dragging up or tapping the handle on top of the card reveals `children`
+ * over a backdrop that fades in. `progress` (0 collapsed → 1 expanded) lets the
+ * parent animate along with it.
  */
 export function PlayerSheet({
   header,
@@ -43,7 +45,7 @@ export function PlayerSheet({
   const { height: screenH } = useWindowDimensions();
   const sheetH = screenH - topInset;
   const [headerH, setHeaderH] = useState(0);
-  const collapsedY = Math.max(0, sheetH - headerH - bottomInset);
+  const collapsedY = Math.max(0, sheetH - headerH);
 
   const y = useSharedValue(sheetH);
   const startY = useSharedValue(0);
@@ -53,8 +55,8 @@ export function PlayerSheet({
   useEffect(() => {
     if (headerH === 0) return;
     if (!expanded.get()) y.set(withSpring(collapsedY, SPRING));
-    onCollapsedHeight?.(headerH + bottomInset);
-  }, [collapsedY, headerH, bottomInset, expanded, y, onCollapsedHeight]);
+    onCollapsedHeight?.(headerH);
+  }, [collapsedY, headerH, expanded, y, onCollapsedHeight]);
 
   useAnimatedReaction(
     () => (collapsedY > 0 ? 1 - y.get() / collapsedY : 0),
@@ -91,33 +93,22 @@ export function PlayerSheet({
   const headerStyle = useAnimatedStyle(() => ({
     transform: [{ scale: interpolate(progress.get(), [0, 1], [1, 0.96]) }],
   }));
-  // The handle's two halves tilt into a "⌄" when expanded.
-  const leftBar = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: interpolate(progress.get(), [0, 1], [0, 1.5]) },
-      { rotate: `${interpolate(progress.get(), [0, 1], [0, 18])}deg` },
-    ],
-  }));
-  const rightBar = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: interpolate(progress.get(), [0, 1], [0, -1.5]) },
-      { rotate: `${interpolate(progress.get(), [0, 1], [0, -18])}deg` },
-    ],
+  // The sheet's own background only shows once it starts opening.
+  const surfaceStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(progress.get(), [0, 0.3], [0, 1], Extrapolation.CLAMP),
   }));
 
   return (
     <>
       <Animated.View pointerEvents="none" style={[styles.backdrop, backdropStyle]} />
       <Animated.View style={[styles.sheet, { height: sheetH }, sheetStyle]}>
+        <Animated.View pointerEvents="none" style={[styles.surface, surfaceStyle]} />
         <GestureDetector gesture={pan}>
           <View onLayout={(e) => setHeaderH(e.nativeEvent.layout.height)}>
+            <Animated.View style={headerStyle}>{header}</Animated.View>
             <Pressable hitSlop={12} style={styles.handleArea} onPress={() => snap(!expanded.get())}>
-              <View style={styles.handle}>
-                <Animated.View style={[styles.handleBar, styles.handleLeft, leftBar]} />
-                <Animated.View style={[styles.handleBar, styles.handleRight, rightBar]} />
-              </View>
+              <View style={styles.handle} />
             </Pressable>
-            <Animated.View style={[styles.header, headerStyle]}>{header}</Animated.View>
           </View>
         </GestureDetector>
         <ScrollView
@@ -163,20 +154,26 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: '#000',
   },
-  sheet: {
+  sheet: { position: 'absolute', left: 0, right: 0, bottom: 0 },
+  surface: {
     position: 'absolute',
     left: 0,
     right: 0,
+    top: 0,
     bottom: 0,
     backgroundColor: colors.background,
     borderTopLeftRadius: radius.lg + 10,
     borderTopRightRadius: radius.lg + 10,
   },
-  handleArea: { alignItems: 'center', paddingTop: spacing.sm, paddingBottom: spacing.sm },
-  handle: { width: 44, height: 6, flexDirection: 'row', alignItems: 'center' },
-  handleBar: { width: 22, height: 5, backgroundColor: colors.textMuted },
-  handleLeft: { borderTopLeftRadius: 3, borderBottomLeftRadius: 3, transformOrigin: 'right' },
-  handleRight: { borderTopRightRadius: 3, borderBottomRightRadius: 3, transformOrigin: 'left' },
-  header: { paddingHorizontal: spacing.md, paddingBottom: spacing.md },
+  // Overlaid on the card's top edge.
+  handleArea: {
+    position: 'absolute',
+    top: 0,
+    alignSelf: 'center',
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
+    paddingHorizontal: spacing.lg,
+  },
+  handle: { width: 40, height: 5, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.5)' },
   content: { paddingHorizontal: spacing.md, gap: spacing.md },
 });

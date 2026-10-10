@@ -431,7 +431,7 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
         onCollapsedHeight={setCollapsedHeight}
         progress={sheetProgress}
         header={
-          <View style={styles.player}>
+          <View style={[styles.player, { paddingBottom: insets.bottom + spacing.xl }]}>
             {canSkipExercise && (
               <Pressable
                 onPress={goToNextExercise}
@@ -536,13 +536,15 @@ const styles = StyleSheet.create({
   heroPlaceholder: { alignItems: 'center', justifyContent: 'center', paddingBottom: 40 },
   player: {
     backgroundColor: colors.accent,
-    borderRadius: radius.lg + 6,
+    borderTopLeftRadius: radius.lg + 10,
+    borderTopRightRadius: radius.lg + 10,
     padding: spacing.xl,
+    paddingTop: spacing.xxl + spacing.sm, // clear of the sheet handle
     gap: spacing.xs,
   },
   skipExercise: {
     position: 'absolute',
-    top: spacing.lg,
+    top: spacing.xxl,
     right: spacing.lg,
     zIndex: 1,
     width: 34,
@@ -552,9 +554,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Overline and title stay clear of the skip-exercise button in the corner.
   overline: { color: 'rgba(255,255,255,0.8)', fontWeight: '600', paddingRight: 44 },
+  title: { color: colors.accentText, paddingRight: 44 },
   hint: { color: 'rgba(255,255,255,0.7)', fontSize: 11, textAlign: 'center', marginTop: spacing.xs },
-  title: { color: colors.accentText, paddingRight: 8 },
   countdown: { color: colors.accentText, fontSize: 64, marginVertical: spacing.xs },
   subtle: { color: 'rgba(255,255,255,0.8)' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.sm },
