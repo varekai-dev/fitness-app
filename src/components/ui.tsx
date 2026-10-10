@@ -14,7 +14,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Backdrop, Glass } from '@/components/glass';
 import { colors, fontSize, radius, spacing } from '@/theme';
@@ -99,10 +99,18 @@ export function ScreenHeader({
   onBack?: () => void;
 }) {
   const insets = useSafeAreaInsets();
-  // iOS page sheets start below the status bar, so they need no inset.
-  const top = mode === 'modal' ? spacing.lg : insets.top + spacing.sm;
+  // A modal may be an iOS page sheet (already below the status bar) or full
+  // screen (Android, or iOS when the sheet expands), so let the native safe area
+  // measure where it actually is instead of assuming.
+  const Container = mode === 'modal' ? SafeAreaView : View;
   return (
-    <View style={[styles.header, { paddingTop: top }]}>
+    <Container
+      // Additive: the measured inset plus the padding below.
+      edges={{ top: 'additive' }}
+      style={[
+        styles.header,
+        { paddingTop: mode === 'modal' ? spacing.lg : insets.top + spacing.sm },
+      ]}>
       {mode !== 'root' && (
         <CircleButton
           icon={mode === 'modal' ? 'close' : 'chevron-back'}
@@ -117,7 +125,7 @@ export function ScreenHeader({
         </RNText>
       )}
       <View style={styles.headerRight}>{right}</View>
-    </View>
+    </Container>
   );
 }
 
