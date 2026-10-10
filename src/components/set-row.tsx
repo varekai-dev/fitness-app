@@ -1,12 +1,13 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/ui';
+import { Wheel } from '@/components/wheel';
 import type { TrackingType, WorkoutSet } from '@/db/schema';
 import type { SetValues } from '@/lib/metrics';
 import { formatDuration, formatNumber, parseDecimal, parseDuration } from '@/lib/metrics';
-import { colors, fontSize, radius, spacing } from '@/theme';
+import { colors, radius, spacing } from '@/theme';
 
 export type Inputs = {
   weight: string;
@@ -32,29 +33,42 @@ export const toValues = (i: Inputs): SetValues => {
   };
 };
 
-export const FIELDS: Record<
-  TrackingType,
-  { key: keyof Inputs; label: string; decimal?: boolean; time?: boolean }[]
-> = {
+export const FIELDS: Record<TrackingType, { key: keyof Inputs; label: string }[]> = {
   weight_reps: [
-    { key: 'weight', label: 'кг', decimal: true },
+    { key: 'weight', label: 'кг' },
     { key: 'reps', label: 'повт' },
   ],
   weighted_reps: [
-    { key: 'weight', label: '+кг', decimal: true },
+    { key: 'weight', label: '+кг' },
     { key: 'reps', label: 'повт' },
   ],
   reps: [{ key: 'reps', label: 'повт' }],
-  duration: [{ key: 'duration', label: 'хв:с', time: true }],
+  duration: [{ key: 'duration', label: 'хв:с' }],
   distance_duration: [
-    { key: 'distance', label: 'км', decimal: true },
-    { key: 'duration', label: 'хв:с', time: true },
+    { key: 'distance', label: 'км' },
+    { key: 'duration', label: 'хв:с' },
   ],
 };
 
+/** Range and step of the wheel for each field. */
+export const WHEELS: Record<
+  keyof Inputs,
+  { min: number; max: number; step: number; format: (v: number) => string }
+> = {
+  weight: { min: 0, max: 300, step: 0.5, format: (v) => formatNumber(v) },
+  reps: { min: 0, max: 100, step: 1, format: (v) => String(v) },
+  duration: { min: 0, max: 3600, step: 15, format: (v) => formatDuration(v) },
+  distance: { min: 0, max: 50, step: 0.1, format: (v) => formatNumber(v) },
+};
+
+export const numeric = (key: keyof Inputs, value: string) =>
+  (key === 'duration' ? parseDuration(value) : parseDecimal(value)) ?? 0;
+export const display = (key: keyof Inputs, n: number) =>
+  key === 'duration' ? formatDuration(n) : formatNumber(n);
+
 /**
- * One editable set. Values are saved on blur and again when ticked off,
- * so a tap on ✓ while the keyboard is still open doesn't lose the last edit.
+ * One editable set: a wheel per field, like in the player, saved as soon as a
+ * wheel settles. Ticking it off saves the values again with the toggle.
  */
 export function SetRow({
   index,
@@ -92,23 +106,27 @@ export function SetRow({
           </View>
         )}
       </Pressable>
-      {FIELDS[type].map((f) => (
-        <View key={f.key} style={styles.cell}>
-          <TextInput
-            value={inputs[f.key]}
-            onChangeText={(v) => setInputs((prev) => ({ ...prev, [f.key]: v }))}
-            onEndEditing={() => onSave(toValues(inputs))}
-            keyboardType={
-              f.decimal ? 'decimal-pad' : f.time ? 'numbers-and-punctuation' : 'number-pad'
-            }
-            selectTextOnFocus
-            placeholder="—"
-            placeholderTextColor={colors.textMuted}
-            style={[styles.input, done && showCheck && styles.inputDone]}
-          />
-          <Text variant="muted">{f.label}</Text>
-        </View>
-      ))}
+      <View style={styles.fields}>
+        {FIELDS[type].map((f) => {
+          const w = WHEELS[f.key];
+          return (
+            <Wheel
+              key={f.key}
+              value={numeric(f.key, inputs[f.key])}
+              min={w.min}
+              max={w.max}
+              step={w.step}
+              unit={f.label}
+              format={w.format}
+              onChange={(v) => {
+                const next = { ...inputs, [f.key]: display(f.key, v) };
+                setInputs(next);
+                onSave(toValues(next));
+              }}
+            />
+          );
+        })}
+      </View>
       {showCheck ? (
         <Pressable
           onPress={() => onToggle(toValues(inputs))}
@@ -146,23 +164,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cell: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  input: {
-    flex: 1,
-    minWidth: 0,
-    backgroundColor: colors.surfaceRaised,
-    color: colors.text,
-    fontSize: fontSize.lg,
-    fontWeight: '700',
-    textAlign: 'center',
-    borderRadius: radius.md,
-    paddingVertical: spacing.sm + 2,
-  },
+  fields: { flex: 1, flexDirection: 'row', gap: spacing.sm },
   pr: {
     position: 'absolute',
     top: -5,
@@ -174,7 +176,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  inputDone: { backgroundColor: colors.accentSoft, color: colors.accent },
   check: {
     width: 44,
     height: 44,

@@ -1,6 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { memo, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { LogBox, StyleSheet, View } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -19,6 +19,10 @@ const VISIBLE = 3; // rows shown; the middle one is selected
 const PAD = (ITEM * (VISIBLE - 1)) / 2;
 
 const tick = () => Haptics.selectionAsync();
+
+// Wheels sit inside scrolling screens (the workout editor). Each one has a fixed
+// height and scrolls on its own, so the nesting warning doesn't apply to it.
+LogBox.ignoreLogs(['VirtualizedLists should never be nested inside plain ScrollViews']);
 
 /**
  * Vertical wheel picker in the style of the iOS clock. Scrolling and the fade of

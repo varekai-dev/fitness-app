@@ -14,32 +14,10 @@ import Svg, { Circle } from 'react-native-svg';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { Wheel } from '@/components/wheel';
-import { FIELDS, toInputs, toValues, type Inputs } from '@/components/set-row';
+import { display, FIELDS, numeric, toInputs, toValues, WHEELS } from '@/components/set-row';
 import type { TrackingType, WorkoutSet } from '@/db/schema';
-import {
-  formatDuration,
-  formatNumber,
-  parseDecimal,
-  parseDuration,
-  type SetValues,
-} from '@/lib/metrics';
+import type { SetValues } from '@/lib/metrics';
 import { colors, radius, spacing } from '@/theme';
-
-/** Range and step of the wheel for each field. */
-const WHEELS: Record<
-  keyof Inputs,
-  { min: number; max: number; step: number; format: (v: number) => string }
-> = {
-  weight: { min: 0, max: 300, step: 0.5, format: (v) => formatNumber(v) },
-  reps: { min: 0, max: 100, step: 1, format: (v) => String(v) },
-  duration: { min: 0, max: 3600, step: 15, format: (v) => formatDuration(v) },
-  distance: { min: 0, max: 50, step: 0.1, format: (v) => formatNumber(v) },
-};
-
-const numeric = (key: keyof Inputs, value: string) =>
-  (key === 'duration' ? parseDuration(value) : parseDecimal(value)) ?? 0;
-const display = (key: keyof Inputs, n: number) =>
-  key === 'duration' ? formatDuration(n) : formatNumber(n);
 
 /**
  * Values of the set in progress, inside the player card: one wheel per field,

@@ -37,10 +37,11 @@ import {
   type getLastSets,
   type WorkoutDetail,
 } from '@/db/workouts';
+import type { TrackingType } from '@/db/schema';
 import { useRestTimer } from '@/hooks/use-rest-timer';
 import { exerciseKcal, formatKcal, workoutKcal } from '@/lib/calories';
 import { formatSetTarget, formatTargets } from '@/lib/labels';
-import { formatSet, isBetter, setMetric, type SetValues } from '@/lib/metrics';
+import { formatNumber, formatSet, isBetter, setMetric, type SetValues } from '@/lib/metrics';
 import { colors, fontSize, radius, spacing } from '@/theme';
 import { exerciseImageSource } from '@/lib/exercise-images';
 
@@ -48,6 +49,21 @@ type WorkoutExercise = WorkoutDetail['exercises'][number];
 type Extra = { last: Awaited<ReturnType<typeof getLastSets>>; record: number | null };
 
 const isDone = (we: WorkoutExercise) => we.sets.every((s) => s.completedAt !== null);
+
+/** A past set spelled out, so "12 кг · 5 повт." can't be read as 5 sets. */
+function formatLastSet(type: TrackingType, s: SetValues) {
+  const reps = `${s.reps ?? 0} повт.`;
+  switch (type) {
+    case 'weight_reps':
+      return `${formatNumber(s.weightKg ?? 0)} кг · ${reps}`;
+    case 'weighted_reps':
+      return s.weightKg ? `+${formatNumber(s.weightKg)} кг · ${reps}` : reps;
+    case 'reps':
+      return reps;
+    default:
+      return formatSet(type, s);
+  }
+}
 
 /** First exercise at or after `from` (wrapping) that still has sets to do. */
 function nextIncomplete(exercises: WorkoutExercise[], from: number) {
@@ -176,6 +192,10 @@ export function WorkoutPlayer({
   const type = current.exercise.trackingType;
   const currentSet = current.sets.find((s) => s.completedAt === null) ?? null;
   const setNumber = currentSet ? current.sets.indexOf(currentSet) + 1 : current.sets.length;
+  // Same set of the previous session (or its last one, if it had fewer sets),
+  // shown over the photo as the number to beat.
+  const lastSets = extra.last?.sets ?? [];
+  const lastSame = lastSets[setNumber - 1] ?? lastSets.at(-1) ?? null;
 
   // Only the best completed set of this session can be the PR.
   let bestId: number | null = null;
@@ -357,7 +377,7 @@ export function WorkoutPlayer({
         </Text>
         <Text variant="caption" style={styles.subtle} numberOfLines={2}>
           Ціль: {formatTargets(current)}
-          {extra.last
+          {!currentSet && extra.last
             ? `\nМинулого разу: ${extra.last.sets.map((s) => formatSet(type, s)).join(', ')}`
             : ''}
         </Text>
@@ -442,9 +462,19 @@ export function WorkoutPlayer({
             <Ionicons name="barbell" size={110} color={colors.accentText} />
           </LinearGradient>
         )}
+        {!showVideo && lastSame && (
+          <Glass tint="rgba(0,0,0,0.55)" style={styles.last}>
+            <Text variant="caption" style={styles.lastLabel}>
+              МИНУЛОГО РАЗУ
+            </Text>
+            <Text variant="body" style={styles.lastValue} numberOfLines={1}>
+              {formatLastSet(type, lastSame)}
+            </Text>
+          </Glass>
+        )}
         {!showVideo && (
           <Glass tint="rgba(0,0,0,0.55)" style={styles.muscles}>
-            <MuscleIcon group={current.exercise.muscleGroup} size={64} />
+            <MuscleIcon group={current.exercise.muscleGroup} size={52} />
           </Glass>
         )}
       </Animated.View>
@@ -452,16 +482,6 @@ export function WorkoutPlayer({
       <View style={[styles.topBar, { top: insets.top + spacing.sm }]}>
         <CircleButton icon="chevron-back" background="rgba(0,0,0,0.35)" onPress={goBack} />
         <View style={styles.topRight}>
-          <View style={styles.clockRow}>
-            <Glass tint="rgba(0,0,0,0.35)" style={styles.clock}>
-              <Ionicons
-                name={paused ? 'pause' : 'time-outline'}
-                size={14}
-                color={paused ? colors.accent : colors.text}
-              />
-              <Elapsed workout={workout} style={styles.clockText} />
-            </Glass>
-          </View>
           {youtubeUrl && (
             <CircleButton
               icon={showVideo ? 'image-outline' : 'logo-youtube'}
@@ -469,6 +489,14 @@ export function WorkoutPlayer({
               onPress={toggleVideo}
             />
           )}
+          <Glass tint="rgba(0,0,0,0.35)" style={styles.clock}>
+            <Ionicons
+              name={paused ? 'pause' : 'time-outline'}
+              size={14}
+              color={paused ? colors.accent : colors.text}
+            />
+            <Elapsed workout={workout} style={styles.clockText} />
+          </Glass>
         </View>
       </View>
 
@@ -587,14 +615,29 @@ const styles = StyleSheet.create({
   videoWrap: { backgroundColor: '#000', justifyContent: 'center', paddingBottom: 40 },
   heroPlaceholder: { alignItems: 'center', justifyContent: 'center', paddingBottom: 40 },
   // Sits just above the part of the photo the sheet covers.
+  // Same height as the last-time badge opposite, so the bottom corners line up.
   muscles: {
     position: 'absolute',
     right: spacing.lg,
     bottom: 40 + spacing.md,
-    paddingVertical: spacing.sm,
+    height: 64,
+    justifyContent: 'center',
     paddingHorizontal: spacing.md,
     borderRadius: radius.md,
   },
+  // Bottom-left, opposite the muscle badge; narrow enough to stay clear of it.
+  last: {
+    position: 'absolute',
+    left: spacing.lg,
+    bottom: 40 + spacing.md,
+    maxWidth: '60%',
+    height: 64,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+  },
+  lastLabel: { color: colors.textSecondary, fontSize: 11, fontWeight: '700' },
+  lastValue: { color: colors.text, fontWeight: '800' },
   player: {
     backgroundColor: colors.surface,
     borderTopLeftRadius: radius.lg + 10,
@@ -693,16 +736,21 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
   },
-  // Clock row matches the back button's height so both stay vertically centred.
-  topRight: { alignItems: 'flex-end', gap: spacing.sm },
-  clockRow: { height: 44, justifyContent: 'center' },
+  // Video and clock sit in one row with the back button, all 44 high.
+  topRight: { flexDirection: 'row', gap: spacing.sm },
   clock: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
+    height: 44,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
   },
-  clockText: { color: colors.text, fontSize: fontSize.md, fontWeight: '700' },
+  // Tabular digits keep the pill from jittering as the seconds tick.
+  clockText: {
+    color: colors.text,
+    fontSize: fontSize.md,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
 });
