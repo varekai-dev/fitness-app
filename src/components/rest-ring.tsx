@@ -35,7 +35,7 @@ export function RestRing({ remainingSec, totalSec }: { remainingSec: number; tot
           cx={SIZE / 2}
           cy={SIZE / 2}
           r={R}
-          stroke={colors.onAccentFaint}
+          stroke={colors.surfaceRaised}
           strokeWidth={STROKE}
           fill="none"
         />
@@ -43,7 +43,7 @@ export function RestRing({ remainingSec, totalSec }: { remainingSec: number; tot
           cx={SIZE / 2}
           cy={SIZE / 2}
           r={R}
-          stroke={colors.accentText}
+          stroke={colors.accent}
           strokeWidth={STROKE}
           strokeLinecap="round"
           strokeDasharray={LENGTH}
@@ -71,9 +71,9 @@ const styles = StyleSheet.create({
   },
   // Starts the arc at 12 o'clock.
   ring: { position: 'absolute', transform: [{ rotate: '-90deg' }] },
-  time: { color: colors.accentText, fontSize: 52 },
+  time: { color: colors.text, fontSize: 52 },
   label: {
-    color: colors.onAccentMuted,
+    color: colors.textSecondary,
     fontSize: fontSize.xs,
     fontWeight: '700',
     letterSpacing: 1,

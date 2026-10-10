@@ -109,8 +109,9 @@ export function PlayerSheet({
             </Pressable>
           </View>
         </GestureDetector>
+        {/* Pulled up over the card's bottom-inset padding, which only matters collapsed. */}
         <ScrollView
-          style={styles.flex}
+          style={[styles.flex, { marginTop: -bottomInset }]}
           contentContainerStyle={[styles.content, { paddingBottom: bottomInset + spacing.xl }]}
           keyboardShouldPersistTaps="handled">
           {children}
@@ -159,7 +160,8 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     bottom: 0,
-    backgroundColor: colors.background,
+    // Matches the player card, so the list reads as part of the same card.
+    backgroundColor: colors.surface,
     borderTopLeftRadius: radius.lg + 10,
     borderTopRightRadius: radius.lg + 10,
   },
@@ -171,6 +173,6 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
     paddingHorizontal: spacing.lg,
   },
-  handle: { width: 40, height: 5, borderRadius: 3, backgroundColor: 'rgba(20,20,20,0.3)' },
-  content: { paddingHorizontal: spacing.md, paddingTop: spacing.xl, gap: spacing.md },
+  handle: { width: 40, height: 5, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.3)' },
+  content: { paddingHorizontal: spacing.md, gap: spacing.md },
 });

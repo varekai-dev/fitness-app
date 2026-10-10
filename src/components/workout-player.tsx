@@ -56,7 +56,7 @@ function nextIncomplete(exercises: WorkoutExercise[], from: number) {
 }
 
 /**
- * Active workout as a "player": the current exercise's photo on top and an accent
+ * Active workout as a "player": the current exercise's photo on top and a
  * card that walks through sets one by one — enter what you did, tap "next set",
  * rest with a countdown, repeat. Remaining exercises are queued below.
  */
@@ -355,7 +355,9 @@ export function WorkoutPlayer({
                   disabled={!done}
                   onPress={() => undoSet(s.id, `Підхід ${i + 1}: ${formatSet(type, s)}`)}
                   style={[styles.chip, done && styles.chipDone, isCurrent && styles.chipCurrent]}>
-                  {s.id === prSetId && <Ionicons name="trophy" size={11} color={colors.accent} />}
+                  {s.id === prSetId && (
+                    <Ionicons name="trophy" size={11} color={colors.accentText} />
+                  )}
                   <Text
                     variant="caption"
                     style={[styles.chipText, done && styles.chipTextDone]}
@@ -462,7 +464,7 @@ export function WorkoutPlayer({
                 hitSlop={6}
                 accessibilityLabel="Пропустити вправу"
                 style={({ pressed }) => [styles.skipExercise, pressed && styles.pressed]}>
-                <Ionicons name="play-forward" size={16} color={colors.accentText} />
+                <Ionicons name="play-forward" size={16} color={colors.text} />
               </Pressable>
             )}
             {body}
@@ -535,7 +537,7 @@ function PillButton({
   disabled?: boolean;
   onPress: () => void;
 }) {
-  const color = primary ? colors.accent : colors.accentText;
+  const color = primary ? colors.accentText : colors.text;
   return (
     <Pressable
       onPress={onPress}
@@ -563,7 +565,7 @@ const styles = StyleSheet.create({
   videoWrap: { backgroundColor: '#000', justifyContent: 'center', paddingBottom: 40 },
   heroPlaceholder: { alignItems: 'center', justifyContent: 'center', paddingBottom: 40 },
   player: {
-    backgroundColor: colors.accent,
+    backgroundColor: colors.surface,
     borderTopLeftRadius: radius.lg + 10,
     borderTopRightRadius: radius.lg + 10,
     padding: spacing.xl,
@@ -578,13 +580,13 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: radius.pill,
-    backgroundColor: colors.onAccentFaint,
+    backgroundColor: colors.surfaceRaised,
     alignItems: 'center',
     justifyContent: 'center',
   },
   // Overline and title stay clear of the skip-exercise button in the corner.
-  overline: { color: colors.onAccentMuted, fontWeight: '600', paddingRight: 44 },
-  title: { color: colors.accentText, paddingRight: 44 },
+  overline: { color: colors.textSecondary, fontWeight: '600', paddingRight: 44 },
+  title: { color: colors.text, paddingRight: 44 },
   // Centred text keeps equal room on both sides of the corner button.
   centered: { textAlign: 'center', paddingHorizontal: 44 },
   restRing: { marginVertical: spacing.lg },
@@ -594,16 +596,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderRadius: radius.pill,
-    backgroundColor: colors.onAccentFaint,
+    backgroundColor: colors.surfaceRaised,
   },
-  extendText: { color: colors.accentText, fontWeight: '700' },
+  extendText: { color: colors.text, fontWeight: '700' },
   hint: {
-    color: colors.onAccentMuted,
+    color: colors.textSecondary,
     fontSize: 11,
     textAlign: 'center',
     marginTop: spacing.xs,
   },
-  subtle: { color: colors.onAccentMuted },
+  subtle: { color: colors.textSecondary },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.sm },
   chip: {
     flexDirection: 'row',
@@ -614,20 +616,20 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
-    backgroundColor: colors.onAccentFaint,
+    backgroundColor: colors.surfaceRaised,
   },
-  chipDone: { backgroundColor: colors.accentText },
-  chipCurrent: { borderWidth: 1.5, borderColor: colors.accentText },
-  chipText: { color: colors.accentText, fontSize: 12, fontWeight: '700' },
-  chipTextDone: { color: colors.accent },
+  chipDone: { backgroundColor: colors.accent },
+  chipCurrent: { borderWidth: 1.5, borderColor: colors.accent },
+  chipText: { color: colors.text, fontSize: 12, fontWeight: '700' },
+  chipTextDone: { color: colors.accentText },
   track: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.onAccentFaint,
+    backgroundColor: colors.surfaceRaised,
     marginTop: spacing.lg,
     overflow: 'hidden',
   },
-  trackFill: { height: '100%', backgroundColor: colors.accentText, borderRadius: 3 },
+  trackFill: { height: '100%', backgroundColor: colors.accent, borderRadius: 3 },
   trackLabels: { justifyContent: 'space-between' },
   actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
   pill: {
@@ -639,14 +641,14 @@ const styles = StyleSheet.create({
     minHeight: 52,
     borderRadius: radius.pill,
   },
-  pillPrimary: { backgroundColor: colors.accentText },
-  pillSecondary: { backgroundColor: colors.onAccentFaint },
+  pillPrimary: { backgroundColor: colors.accent },
+  pillSecondary: { backgroundColor: colors.surfaceRaised },
   pillText: { fontWeight: '800', fontSize: fontSize.sm },
   queueItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceRaised,
     borderRadius: radius.lg,
     padding: spacing.sm,
     paddingRight: spacing.lg,

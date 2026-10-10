@@ -37,7 +37,7 @@ function step(key: keyof Inputs, value: string, direction: 1 | -1): string {
 }
 
 /**
- * Big inputs with −/+ steppers for the set in progress, shown inside the accent
+ * Big inputs with −/+ steppers for the set in progress, shown inside the
  * player card. Keyed by set id, so it starts from that set's prefilled values.
  * `children` renders below the inputs and gets a reader for the values entered.
  */
@@ -63,7 +63,7 @@ export function PlayerSetEditor({
               hitSlop={6}
               style={styles.stepper}
               onPress={() => update(f.key, step(f.key, inputs[f.key], -1))}>
-              <Ionicons name="remove" size={18} color={colors.accentText} />
+              <Ionicons name="remove" size={18} color={colors.text} />
             </Pressable>
             <View style={styles.valueBox}>
               <TextInput
@@ -74,7 +74,7 @@ export function PlayerSetEditor({
                 }
                 selectTextOnFocus
                 placeholder="—"
-                placeholderTextColor={colors.onAccentMuted}
+                placeholderTextColor={colors.textMuted}
                 style={styles.value}
               />
               <Text variant="caption" style={styles.unit}>
@@ -85,7 +85,7 @@ export function PlayerSetEditor({
               hitSlop={6}
               style={styles.stepper}
               onPress={() => update(f.key, step(f.key, inputs[f.key], 1))}>
-              <Ionicons name="add" size={18} color={colors.accentText} />
+              <Ionicons name="add" size={18} color={colors.text} />
             </Pressable>
           </View>
         ))}
@@ -177,7 +177,7 @@ function HoldButton({ icon, holdIcon, label, onPress, onHold, disabled }: MainBu
           cx={RING / 2}
           cy={RING / 2}
           r={RING_R}
-          stroke={colors.accentText}
+          stroke={colors.accent}
           strokeWidth={RING_STROKE}
           strokeLinecap="round"
           strokeDasharray={RING_LENGTH}
@@ -192,7 +192,11 @@ function HoldButton({ icon, holdIcon, label, onPress, onHold, disabled }: MainBu
         disabled={disabled}
         accessibilityLabel={label}
         style={({ pressed }) => [styles.main, (pressed || disabled) && styles.dimmed]}>
-        <Ionicons name={holding && holdIcon ? holdIcon : icon} size={34} color={colors.accent} />
+        <Ionicons
+          name={holding && holdIcon ? holdIcon : icon}
+          size={34}
+          color={colors.accentText}
+        />
       </Pressable>
     </View>
   );
@@ -206,7 +210,7 @@ function TransportIcon({ icon, label, onPress, disabled }: TransportButton) {
       hitSlop={8}
       accessibilityLabel={label}
       style={({ pressed }) => [styles.side, (pressed || disabled) && styles.dimmed]}>
-      <Ionicons name={icon} size={24} color={colors.accentText} />
+      <Ionicons name={icon} size={24} color={colors.text} />
     </Pressable>
   );
 }
@@ -218,7 +222,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    backgroundColor: 'rgba(0,0,0,0.12)',
+    backgroundColor: 'rgba(0,0,0,0.25)',
     borderRadius: radius.md,
     padding: spacing.xs,
   },
@@ -226,20 +230,20 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: radius.pill,
-    backgroundColor: colors.onAccentFaint,
+    backgroundColor: colors.surfaceRaised,
     alignItems: 'center',
     justifyContent: 'center',
   },
   valueBox: { flex: 1, alignItems: 'center' },
   value: {
     alignSelf: 'stretch',
-    color: colors.accentText,
+    color: colors.text,
     fontSize: fontSize.xxl,
     fontWeight: '800',
     textAlign: 'center',
     paddingVertical: 2,
   },
-  unit: { color: colors.onAccentMuted, fontSize: 11, marginTop: -2 },
+  unit: { color: colors.textSecondary, fontSize: 11, marginTop: -2 },
   transport: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -250,7 +254,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: radius.pill,
-    backgroundColor: colors.onAccentFaint,
+    backgroundColor: colors.surfaceRaised,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -261,7 +265,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: radius.pill,
-    backgroundColor: colors.accentText,
+    backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
