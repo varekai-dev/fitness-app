@@ -105,10 +105,16 @@ export function PlayerSheet({
         <Animated.View pointerEvents="none" style={[styles.surface, surfaceStyle]} />
         <GestureDetector gesture={pan}>
           <View onLayout={(e) => setHeaderH(e.nativeEvent.layout.height)}>
-            <Animated.View style={headerStyle}>{header}</Animated.View>
-            <Pressable hitSlop={12} style={styles.handleArea} onPress={() => snap(!expanded.get())}>
-              <View style={styles.handle} />
-            </Pressable>
+            {/* The handle scales with the card so it stays on the card's top edge. */}
+            <Animated.View style={headerStyle}>
+              {header}
+              <Pressable
+                hitSlop={12}
+                style={styles.handleArea}
+                onPress={() => snap(!expanded.get())}>
+                <View style={styles.handle} />
+              </Pressable>
+            </Animated.View>
           </View>
         </GestureDetector>
         <ScrollView
