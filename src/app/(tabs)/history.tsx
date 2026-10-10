@@ -4,13 +4,18 @@ import { useTabBarSpace } from '@/components/floating-tab-bar';
 import { Backdrop } from '@/components/glass';
 import { WorkoutSummaryCard } from '@/components/workout-summary-card';
 import { EmptyState, Loading, ScreenHeader } from '@/components/ui';
+import { listBodyWeights } from '@/db/body-weight';
 import { listFinishedWorkouts } from '@/db/workouts';
+import { estimateKcal } from '@/lib/calories';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { colors, spacing } from '@/theme';
 
 export default function HistoryScreen() {
   const tabBarSpace = useTabBarSpace();
-  const { data } = useDbQuery(listFinishedWorkouts);
+  const { data } = useDbQuery(async () => {
+    const [workouts, weights] = await Promise.all([listFinishedWorkouts(), listBodyWeights()]);
+    return { workouts, weights };
+  });
   if (!data) return <Loading />;
   return (
     <View style={styles.root}>
@@ -18,9 +23,11 @@ export default function HistoryScreen() {
       <ScreenHeader title="Історія" mode="root" />
       <FlatList
         contentContainerStyle={[styles.content, { paddingBottom: tabBarSpace }]}
-        data={data}
+        data={data.workouts}
         keyExtractor={(w) => String(w.id)}
-        renderItem={({ item }) => <WorkoutSummaryCard workout={item} />}
+        renderItem={({ item }) => (
+          <WorkoutSummaryCard workout={item} kcal={estimateKcal(item, data.weights)} />
+        )}
         ListEmptyComponent={
           <EmptyState
             icon="time"

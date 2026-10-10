@@ -4,13 +4,21 @@ import { StyleSheet, View } from 'react-native';
 
 import { Card, Text } from '@/components/ui';
 import type { listFinishedWorkouts } from '@/db/workouts';
+import { formatKcal } from '@/lib/calories';
 import { formatShortDate } from '@/lib/labels';
 import { formatDuration, workoutDurationMs } from '@/lib/metrics';
 import { colors, radius, spacing } from '@/theme';
 
 type FinishedWorkout = Awaited<ReturnType<typeof listFinishedWorkouts>>[number];
 
-export function WorkoutSummaryCard({ workout }: { workout: FinishedWorkout }) {
+export function WorkoutSummaryCard({
+  workout,
+  kcal,
+}: {
+  workout: FinishedWorkout;
+  /** Estimated energy, omitted when no body weight is known. */
+  kcal?: number | null;
+}) {
   const totalSets = workout.exercises.reduce((n, e) => n + e.sets.length, 0);
   const done = workout.exercises.filter((e) => e.sets.length > 0);
   const minutes = formatDuration(workoutDurationMs(workout, workout.startedAt) / 1000);
@@ -31,7 +39,7 @@ export function WorkoutSummaryCard({ workout }: { workout: FinishedWorkout }) {
           {workout.dayName}
         </Text>
         <Text variant="muted">
-          {minutes} · {totalSets} підх. ·{' '}
+          {minutes} · {totalSets} підх. ·{kcal ? ` ${formatKcal(kcal)} ·` : ''}{' '}
           <Text variant="muted" style={styles.accent}>
             {workout.programName}
           </Text>

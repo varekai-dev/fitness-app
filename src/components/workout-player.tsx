@@ -35,6 +35,7 @@ import {
   type WorkoutDetail,
 } from '@/db/workouts';
 import { useRestTimer } from '@/hooks/use-rest-timer';
+import { exerciseKcal, formatKcal, workoutKcal } from '@/lib/calories';
 import { formatSetTarget, formatTargets } from '@/lib/labels';
 import { formatSet, isBetter, setMetric, type SetValues } from '@/lib/metrics';
 import { colors, fontSize, radius, spacing } from '@/theme';
@@ -59,7 +60,16 @@ function nextIncomplete(exercises: WorkoutExercise[], from: number) {
  * card that walks through sets one by one — enter what you did, tap "next set",
  * rest with a countdown, repeat. Remaining exercises are queued below.
  */
-export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; extras: Extra[] }) {
+export function WorkoutPlayer({
+  workout,
+  extras,
+  bodyKg,
+}: {
+  workout: WorkoutDetail;
+  extras: Extra[];
+  /** Null until a body weight is logged; calories are hidden then. */
+  bodyKg: number | null;
+}) {
   const insets = useSafeAreaInsets();
   const timer = useRestTimer();
   const exercises = workout.exercises;
@@ -276,6 +286,11 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
       <Track progress={progress} />
       <Row style={styles.trackLabels}>
         <Elapsed workout={workout} style={styles.subtle} />
+        {bodyKg !== null && (
+          <Text variant="caption" style={styles.subtle}>
+            {formatKcal(workoutKcal(exercises, bodyKg))}
+          </Text>
+        )}
         <Text variant="caption" style={styles.subtle}>
           {doneSets} / {allSets.length} підх.
         </Text>
@@ -478,7 +493,11 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
                     {we.exercise.name}
                   </Text>
                   <Text variant="muted" numberOfLines={1}>
-                    {done ? 'Виконано' : formatTargets(we)}
+                    {done
+                      ? bodyKg !== null
+                        ? `Виконано · ${formatKcal(exerciseKcal(we.exercise.trackingType, we.sets, we.restSec, bodyKg))}`
+                        : 'Виконано'
+                      : formatTargets(we)}
                   </Text>
                 </View>
                 {done && <Ionicons name="checkmark-circle" size={22} color={colors.accent} />}

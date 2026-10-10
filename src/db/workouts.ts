@@ -41,10 +41,20 @@ export const listFinishedWorkouts = () =>
     with: {
       exercises: {
         orderBy: [asc(workoutExercises.position)],
-        columns: { id: true },
+        columns: { id: true, restSec: true },
         with: {
-          exercise: { columns: { name: true } },
-          sets: { columns: { id: true } },
+          exercise: { columns: { name: true, trackingType: true } },
+          // Values feed the calorie estimate.
+          sets: {
+            columns: {
+              id: true,
+              weightKg: true,
+              reps: true,
+              durationSec: true,
+              distanceKm: true,
+              completedAt: true,
+            },
+          },
         },
       },
     },

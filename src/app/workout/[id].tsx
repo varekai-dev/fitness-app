@@ -27,15 +27,18 @@ import {
   updateSet,
   type WorkoutDetail,
 } from '@/db/workouts';
+import { listBodyWeights } from '@/db/body-weight';
 import { useDbQuery } from '@/hooks/use-db-query';
+import { bodyWeightAt, exerciseKcal, formatKcal, workoutKcal } from '@/lib/calories';
 import { formatDate, formatTargets } from '@/lib/labels';
 import { formatDuration, formatSet, isBetter, setMetric, workoutDurationMs } from '@/lib/metrics';
 import { computeProgress, recordBefore } from '@/lib/progress';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 async function loadWorkout(id: number) {
-  const workout = await getWorkout(id);
+  const [workout, weights] = await Promise.all([getWorkout(id), listBodyWeights()]);
   if (!workout) return null;
+  const bodyKg = bodyWeightAt(weights, workout.startedAt);
   const extras = await Promise.all(
     workout.exercises.map(async (we) => {
       const [last, history] = await Promise.all([
@@ -49,7 +52,7 @@ async function loadWorkout(id: number) {
       };
     }),
   );
-  return { workout, extras };
+  return { workout, extras, bodyKg };
 }
 
 export default function WorkoutScreen() {
@@ -66,18 +69,20 @@ export default function WorkoutScreen() {
     );
   }
   if (data.workout.finishedAt === null) {
-    return <WorkoutPlayer workout={data.workout} extras={data.extras} />;
+    return <WorkoutPlayer workout={data.workout} extras={data.extras} bodyKg={data.bodyKg} />;
   }
-  return <FinishedWorkout workout={data.workout} extras={data.extras} />;
+  return <FinishedWorkout workout={data.workout} extras={data.extras} bodyKg={data.bodyKg} />;
 }
 
 /** A past workout: every exercise and set is editable in place. */
 function FinishedWorkout({
   workout,
   extras,
+  bodyKg,
 }: {
   workout: WorkoutDetail;
   extras: NonNullable<Awaited<ReturnType<typeof loadWorkout>>>['extras'];
+  bodyKg: number | null;
 }) {
   const insets = useSafeAreaInsets();
   const doneSets = workout.exercises.reduce((n, e) => n + e.sets.length, 0);
@@ -129,7 +134,20 @@ function FinishedWorkout({
               {String(doneSets)}
             </Text>
           </View>
+          <View style={styles.stat}>
+            <Text variant="muted" style={styles.statLabel}>
+              ККАЛ
+            </Text>
+            <Text variant="heading" style={styles.statValue}>
+              {bodyKg !== null ? `~${Math.round(workoutKcal(workout.exercises, bodyKg))}` : '—'}
+            </Text>
+          </View>
         </Row>
+        {bodyKg === null && (
+          <Text variant="muted" style={styles.hint}>
+            Додай вагу тіла, щоб рахувати калорії.
+          </Text>
+        )}
 
         {workout.exercises.map((we, i) => (
           <ExerciseBlock
@@ -139,6 +157,11 @@ function FinishedWorkout({
             active={false}
             last={extras[i].last}
             record={extras[i].record}
+            kcal={
+              bodyKg !== null
+                ? exerciseKcal(we.exercise.trackingType, we.sets, we.restSec, bodyKg)
+                : null
+            }
             onSetDone={() => {}}
           />
         ))}
@@ -157,6 +180,7 @@ function ExerciseBlock({
   active,
   last,
   record,
+  kcal,
   onSetDone,
 }: {
   index: number;
@@ -164,6 +188,7 @@ function ExerciseBlock({
   active: boolean;
   last: Awaited<ReturnType<typeof getLastSets>>;
   record: number | null;
+  kcal: number | null;
   onSetDone: () => void;
 }) {
   const type = we.exercise.trackingType;
@@ -188,7 +213,10 @@ function ExerciseBlock({
           <Text variant="heading" numberOfLines={2}>
             {we.exercise.name}
           </Text>
-          <Text variant="muted">{formatTargets(we)}</Text>
+          <Text variant="muted">
+            {formatTargets(we)}
+            {kcal ? ` · ${formatKcal(kcal)}` : ''}
+          </Text>
         </View>
         {active && allDone && <Ionicons name="checkmark-circle" size={24} color={colors.accent} />}
       </Row>

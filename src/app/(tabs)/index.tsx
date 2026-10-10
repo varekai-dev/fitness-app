@@ -24,6 +24,7 @@ import { listBodyWeights } from '@/db/body-weight';
 import { getActiveProgram, getNextDayId } from '@/db/programs';
 import { getActiveWorkout, listFinishedWorkouts, startWorkout } from '@/db/workouts';
 import { useDbQuery } from '@/hooks/use-db-query';
+import { estimateKcal, formatKcal } from '@/lib/calories';
 import {
   formatLongDate,
   formatShortDate,
@@ -70,6 +71,14 @@ export default function HomeScreen() {
     0,
   );
   const today = weekdayIndex(loadedAt);
+  // Calories per weekday this week; null when no body weight has been logged.
+  const weekKcal: number[] | null = bodyWeights.length > 0 ? Array(7).fill(0) : null;
+  if (weekKcal) {
+    for (const w of thisWeek)
+      weekKcal[weekdayIndex(w.startedAt)] += estimateKcal(w, bodyWeights) ?? 0;
+  }
+  const weekKcalTotal = weekKcal?.reduce((a, b) => a + b, 0) ?? 0;
+  const weekKcalMax = Math.max(1, ...(weekKcal ?? []));
 
   const start = async () => {
     if (!selectedDay) return;
@@ -211,6 +220,39 @@ export default function HomeScreen() {
         </Row>
       </Card>
 
+      <Card>
+        <Row style={styles.spaceBetween}>
+          <Row>
+            <Ionicons name="flame" size={20} color={colors.accent} />
+            <Text variant="heading">Калорії за тиждень</Text>
+          </Row>
+          {weekKcal && <Text variant="heading">{formatKcal(weekKcalTotal)}</Text>}
+        </Row>
+        {weekKcal ? (
+          <Row style={styles.kcalBars}>
+            {WEEKDAY_SHORT.map((label, i) => (
+              <View key={label} style={styles.kcalDay}>
+                <View style={styles.kcalTrack}>
+                  <View
+                    style={[
+                      styles.kcalFill,
+                      { height: `${(weekKcal[i] / weekKcalMax) * 100}%` },
+                      weekKcal[i] === 0 && styles.kcalEmpty,
+                    ]}
+                  />
+                </View>
+                <Text variant="muted" style={i === today && styles.today}>
+                  {label}
+                </Text>
+              </View>
+            ))}
+          </Row>
+        ) : (
+          <Text variant="muted">Додай вагу тіла, щоб рахувати спалені калорії.</Text>
+        )}
+        <Text variant="muted">Орієнтовна оцінка за вагою тіла та обсягом роботи.</Text>
+      </Card>
+
       <Card onPress={() => router.push('/body-weight')}>
         <Row style={styles.spaceBetween}>
           <Row>
@@ -254,7 +296,11 @@ export default function HomeScreen() {
       {finished.length === 0 ? (
         <EmptyState icon="time" title="Ще немає завершених тренувань" />
       ) : (
-        finished.slice(0, 3).map((w) => <WorkoutSummaryCard key={w.id} workout={w} />)
+        finished
+          .slice(0, 3)
+          .map((w) => (
+            <WorkoutSummaryCard key={w.id} workout={w} kcal={estimateKcal(w, bodyWeights)} />
+          ))
       )}
     </Screen>
   );
@@ -388,4 +434,9 @@ const styles = StyleSheet.create({
   },
   weekDotDone: { backgroundColor: colors.accent },
   weekDotToday: { borderWidth: 1.5, borderColor: colors.accent },
+  kcalBars: { justifyContent: 'space-between', marginTop: spacing.sm },
+  kcalDay: { alignItems: 'center', gap: spacing.xs },
+  kcalTrack: { width: 22, height: 72, justifyContent: 'flex-end' },
+  kcalFill: { width: '100%', minHeight: 4, borderRadius: 6, backgroundColor: colors.accent },
+  kcalEmpty: { backgroundColor: colors.glassBorder },
 });
