@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as WebBrowser from 'expo-web-browser';
-import { useState, type ReactNode } from 'react';
+import { useState, type ComponentProps, type ReactNode } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { interpolate, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -201,12 +201,7 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
     onPress: goBackStep,
     disabled: !lastDoneHere && prevExerciseId === null,
   };
-  const nextExercise = {
-    icon: 'play-skip-forward' as const,
-    label: 'Наступна вправа',
-    onPress: goToNextExercise,
-    disabled: exercises.length < 2,
-  };
+  const canSkipExercise = exercises.length > 1;
   // Tap pauses or resumes; holding fills a ring, turns into stop and asks to finish.
   const pauseStop = {
     icon: paused ? ('play' as const) : ('pause' as const),
@@ -215,9 +210,9 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
     onPress: togglePause,
     onHold: finish,
   };
-  const transport = (
+  const transport = (next: Omit<ComponentProps<typeof Transport>['right'], 'icon'>) => (
     <>
-      <Transport left={back} main={pauseStop} right={nextExercise} />
+      <Transport left={back} main={pauseStop} right={{ ...next, icon: 'play-skip-forward' }} />
       {paused && (
         <Text variant="caption" style={styles.hint}>
           Утримуйте кнопку, щоб завершити тренування
@@ -300,7 +295,7 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
           Далі: {current.exercise.name} · підхід {setNumber} з {current.sets.length}
         </Text>
         <Track progress={progress} />
-        {transport}
+        {transport({ label: 'Пропустити відпочинок', onPress: timer.stop })}
         <View style={styles.actions}>
           <PillButton label="+15 с" onPress={() => timer.extend(15)} />
           <PillButton label="Пропустити" icon="play-skip-forward" primary onPress={timer.stop} />
@@ -354,23 +349,23 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
             {(values) => (
               <>
                 {progressBar}
-                {transport}
-                <View style={styles.actions}>
-                  <PillButton
-                    label="Підхід виконано"
-                    icon="checkmark"
-                    primary
-                    disabled={paused}
-                    onPress={() => completeSet(values())}
-                  />
-                </View>
+                {/* Next completes the set; after the last one it moves to the next exercise. */}
+                {transport({
+                  label: 'Наступний підхід',
+                  onPress: () => completeSet(values()),
+                  disabled: paused,
+                })}
               </>
             )}
           </PlayerSetEditor>
         ) : (
           <>
             {progressBar}
-            {transport}
+            {transport({
+              label: 'Наступна вправа',
+              onPress: goToNextExercise,
+              disabled: !canSkipExercise,
+            })}
             <View style={styles.actions}>
               <PillButton label="Ще підхід" icon="add" onPress={() => addSet(current.id, false)} />
               {workoutDone && <PillButton label="Завершити" icon="flag" primary onPress={finish} />}
@@ -437,6 +432,15 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
         progress={sheetProgress}
         header={
           <View style={styles.player}>
+            {canSkipExercise && (
+              <Pressable
+                onPress={goToNextExercise}
+                hitSlop={6}
+                accessibilityLabel="Пропустити вправу"
+                style={({ pressed }) => [styles.skipExercise, pressed && styles.pressed]}>
+                <Ionicons name="play-forward" size={16} color={colors.accentText} />
+              </Pressable>
+            )}
             {body}
           </View>
         }>
@@ -498,7 +502,7 @@ function PillButton({
   onPress,
 }: {
   label: string;
-  icon?: 'add' | 'checkmark' | 'flag' | 'play-skip-forward';
+  icon?: 'add' | 'flag' | 'play-skip-forward';
   primary?: boolean;
   disabled?: boolean;
   onPress: () => void;
@@ -536,7 +540,19 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     gap: spacing.xs,
   },
-  overline: { color: 'rgba(255,255,255,0.8)', fontWeight: '600' },
+  skipExercise: {
+    position: 'absolute',
+    top: spacing.lg,
+    right: spacing.lg,
+    zIndex: 1,
+    width: 34,
+    height: 34,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  overline: { color: 'rgba(255,255,255,0.8)', fontWeight: '600', paddingRight: 44 },
   hint: { color: 'rgba(255,255,255,0.7)', fontSize: 11, textAlign: 'center', marginTop: spacing.xs },
   title: { color: colors.accentText, paddingRight: 8 },
   countdown: { color: colors.accentText, fontSize: 64, marginVertical: spacing.xs },
