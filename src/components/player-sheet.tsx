@@ -22,9 +22,9 @@ const tick = () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 /**
  * Draggable sheet for the workout player. Collapsed, only `header` (the player
  * card) shows, flush with the bottom edge, so it should pad itself for the bottom
- * inset. Dragging up or tapping the handle on top of the card reveals `children`
- * over a backdrop that fades in. `progress` (0 collapsed → 1 expanded) lets the
- * parent animate along with it.
+ * inset. Dragging the strip along the card's top edge, or tapping its handle,
+ * reveals `children` over a backdrop that fades in. `progress` (0 collapsed →
+ * 1 expanded) lets the parent animate along with it.
  */
 export function PlayerSheet({
   header,
@@ -100,15 +100,16 @@ export function PlayerSheet({
       <Animated.View pointerEvents="none" style={[styles.backdrop, backdropStyle]} />
       <Animated.View style={[styles.sheet, { height: sheetH }, sheetStyle]}>
         <Animated.View pointerEvents="none" style={[styles.surface, surfaceStyle]} />
-        <GestureDetector gesture={pan}>
-          <View onLayout={(e) => setHeaderH(e.nativeEvent.layout.height)}>
-            {header}
-            {/* Overlaid on the card's top edge. */}
-            <Pressable hitSlop={12} style={styles.handleArea} onPress={() => snap(!expanded.get())}>
+        <View onLayout={(e) => setHeaderH(e.nativeEvent.layout.height)}>
+          {header}
+          {/* The sheet drags only by this strip along the card's top edge, so
+              scrollable controls inside the card keep their own swipes. */}
+          <GestureDetector gesture={pan}>
+            <Pressable style={styles.grabStrip} onPress={() => snap(!expanded.get())}>
               <View style={styles.handle} />
             </Pressable>
-          </View>
-        </GestureDetector>
+          </GestureDetector>
+        </View>
         {/* Pulled up over the card's bottom-inset padding, which only matters collapsed. */}
         <ScrollView
           style={[styles.flex, { marginTop: -bottomInset }]}
@@ -165,13 +166,14 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: radius.lg + 10,
     borderTopRightRadius: radius.lg + 10,
   },
-  handleArea: {
+  grabStrip: {
     position: 'absolute',
     top: 0,
-    alignSelf: 'center',
+    left: 0,
+    right: 0,
+    height: 30, // clears the corner button below it
+    alignItems: 'center',
     paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
-    paddingHorizontal: spacing.lg,
   },
   handle: { width: 40, height: 5, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.3)' },
   content: { paddingHorizontal: spacing.md, gap: spacing.md },

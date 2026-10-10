@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { useRef, useState, type ComponentProps, type ReactNode } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -13,8 +13,8 @@ import Animated, {
 import Svg, { Circle } from 'react-native-svg';
 import { scheduleOnRN } from 'react-native-worklets';
 
+import { Wheel } from '@/components/wheel';
 import { FIELDS, toInputs, toValues, type Inputs } from '@/components/set-row';
-import { Text } from '@/components/ui';
 import type { TrackingType, WorkoutSet } from '@/db/schema';
 import {
   formatDuration,
@@ -23,23 +23,29 @@ import {
   parseDuration,
   type SetValues,
 } from '@/lib/metrics';
-import { colors, fontSize, radius, spacing } from '@/theme';
+import { colors, radius, spacing } from '@/theme';
 
-const STEP: Record<keyof Inputs, number> = { weight: 0.5, reps: 1, duration: 15, distance: 0.5 };
+/** Range and step of the wheel for each field. */
+const WHEELS: Record<
+  keyof Inputs,
+  { min: number; max: number; step: number; format: (v: number) => string }
+> = {
+  weight: { min: 0, max: 300, step: 0.5, format: (v) => formatNumber(v) },
+  reps: { min: 0, max: 100, step: 1, format: (v) => String(v) },
+  duration: { min: 0, max: 3600, step: 15, format: (v) => formatDuration(v) },
+  distance: { min: 0, max: 50, step: 0.1, format: (v) => formatNumber(v) },
+};
 
-function step(key: keyof Inputs, value: string, direction: 1 | -1): string {
-  if (key === 'duration') {
-    const sec = Math.max(0, (parseDuration(value) ?? 0) + direction * STEP.duration);
-    return formatDuration(sec);
-  }
-  const n = Math.max(0, (parseDecimal(value) ?? 0) + direction * STEP[key]);
-  return formatNumber(n);
-}
+const numeric = (key: keyof Inputs, value: string) =>
+  (key === 'duration' ? parseDuration(value) : parseDecimal(value)) ?? 0;
+const display = (key: keyof Inputs, n: number) =>
+  key === 'duration' ? formatDuration(n) : formatNumber(n);
 
 /**
- * Big inputs with −/+ steppers for the set in progress, shown inside the
- * player card. Keyed by set id, so it starts from that set's prefilled values.
- * `children` renders below the inputs and gets a reader for the values entered.
+ * Values of the set in progress, inside the player card: one wheel per field,
+ * side by side like the iOS clock, so no keyboard is needed. Keyed by set id, so
+ * it starts from that set's prefilled values. `children` renders below and gets
+ * a reader for the values entered.
  */
 export function PlayerSetEditor({
   set,
@@ -51,44 +57,25 @@ export function PlayerSetEditor({
   children: (values: () => SetValues) => ReactNode;
 }) {
   const [inputs, setInputs] = useState(() => toInputs(set));
-  const update = (key: keyof Inputs, value: string) =>
-    setInputs((prev) => ({ ...prev, [key]: value }));
 
   return (
     <>
       <View style={styles.fields}>
-        {FIELDS[type].map((f) => (
-          <View key={f.key} style={styles.field}>
-            <Pressable
-              hitSlop={6}
-              style={styles.stepper}
-              onPress={() => update(f.key, step(f.key, inputs[f.key], -1))}>
-              <Ionicons name="remove" size={18} color={colors.text} />
-            </Pressable>
-            <View style={styles.valueBox}>
-              <TextInput
-                value={inputs[f.key]}
-                onChangeText={(v) => update(f.key, v)}
-                keyboardType={
-                  f.decimal ? 'decimal-pad' : f.time ? 'numbers-and-punctuation' : 'number-pad'
-                }
-                selectTextOnFocus
-                placeholder="—"
-                placeholderTextColor={colors.textMuted}
-                style={styles.value}
-              />
-              <Text variant="caption" style={styles.unit}>
-                {f.label}
-              </Text>
-            </View>
-            <Pressable
-              hitSlop={6}
-              style={styles.stepper}
-              onPress={() => update(f.key, step(f.key, inputs[f.key], 1))}>
-              <Ionicons name="add" size={18} color={colors.text} />
-            </Pressable>
-          </View>
-        ))}
+        {FIELDS[type].map((f) => {
+          const w = WHEELS[f.key];
+          return (
+            <Wheel
+              key={f.key}
+              value={numeric(f.key, inputs[f.key])}
+              min={w.min}
+              max={w.max}
+              step={w.step}
+              unit={f.label}
+              format={w.format}
+              onChange={(v) => setInputs((prev) => ({ ...prev, [f.key]: display(f.key, v) }))}
+            />
+          );
+        })}
       </View>
       {children(() => toValues(inputs))}
     </>
@@ -217,33 +204,6 @@ function TransportIcon({ icon, label, onPress, disabled }: TransportButton) {
 
 const styles = StyleSheet.create({
   fields: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
-  field: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    backgroundColor: 'rgba(0,0,0,0.25)',
-    borderRadius: radius.md,
-    padding: spacing.xs,
-  },
-  stepper: {
-    width: 30,
-    height: 30,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surfaceRaised,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  valueBox: { flex: 1, alignItems: 'center' },
-  value: {
-    alignSelf: 'stretch',
-    color: colors.text,
-    fontSize: fontSize.xxl,
-    fontWeight: '800',
-    textAlign: 'center',
-    paddingVertical: 2,
-  },
-  unit: { color: colors.textSecondary, fontSize: 11, marginTop: -2 },
   transport: {
     flexDirection: 'row',
     alignItems: 'center',

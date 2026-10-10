@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as WebBrowser from 'expo-web-browser';
 import { useState, type ComponentProps, type ReactNode } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { interpolate, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -403,9 +403,7 @@ export function WorkoutPlayer({
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.root}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <View style={styles.root}>
       <Animated.View style={[styles.hero, { bottom: collapsedHeight - 40 }, heroStyle]}>
         {showVideo ? (
           <View style={[styles.fill, styles.videoWrap, { paddingTop: insets.top + 60 }]}>
@@ -512,7 +510,7 @@ export function WorkoutPlayer({
           <Button title="Скасувати тренування" variant="ghost" onPress={discard} />
         </SheetItem>
       </PlayerSheet>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
