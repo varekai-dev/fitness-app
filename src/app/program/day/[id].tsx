@@ -4,6 +4,7 @@ import { StyleSheet } from 'react-native';
 
 import { useDialog } from '@/components/dialog';
 import { ExerciseThumb } from '@/components/exercise-thumb';
+import { MuscleIcon } from '@/components/muscle-icon';
 import { TargetsEditor } from '@/components/targets-editor';
 import {
   Button,
@@ -79,6 +80,7 @@ export default function ProgramDayScreen() {
             <Text variant="body" style={styles.flex} numberOfLines={2}>
               {e.exercise.name}
             </Text>
+            <MuscleIcon group={e.exercise.muscleGroup} size={36} />
             <IconButton
               icon="chevron-up"
               size={18}
