@@ -12,6 +12,7 @@
       "bundleIdentifier": "com.serhijsav.fitness"
     },
     "android": {
+      "package": "com.serhijsav.fitness",
       "adaptiveIcon": {
         "backgroundColor": "#FF6B2C",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -50,6 +51,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "89e0616b-90d4-4c0c-926c-ce52eeda2bd6"
+      }
+    },
+    "owner": "varekai"
   }
 }
