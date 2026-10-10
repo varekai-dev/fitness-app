@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { useTabBarSpace } from '@/components/floating-tab-bar';
+import { ActivityCalendar } from '@/components/activity-calendar';
 import { Elapsed } from '@/components/elapsed';
 import { Sparkline } from '@/components/line-chart';
 import { WorkoutSummaryCard } from '@/components/workout-summary-card';
@@ -24,15 +25,8 @@ import { listBodyWeights } from '@/db/body-weight';
 import { getActiveProgram, getNextDayId } from '@/db/programs';
 import { getActiveWorkout, listFinishedWorkouts, startWorkout } from '@/db/workouts';
 import { useDbQuery } from '@/hooks/use-db-query';
-import { estimateKcal, formatKcal } from '@/lib/calories';
-import {
-  formatLongDate,
-  formatShortDate,
-  formatWeightDelta,
-  startOfWeek,
-  WEEKDAY_SHORT,
-  weekdayIndex,
-} from '@/lib/labels';
+import { estimateKcal } from '@/lib/calories';
+import { formatLongDate, formatShortDate, formatWeightDelta, startOfWeek } from '@/lib/labels';
 import { formatNumber } from '@/lib/metrics';
 import { prepareRestNotifications } from '@/lib/rest-notifications';
 import { colors, fontSize, radius, spacing } from '@/theme';
@@ -65,20 +59,11 @@ export default function HomeScreen() {
 
   const weekStart = startOfWeek(loadedAt);
   const thisWeek = finished.filter((w) => w.startedAt >= weekStart);
-  const trainedDays = new Set(thisWeek.map((w) => weekdayIndex(w.startedAt)));
-  const weekSets = thisWeek.reduce(
-    (n, w) => n + w.exercises.reduce((m, e) => m + e.sets.length, 0),
-    0,
-  );
-  const today = weekdayIndex(loadedAt);
-  // Calories per weekday this week; null when no body weight has been logged.
-  const weekKcal: number[] | null = bodyWeights.length > 0 ? Array(7).fill(0) : null;
-  if (weekKcal) {
-    for (const w of thisWeek)
-      weekKcal[weekdayIndex(w.startedAt)] += estimateKcal(w, bodyWeights) ?? 0;
-  }
-  const weekKcalTotal = weekKcal?.reduce((a, b) => a + b, 0) ?? 0;
-  const weekKcalMax = Math.max(1, ...(weekKcal ?? []));
+  // Null when no body weight has been logged, since calories depend on it.
+  const weekKcal =
+    bodyWeights.length > 0
+      ? thisWeek.reduce((sum, w) => sum + (estimateKcal(w, bodyWeights) ?? 0), 0)
+      : null;
 
   const start = async () => {
     if (!selectedDay) return;
@@ -107,7 +92,12 @@ export default function HomeScreen() {
 
       <Row style={styles.stats}>
         <StatTile icon="flame" value={String(thisWeek.length)} label="За тиждень" />
-        <StatTile icon="layers" value={String(weekSets)} unit="підх." label="Об'єм тижня" />
+        <StatTile
+          icon="bonfire"
+          value={weekKcal !== null ? String(Math.round(weekKcal)) : '—'}
+          unit={weekKcal !== null ? 'ккал' : undefined}
+          label="Спалено"
+        />
         <StatTile icon="trophy" value={String(finished.length)} label="Усього" />
       </Row>
 
@@ -188,70 +178,7 @@ export default function HomeScreen() {
         </>
       )}
 
-      <Card>
-        <Row style={styles.spaceBetween}>
-          <Text variant="heading">Цей тиждень</Text>
-          <Row style={styles.streak}>
-            <Text variant="caption" style={{ color: colors.accent }}>
-              {trainedDays.size} дн.
-            </Text>
-            <Ionicons name="flame" size={14} color={colors.accent} />
-          </Row>
-        </Row>
-        <Row style={styles.week}>
-          {WEEKDAY_SHORT.map((label, i) => {
-            const done = trainedDays.has(i);
-            return (
-              <View key={label} style={styles.weekDay}>
-                <Text variant="muted" style={i === today && styles.today}>
-                  {label}
-                </Text>
-                <View
-                  style={[
-                    styles.weekDot,
-                    done && styles.weekDotDone,
-                    i === today && !done && styles.weekDotToday,
-                  ]}>
-                  {done && <Ionicons name="checkmark" size={14} color={colors.accentText} />}
-                </View>
-              </View>
-            );
-          })}
-        </Row>
-      </Card>
-
-      <Card>
-        <Row style={styles.spaceBetween}>
-          <Row>
-            <Ionicons name="flame" size={20} color={colors.accent} />
-            <Text variant="heading">Калорії за тиждень</Text>
-          </Row>
-          {weekKcal && <Text variant="heading">{formatKcal(weekKcalTotal)}</Text>}
-        </Row>
-        {weekKcal ? (
-          <Row style={styles.kcalBars}>
-            {WEEKDAY_SHORT.map((label, i) => (
-              <View key={label} style={styles.kcalDay}>
-                <View style={styles.kcalTrack}>
-                  <View
-                    style={[
-                      styles.kcalFill,
-                      { height: `${(weekKcal[i] / weekKcalMax) * 100}%` },
-                      weekKcal[i] === 0 && styles.kcalEmpty,
-                    ]}
-                  />
-                </View>
-                <Text variant="muted" style={i === today && styles.today}>
-                  {label}
-                </Text>
-              </View>
-            ))}
-          </Row>
-        ) : (
-          <Text variant="muted">Додай вагу тіла, щоб рахувати спалені калорії.</Text>
-        )}
-        <Text variant="muted">Орієнтовна оцінка за вагою тіла та обсягом роботи.</Text>
-      </Card>
+      <ActivityCalendar workoutDates={finished.map((w) => w.startedAt)} now={loadedAt} />
 
       <Card onPress={() => router.push('/body-weight')}>
         <Row style={styles.spaceBetween}>
@@ -373,7 +300,6 @@ const styles = StyleSheet.create({
   greeting: { gap: spacing.xs, marginTop: spacing.sm },
   stats: { gap: spacing.sm, alignItems: 'stretch' },
   spaceBetween: { justifyContent: 'space-between' },
-  streak: { gap: 2 },
   weightValue: { alignItems: 'flex-end' },
   pressed: { opacity: 0.85 },
   hero: {
@@ -421,22 +347,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  week: { justifyContent: 'space-between', marginTop: spacing.sm },
-  weekDay: { alignItems: 'center', gap: spacing.sm },
-  today: { color: colors.text, fontWeight: '700' },
-  weekDot: {
-    width: 32,
-    height: 32,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surfaceRaised,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  weekDotDone: { backgroundColor: colors.accent },
-  weekDotToday: { borderWidth: 1.5, borderColor: colors.accent },
-  kcalBars: { justifyContent: 'space-between', marginTop: spacing.sm },
-  kcalDay: { alignItems: 'center', gap: spacing.xs },
-  kcalTrack: { width: 22, height: 72, justifyContent: 'flex-end' },
-  kcalFill: { width: '100%', minHeight: 4, borderRadius: 6, backgroundColor: colors.accent },
-  kcalEmpty: { backgroundColor: colors.glassBorder },
 });
