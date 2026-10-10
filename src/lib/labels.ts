@@ -59,15 +59,27 @@ export function startOfWeek(ms: number) {
 export const weekdayIndex = (ms: number) => (new Date(ms).getDay() + 6) % 7;
 
 /** e.g. "3 × 8–12 · відпочинок 1:30". */
-export function formatTargets(t: Targets) {
-  let what = '';
+function targetValue(t: Targets) {
   if (t.targetRepsMin !== null || t.targetRepsMax !== null) {
-    what =
-      t.targetRepsMin !== null && t.targetRepsMax !== null && t.targetRepsMin !== t.targetRepsMax
-        ? `${t.targetRepsMin}–${t.targetRepsMax}`
-        : String(t.targetRepsMin ?? t.targetRepsMax);
-  } else if (t.targetDurationSec !== null) what = formatDuration(t.targetDurationSec);
-  else if (t.targetDistanceKm !== null) what = `${t.targetDistanceKm} км`;
+    return t.targetRepsMin !== null &&
+      t.targetRepsMax !== null &&
+      t.targetRepsMin !== t.targetRepsMax
+      ? `${t.targetRepsMin}–${t.targetRepsMax}`
+      : String(t.targetRepsMin ?? t.targetRepsMax);
+  }
+  if (t.targetDurationSec !== null) return formatDuration(t.targetDurationSec);
+  if (t.targetDistanceKm !== null) return `${t.targetDistanceKm} км`;
+  return '';
+}
+
+/** Per-set target: "8–12 повт.", a duration or a distance; empty when none is set. */
+export function formatSetTarget(t: Targets) {
+  const what = targetValue(t);
+  return what && (t.targetRepsMin !== null || t.targetRepsMax !== null) ? `${what} повт.` : what;
+}
+
+export function formatTargets(t: Targets) {
+  const what = targetValue(t);
   const sets = what ? `${t.targetSets} × ${what}` : `${t.targetSets} підх.`;
   return t.restSec > 0 ? `${sets} · відпочинок ${formatDuration(t.restSec)}` : sets;
 }

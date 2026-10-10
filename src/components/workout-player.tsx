@@ -11,6 +11,7 @@ import { Elapsed } from '@/components/elapsed';
 import { ExerciseThumb } from '@/components/exercise-thumb';
 import { PlayerSetEditor, Transport } from '@/components/player-set-editor';
 import { PlayerSheet, SheetItem } from '@/components/player-sheet';
+import { RestRing } from '@/components/rest-ring';
 import { YoutubePlayer, youtubeVideoId } from '@/components/youtube-player';
 import {
   Button,
@@ -33,8 +34,8 @@ import {
   type WorkoutDetail,
 } from '@/db/workouts';
 import { useRestTimer } from '@/hooks/use-rest-timer';
-import { formatTargets } from '@/lib/labels';
-import { formatDuration, formatSet, isBetter, setMetric, type SetValues } from '@/lib/metrics';
+import { formatSetTarget, formatTargets } from '@/lib/labels';
+import { formatSet, isBetter, setMetric, type SetValues } from '@/lib/metrics';
 import { colors, fontSize, radius, spacing } from '@/theme';
 import { exerciseImageSource } from '@/lib/exercise-images';
 
@@ -283,23 +284,30 @@ export function WorkoutPlayer({ workout, extras }: { workout: WorkoutDetail; ext
 
   let body: ReactNode;
   if (resting) {
+    const target = formatSetTarget(current);
     body = (
       <>
-        <Text variant="caption" style={styles.overline}>
-          {paused ? 'НА ПАУЗІ · ' : ''}Відпочинок
+        <Text variant="caption" style={[styles.overline, styles.centered]}>
+          {paused ? 'НА ПАУЗІ · ' : ''}ВІДПОЧИНОК
         </Text>
-        <Text variant="hero" style={styles.countdown}>
-          {formatDuration(timer.remainingSec)}
+        <Text variant="title" style={[styles.title, styles.centered]} numberOfLines={2}>
+          {current.exercise.name}
         </Text>
-        <Text variant="caption" style={styles.subtle} numberOfLines={1}>
-          Далі: {current.exercise.name} · підхід {setNumber} з {current.sets.length}
+        <Text variant="caption" style={[styles.subtle, styles.centered]} numberOfLines={1}>
+          Підхід {setNumber} з {current.sets.length}
+          {target ? ` · ціль ${target}` : ''}
         </Text>
-        <Track progress={progress} />
-        {transport({ label: 'Пропустити відпочинок', onPress: timer.stop })}
-        <View style={styles.actions}>
-          <PillButton label="+15 с" onPress={() => timer.extend(15)} />
-          <PillButton label="Пропустити" icon="play-skip-forward" primary onPress={timer.stop} />
+        <View style={styles.restRing}>
+          <RestRing remainingSec={timer.remainingSec} totalSec={timer.totalSec} />
         </View>
+        {transport({ label: 'Пропустити відпочинок', onPress: timer.stop })}
+        <Pressable
+          onPress={() => timer.extend(15)}
+          style={({ pressed }) => [styles.extend, pressed && styles.pressed]}>
+          <Text variant="caption" style={styles.extendText}>
+            +15 с
+          </Text>
+        </Pressable>
       </>
     );
   } else {
@@ -557,8 +565,24 @@ const styles = StyleSheet.create({
   // Overline and title stay clear of the skip-exercise button in the corner.
   overline: { color: 'rgba(255,255,255,0.8)', fontWeight: '600', paddingRight: 44 },
   title: { color: colors.accentText, paddingRight: 44 },
-  hint: { color: 'rgba(255,255,255,0.7)', fontSize: 11, textAlign: 'center', marginTop: spacing.xs },
-  countdown: { color: colors.accentText, fontSize: 64, marginVertical: spacing.xs },
+  // Centred text keeps equal room on both sides of the corner button.
+  centered: { textAlign: 'center', paddingHorizontal: 44 },
+  restRing: { marginVertical: spacing.lg },
+  extend: {
+    alignSelf: 'center',
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  extendText: { color: colors.accentText, fontWeight: '700' },
+  hint: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 11,
+    textAlign: 'center',
+    marginTop: spacing.xs,
+  },
   subtle: { color: 'rgba(255,255,255,0.8)' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.sm },
   chip: {
