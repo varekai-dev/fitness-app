@@ -13,6 +13,7 @@
     },
     "android": {
       "package": "com.serhijsav.fitness",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#FF6B2C",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
