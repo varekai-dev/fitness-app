@@ -132,6 +132,8 @@ export async function startWorkout(programDayId: number) {
   if (!day) throw new Error(`Program day ${programDayId} not found`);
   const previous = await Promise.all(day.exercises.map((e) => getLastSets(e.exerciseId)));
 
+  // Opens paused: the clock only starts once play is pressed in the player.
+  const now = Date.now();
   return db.transaction((tx) => {
     const workout = tx
       .insert(workouts)
@@ -140,7 +142,8 @@ export async function startWorkout(programDayId: number) {
         programDayId: day.id,
         programName: day.program.name,
         dayName: day.name,
-        startedAt: Date.now(),
+        startedAt: now,
+        pausedAt: now,
       })
       .returning({ id: workouts.id })
       .get();
@@ -214,6 +217,9 @@ export async function deleteSet(id: number) {
   await db.delete(workoutSets).where(eq(workoutSets.id, id));
 }
 
+/** Shorter workouts are discarded on finish instead of landing in history. */
+export const MIN_WORKOUT_MS = 30_000;
+
 /** Sets that were never ticked off are dropped; an exercise may end up with zero sets. */
 export function finishWorkout(id: number) {
   db.transaction((tx) => {
@@ -230,12 +236,21 @@ export function finishWorkout(id: number) {
     }
     const now = Date.now();
     const w = tx
-      .select({ pausedAt: workouts.pausedAt, pausedMs: workouts.pausedMs })
+      .select({
+        startedAt: workouts.startedAt,
+        pausedAt: workouts.pausedAt,
+        pausedMs: workouts.pausedMs,
+      })
       .from(workouts)
       .where(eq(workouts.id, id))
       .get();
+    if (!w) return;
     // Finishing while paused closes the pause first.
-    const pausedMs = (w?.pausedMs ?? 0) + (w?.pausedAt ? now - w.pausedAt : 0);
+    const pausedMs = w.pausedMs + (w.pausedAt ? now - w.pausedAt : 0);
+    if (now - w.startedAt - pausedMs < MIN_WORKOUT_MS) {
+      tx.delete(workouts).where(eq(workouts.id, id)).run();
+      return;
+    }
     tx.update(workouts)
       .set({ finishedAt: now, pausedAt: null, pausedMs })
       .where(eq(workouts.id, id))

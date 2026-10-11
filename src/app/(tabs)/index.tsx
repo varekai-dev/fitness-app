@@ -28,7 +28,7 @@ import { getActiveWorkout, listFinishedWorkouts, startWorkout } from '@/db/worko
 import { useDbQuery } from '@/hooks/use-db-query';
 import { estimateKcal } from '@/lib/calories';
 import { formatLongDate, formatShortDate, formatWeightDelta, startOfWeek } from '@/lib/labels';
-import { formatNumber } from '@/lib/metrics';
+import { formatNumber, notStarted } from '@/lib/metrics';
 import { dailyPhrase } from '@/lib/motivation';
 import { prepareRestNotifications } from '@/lib/rest-notifications';
 import { colors, fontSize, radius, spacing } from '@/theme';
@@ -106,7 +106,13 @@ export default function HomeScreen() {
 
       {activeWorkout ? (
         <HeroCard
-          overline={activeWorkout.pausedAt ? 'Тренування на паузі' : 'Тренування триває'}
+          overline={
+            notStarted(activeWorkout)
+              ? 'Тренування не розпочато'
+              : activeWorkout.pausedAt
+                ? 'Тренування на паузі'
+                : 'Тренування триває'
+          }
           title={activeWorkout.dayName}
           subtitle={activeWorkout.programName}
           meta={<Elapsed workout={activeWorkout} style={styles.heroElapsed} />}

@@ -127,6 +127,11 @@ export function parseDuration(input: string): number | null {
   return parts.reduce((acc, p) => acc * 60 + Number(p), 0);
 }
 
+/** A workout that was opened but whose play button hasn't been pressed yet. */
+export function notStarted(w: { startedAt: number; pausedAt: number | null; pausedMs: number }) {
+  return w.pausedAt === w.startedAt && w.pausedMs === 0;
+}
+
 /** Active workout time in ms, excluding pauses. `now` is ignored once finished or paused. */
 export function workoutDurationMs(
   w: { startedAt: number; finishedAt?: number | null; pausedAt: number | null; pausedMs: number },

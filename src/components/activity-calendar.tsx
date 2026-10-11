@@ -126,6 +126,8 @@ function Month({
       (_, i) => new Date(first.getFullYear(), first.getMonth(), i + 1),
     ),
   ];
+  while (cells.length % 7) cells.push(null);
+  const weeks = Array.from({ length: cells.length / 7 }, (_, w) => cells.slice(w * 7, w * 7 + 7));
   const count = cells.filter((d) => d && trained.has(dayKey(d))).length;
 
   return (
@@ -140,35 +142,45 @@ function Month({
         </View>
         <IconButton icon="chevron-forward" onPress={onNext} disabled={offset === 0} />
       </Row>
-      <View style={styles.grid}>
-        {WEEKDAY_SHORT.map((label) => (
-          <View key={label} style={styles.cell}>
-            <Text variant="muted">{label}</Text>
+      <View>
+        <View style={styles.gridRow}>
+          {WEEKDAY_SHORT.map((label) => (
+            <View key={label} style={styles.cell}>
+              <Text variant="muted">{label}</Text>
+            </View>
+          ))}
+        </View>
+        {weeks.map((week, w) => (
+          <View key={w} style={styles.gridRow}>
+            {week.map((d, i) => {
+              if (!d) return <View key={`blank-${i}`} style={styles.cell} />;
+              const key = dayKey(d);
+              const done = trained.has(key);
+              const isToday = key === todayKey;
+              const future = d.getTime() > now;
+              return (
+                <View key={key} style={styles.cell}>
+                  <View
+                    style={[
+                      styles.day,
+                      done && styles.dotDone,
+                      isToday && !done && styles.dotToday,
+                    ]}>
+                    <Text
+                      variant="caption"
+                      style={[
+                        styles.dayText,
+                        done && styles.dayTextDone,
+                        future && styles.dayTextFuture,
+                      ]}>
+                      {d.getDate()}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
           </View>
         ))}
-        {cells.map((d, i) => {
-          if (!d) return <View key={`blank-${i}`} style={styles.cell} />;
-          const key = dayKey(d);
-          const done = trained.has(key);
-          const isToday = key === todayKey;
-          const future = d.getTime() > now;
-          return (
-            <View key={key} style={styles.cell}>
-              <View
-                style={[styles.day, done && styles.dotDone, isToday && !done && styles.dotToday]}>
-                <Text
-                  variant="caption"
-                  style={[
-                    styles.dayText,
-                    done && styles.dayTextDone,
-                    future && styles.dayTextFuture,
-                  ]}>
-                  {d.getDate()}
-                </Text>
-              </View>
-            </View>
-          );
-        })}
       </View>
     </View>
   );
@@ -194,8 +206,8 @@ const styles = StyleSheet.create({
   dotToday: { borderWidth: 1.5, borderColor: colors.accent },
   month: { gap: spacing.sm, marginTop: spacing.xs },
   monthTitle: { alignItems: 'center' },
-  grid: { flexDirection: 'row', flexWrap: 'wrap' },
-  cell: { width: `${100 / 7}%`, alignItems: 'center', paddingVertical: 3 },
+  gridRow: { flexDirection: 'row' },
+  cell: { flex: 1, alignItems: 'center', paddingVertical: 3 },
   day: {
     width: 34,
     height: 34,

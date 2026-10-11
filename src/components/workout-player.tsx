@@ -30,6 +30,7 @@ import {
   addSet,
   deleteWorkout,
   finishWorkout,
+  MIN_WORKOUT_MS,
   pauseWorkout,
   resumeWorkout,
   setCompleted,
@@ -41,7 +42,15 @@ import type { TrackingType } from '@/db/schema';
 import { useRestTimer } from '@/hooks/use-rest-timer';
 import { exerciseKcal, formatKcal, workoutKcal } from '@/lib/calories';
 import { formatSetTarget, formatTargets } from '@/lib/labels';
-import { formatNumber, formatSet, isBetter, setMetric, type SetValues } from '@/lib/metrics';
+import {
+  formatNumber,
+  formatSet,
+  isBetter,
+  notStarted,
+  setMetric,
+  type SetValues,
+  workoutDurationMs,
+} from '@/lib/metrics';
 import { colors, fontSize, radius, spacing } from '@/theme';
 import { exerciseImageSource } from '@/lib/exercise-images';
 
@@ -111,6 +120,8 @@ export function WorkoutPlayer({
   useKeepAwake();
 
   const paused = workout.pausedAt !== null;
+  const waiting = notStarted(workout);
+  const pausedTag = waiting ? '' : paused ? 'НА ПАУЗІ · ' : '';
   const index = Math.max(
     0,
     exercises.findIndex((e) => e.id === currentId),
@@ -130,7 +141,11 @@ export function WorkoutPlayer({
     dialog.show({
       title: 'Завершити тренування?',
       message:
-        pending > 0 ? `Невиконані підходи (${pending}) не збережуться.` : 'Усі підходи виконано.',
+        workoutDurationMs(workout, Date.now()) < MIN_WORKOUT_MS
+          ? 'Тренування коротше 30 с не збережеться в історії.'
+          : pending > 0
+            ? `Невиконані підходи (${pending}) не збережуться.`
+            : 'Усі підходи виконано.',
       icon: 'flag',
       buttons: [
         { text: 'Скасувати', style: 'cancel' },
@@ -251,7 +266,7 @@ export function WorkoutPlayer({
   const pauseStop = {
     icon: paused ? ('play' as const) : ('pause' as const),
     holdIcon: 'stop' as const,
-    label: paused ? 'Продовжити' : 'Пауза',
+    label: waiting ? 'Почати' : paused ? 'Продовжити' : 'Пауза',
     onPress: togglePause,
     onHold: finish,
   };
@@ -260,7 +275,9 @@ export function WorkoutPlayer({
       <Transport left={back} main={pauseStop} right={{ ...next, icon: 'play-skip-forward' }} />
       {paused && (
         <Text variant="caption" style={styles.hint}>
-          Утримуйте кнопку, щоб завершити тренування
+          {waiting
+            ? 'Натисніть ▶, щоб почати тренування'
+            : 'Утримуйте кнопку, щоб завершити тренування'}
         </Text>
       )}
     </>
@@ -342,7 +359,7 @@ export function WorkoutPlayer({
     body = (
       <>
         <Text variant="caption" style={[styles.overline, styles.centered]}>
-          {paused ? 'НА ПАУЗІ · ' : ''}ВІДПОЧИНОК
+          {pausedTag}ВІДПОЧИНОК
         </Text>
         <Text variant="title" style={[styles.title, styles.centered]} numberOfLines={2}>
           {current.exercise.name}
@@ -368,7 +385,7 @@ export function WorkoutPlayer({
     body = (
       <>
         <Text variant="caption" style={styles.overline}>
-          {paused ? 'НА ПАУЗІ · ' : ''}
+          {pausedTag}
           {currentSet ? `Підхід ${setNumber} з ${current.sets.length}` : 'Вправу виконано'} · Вправа{' '}
           {index + 1} з {exercises.length}
         </Text>
