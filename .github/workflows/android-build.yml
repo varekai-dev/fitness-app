@@ -11,6 +11,9 @@ on:
           - preview
         default: preview
 
+permissions:
+  contents: write # to create the release
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -29,6 +32,20 @@ jobs:
 
       - run: npm ci
 
-      # The build runs on EAS; --no-wait ends the job once it's queued.
-      # The APK link shows up on expo.dev when the build finishes.
-      - run: eas build --platform android --profile ${{ inputs.profile }} --non-interactive --no-wait
+      # Waits for EAS to finish, so the job fails when the build does.
+      - name: Build on EAS
+        run: |
+          eas build --platform android --profile ${{ inputs.profile }} --non-interactive --wait --json > build.json
+          jq -r '.[0] | "version=\(.appVersion)\ncode=\(.appBuildVersion)\nurl=\(.artifacts.applicationArchiveUrl)\nid=\(.id)"' build.json >> "$GITHUB_ENV"
+
+      # The build number goes up on every build, so the tag is unique even without a version bump.
+      - name: Publish the APK as a release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          apk="fitness-$version-$code.apk"
+          curl -fsSL "$url" -o "$apk"
+          gh release create "v$version-$code" "$apk" \
+            --target "$GITHUB_SHA" \
+            --title "$version ($code)" \
+            --notes "Android build from EAS: https://expo.dev/accounts/varekai/projects/fitness/builds/$id"
