@@ -102,6 +102,8 @@ export function WorkoutPlayer({
   const timer = useRestTimer();
   const exercises = workout.exercises;
   const [collapsedHeight, setCollapsedHeight] = useState(420);
+  // Natural heights of the exercise and rest views, measured as they render.
+  const [bodyHeights, setBodyHeights] = useState({ work: 0, rest: 0 });
   const sheetProgress = useSharedValue(0);
   // Photo drifts up and zooms in slightly as the sheet opens.
   const heroStyle = useAnimatedStyle(() => ({
@@ -273,13 +275,13 @@ export function WorkoutPlayer({
   const transport = (next: Omit<ComponentProps<typeof Transport>['right'], 'icon'>) => (
     <>
       <Transport left={back} main={pauseStop} right={{ ...next, icon: 'play-skip-forward' }} />
-      {paused && (
-        <Text variant="caption" style={styles.hint}>
-          {waiting
-            ? 'Натисніть ▶, щоб почати тренування'
-            : 'Утримуйте кнопку, щоб завершити тренування'}
-        </Text>
-      )}
+      {/* Always laid out, only hidden, so pausing doesn't change the card's height. */}
+      <Text
+        variant="caption"
+        numberOfLines={1}
+        style={[styles.hint, !paused && styles.hidden]}>
+        {waiting ? 'Натисніть ▶, щоб почати тренування' : 'Утримуйте кнопку, щоб завершити тренування'}
+      </Text>
     </>
   );
 
@@ -353,6 +355,13 @@ export function WorkoutPlayer({
     </>
   );
 
+  const bodyMinHeight = Math.max(bodyHeights.work, bodyHeights.rest);
+  const measureBody = (rest: boolean, height: number) =>
+    setBodyHeights((h) => {
+      const key = rest ? 'rest' : 'work';
+      return Math.abs(h[key] - height) < 1 ? h : { ...h, [key]: height };
+    });
+
   let body: ReactNode;
   if (resting) {
     const target = formatSetTarget(current);
@@ -384,7 +393,7 @@ export function WorkoutPlayer({
   } else {
     body = (
       <>
-        <Text variant="caption" style={styles.overline}>
+        <Text variant="caption" style={styles.overline} numberOfLines={1}>
           {pausedTag}
           {currentSet ? `Підхід ${setNumber} з ${current.sets.length}` : 'Вправу виконано'} · Вправа{' '}
           {index + 1} з {exercises.length}
@@ -533,7 +542,12 @@ export function WorkoutPlayer({
                 <Ionicons name="play-forward" size={16} color={colors.text} />
               </Pressable>
             )}
-            {body}
+            {/* Rest and exercise views share one height, so switching between them doesn't jump. */}
+            <View style={{ minHeight: bodyMinHeight, justifyContent: resting ? 'center' : 'flex-start' }}>
+              <View onLayout={(e) => measureBody(resting, e.nativeEvent.layout.height)}>
+                {body}
+              </View>
+            </View>
           </View>
         }>
         {queue.length > 0 && (
@@ -690,6 +704,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceRaised,
   },
   extendText: { color: colors.text, fontWeight: '700' },
+  hidden: { opacity: 0 },
   hint: {
     color: colors.textSecondary,
     fontSize: 11,
