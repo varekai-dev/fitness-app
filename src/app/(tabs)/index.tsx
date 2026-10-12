@@ -30,7 +30,6 @@ import { estimateKcal } from '@/lib/calories';
 import { formatLongDate, formatShortDate, formatWeightDelta, startOfWeek } from '@/lib/labels';
 import { formatNumber, notStarted } from '@/lib/metrics';
 import { dailyPhrase } from '@/lib/motivation';
-import { prepareRestNotifications } from '@/lib/rest-notifications';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 async function loadHome() {
@@ -72,7 +71,6 @@ export default function HomeScreen() {
     if (!selectedDay) return;
     setStarting(true);
     try {
-      await prepareRestNotifications();
       const id = await startWorkout(selectedDay.id);
       setPickedDayId(null);
       router.push({ pathname: '/workout/[id]', params: { id } });

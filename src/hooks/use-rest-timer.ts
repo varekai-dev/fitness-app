@@ -1,11 +1,9 @@
 import * as Haptics from 'expo-haptics';
 import { useEffect, useState } from 'react';
 
-import { cancelRestEnd, scheduleRestEnd } from '@/lib/rest-notifications';
-
 /**
  * Countdown between sets. The end time is absolute, so the countdown stays correct
- * after the app was backgrounded; a local notification covers the locked-screen case.
+ * after the app was backgrounded.
  */
 export function useRestTimer() {
   const [endAt, setEndAt] = useState<number | null>(null);
@@ -28,9 +26,6 @@ export function useRestTimer() {
     return () => clearInterval(tick);
   }, [endAt]);
 
-  // Never leave a stale notification behind when the workout screen closes.
-  useEffect(() => () => void cancelRestEnd(), []);
-
   const start = (seconds: number, exerciseName: string) => {
     if (seconds <= 0) return;
     setNow(Date.now());
@@ -38,16 +33,13 @@ export function useRestTimer() {
     setPausedLeft(null);
     setTotalSec(seconds);
     setLabel(exerciseName);
-    scheduleRestEnd(seconds, exerciseName);
   };
 
   const extend = (seconds: number) => {
     if (pausedLeft !== null) {
       setPausedLeft(pausedLeft + seconds * 1000);
     } else if (endAt !== null) {
-      const end = endAt + seconds * 1000;
-      setEndAt(end);
-      scheduleRestEnd(Math.ceil((end - Date.now()) / 1000), label);
+      setEndAt(endAt + seconds * 1000);
     } else return;
     setTotalSec((t) => t + seconds);
   };
@@ -56,7 +48,6 @@ export function useRestTimer() {
     if (endAt === null) return;
     setPausedLeft(Math.max(0, endAt - Date.now()));
     setEndAt(null);
-    cancelRestEnd();
   };
 
   const resume = () => {
@@ -64,13 +55,11 @@ export function useRestTimer() {
     setNow(Date.now());
     setEndAt(Date.now() + pausedLeft);
     setPausedLeft(null);
-    scheduleRestEnd(Math.ceil(pausedLeft / 1000), label);
   };
 
   const stop = () => {
     setEndAt(null);
     setPausedLeft(null);
-    cancelRestEnd();
   };
 
   const leftMs = pausedLeft ?? (endAt === null ? 0 : Math.max(0, endAt - now));
