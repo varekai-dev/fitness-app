@@ -11,7 +11,7 @@ import type { IconName } from '@/components/ui';
 import { colors, radius, spacing } from '@/theme';
 
 const BAR_HEIGHT = 72;
-const BUBBLE = 60;
+const BUBBLE = 56;
 const SIDE_MARGIN = spacing.lg;
 const SPRING = { damping: 18, stiffness: 220, mass: 0.7 };
 

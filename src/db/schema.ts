@@ -152,6 +152,23 @@ export const bodyWeights = sqliteTable(
   (t) => [index('body_weights_measured_idx').on(t.measuredAt)],
 );
 
+/** Water log: one row per glass, summed per local day. */
+export const waterIntakes = sqliteTable(
+  'water_intakes',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    drankAt: integer('drank_at').notNull(),
+    amountMl: integer('amount_ml').notNull(),
+  },
+  (t) => [index('water_intakes_drank_idx').on(t.drankAt)],
+);
+
+/** Small key/value store for user preferences such as the daily water goal. */
+export const settings = sqliteTable('settings', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
+});
+
 export const programsRelations = relations(programs, ({ many }) => ({
   days: many(programDays),
 }));
@@ -207,6 +224,7 @@ export type Workout = typeof workouts.$inferSelect;
 export type WorkoutExercise = typeof workoutExercises.$inferSelect;
 export type WorkoutSet = typeof workoutSets.$inferSelect;
 export type BodyWeight = typeof bodyWeights.$inferSelect;
+export type WaterIntake = typeof waterIntakes.$inferSelect;
 export type Targets = Pick<
   ProgramDayExercise,
   | 'targetSets'

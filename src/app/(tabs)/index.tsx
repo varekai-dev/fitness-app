@@ -8,6 +8,7 @@ import { ActivityCalendar } from '@/components/activity-calendar';
 import { useDialog } from '@/components/dialog';
 import { Elapsed } from '@/components/elapsed';
 import { Sparkline } from '@/components/line-chart';
+import { WaterCard } from '@/components/water-card';
 import { WorkoutSummaryCard } from '@/components/workout-summary-card';
 import {
   Button,
@@ -24,6 +25,7 @@ import {
 } from '@/components/ui';
 import { listBodyWeights } from '@/db/body-weight';
 import { getActiveProgram, getNextDayId } from '@/db/programs';
+import { loadWater } from '@/db/water';
 import { getActiveWorkout, listFinishedWorkouts, startWorkout } from '@/db/workouts';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { estimateKcal } from '@/lib/calories';
@@ -33,14 +35,15 @@ import { dailyPhrase } from '@/lib/motivation';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 async function loadHome() {
-  const [activeWorkout, program, finished, bodyWeights] = await Promise.all([
+  const [activeWorkout, program, finished, bodyWeights, water] = await Promise.all([
     getActiveWorkout(),
     getActiveProgram(),
     listFinishedWorkouts(),
     listBodyWeights(),
+    loadWater(),
   ]);
   const nextDayId = program ? await getNextDayId(program.id) : null;
-  return { activeWorkout, program, nextDayId, finished, bodyWeights, loadedAt: Date.now() };
+  return { activeWorkout, program, nextDayId, finished, bodyWeights, water, loadedAt: Date.now() };
 }
 
 export default function HomeScreen() {
@@ -51,7 +54,7 @@ export default function HomeScreen() {
   const dialog = useDialog();
 
   if (!data) return <Loading />;
-  const { activeWorkout, program, nextDayId, finished, bodyWeights, loadedAt } = data;
+  const { activeWorkout, program, nextDayId, finished, bodyWeights, water, loadedAt } = data;
   const weight = bodyWeights.at(-1);
   const prevWeight = bodyWeights.at(-2);
   // A manual pick may point to another program's day after switching programs.
@@ -184,6 +187,8 @@ export default function HomeScreen() {
           />
         </>
       )}
+
+      <WaterCard todayMl={water.todayMl} goal={water.goal} />
 
       <ActivityCalendar workoutDates={finished.map((w) => w.startedAt)} now={loadedAt} />
 
