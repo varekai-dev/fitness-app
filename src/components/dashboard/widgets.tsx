@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, Text as RNText, StyleSheet, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
 import { Elapsed } from '@/components/elapsed';
@@ -12,7 +12,15 @@ import { WaterBottle } from '@/components/water-bottle';
 import type { DashboardData } from '@/db/dashboard';
 import { startWorkout } from '@/db/workouts';
 import { estimateKcal } from '@/lib/calories';
-import { isFixedSize, WIDGET_INFO, type Widget, type WidgetSize } from '@/lib/dashboard';
+import {
+  isFixedSize,
+  isStatType,
+  STAT_INFO,
+  WIDGET_INFO,
+  type StatType,
+  type Widget,
+  type WidgetSize,
+} from '@/lib/dashboard';
 import { formatGrams, formatKcal } from '@/lib/food';
 import {
   formatShortDate,
@@ -21,22 +29,37 @@ import {
   WEEKDAY_SHORT,
   weekdayIndex,
 } from '@/lib/labels';
-import { formatNumber, notStarted } from '@/lib/metrics';
+import { formatNumber, notStarted, workoutDurationMs } from '@/lib/metrics';
 import { dailyPhrase } from '@/lib/motivation';
+import { averageOfLogged, daysBetween, dayStreak, weekStreak } from '@/lib/stats';
 import { formatMl, GLASS_PRESETS } from '@/lib/water';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 /** Height of a small or medium tile; a large tile is two rows tall. */
 export const TILE_HEIGHT = 156;
 export const TILE_GAP = 12;
+export const STAT_TILE_HEIGHT = 120;
 
-/** Undefined for fixed-size widgets, which take the height of their content. */
+/** Undefined for the quote, which takes the height of its content. */
 export const tileHeight = ({ type, size }: Pick<Widget, 'type' | 'size'>) =>
-  isFixedSize(type) ? undefined : size === 'large' ? TILE_HEIGHT * 2 + TILE_GAP : TILE_HEIGHT;
+  isStatType(type)
+    ? STAT_TILE_HEIGHT
+    : isFixedSize(type)
+      ? undefined
+      : size === 'large'
+        ? TILE_HEIGHT * 2 + TILE_GAP
+        : TILE_HEIGHT;
 
-/** Small tiles take half the row, medium and large the full width. */
+/**
+ * Stat tiles take a third of the row, small tiles half, medium and large the full width.
+ * Rounded down: fractions rounded up to whole pixels would push the last tile onto a new row.
+ */
 export const tileWidth = ({ type, size }: Pick<Widget, 'type' | 'size'>, rowWidth: number) =>
-  size === 'small' && !isFixedSize(type) ? (rowWidth - TILE_GAP) / 2 : rowWidth;
+  isStatType(type)
+    ? Math.floor((rowWidth - TILE_GAP * 2) / 3)
+    : size === 'small' && !isFixedSize(type)
+      ? Math.floor((rowWidth - TILE_GAP) / 2)
+      : rowWidth;
 
 type WidgetProps = { size: WidgetSize; data: DashboardData };
 
@@ -54,6 +77,7 @@ export function WidgetView({
 }) {
   const props = { size: widget.size, data };
   const content = (() => {
+    if (isStatType(widget.type)) return <StatWidget type={widget.type} data={data} />;
     switch (widget.type) {
       case 'quote':
         return <QuoteWidget {...props} />;
@@ -668,6 +692,178 @@ function WaterWeekWidget({ size, data }: WidgetProps) {
   );
 }
 
+// ---------- stat tiles ----------
+
+type StatValue = { value: string; unit?: string; label: string; onPress: () => void };
+
+const openHistory = () => router.navigate({ pathname: '/training', params: { view: 'history' } });
+const openFood = () => router.navigate('/food');
+const openWater = () => router.navigate('/water');
+
+/** "45 хв" under an hour, "3,5 год" from there on. */
+function formatHours(ms: number): Pick<StatValue, 'value' | 'unit'> {
+  const min = Math.round(ms / 60_000);
+  return min < 60
+    ? { value: String(min), unit: 'хв' }
+    : { value: formatNumber(min / 60, 1), unit: 'год' };
+}
+
+/** Kilograms lifted, in tonnes from a tonne up. */
+const formatTonnage = (kg: number): Pick<StatValue, 'value' | 'unit'> =>
+  kg < 1000
+    ? { value: formatNumber(kg, 0), unit: 'кг' }
+    : { value: formatNumber(kg / 1000, 1), unit: 'т' };
+
+function pluralDays(n: number) {
+  if (n % 10 === 1 && n % 100 !== 11) return 'день';
+  if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) return 'дні';
+  return 'днів';
+}
+
+function statValue(type: StatType, data: DashboardData): StatValue {
+  const { finished, bodyWeights, food, water, daily, loadedAt } = data;
+  const weekStart = startOfWeek(loadedAt);
+  const thisWeek = finished.filter((w) => w.startedAt >= weekStart);
+  const kcalOf = (ws: typeof finished) =>
+    bodyWeights.length > 0
+      ? ws.reduce((sum, w) => sum + (estimateKcal(w, bodyWeights) ?? 0), 0)
+      : null;
+
+  switch (type) {
+    case 'stat-workouts-week':
+      return { value: String(thisWeek.length), label: 'За тиждень', onPress: openHistory };
+    case 'stat-workouts-kcal': {
+      const kcal = kcalOf(thisWeek);
+      return {
+        value: kcal !== null ? formatKcal(kcal) : '—',
+        unit: kcal !== null ? 'ккал' : undefined,
+        label: 'Спалено',
+        onPress: openHistory,
+      };
+    }
+    case 'stat-workouts-total':
+      return { value: String(finished.length), label: 'Усього', onPress: openHistory };
+    case 'stat-workouts-time': {
+      const ms = thisWeek.reduce((sum, w) => sum + workoutDurationMs(w, loadedAt), 0);
+      return { ...formatHours(ms), label: 'Час', onPress: openHistory };
+    }
+    case 'stat-workouts-volume': {
+      let kg = 0;
+      for (const w of thisWeek)
+        for (const e of w.exercises) {
+          const t = e.exercise.trackingType;
+          if (t !== 'weight_reps' && t !== 'weighted_reps') continue;
+          for (const set of e.sets)
+            if (set.completedAt !== null) kg += (set.weightKg ?? 0) * (set.reps ?? 0);
+        }
+      return { ...formatTonnage(kg), label: 'Тоннаж', onPress: openHistory };
+    }
+    case 'stat-workouts-streak': {
+      const n = weekStreak(
+        loadedAt,
+        finished.map((w) => w.startedAt),
+      );
+      return { value: String(n), unit: 'тиж.', label: 'Поспіль', onPress: openHistory };
+    }
+    case 'stat-workouts-since': {
+      const last = finished[0];
+      if (!last) return { value: '—', label: 'Ще без тренувань', onPress: openHistory };
+      const days = daysBetween(last.startedAt, loadedAt);
+      return days === 0
+        ? { value: 'Сьогодні', label: 'Тренування', onPress: openHistory }
+        : { value: String(days), unit: pluralDays(days), label: 'Перерва', onPress: openHistory };
+    }
+    case 'stat-food-left': {
+      const left = food.goal - food.totals.kcal;
+      return {
+        value: formatKcal(Math.abs(left)),
+        unit: 'ккал',
+        label: left >= 0 ? 'Лишилось' : 'Понад ціль',
+        onPress: openFood,
+      };
+    }
+    case 'stat-food-protein':
+      return {
+        value: formatGrams(food.totals.proteinG),
+        unit: 'г',
+        label: 'Білок',
+        onPress: openFood,
+      };
+    case 'stat-food-average': {
+      const avg = averageOfLogged(food.days.map((d) => d.kcal));
+      return {
+        value: avg !== null ? formatKcal(avg) : '—',
+        unit: avg !== null ? 'ккал' : undefined,
+        label: 'Середнє',
+        onPress: openFood,
+      };
+    }
+    case 'stat-food-streak': {
+      const n = dayStreak(loadedAt, (day) => {
+        const kcal = daily.foodKcal.get(day) ?? 0;
+        return kcal > 0 && kcal <= food.goal;
+      });
+      return { value: String(n), unit: pluralDays(n), label: 'У межах цілі', onPress: openFood };
+    }
+    case 'stat-food-balance': {
+      const today = finished.filter((w) => w.startedAt >= food.today);
+      const balance = food.totals.kcal - (kcalOf(today) ?? 0);
+      const sign = balance > 0 ? '+' : balance < 0 ? '−' : '';
+      return {
+        value: `${sign}${formatKcal(Math.abs(balance))}`,
+        unit: 'ккал',
+        label: 'Баланс',
+        onPress: openFood,
+      };
+    }
+    case 'stat-water-today': {
+      const pct = water.goal > 0 ? Math.round((water.todayMl / water.goal) * 100) : 0;
+      return {
+        value: formatMl(water.todayMl),
+        unit: 'мл',
+        label: `${pct}% норми`,
+        onPress: openWater,
+      };
+    }
+    case 'stat-water-average': {
+      const avg = averageOfLogged(water.days.map((d) => d.totalMl));
+      return {
+        value: avg !== null ? formatMl(avg) : '—',
+        unit: avg !== null ? 'мл' : undefined,
+        label: 'Середнє',
+        onPress: openWater,
+      };
+    }
+    case 'stat-water-goal-days': {
+      const reached = water.days.filter((d) => d.totalMl >= water.goal).length;
+      return { value: String(reached), unit: '/ 7', label: 'З нормою', onPress: openWater };
+    }
+    case 'stat-water-streak': {
+      const n = dayStreak(loadedAt, (day) => (daily.waterMl.get(day) ?? 0) >= water.goal);
+      return { value: String(n), unit: pluralDays(n), label: 'Поспіль', onPress: openWater };
+    }
+  }
+}
+
+/** One number with an icon and a caption, like the Training tab's stats. */
+function StatWidget({ type, data }: { type: StatType; data: DashboardData }) {
+  const { value, unit, label, onPress } = statValue(type, data);
+  return (
+    <Tile onPress={onPress}>
+      <View style={styles.statTile}>
+        <Ionicons name={STAT_INFO[type].icon} size={22} color={colors.accent} />
+        <RNText style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
+          {value}
+          {unit ? <Unit> {unit}</Unit> : null}
+        </RNText>
+        <Text variant="muted" style={styles.centerText} numberOfLines={1}>
+          {label}
+        </Text>
+      </View>
+    </Tile>
+  );
+}
+
 // ---------- body ----------
 
 function WeightWidget({ size, data }: WidgetProps) {
@@ -809,6 +1005,7 @@ const styles = StyleSheet.create({
   statsRow: { flexDirection: 'row', gap: spacing.sm, flex: 1, alignItems: 'center' },
   stat: { flex: 1, alignItems: 'center', gap: 2 },
   statValue: { color: colors.text, fontSize: fontSize.xl, fontWeight: '800' },
+  statTile: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.xs },
   weekRow: { flexDirection: 'row', justifyContent: 'space-between' },
   weekDay: { alignItems: 'center', gap: spacing.xs },
   weekDot: {

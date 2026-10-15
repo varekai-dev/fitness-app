@@ -1,14 +1,15 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
-import { tileWidth, WidgetView } from '@/components/dashboard/widgets';
+import { TILE_GAP, tileWidth, WidgetView } from '@/components/dashboard/widgets';
 import { Button, Card, ChipGroup, goBack, Loading, Row, Screen, Text } from '@/components/ui';
 import { addWidget, getDashboard, loadDashboardData } from '@/db/dashboard';
 import { useDbQuery } from '@/hooks/use-db-query';
 import {
   isFixedSize,
+  STAT_INFO,
   WIDGET_GROUPS,
   WIDGET_INFO,
   WIDGET_SIZE_LABELS,
@@ -76,6 +77,42 @@ export default function WidgetsScreen() {
               </Card>
             );
           })}
+          {group.stats.length > 0 && (
+            <Card>
+              <Row>
+                <Ionicons name="apps" size={18} color={colors.accent} />
+                <Text variant="heading" style={styles.flex}>
+                  Плитки
+                </Text>
+              </Row>
+              <Text variant="muted">Одне число на третину ширини. Торкнись плитки, щоб додати.</Text>
+              <View style={[styles.preview, styles.statGrid]}>
+                {group.stats.map((type) => {
+                  const count = widgets.filter((w) => w.type === type).length;
+                  return (
+                    <Pressable
+                      key={type}
+                      onPress={() => add(type, 'small')}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Додати плитку «${STAT_INFO[type].title}»`}
+                      style={({ pressed }) => pressed && styles.pressed}>
+                      <WidgetView
+                        widget={{ id: `preview-${type}`, type, size: 'small' }}
+                        data={data}
+                        width={tileWidth({ type, size: 'small' }, rowWidth)}
+                        interactive={false}
+                      />
+                      {count > 0 && (
+                        <View style={styles.added}>
+                          <Ionicons name="checkmark" size={12} color={colors.accentText} />
+                        </View>
+                      )}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </Card>
+          )}
         </View>
       ))}
     </Screen>
@@ -92,5 +129,19 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     backgroundColor: colors.background,
     alignItems: 'flex-start',
+  },
+  statGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: TILE_GAP },
+  pressed: { opacity: 0.7 },
+  // Marks a tile that is already on Home.
+  added: {
+    position: 'absolute',
+    top: spacing.xs,
+    right: spacing.xs,
+    width: 18,
+    height: 18,
+    borderRadius: radius.pill,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

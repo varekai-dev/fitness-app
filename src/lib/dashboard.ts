@@ -9,7 +9,29 @@ export const WIDGET_SIZE_LABELS: Record<WidgetSize, string> = {
   large: 'Великий',
 };
 
+/** One-number tiles, a third of the row wide, like the Training tab's stats. */
+export const STAT_TYPES = [
+  'stat-workouts-week',
+  'stat-workouts-kcal',
+  'stat-workouts-total',
+  'stat-workouts-time',
+  'stat-workouts-volume',
+  'stat-workouts-streak',
+  'stat-workouts-since',
+  'stat-food-left',
+  'stat-food-protein',
+  'stat-food-average',
+  'stat-food-streak',
+  'stat-food-balance',
+  'stat-water-today',
+  'stat-water-average',
+  'stat-water-goal-days',
+  'stat-water-streak',
+] as const;
+export type StatType = (typeof STAT_TYPES)[number];
+
 export const WIDGET_TYPES = [
+  ...STAT_TYPES,
   'quote',
   'workout-next',
   'workout-week',
@@ -23,8 +45,30 @@ export type WidgetType = (typeof WIDGET_TYPES)[number];
 
 export type Widget = { id: string; type: WidgetType; size: WidgetSize };
 
+export const STAT_INFO: Record<StatType, { title: string; icon: IconName }> = {
+  'stat-workouts-week': { title: 'Тренувань за тиждень', icon: 'flame' },
+  'stat-workouts-kcal': { title: 'Спалено за тиждень', icon: 'bonfire' },
+  'stat-workouts-total': { title: 'Усього тренувань', icon: 'trophy' },
+  'stat-workouts-time': { title: 'Час тренувань за тиждень', icon: 'time' },
+  'stat-workouts-volume': { title: 'Тоннаж за тиждень', icon: 'barbell' },
+  'stat-workouts-streak': { title: 'Тижнів поспіль', icon: 'ribbon' },
+  'stat-workouts-since': { title: 'Від останнього тренування', icon: 'hourglass' },
+  'stat-food-left': { title: 'Лишилось ккал', icon: 'restaurant' },
+  'stat-food-protein': { title: 'Білок сьогодні', icon: 'nutrition' },
+  'stat-food-average': { title: 'Ккал у середньому', icon: 'stats-chart' },
+  'stat-food-streak': { title: 'Днів у межах цілі', icon: 'checkmark-circle' },
+  'stat-food-balance': { title: 'Баланс калорій', icon: 'swap-vertical' },
+  'stat-water-today': { title: 'Вода сьогодні', icon: 'water' },
+  'stat-water-average': { title: 'Вода в середньому', icon: 'stats-chart' },
+  'stat-water-goal-days': { title: 'Днів з ціллю', icon: 'calendar' },
+  'stat-water-streak': { title: 'Днів поспіль', icon: 'ribbon' },
+};
+
+export const isStatType = (type: WidgetType): type is StatType =>
+  (STAT_TYPES as readonly string[]).includes(type);
+
 export const WIDGET_INFO: Record<
-  WidgetType,
+  Exclude<WidgetType, StatType>,
   { title: string; description: string; icon: IconName }
 > = {
   quote: {
@@ -69,13 +113,29 @@ export const WIDGET_INFO: Record<
   },
 };
 
-/** The picker lists widgets under the tab they belong to. */
-export const WIDGET_GROUPS: { title: string; types: WidgetType[] }[] = [
-  { title: 'Тренування', types: ['workout-next', 'workout-week'] },
-  { title: 'Харчування', types: ['food-calories', 'food-meals'] },
-  { title: 'Вода', types: ['water-today', 'water-week'] },
-  { title: 'Тіло', types: ['weight'] },
-  { title: 'Інше', types: ['quote'] },
+/** The picker lists widgets, then stat tiles, under the tab they belong to. */
+export const WIDGET_GROUPS: {
+  title: string;
+  types: Exclude<WidgetType, StatType>[];
+  stats: StatType[];
+}[] = [
+  {
+    title: 'Тренування',
+    types: ['workout-next', 'workout-week'],
+    stats: STAT_TYPES.filter((t) => t.startsWith('stat-workouts-')),
+  },
+  {
+    title: 'Харчування',
+    types: ['food-calories', 'food-meals'],
+    stats: STAT_TYPES.filter((t) => t.startsWith('stat-food-')),
+  },
+  {
+    title: 'Вода',
+    types: ['water-today', 'water-week'],
+    stats: STAT_TYPES.filter((t) => t.startsWith('stat-water-')),
+  },
+  { title: 'Тіло', types: ['weight'], stats: [] },
+  { title: 'Інше', types: ['quote'], stats: [] },
 ];
 
 export const newWidgetId = () =>
@@ -111,8 +171,8 @@ export function parseDashboard(json: string | undefined): Widget[] {
   }
 }
 
-/** Widgets drawn full width at the height of their content, with no size choice. */
-export const isFixedSize = (type: WidgetType) => type === 'quote';
+/** Widgets with no size choice: the quote and the stat tiles. */
+export const isFixedSize = (type: WidgetType) => type === 'quote' || isStatType(type);
 
 /** The next size when the size button is tapped in edit mode. */
 export const nextSize = (size: WidgetSize): WidgetSize =>

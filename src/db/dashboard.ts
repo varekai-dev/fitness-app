@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, gte } from 'drizzle-orm';
 
 import {
   newWidgetId,
@@ -7,11 +7,13 @@ import {
   type WidgetSize,
   type WidgetType,
 } from '@/lib/dashboard';
+import { STREAK_DAYS, totalsByDay } from '@/lib/stats';
+import { addDays } from '@/lib/water';
 import { listBodyWeights } from './body-weight';
 import { db } from './client';
 import { loadFood } from './food';
 import { getActiveProgram, getNextDayId } from './programs';
-import { settings } from './schema';
+import { foodEntries, settings, waterIntakes } from './schema';
 import { loadWater } from './water';
 import { getActiveWorkout, listFinishedWorkouts } from './workouts';
 
@@ -56,15 +58,39 @@ export async function addWidget(type: WidgetType, size: WidgetSize) {
   await saveDashboard([...widgets, { id: newWidgetId(), type, size }]);
 }
 
+/** Water and kcal per day over the streak window, for the streak tiles. */
+async function loadDailyTotals(now: number) {
+  const from = addDays(now, -STREAK_DAYS);
+  const [water, food] = await Promise.all([
+    db
+      .select({ at: waterIntakes.drankAt, amount: waterIntakes.amountMl })
+      .from(waterIntakes)
+      .where(gte(waterIntakes.drankAt, from)),
+    db
+      .select({ at: foodEntries.eatenAt, amount: foodEntries.kcal })
+      .from(foodEntries)
+      .where(gte(foodEntries.eatenAt, from)),
+  ]);
+  const byDay = (rows: { at: number; amount: number }[]) =>
+    totalsByDay(
+      rows,
+      (r) => r.at,
+      (r) => r.amount,
+    );
+  return { waterMl: byDay(water), foodKcal: byDay(food) };
+}
+
 /** Everything any widget may show, loaded once for the whole dashboard. */
 export async function loadDashboardData() {
-  const [activeWorkout, program, finished, bodyWeights, water, food] = await Promise.all([
+  const now = Date.now();
+  const [activeWorkout, program, finished, bodyWeights, water, food, daily] = await Promise.all([
     getActiveWorkout(),
     getActiveProgram(),
     listFinishedWorkouts(),
     listBodyWeights(),
-    loadWater(),
-    loadFood(),
+    loadWater(now),
+    loadFood(now),
+    loadDailyTotals(now),
   ]);
   const nextDayId = program ? await getNextDayId(program.id) : null;
   const nextDay = program?.days.find((d) => d.id === nextDayId) ?? null;
@@ -76,7 +102,8 @@ export async function loadDashboardData() {
     bodyWeights,
     water,
     food,
-    loadedAt: Date.now(),
+    daily,
+    loadedAt: now,
   };
 }
 
