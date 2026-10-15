@@ -153,11 +153,14 @@ const RING_STROKE = 6;
 function ProgressRing({
   progress,
   icon,
+  label,
   size = 56,
   overIsBad,
 }: {
   progress: number;
-  icon: IconName;
+  icon?: IconName;
+  /** Drawn in the middle instead of the icon. */
+  label?: string;
   size?: number;
   overIsBad?: boolean;
 }) {
@@ -190,7 +193,11 @@ function ProgressRing({
           />
         )}
       </Svg>
-      <Ionicons name={icon} size={size * 0.36} color={color} />
+      {label !== undefined ? (
+        <Text style={[styles.ringLabel, { color }]}>{label}</Text>
+      ) : (
+        icon && <Ionicons name={icon} size={size * 0.36} color={color} />
+      )}
     </View>
   );
 }
@@ -438,16 +445,50 @@ function FoodCaloriesWidget({ size, data }: WidgetProps) {
   const open = () => router.navigate('/food');
 
   if (size === 'small') {
+    // No macro goals exist, so each bar is that macro's share of today's kcal.
+    const macroKcal = [
+      { label: 'Б', grams: totals.proteinG, kcal: totals.proteinG * 4 },
+      { label: 'Ж', grams: totals.fatG, kcal: totals.fatG * 9 },
+      { label: 'В', grams: totals.carbsG, kcal: totals.carbsG * 4 },
+    ];
+    const macroTotal = macroKcal.reduce((sum, m) => sum + m.kcal, 0);
     return (
       <Tile onPress={open}>
-        <ProgressRing progress={progress} icon="restaurant" overIsBad />
-        <View style={styles.bottom}>
-          <Big small>
-            {formatKcal(totals.kcal)}
-            <Unit> ккал</Unit>
-          </Big>
-          <Text variant="muted">з {formatKcal(goal)}</Text>
+        <View style={styles.titleWithRing}>
+          <View style={styles.flex}>
+            <TileTitle title="Калорії" icon="restaurant" />
+          </View>
+          <ProgressRing
+            progress={progress}
+            label={`${Math.round(progress * 100)}%`}
+            size={36}
+            overIsBad
+          />
         </View>
+        <View style={styles.macroBars}>
+          {macroKcal.map((m) => (
+            <View key={m.label} style={styles.macroBarRow}>
+              <Text variant="caption" style={styles.macroBarLabel}>
+                {m.label}
+              </Text>
+              <View style={styles.macroBarTrack}>
+                <View
+                  style={[
+                    styles.macroBarFill,
+                    { width: `${macroTotal > 0 ? (m.kcal / macroTotal) * 100 : 0}%` },
+                  ]}
+                />
+              </View>
+              <Text variant="caption" style={styles.macroBarValue}>
+                {formatGrams(m.grams)} г
+              </Text>
+            </View>
+          ))}
+        </View>
+        <Big small>
+          {formatKcal(totals.kcal)}
+          <Unit> / {formatKcal(goal)} ккал</Unit>
+        </Big>
       </Tile>
     );
   }
@@ -569,18 +610,30 @@ function WaterTodayWidget({ size, data }: WidgetProps) {
   if (size === 'small') {
     return (
       <Tile onPress={open}>
-        <View style={styles.rowBetween}>
-          <ProgressRing progress={progress} icon="water" size={48} />
-          <View style={styles.right}>
+        <TileTitle title="Вода" icon="water" />
+        <View style={styles.bottleRow}>
+          <WaterBottle progress={progress} height={64} />
+          <View>
             <Big small>
-              {formatMl(todayMl)}
-              <Unit> мл</Unit>
+              {Math.round(progress * 100)}
+              <Unit> %</Unit>
             </Big>
-            <Text variant="muted">з {formatMl(goal)}</Text>
+            <Text variant="muted">норми</Text>
           </View>
         </View>
-        <View style={styles.bottom}>
-          <QuickButton label={`${QUICK_ML} мл`} onPress={() => drink(QUICK_ML)} />
+        <View style={styles.valueWithAction}>
+          <Big small>
+            {formatMl(todayMl)}
+            <Unit> / {formatMl(goal)} мл</Unit>
+          </Big>
+          <Pressable
+            onPress={() => drink(QUICK_ML)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={`Додати ${QUICK_ML} мл`}
+            style={({ pressed }) => [styles.addRound, pressed && styles.quickPressed]}>
+            <Ionicons name="add" size={20} color={colors.accentText} />
+          </Pressable>
         </View>
       </Tile>
     );
@@ -900,7 +953,32 @@ function WeightWidget({ size, data }: WidgetProps) {
     return (
       <Tile onPress={open}>
         <TileTitle title="Вага тіла" icon="scale" />
-        <View style={styles.bottom}>{value}</View>
+        <View style={styles.fillCenter}>
+          {recent.length > 1 ? (
+            <Sparkline
+              points={recent.map((w) => ({ x: w.measuredAt, y: w.weightKg }))}
+              height={36}
+            />
+          ) : (
+            <Text variant="muted" style={styles.centerText}>
+              Графік — після наступного зважування
+            </Text>
+          )}
+        </View>
+        <View>
+          <View style={styles.valueWithAction}>
+            <Big small>
+              {formatNumber(latest.weightKg, 1)}
+              <Unit> кг</Unit>
+            </Big>
+            {delta !== null && (
+              <View style={styles.chip}>
+                <Text style={styles.chipText}>{formatWeightDelta(delta)}</Text>
+              </View>
+            )}
+          </View>
+          <Text variant="muted">{formatShortDate(latest.measuredAt)}</Text>
+        </View>
       </Tile>
     );
   }
@@ -1005,6 +1083,43 @@ const styles = StyleSheet.create({
   statsRow: { flexDirection: 'row', gap: spacing.sm, flex: 1, alignItems: 'center' },
   stat: { flex: 1, alignItems: 'center', gap: 2 },
   statValue: { color: colors.text, fontSize: fontSize.xl, fontWeight: '800' },
+  ringLabel: { fontSize: fontSize.xs - 1, fontWeight: '800' },
+  titleWithRing: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  macroBars: { flex: 1, justifyContent: 'center', gap: spacing.xs + 1 },
+  macroBarRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  macroBarLabel: { width: 12, fontWeight: '700' },
+  macroBarTrack: {
+    flex: 1,
+    height: 6,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surfaceRaised,
+    overflow: 'hidden',
+  },
+  macroBarFill: { height: '100%', borderRadius: radius.pill, backgroundColor: colors.accent },
+  macroBarValue: { minWidth: 36, textAlign: 'right' },
+  bottleRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  fillCenter: { flex: 1, justifyContent: 'center' },
+  valueWithAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.xs,
+  },
+  addRound: {
+    width: 34,
+    height: 34,
+    borderRadius: radius.pill,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chip: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+    backgroundColor: colors.accentSoft,
+  },
+  chipText: { color: colors.accent, fontSize: fontSize.xs + 1, fontWeight: '700' },
   statTile: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.xs },
   weekRow: { flexDirection: 'row', justifyContent: 'space-between' },
   weekDay: { alignItems: 'center', gap: spacing.xs },
