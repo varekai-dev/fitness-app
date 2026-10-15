@@ -159,12 +159,7 @@ export default function FoodScreen() {
       title="Харчування"
       mode="root"
       bottomSpace={tabBarSpace}
-      headerRight={
-        <>
-          <CircleButton icon="person-outline" onPress={() => router.push('/profile')} />
-          <CircleButton icon="settings-outline" onPress={() => router.push('/settings')} />
-        </>
-      }>
+      headerRight={<CircleButton icon="person-outline" onPress={() => router.push('/profile')} />}>
       <Card style={styles.hero}>
         <Text style={styles.amount}>
           {formatKcal(totals.kcal)}

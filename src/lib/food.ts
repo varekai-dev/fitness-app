@@ -1,7 +1,4 @@
 export const DEFAULT_KCAL_GOAL = 2000;
-export const KCAL_GOAL_STEP = 100;
-export const MIN_KCAL_GOAL = 1000;
-export const MAX_KCAL_GOAL = 5000;
 
 /** Cache key for a dish: case, spacing and trailing punctuation do not make a new dish. */
 export function normalizeDish(text: string) {

@@ -3,13 +3,10 @@ import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import { useDialog } from '@/components/dialog';
-import { Button, Card, CircleButton, Field, Row, Screen, Text } from '@/components/ui';
-import { getKcalGoal, setKcalGoal } from '@/db/food';
-import { useDbQuery } from '@/hooks/use-db-query';
-import { formatKcal, KCAL_GOAL_STEP, MAX_KCAL_GOAL, MIN_KCAL_GOAL } from '@/lib/food';
+import { Button, Card, Field, Row, Screen, Text } from '@/components/ui';
 import {
   checkGroqKey,
   deleteGroqKey,
@@ -28,7 +25,6 @@ export default function SettingsScreen() {
   const [savedKey, setSavedKey] = useState<string | null | undefined>(undefined);
   const [input, setInput] = useState('');
   const [saving, setSaving] = useState(false);
-  const { data: goal } = useDbQuery(getKcalGoal);
 
   useEffect(() => {
     getGroqKey()
@@ -80,14 +76,6 @@ export default function SettingsScreen() {
         },
       ],
     });
-
-  const changeGoal = (delta: number) => {
-    if (goal === undefined) return;
-    const next = Math.min(Math.max(goal + delta, MIN_KCAL_GOAL), MAX_KCAL_GOAL);
-    if (next === goal) return;
-    Haptics.selectionAsync();
-    setKcalGoal(next);
-  };
 
   return (
     <Screen title="Налаштування">
@@ -150,32 +138,6 @@ export default function SettingsScreen() {
         />
       </Card>
 
-      <Text variant="overline">Харчування</Text>
-      <Card>
-        <Row style={styles.spaceBetween}>
-          <View style={styles.flex}>
-            <Text variant="heading">Денна ціль</Text>
-            <Text variant="muted">Крок {KCAL_GOAL_STEP} ккал</Text>
-          </View>
-          <Row style={styles.stepper}>
-            <CircleButton
-              icon="remove"
-              size={36}
-              disabled={goal === undefined || goal <= MIN_KCAL_GOAL}
-              onPress={() => changeGoal(-KCAL_GOAL_STEP)}
-            />
-            <Text variant="heading" style={styles.goalValue}>
-              {goal === undefined ? '—' : formatKcal(goal)}
-            </Text>
-            <CircleButton
-              icon="add"
-              size={36}
-              disabled={goal === undefined || goal >= MAX_KCAL_GOAL}
-              onPress={() => changeGoal(KCAL_GOAL_STEP)}
-            />
-          </Row>
-        </Row>
-      </Card>
       {dialog.element}
     </Screen>
   );
@@ -185,6 +147,4 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   saved: { marginVertical: spacing.xs },
   spaceBetween: { justifyContent: 'space-between' },
-  stepper: { gap: spacing.sm },
-  goalValue: { minWidth: 64, textAlign: 'center' },
 });

@@ -6,14 +6,16 @@ import { useTabBarSpace } from '@/components/floating-tab-bar';
 import { Backdrop } from '@/components/glass';
 import { ExercisesView } from '@/components/training/exercises-view';
 import { HistoryView } from '@/components/training/history-view';
+import { OverviewView } from '@/components/training/overview-view';
 import { ProgramsView } from '@/components/training/programs-view';
 import { CircleButton, ScreenHeader } from '@/components/ui';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
-const SECTIONS = ['programs', 'exercises', 'history'] as const;
+const SECTIONS = ['today', 'programs', 'exercises', 'history'] as const;
 export type TrainingSection = (typeof SECTIONS)[number];
 
 const LABELS: Record<TrainingSection, string> = {
+  today: 'Сьогодні',
   programs: 'Програми',
   exercises: 'Вправи',
   history: 'Історія',
@@ -22,15 +24,15 @@ const LABELS: Record<TrainingSection, string> = {
 const isSection = (v: unknown): v is TrainingSection => SECTIONS.includes(v as TrainingSection);
 
 /**
- * Everything about workouts in one tab: programs, the exercise library and the
- * history with its activity calendar. `?view=` picks the section, so links from
+ * Everything about workouts in one tab: today's workout and weekly stats,
+ * programs, the exercise library and the history with its activity calendar. `?view=` picks the section, so links from
  * other screens can open the right one.
  */
 export default function TrainingScreen() {
   const tabBarSpace = useTabBarSpace();
   const { view } = useLocalSearchParams<{ view?: string }>();
   // The URL is the single source of truth, so links and the switcher stay in sync.
-  const section: TrainingSection = isSection(view) ? view : 'programs';
+  const section: TrainingSection = isSection(view) ? view : 'today';
 
   const select = (next: TrainingSection) => {
     if (next === section) return;
@@ -70,6 +72,7 @@ export default function TrainingScreen() {
         ))}
       </View>
       <View style={styles.body}>
+        {section === 'today' && <OverviewView bottomSpace={tabBarSpace} onSection={select} />}
         {section === 'programs' && <ProgramsView bottomSpace={tabBarSpace} />}
         {section === 'exercises' && <ExercisesView bottomSpace={tabBarSpace} />}
         {section === 'history' && <HistoryView bottomSpace={tabBarSpace} />}
