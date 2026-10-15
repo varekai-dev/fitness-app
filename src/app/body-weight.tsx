@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useDialog } from '@/components/dialog';
@@ -17,17 +17,43 @@ import {
 } from '@/components/ui';
 import { deleteBodyWeight, listBodyWeights, saveBodyWeight } from '@/db/body-weight';
 import { useDbQuery } from '@/hooks/use-db-query';
+import { healthConnectSupported, syncWeightFromHealthConnect } from '@/lib/health-connect';
 import { formatDate, formatShortDate, formatWeightDelta } from '@/lib/labels';
 import { formatNumber, parseDecimal } from '@/lib/metrics';
 import { spacing } from '@/theme';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+const SYNC_MESSAGES = {
+  ok: (n: number) =>
+    n > 0
+      ? { title: 'Синхронізовано', message: `Додано або оновлено днів: ${n}.` }
+      : { title: 'Нових зважувань немає', message: 'Усі записи з Health Connect уже тут.' },
+  denied: () => ({
+    title: 'Немає доступу',
+    message: 'Дозволь читання ваги для Fitness у налаштуваннях Health Connect.',
+  }),
+  'update-required': () => ({
+    title: 'Потрібне оновлення',
+    message: 'Онови Health Connect у Google Play і спробуй ще раз.',
+  }),
+  unavailable: () => ({
+    title: 'Health Connect недоступний',
+    message: 'Встанови Health Connect з Google Play.',
+  }),
+};
+
 export default function BodyWeightScreen() {
   const { data } = useDbQuery(listBodyWeights);
   // null until the user types, so the field shows the latest weight to adjust.
   const [input, setInput] = useState<string | null>(null);
   const dialog = useDialog();
+  const [syncing, setSyncing] = useState(false);
+
+  // Picks up new scale readings on open once access was granted; never prompts.
+  useEffect(() => {
+    if (healthConnectSupported) syncWeightFromHealthConnect({ prompt: false }).catch(() => {});
+  }, []);
 
   if (!data) return <Loading />;
   const latest = data.at(-1);
@@ -39,6 +65,18 @@ export default function BodyWeightScreen() {
     if (!valid) return;
     saveBodyWeight(parsed);
     setInput(null);
+  };
+
+  const sync = async () => {
+    setSyncing(true);
+    try {
+      const result = await syncWeightFromHealthConnect({ prompt: true });
+      dialog.show(SYNC_MESSAGES[result.status](result.status === 'ok' ? result.imported : 0));
+    } catch (e) {
+      dialog.show({ title: 'Не вдалося синхронізувати', message: String(e) });
+    } finally {
+      setSyncing(false);
+    }
   };
 
   const remove = (id: number, label: string) =>
@@ -75,6 +113,16 @@ export default function BodyWeightScreen() {
         </Row>
         <Text variant="muted">Повторне зважування того ж дня замінить запис.</Text>
       </Card>
+
+      {healthConnectSupported && (
+        <Button
+          title="Синхронізувати з Health Connect"
+          icon="sync"
+          variant="secondary"
+          loading={syncing}
+          onPress={sync}
+        />
+      )}
 
       {data.length === 0 ? (
         <EmptyState
