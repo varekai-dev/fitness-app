@@ -6,10 +6,9 @@ import { colors } from '@/theme';
 
 const ICONS: Record<string, IconName> = {
   index: 'home',
-  programs: 'calendar',
+  training: 'barbell',
+  food: 'restaurant',
   water: 'water',
-  exercises: 'barbell',
-  history: 'stats-chart',
 };
 
 export default function TabsLayout() {
@@ -21,10 +20,9 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: colors.background },
       }}>
       <Tabs.Screen name="index" options={{ title: 'Головна' }} />
-      <Tabs.Screen name="programs" options={{ title: 'Програми' }} />
+      <Tabs.Screen name="training" options={{ title: 'Тренування' }} />
+      <Tabs.Screen name="food" options={{ title: 'Харчування' }} />
       <Tabs.Screen name="water" options={{ title: 'Вода' }} />
-      <Tabs.Screen name="exercises" options={{ title: 'Вправи' }} />
-      <Tabs.Screen name="history" options={{ title: 'Історія' }} />
     </Tabs>
   );
 }

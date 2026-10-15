@@ -3,32 +3,20 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { useTabBarSpace } from '@/components/floating-tab-bar';
-import { Backdrop } from '@/components/glass';
 import { useDialog } from '@/components/dialog';
 import { ExerciseThumb } from '@/components/exercise-thumb';
 import { MuscleIcon } from '@/components/muscle-icon';
 import { confirmRemoveExercise } from '@/components/remove-dialogs';
 import { SwipeToDelete } from '@/components/swipe-to-delete';
-import {
-  Card,
-  Chip,
-  ChipScroller,
-  CircleButton,
-  EmptyState,
-  Loading,
-  ScreenHeader,
-  SearchField,
-  Text,
-} from '@/components/ui';
+import { Card, Chip, ChipScroller, EmptyState, Loading, SearchField, Text } from '@/components/ui';
 import { listExercises } from '@/db/exercises';
 import { MUSCLE_GROUPS, type MuscleGroup } from '@/db/schema';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { MUSCLE_GROUP_LABELS, TRACKING_TYPE_LABELS } from '@/lib/labels';
 import { colors, spacing } from '@/theme';
 
-export default function ExercisesScreen() {
-  const tabBarSpace = useTabBarSpace();
+/** The Exercises section of the Training tab: the searchable exercise library. */
+export function ExercisesView({ bottomSpace }: { bottomSpace: number }) {
   const { data } = useDbQuery(listExercises);
   const [group, setGroup] = useState<MuscleGroup | null>(null);
   const [search, setSearch] = useState('');
@@ -41,22 +29,9 @@ export default function ExercisesScreen() {
   );
 
   return (
-    <View style={styles.root}>
-      <Backdrop />
-      <ScreenHeader
-        title="Вправи"
-        mode="root"
-        right={
-          <CircleButton
-            icon="add"
-            background={colors.accent}
-            color={colors.accentText}
-            onPress={() => router.push('/exercise/edit')}
-          />
-        }
-      />
+    <>
       <FlatList
-        contentContainerStyle={[styles.content, { paddingBottom: tabBarSpace }]}
+        contentContainerStyle={[styles.content, { paddingBottom: bottomSpace }]}
         keyboardShouldPersistTaps="handled"
         data={filtered}
         keyExtractor={(e) => String(e.id)}
@@ -123,12 +98,11 @@ export default function ExercisesScreen() {
         ListEmptyComponent={<EmptyState icon="barbell" title="Нічого не знайдено" />}
       />
       {dialog.element}
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingTop: spacing.sm, gap: spacing.sm },
   header: { gap: spacing.lg, marginBottom: spacing.xs },
   item: {

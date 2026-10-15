@@ -4,16 +4,15 @@ import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useTabBarSpace } from '@/components/floating-tab-bar';
-import { ActivityCalendar } from '@/components/activity-calendar';
 import { useDialog } from '@/components/dialog';
 import { Elapsed } from '@/components/elapsed';
-import { Sparkline } from '@/components/line-chart';
-import { WaterCard } from '@/components/water-card';
+import { TodayCards } from '@/components/today-cards';
 import { WorkoutSummaryCard } from '@/components/workout-summary-card';
 import {
   Button,
   Card,
   Chip,
+  CircleButton,
   ChipScroller,
   EmptyState,
   Loading,
@@ -24,6 +23,7 @@ import {
   Text,
 } from '@/components/ui';
 import { listBodyWeights } from '@/db/body-weight';
+import { loadFood } from '@/db/food';
 import { getActiveProgram, getNextDayId } from '@/db/programs';
 import { loadWater } from '@/db/water';
 import { getActiveWorkout, listFinishedWorkouts, startWorkout } from '@/db/workouts';
@@ -35,15 +35,25 @@ import { dailyPhrase } from '@/lib/motivation';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 async function loadHome() {
-  const [activeWorkout, program, finished, bodyWeights, water] = await Promise.all([
+  const [activeWorkout, program, finished, bodyWeights, water, food] = await Promise.all([
     getActiveWorkout(),
     getActiveProgram(),
     listFinishedWorkouts(),
     listBodyWeights(),
     loadWater(),
+    loadFood(),
   ]);
   const nextDayId = program ? await getNextDayId(program.id) : null;
-  return { activeWorkout, program, nextDayId, finished, bodyWeights, water, loadedAt: Date.now() };
+  return {
+    activeWorkout,
+    program,
+    nextDayId,
+    finished,
+    bodyWeights,
+    water,
+    food,
+    loadedAt: Date.now(),
+  };
 }
 
 export default function HomeScreen() {
@@ -54,7 +64,7 @@ export default function HomeScreen() {
   const dialog = useDialog();
 
   if (!data) return <Loading />;
-  const { activeWorkout, program, nextDayId, finished, bodyWeights, water, loadedAt } = data;
+  const { activeWorkout, program, nextDayId, finished, bodyWeights, water, food, loadedAt } = data;
   const weight = bodyWeights.at(-1);
   const prevWeight = bodyWeights.at(-2);
   // A manual pick may point to another program's day after switching programs.
@@ -87,7 +97,17 @@ export default function HomeScreen() {
   return (
     <Screen header={false} bottomSpace={tabBarSpace}>
       <View style={styles.greeting}>
-        <Text variant="caption">{formatLongDate(loadedAt)}</Text>
+        <Row style={styles.spaceBetween}>
+          <Text variant="caption">{formatLongDate(loadedAt)}</Text>
+          <Row>
+            <CircleButton icon="person-outline" size={36} onPress={() => router.push('/profile')} />
+            <CircleButton
+              icon="settings-outline"
+              size={36}
+              onPress={() => router.push('/settings')}
+            />
+          </Row>
+        </Row>
         <Text variant="title">
           {dailyPhrase(new Date(loadedAt))}{' '}
           <Ionicons name="flash" size={26} color={colors.accent} />
@@ -135,7 +155,7 @@ export default function HomeScreen() {
           <Button
             title="До програм"
             trailingIcon="arrow-forward"
-            onPress={() => router.navigate('/programs')}
+            onPress={() => router.navigate({ pathname: '/training', params: { view: 'programs' } })}
           />
         </Card>
       ) : program.days.length === 0 || !selectedDay ? (
@@ -188,9 +208,12 @@ export default function HomeScreen() {
         </>
       )}
 
-      <WaterCard todayMl={water.todayMl} goal={water.goal} />
-
-      <ActivityCalendar workoutDates={finished.map((w) => w.startedAt)} now={loadedAt} />
+      <TodayCards
+        kcal={food.totals.kcal}
+        kcalGoal={food.goal}
+        waterMl={water.todayMl}
+        waterGoal={water.goal}
+      />
 
       <Card onPress={() => router.push('/body-weight')}>
         <Row style={styles.spaceBetween}>
@@ -215,20 +238,20 @@ export default function HomeScreen() {
             <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           </Row>
         </Row>
-        {bodyWeights.length === 1 ? (
-          <Text variant="muted">Графік з’явиться після зважування в інший день.</Text>
-        ) : (
-          <Sparkline
-            points={bodyWeights.slice(-30).map((w) => ({ x: w.measuredAt, y: w.weightKg }))}
-          />
-        )}
       </Card>
 
       <SectionHeader
         title="Останні тренування"
         action={
           finished.length > 0 ? (
-            <Button title="Усі" variant="ghost" small onPress={() => router.navigate('/history')} />
+            <Button
+              title="Усі"
+              variant="ghost"
+              small
+              onPress={() =>
+                router.navigate({ pathname: '/training', params: { view: 'history' } })
+              }
+            />
           ) : undefined
         }
       />
@@ -236,7 +259,7 @@ export default function HomeScreen() {
         <EmptyState icon="time" title="Ще немає завершених тренувань" />
       ) : (
         finished
-          .slice(0, 3)
+          .slice(0, 2)
           .map((w) => (
             <WorkoutSummaryCard key={w.id} workout={w} kcal={estimateKcal(w, bodyWeights)} />
           ))

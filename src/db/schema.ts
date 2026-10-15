@@ -163,6 +163,44 @@ export const waterIntakes = sqliteTable(
   (t) => [index('water_intakes_drank_idx').on(t.drankAt)],
 );
 
+/**
+ * Nutrition looked up by Groq, keyed by the normalized dish text, so typing the
+ * same dish again reuses the stored values instead of calling the API.
+ */
+export const foods = sqliteTable('foods', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  query: text('query').notNull().unique(),
+  name: text('name').notNull(),
+  portion: text('portion'),
+  kcal: real('kcal').notNull(),
+  proteinG: real('protein_g').notNull(),
+  fatG: real('fat_g').notNull(),
+  carbsG: real('carbs_g').notNull(),
+  fiberG: real('fiber_g'),
+  sugarG: real('sugar_g'),
+  lastUsedAt: integer('last_used_at').notNull().$defaultFn(now),
+  createdAt: integer('created_at').notNull().$defaultFn(now),
+});
+
+/** Meal log: values are copied from `foods` so editing the cache never rewrites history. */
+export const foodEntries = sqliteTable(
+  'food_entries',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    eatenAt: integer('eaten_at').notNull(),
+    foodId: integer('food_id').references(() => foods.id, { onDelete: 'set null' }),
+    name: text('name').notNull(),
+    portion: text('portion'),
+    kcal: real('kcal').notNull(),
+    proteinG: real('protein_g').notNull(),
+    fatG: real('fat_g').notNull(),
+    carbsG: real('carbs_g').notNull(),
+    fiberG: real('fiber_g'),
+    sugarG: real('sugar_g'),
+  },
+  (t) => [index('food_entries_eaten_idx').on(t.eatenAt)],
+);
+
 /** Small key/value store for user preferences such as the daily water goal. */
 export const settings = sqliteTable('settings', {
   key: text('key').primaryKey(),
@@ -225,6 +263,8 @@ export type WorkoutExercise = typeof workoutExercises.$inferSelect;
 export type WorkoutSet = typeof workoutSets.$inferSelect;
 export type BodyWeight = typeof bodyWeights.$inferSelect;
 export type WaterIntake = typeof waterIntakes.$inferSelect;
+export type Food = typeof foods.$inferSelect;
+export type FoodEntry = typeof foodEntries.$inferSelect;
 export type Targets = Pick<
   ProgramDayExercise,
   | 'targetSets'

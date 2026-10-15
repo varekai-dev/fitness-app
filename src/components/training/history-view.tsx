@@ -1,22 +1,21 @@
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet } from 'react-native';
 
+import { ActivityCalendar } from '@/components/activity-calendar';
 import { useDialog } from '@/components/dialog';
-import { useTabBarSpace } from '@/components/floating-tab-bar';
-import { Backdrop } from '@/components/glass';
 import { SwipeToDelete } from '@/components/swipe-to-delete';
 import { WorkoutSummaryCard } from '@/components/workout-summary-card';
-import { EmptyState, Loading, ScreenHeader } from '@/components/ui';
+import { EmptyState, Loading } from '@/components/ui';
 import { listBodyWeights } from '@/db/body-weight';
 import { deleteWorkout, listFinishedWorkouts } from '@/db/workouts';
 import { estimateKcal } from '@/lib/calories';
 import { useDbQuery } from '@/hooks/use-db-query';
-import { colors, spacing } from '@/theme';
+import { spacing } from '@/theme';
 
-export default function HistoryScreen() {
-  const tabBarSpace = useTabBarSpace();
+/** The History section of the Training tab: activity calendar and finished workouts. */
+export function HistoryView({ bottomSpace }: { bottomSpace: number }) {
   const { data } = useDbQuery(async () => {
     const [workouts, weights] = await Promise.all([listFinishedWorkouts(), listBodyWeights()]);
-    return { workouts, weights };
+    return { workouts, weights, loadedAt: Date.now() };
   });
   const dialog = useDialog();
   if (!data) return <Loading />;
@@ -32,12 +31,17 @@ export default function HistoryScreen() {
     });
 
   return (
-    <View style={styles.root}>
-      <Backdrop />
-      <ScreenHeader title="Історія" mode="root" />
+    <>
       <FlatList
-        contentContainerStyle={[styles.content, { paddingBottom: tabBarSpace }]}
+        contentContainerStyle={[styles.content, { paddingBottom: bottomSpace }]}
         data={data.workouts}
+        ListHeaderComponent={
+          <ActivityCalendar
+            workoutDates={data.workouts.map((w) => w.startedAt)}
+            now={data.loadedAt}
+          />
+        }
+        ListHeaderComponentStyle={styles.calendar}
         keyExtractor={(w) => String(w.id)}
         renderItem={({ item }) => (
           <SwipeToDelete onDelete={(close) => remove(item.id, close)}>
@@ -53,11 +57,11 @@ export default function HistoryScreen() {
         }
       />
       {dialog.element}
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
+  calendar: { marginBottom: spacing.sm },
   content: { padding: spacing.lg, paddingTop: spacing.sm, gap: spacing.sm },
 });

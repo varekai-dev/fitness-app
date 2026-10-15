@@ -6,6 +6,7 @@ import m0001 from './0001_workout_pause.sql';
 import m0002 from './0002_body_weight.sql';
 import m0003 from './0003_built_in.sql';
 import m0004 from './0004_water.sql';
+import m0005 from './0005_food.sql';
 
   export default {
     journal,
@@ -14,7 +15,8 @@ import m0004 from './0004_water.sql';
 m0001,
 m0002,
 m0003,
-m0004
+m0004,
+m0005
     }
   }
   

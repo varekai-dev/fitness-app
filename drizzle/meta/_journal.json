@@ -36,6 +36,13 @@
       "when": 1792019880227,
       "tag": "0004_water",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1792071281388,
+      "tag": "0005_food",
+      "breakpoints": true
     }
   ]
 }

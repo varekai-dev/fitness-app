@@ -14,9 +14,6 @@ export const GLASS_PRESETS: GlassPreset[] = [
   { ml: 750, label: 'Спортпляшка', icon: 'bottle-tonic-outline' },
 ];
 
-/** The quick-add buttons on the home card. */
-export const QUICK_GLASSES = GLASS_PRESETS.filter((g) => g.ml === 250 || g.ml === 500);
-
 export const DEFAULT_WATER_GOAL_ML = 2500;
 export const WATER_GOAL_STEP_ML = 250;
 export const MIN_WATER_GOAL_ML = 500;

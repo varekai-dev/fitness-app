@@ -49,6 +49,10 @@ Docs: https://docs.expo.dev/eas/index.md
 
 Always use the **iPhone 17 Pro Max** simulator: boot it (`xcrun simctl boot "iPhone 17 Pro Max"`) rather than whichever device happens to be open, and shut other simulators down first.
 
+## Android Emulator
+
+Always use the **Pixel_10_Pro_API_37.0** emulator. `npm run android` boots it (shutting other emulators down) and opens the app in Expo Go with `expo start --android` (needs `npx expo login`: Expo Go requires a signed manifest); `npm run android:build` does the same with a development build (`expo run:android`). Override the AVD with `PIXEL_AVD`.
+
 ## README screenshots
 
 `README.md` shows screenshots from `docs/screenshots/`. When a change visibly alters one of these screens, retake that screenshot in the same commit:
@@ -57,11 +61,11 @@ Always use the **iPhone 17 Pro Max** simulator: boot it (`xcrun simctl boot "iPh
 |---|---|---|
 | `home.png` | Home tab | `/` |
 | `workout.png` | Workout player (active workout) | `/workout/<id>` |
-| `programs.png` | Programs tab | `/programs` |
+| `programs.png` | Training tab, Programs section | `/training?view=programs` |
 | `program.png` | Program editor | `/program/<id>` |
-| `exercises.png` | Exercises tab | `/exercises` |
+| `exercises.png` | Training tab, Exercises section | `/training?view=exercises` |
 | `exercise.png` | Exercise detail | `/exercise/<id>` |
-| `history.png` | History tab | `/history` |
+| `history.png` | Training tab, History section | `/training?view=history` |
 | `body-weight.png` | Body weight | `/body-weight` |
 
 How to retake (iPhone 17 Pro Max simulator with the app open in Expo Go and the dev server running):

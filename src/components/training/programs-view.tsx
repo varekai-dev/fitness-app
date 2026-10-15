@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
 import {
   Badge,
@@ -9,20 +9,18 @@ import {
   CircleButton,
   EmptyState,
   Loading,
-  Screen,
   SectionHeader,
   Text,
 } from '@/components/ui';
 import { useDialog } from '@/components/dialog';
-import { useTabBarSpace } from '@/components/floating-tab-bar';
 import { confirmRemoveProgram } from '@/components/remove-dialogs';
 import { SwipeToDelete } from '@/components/swipe-to-delete';
 import { createProgram, listPrograms } from '@/db/programs';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
-export default function ProgramsScreen() {
-  const tabBarSpace = useTabBarSpace();
+/** The Programs section of the Training tab. */
+export function ProgramsView({ bottomSpace }: { bottomSpace: number }) {
   const { data } = useDbQuery(listPrograms);
   const [name, setName] = useState('');
   const dialog = useDialog();
@@ -38,7 +36,9 @@ export default function ProgramsScreen() {
   };
 
   return (
-    <Screen title="Програми" mode="root" bottomSpace={tabBarSpace}>
+    <ScrollView
+      contentContainerStyle={[styles.content, { paddingBottom: bottomSpace }]}
+      keyboardShouldPersistTaps="handled">
       <View style={styles.create}>
         <TextInput
           style={styles.createInput}
@@ -103,11 +103,12 @@ export default function ProgramsScreen() {
         })
       )}
       {dialog.element}
-    </Screen>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  content: { padding: spacing.lg, paddingTop: spacing.sm, gap: spacing.lg },
   flex: { flex: 1, gap: 3 },
   create: {
     flexDirection: 'row',
