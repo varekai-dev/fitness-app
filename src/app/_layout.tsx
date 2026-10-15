@@ -70,6 +70,7 @@ export default function RootLayout() {
           }}>
           <Stack.Screen name="exercise/edit" options={{ presentation: 'modal' }} />
           <Stack.Screen name="pick-exercise" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="widgets" options={{ presentation: 'modal' }} />
           <Stack.Screen
             name="workout/[id]"
             options={{ presentation: 'fullScreenModal', gestureEnabled: false }}

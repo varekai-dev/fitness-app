@@ -1,101 +1,224 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import Animated, { useAnimatedRef } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Sortable from 'react-native-sortables';
 
+import { TILE_GAP, tileWidth, WidgetView } from '@/components/dashboard/widgets';
 import { useTabBarSpace } from '@/components/floating-tab-bar';
-import { Sparkline } from '@/components/line-chart';
-import { TodayCards } from '@/components/today-cards';
-import { Card, CircleButton, Loading, Row, Screen, Text } from '@/components/ui';
-import { listBodyWeights } from '@/db/body-weight';
-import { loadFood } from '@/db/food';
-import { loadWater } from '@/db/water';
+import { Backdrop } from '@/components/glass';
+import { Button, CircleButton, EmptyState, Loading, Row, Text } from '@/components/ui';
+import { getDashboard, loadDashboardData, saveDashboard } from '@/db/dashboard';
 import { useDbQuery } from '@/hooks/use-db-query';
-import { formatLongDate, formatShortDate, formatWeightDelta } from '@/lib/labels';
-import { formatNumber } from '@/lib/metrics';
+import { nextSize, WIDGET_SIZE_LABELS, type Widget } from '@/lib/dashboard';
+import { formatLongDate } from '@/lib/labels';
 import { dailyPhrase } from '@/lib/motivation';
-import { colors, spacing } from '@/theme';
+import { colors, fontSize, radius, spacing } from '@/theme';
 
-async function loadHome() {
-  const [bodyWeights, water, food] = await Promise.all([
-    listBodyWeights(),
-    loadWater(),
-    loadFood(),
-  ]);
-  return { bodyWeights, water, food, loadedAt: Date.now() };
-}
-
-/** The day at a glance: food, water and body weight. Workouts live in the Training tab. */
+/**
+ * Home is a dashboard of widgets the user picks. "Змінити" switches to edit
+ * mode: tiles can be dragged into a new order, resized and removed, and new
+ * ones added from the widget picker.
+ */
 export default function HomeScreen() {
   const tabBarSpace = useTabBarSpace();
-  const { data } = useDbQuery(loadHome);
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const rowWidth = width - spacing.lg * 2;
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  const { data: widgets } = useDbQuery(getDashboard);
+  const { data } = useDbQuery(loadDashboardData);
+  const [editing, setEditing] = useState(false);
 
-  if (!data) return <Loading />;
-  const { bodyWeights, water, food, loadedAt } = data;
-  const weight = bodyWeights.at(-1);
-  const prevWeight = bodyWeights.at(-2);
+  if (!widgets || !data) return <Loading />;
+
+  const remove = (id: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    saveDashboard(widgets.filter((w) => w.id !== id));
+  };
+  const resize = (id: string) => {
+    Haptics.selectionAsync();
+    saveDashboard(widgets.map((w) => (w.id === id ? { ...w, size: nextSize(w.size) } : w)));
+  };
+  const toggleEditing = () => {
+    Haptics.selectionAsync();
+    setEditing((e) => !e);
+  };
 
   return (
-    <Screen header={false} bottomSpace={tabBarSpace}>
-      <View style={styles.greeting}>
-        <Row style={styles.spaceBetween}>
-          <Text variant="caption">{formatLongDate(loadedAt)}</Text>
-          <Row>
-            <CircleButton icon="person-outline" size={36} onPress={() => router.push('/profile')} />
-            <CircleButton
-              icon="settings-outline"
-              size={36}
-              onPress={() => router.push('/settings')}
-            />
+    <View style={styles.root}>
+      <Backdrop />
+      <Animated.ScrollView
+        ref={scrollRef}
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: insets.top + spacing.sm, paddingBottom: tabBarSpace },
+        ]}>
+        <View style={styles.greeting}>
+          <Row style={styles.spaceBetween}>
+            <Text variant="caption">{formatLongDate(data.loadedAt)}</Text>
+            <Row>
+              <Button
+                title={editing ? 'Готово' : 'Змінити'}
+                icon={editing ? 'checkmark' : 'grid-outline'}
+                variant={editing ? 'primary' : 'secondary'}
+                small
+                onPress={toggleEditing}
+              />
+              {!editing && (
+                <>
+                  <CircleButton
+                    icon="person-outline"
+                    size={36}
+                    onPress={() => router.push('/profile')}
+                  />
+                  <CircleButton
+                    icon="settings-outline"
+                    size={36}
+                    onPress={() => router.push('/settings')}
+                  />
+                </>
+              )}
+            </Row>
           </Row>
-        </Row>
-        <Text variant="title">
-          {dailyPhrase(new Date(loadedAt))}{' '}
-          <Ionicons name="flash" size={26} color={colors.accent} />
-        </Text>
-      </View>
+          <Text variant="title">
+            {dailyPhrase(new Date(data.loadedAt))}{' '}
+            <Ionicons name="flash" size={26} color={colors.accent} />
+          </Text>
+          {editing && (
+            <Text variant="muted">
+              Утримуй і тягни плитку, щоб перемістити. Розмір змінює кнопка внизу плитки.
+            </Text>
+          )}
+        </View>
 
-      <TodayCards
-        kcal={food.totals.kcal}
-        kcalGoal={food.goal}
-        waterMl={water.todayMl}
-        waterGoal={water.goal}
-      />
-
-      <Card onPress={() => router.push('/body-weight')}>
-        <Row style={styles.spaceBetween}>
-          <Row>
-            <Ionicons name="scale-outline" size={20} color={colors.accent} />
-            <Text variant="heading">Вага тіла</Text>
-          </Row>
-          <Row>
-            {weight ? (
-              <View style={styles.weightValue}>
-                <Text variant="heading">{formatNumber(weight.weightKg, 1)} кг</Text>
-                <Text variant="muted">
-                  {prevWeight
-                    ? `${formatWeightDelta(weight.weightKg - prevWeight.weightKg)} кг · `
-                    : ''}
-                  {formatShortDate(weight.measuredAt)}
-                </Text>
+        {widgets.length === 0 ? (
+          <EmptyState
+            icon="grid-outline"
+            title="На головній ще немає віджетів"
+            hint="Додай плитки з тренуваннями, харчуванням, водою чи вагою."
+          />
+        ) : (
+          <Sortable.Flex
+            gap={TILE_GAP}
+            sortEnabled={editing}
+            scrollableRef={scrollRef}
+            hapticsEnabled
+            dragActivationDelay={150}
+            activeItemScale={1.03}
+            inactiveItemOpacity={0.6}
+            onDragEnd={({ order }) => saveDashboard(order(widgets))}>
+            {widgets.map((w) => (
+              <View key={w.id}>
+                <WidgetView
+                  widget={w}
+                  data={data}
+                  width={tileWidth(w.size, rowWidth)}
+                  interactive={!editing}
+                />
+                {editing && (
+                  <EditOverlay
+                    widget={w}
+                    onRemove={() => remove(w.id)}
+                    onResize={() => resize(w.id)}
+                  />
+                )}
               </View>
-            ) : (
-              <Text variant="muted">Додати</Text>
-            )}
-            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-          </Row>
-        </Row>
-        {bodyWeights.length > 1 && (
-          <Sparkline
-            points={bodyWeights.slice(-30).map((w) => ({ x: w.measuredAt, y: w.weightKg }))}
+            ))}
+          </Sortable.Flex>
+        )}
+
+        {(editing || widgets.length === 0) && (
+          <Button
+            title="Додати віджет"
+            icon="add"
+            variant={widgets.length === 0 ? 'primary' : 'secondary'}
+            onPress={() => router.push('/widgets')}
           />
         )}
-      </Card>
-    </Screen>
+      </Animated.ScrollView>
+    </View>
+  );
+}
+
+/** Edit-mode chrome on a tile: a dashed outline, a remove cross and a size switch. */
+function EditOverlay({
+  widget,
+  onRemove,
+  onResize,
+}: {
+  widget: Widget;
+  onRemove: () => void;
+  onResize: () => void;
+}) {
+  return (
+    <View style={styles.overlay} pointerEvents="box-none">
+      <View style={styles.scrim} pointerEvents="none" />
+      <View style={styles.outline} pointerEvents="none" />
+      <Sortable.Touchable onTap={onRemove} style={styles.remove}>
+        <Ionicons name="close" size={16} color={colors.text} />
+      </Sortable.Touchable>
+      <Sortable.Touchable onTap={onResize} style={styles.size}>
+        <Ionicons name="resize" size={14} color={colors.accentText} />
+        <Text variant="caption" style={styles.sizeText}>
+          {WIDGET_SIZE_LABELS[widget.size]}
+        </Text>
+      </Sortable.Touchable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.background },
+  content: { paddingHorizontal: spacing.lg, gap: spacing.lg, flexGrow: 1 },
   greeting: { gap: spacing.xs, marginTop: spacing.sm },
   spaceBetween: { justifyContent: 'space-between' },
-  weightValue: { alignItems: 'flex-end' },
+  overlay: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
+  scrim: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    borderRadius: radius.lg,
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+  },
+  outline: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    borderRadius: radius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.accent,
+    borderStyle: 'dashed',
+  },
+  remove: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 28,
+    height: 28,
+    borderRadius: radius.pill,
+    backgroundColor: colors.danger,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  size: {
+    position: 'absolute',
+    left: spacing.sm,
+    bottom: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: radius.pill,
+    backgroundColor: colors.accent,
+  },
+  sizeText: { color: colors.accentText, fontWeight: '700', fontSize: fontSize.xs + 1 },
 });
