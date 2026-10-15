@@ -68,6 +68,11 @@ export default function RootLayout() {
             headerShown: false,
             contentStyle: { backgroundColor: colors.background },
           }}>
+          {/*
+            First on purpose: the Stack mounts only once the database is ready,
+            after the launch URL was read, and then opens its first screen.
+          */}
+          <Stack.Screen name="(tabs)" />
           <Stack.Screen name="exercise/edit" options={{ presentation: 'modal' }} />
           <Stack.Screen name="pick-exercise" options={{ presentation: 'modal' }} />
           <Stack.Screen name="widgets" options={{ presentation: 'modal' }} />

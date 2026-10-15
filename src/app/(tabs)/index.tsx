@@ -58,21 +58,17 @@ export default function HomeScreen() {
         ]}>
         <View style={styles.greeting}>
           <Row style={styles.spaceBetween}>
-            <Text variant="caption">{formatLongDate(data.loadedAt)}</Text>
+            <Text variant="secondary">{formatLongDate(data.loadedAt)}</Text>
             <Row>
               <Button
                 title={editing ? 'Готово' : 'Змінити'}
                 icon={editing ? 'checkmark' : 'grid-outline'}
                 variant={editing ? 'primary' : 'secondary'}
-                small
                 onPress={toggleEditing}
+                style={styles.editButton}
               />
               {!editing && (
-                <CircleButton
-                  icon="settings-outline"
-                  size={36}
-                  onPress={() => router.push('/settings')}
-                />
+                <CircleButton icon="settings-outline" onPress={() => router.push('/settings')} />
               )}
             </Row>
           </Row>
@@ -166,6 +162,8 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: spacing.lg, gap: spacing.lg, flexGrow: 1 },
   greeting: { gap: spacing.xs, marginTop: spacing.sm },
   spaceBetween: { justifyContent: 'space-between' },
+  // As tall as the 44 px CircleButtons used in every screen header.
+  editButton: { minHeight: 44, paddingHorizontal: spacing.lg },
   overlay: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
   scrim: {
     position: 'absolute',

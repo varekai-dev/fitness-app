@@ -512,7 +512,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.lg,
-    gap: spacing.sm,
+    gap: spacing.md,
   },
   pressed: { opacity: 0.7 },
   dimmed: { opacity: 0.35 },
