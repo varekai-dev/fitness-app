@@ -10,16 +10,21 @@ export type WeightSyncResult =
   | { status: 'ok'; imported: number }
   | { status: 'unavailable' | 'update-required' | 'denied' };
 
+let queue: Promise<unknown> = Promise.resolve();
+
 /**
  * Pulls every weighing from Health Connect (e.g. a smart scale's app writing
  * through Google Fit) into the body weight log. With `prompt`, asks for read
  * access when it's missing; without it, quietly skips until access is granted.
  */
-export async function syncWeightFromHealthConnect({
-  prompt,
-}: {
-  prompt: boolean;
-}): Promise<WeightSyncResult> {
+export function syncWeightFromHealthConnect(options: { prompt: boolean }) {
+  // Runs one at a time, so overlapping syncs can't import the same day twice.
+  const run = queue.then(() => sync(options));
+  queue = run.catch(() => {});
+  return run;
+}
+
+async function sync({ prompt }: { prompt: boolean }): Promise<WeightSyncResult> {
   // Loaded lazily: the module throws on import wherever its native side is missing.
   const {
     getGrantedPermissions,

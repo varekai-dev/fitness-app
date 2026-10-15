@@ -9,6 +9,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Text } from '@/components/ui';
 import { db } from '@/db/client';
 import { runContentSeeds, seedIfEmpty } from '@/db/seed';
+import { useHealthConnectAutoSync } from '@/hooks/use-health-connect-auto-sync';
 import { colors } from '@/theme';
 import migrations from '../../drizzle/migrations';
 
@@ -40,6 +41,8 @@ export default function RootLayout() {
       })
       .catch(setSeedError);
   }, [success]);
+
+  useHealthConnectAutoSync(ready);
 
   const error = migrationError ?? seedError;
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useDialog } from '@/components/dialog';
@@ -49,11 +49,6 @@ export default function BodyWeightScreen() {
   const [input, setInput] = useState<string | null>(null);
   const dialog = useDialog();
   const [syncing, setSyncing] = useState(false);
-
-  // Picks up new scale readings on open once access was granted; never prompts.
-  useEffect(() => {
-    if (healthConnectSupported) syncWeightFromHealthConnect({ prompt: false }).catch(() => {});
-  }, []);
 
   if (!data) return <Loading />;
   const latest = data.at(-1);
