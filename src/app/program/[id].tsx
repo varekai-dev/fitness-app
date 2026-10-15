@@ -26,7 +26,8 @@ import { useDbQuery } from '@/hooks/use-db-query';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 export default function ProgramScreen() {
-  const id = Number(useLocalSearchParams<{ id: string }>().id);
+  const params = useLocalSearchParams<{ id: string; isNew?: string }>();
+  const id = Number(params.id);
   const { data: program } = useDbQuery(() => getProgram(id).then((p) => p ?? null), [id]);
   const [dayName, setDayName] = useState('');
   const dialog = useDialog();
@@ -54,7 +55,12 @@ export default function ProgramScreen() {
     <Screen
       title={program.name}
       headerRight={<CircleButton icon="trash-outline" color={colors.danger} onPress={remove} />}>
-      <ProgramNameField key={program.name} id={id} name={program.name} />
+      <ProgramNameField
+        key={program.name}
+        id={id}
+        name={program.name}
+        focus={params.isNew === '1'}
+      />
 
       <Row style={styles.badges}>
         {program.isActive && <Badge label="Активна" />}
@@ -127,7 +133,7 @@ export default function ProgramScreen() {
   );
 }
 
-function ProgramNameField({ id, name }: { id: number; name: string }) {
+function ProgramNameField({ id, name, focus }: { id: number; name: string; focus?: boolean }) {
   const [value, setValue] = useState(name);
   const save = () => {
     const trimmed = value.trim();
@@ -141,6 +147,8 @@ function ProgramNameField({ id, name }: { id: number; name: string }) {
       onChangeText={setValue}
       onEndEditing={save}
       returnKeyType="done"
+      autoFocus={focus}
+      selectTextOnFocus={focus}
     />
   );
 }

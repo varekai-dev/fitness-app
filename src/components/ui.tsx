@@ -501,7 +501,8 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: -0.5,
   },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  // Always as tall as a CircleButton, so the header doesn't jump when the actions change.
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 44 },
   circle: {
     borderRadius: radius.pill,
     alignItems: 'center',

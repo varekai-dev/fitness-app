@@ -9,6 +9,7 @@ import { HistoryView } from '@/components/training/history-view';
 import { OverviewView } from '@/components/training/overview-view';
 import { ProgramsView } from '@/components/training/programs-view';
 import { CircleButton, ScreenHeader } from '@/components/ui';
+import { createProgram } from '@/db/programs';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 const SECTIONS = ['today', 'programs', 'exercises', 'history'] as const;
@@ -34,6 +35,12 @@ export default function TrainingScreen() {
   // The URL is the single source of truth, so links and the switcher stay in sync.
   const section: TrainingSection = isSection(view) ? view : 'today';
 
+  // A new program starts with a placeholder name; the editor opens with it selected to retype.
+  const newProgram = async () => {
+    const id = await createProgram('Нова програма');
+    router.push({ pathname: '/program/[id]', params: { id, isNew: '1' } });
+  };
+
   const select = (next: TrainingSection) => {
     if (next === section) return;
     Haptics.selectionAsync();
@@ -47,12 +54,12 @@ export default function TrainingScreen() {
         title="Тренування"
         mode="root"
         right={
-          section === 'exercises' && (
+          (section === 'exercises' || section === 'programs') && (
             <CircleButton
               icon="add"
               background={colors.accent}
               color={colors.accentText}
-              onPress={() => router.push('/exercise/edit')}
+              onPress={section === 'exercises' ? () => router.push('/exercise/edit') : newProgram}
             />
           )
         }

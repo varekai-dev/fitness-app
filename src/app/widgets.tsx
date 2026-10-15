@@ -8,6 +8,7 @@ import { Button, Card, ChipGroup, goBack, Loading, Row, Screen, Text } from '@/c
 import { addWidget, getDashboard, loadDashboardData } from '@/db/dashboard';
 import { useDbQuery } from '@/hooks/use-db-query';
 import {
+  isFixedSize,
   WIDGET_GROUPS,
   WIDGET_INFO,
   WIDGET_SIZE_LABELS,
@@ -43,7 +44,7 @@ export default function WidgetsScreen() {
           <Text variant="overline">{group.title}</Text>
           {group.types.map((type) => {
             const info = WIDGET_INFO[type];
-            const size = sizes[type] ?? 'small';
+            const size = isFixedSize(type) ? 'medium' : (sizes[type] ?? 'small');
             const count = widgets.filter((w) => w.type === type).length;
             return (
               <Card key={type}>
@@ -59,16 +60,18 @@ export default function WidgetsScreen() {
                   <WidgetView
                     widget={{ id: `preview-${type}`, type, size }}
                     data={data}
-                    width={tileWidth(size, rowWidth)}
+                    width={tileWidth({ type, size }, rowWidth)}
                     interactive={false}
                   />
                 </View>
-                <ChipGroup
-                  options={WIDGET_SIZES}
-                  value={size}
-                  onChange={(s) => setSizes((prev) => ({ ...prev, [type]: s }))}
-                  labels={WIDGET_SIZE_LABELS}
-                />
+                {!isFixedSize(type) && (
+                  <ChipGroup
+                    options={WIDGET_SIZES}
+                    value={size}
+                    onChange={(s) => setSizes((prev) => ({ ...prev, [type]: s }))}
+                    labels={WIDGET_SIZE_LABELS}
+                  />
+                )}
                 <Button title="Додати на головну" icon="add" onPress={() => add(type, size)} />
               </Card>
             );

@@ -10,6 +10,7 @@ export const WIDGET_SIZE_LABELS: Record<WidgetSize, string> = {
 };
 
 export const WIDGET_TYPES = [
+  'quote',
   'workout-next',
   'workout-week',
   'food-calories',
@@ -26,6 +27,11 @@ export const WIDGET_INFO: Record<
   WidgetType,
   { title: string; description: string; icon: IconName }
 > = {
+  quote: {
+    title: 'Цитата дня',
+    description: 'Мотиваційна фраза, щодня нова.',
+    icon: 'flash',
+  },
   'workout-next': {
     title: 'Наступне тренування',
     description: 'День програми, який іде далі, або тренування, що триває. Старт одним дотиком.',
@@ -69,6 +75,7 @@ export const WIDGET_GROUPS: { title: string; types: WidgetType[] }[] = [
   { title: 'Харчування', types: ['food-calories', 'food-meals'] },
   { title: 'Вода', types: ['water-today', 'water-week'] },
   { title: 'Тіло', types: ['weight'] },
+  { title: 'Інше', types: ['quote'] },
 ];
 
 export const newWidgetId = () =>
@@ -76,6 +83,7 @@ export const newWidgetId = () =>
 
 /** What a fresh install shows: roughly the old fixed home screen. */
 export const DEFAULT_DASHBOARD: Widget[] = [
+  { id: 'default-quote', type: 'quote', size: 'medium' },
   { id: 'default-workout', type: 'workout-next', size: 'medium' },
   { id: 'default-food', type: 'food-calories', size: 'small' },
   { id: 'default-water', type: 'water-today', size: 'small' },
@@ -102,6 +110,9 @@ export function parseDashboard(json: string | undefined): Widget[] {
     return DEFAULT_DASHBOARD;
   }
 }
+
+/** Widgets drawn full width at the height of their content, with no size choice. */
+export const isFixedSize = (type: WidgetType) => type === 'quote';
 
 /** The next size when the size button is tapped in edit mode. */
 export const nextSize = (size: WidgetSize): WidgetSize =>

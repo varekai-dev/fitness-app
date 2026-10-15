@@ -12,7 +12,7 @@ import { WaterBottle } from '@/components/water-bottle';
 import type { DashboardData } from '@/db/dashboard';
 import { startWorkout } from '@/db/workouts';
 import { estimateKcal } from '@/lib/calories';
-import { WIDGET_INFO, type Widget, type WidgetSize } from '@/lib/dashboard';
+import { isFixedSize, WIDGET_INFO, type Widget, type WidgetSize } from '@/lib/dashboard';
 import { formatGrams, formatKcal } from '@/lib/food';
 import {
   formatShortDate,
@@ -22,6 +22,7 @@ import {
   weekdayIndex,
 } from '@/lib/labels';
 import { formatNumber, notStarted } from '@/lib/metrics';
+import { dailyPhrase } from '@/lib/motivation';
 import { formatMl, GLASS_PRESETS } from '@/lib/water';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
@@ -29,12 +30,13 @@ import { colors, fontSize, radius, spacing } from '@/theme';
 export const TILE_HEIGHT = 156;
 export const TILE_GAP = 12;
 
-export const tileHeight = (size: WidgetSize) =>
-  size === 'large' ? TILE_HEIGHT * 2 + TILE_GAP : TILE_HEIGHT;
+/** Undefined for fixed-size widgets, which take the height of their content. */
+export const tileHeight = ({ type, size }: Pick<Widget, 'type' | 'size'>) =>
+  isFixedSize(type) ? undefined : size === 'large' ? TILE_HEIGHT * 2 + TILE_GAP : TILE_HEIGHT;
 
 /** Small tiles take half the row, medium and large the full width. */
-export const tileWidth = (size: WidgetSize, rowWidth: number) =>
-  size === 'small' ? (rowWidth - TILE_GAP) / 2 : rowWidth;
+export const tileWidth = ({ type, size }: Pick<Widget, 'type' | 'size'>, rowWidth: number) =>
+  size === 'small' && !isFixedSize(type) ? (rowWidth - TILE_GAP) / 2 : rowWidth;
 
 type WidgetProps = { size: WidgetSize; data: DashboardData };
 
@@ -53,6 +55,8 @@ export function WidgetView({
   const props = { size: widget.size, data };
   const content = (() => {
     switch (widget.type) {
+      case 'quote':
+        return <QuoteWidget {...props} />;
       case 'workout-next':
         return <WorkoutNextWidget {...props} />;
       case 'workout-week':
@@ -71,7 +75,7 @@ export function WidgetView({
   })();
   return (
     <View
-      style={{ width, height: tileHeight(widget.size) }}
+      style={{ width, height: tileHeight(widget) }}
       pointerEvents={interactive ? 'auto' : 'none'}>
       {content}
     </View>
@@ -84,16 +88,20 @@ function Tile({
   children,
   onPress,
   accent,
+  fit,
 }: {
   children: ReactNode;
   onPress?: () => void;
   accent?: boolean;
+  /** Height of the content instead of filling the fixed tile box. */
+  fit?: boolean;
 }) {
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         styles.tile,
+        fit && styles.tileFit,
         accent && styles.tileAccent,
         pressed && styles.pressed,
       ]}>
@@ -203,6 +211,18 @@ const Big = ({ children, small }: { children: ReactNode; small?: boolean }) => (
 );
 
 const Unit = ({ children }: { children: ReactNode }) => <Text style={styles.unit}>{children}</Text>;
+
+// ---------- quote ----------
+
+function QuoteWidget({ data }: WidgetProps) {
+  return (
+    <Tile fit>
+      <View style={styles.quoteGlow} pointerEvents="none" />
+      <TileTitle title="Цитата дня" icon="flash" />
+      <Text style={styles.quote}>{dailyPhrase(new Date(data.loadedAt))}</Text>
+    </Tile>
+  );
+}
 
 // ---------- training ----------
 
@@ -723,7 +743,18 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     overflow: 'hidden',
   },
+  tileFit: { flex: 0 },
   tileAccent: { backgroundColor: colors.accent },
+  quoteGlow: {
+    position: 'absolute',
+    right: -40,
+    top: -60,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: colors.accentSoft,
+  },
+  quote: { color: colors.text, fontSize: fontSize.xl, fontWeight: '800', letterSpacing: -0.3 },
   pressed: { opacity: 0.85 },
   flex: { flex: 1 },
   fill: { flex: 1, justifyContent: 'flex-end' },

@@ -16,8 +16,29 @@ import { loadWater } from './water';
 import { getActiveWorkout, listFinishedWorkouts } from './workouts';
 
 const LAYOUT_KEY = 'dashboard_layout';
+// Set once the daily phrase, which used to be the Home headline, became a widget.
+const QUOTE_MIGRATED_KEY = 'dashboard_quote_added';
+
+/**
+ * A layout saved before the quote widget existed gets the phrase on top, once.
+ * Synchronous, so screens loading the dashboard at the same time can't both add it.
+ */
+function addQuoteToOldLayout() {
+  db.transaction((tx) => {
+    const done = tx.select().from(settings).where(eq(settings.key, QUOTE_MIGRATED_KEY)).get();
+    if (done) return;
+    const row = tx.select().from(settings).where(eq(settings.key, LAYOUT_KEY)).get();
+    if (row) {
+      const quote: Widget = { id: newWidgetId(), type: 'quote', size: 'medium' };
+      const value = JSON.stringify([quote, ...parseDashboard(row.value)]);
+      tx.update(settings).set({ value }).where(eq(settings.key, LAYOUT_KEY)).run();
+    }
+    tx.insert(settings).values({ key: QUOTE_MIGRATED_KEY, value: '1' }).run();
+  });
+}
 
 export async function getDashboard(): Promise<Widget[]> {
+  addQuoteToOldLayout();
   const row = await db.query.settings.findFirst({ where: eq(settings.key, LAYOUT_KEY) });
   return parseDashboard(row?.value);
 }

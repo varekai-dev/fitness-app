@@ -13,9 +13,8 @@ import { Backdrop } from '@/components/glass';
 import { Button, CircleButton, EmptyState, Loading, Row, Text } from '@/components/ui';
 import { getDashboard, loadDashboardData, saveDashboard } from '@/db/dashboard';
 import { useDbQuery } from '@/hooks/use-db-query';
-import { nextSize, WIDGET_SIZE_LABELS, type Widget } from '@/lib/dashboard';
+import { isFixedSize, nextSize, WIDGET_SIZE_LABELS, type Widget } from '@/lib/dashboard';
 import { formatLongDate } from '@/lib/labels';
-import { dailyPhrase } from '@/lib/motivation';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 /**
@@ -69,25 +68,14 @@ export default function HomeScreen() {
                 onPress={toggleEditing}
               />
               {!editing && (
-                <>
-                  <CircleButton
-                    icon="person-outline"
-                    size={36}
-                    onPress={() => router.push('/profile')}
-                  />
-                  <CircleButton
-                    icon="settings-outline"
-                    size={36}
-                    onPress={() => router.push('/settings')}
-                  />
-                </>
+                <CircleButton
+                  icon="settings-outline"
+                  size={36}
+                  onPress={() => router.push('/settings')}
+                />
               )}
             </Row>
           </Row>
-          <Text variant="title">
-            {dailyPhrase(new Date(data.loadedAt))}{' '}
-            <Ionicons name="flash" size={26} color={colors.accent} />
-          </Text>
           {editing && (
             <Text variant="muted">
               Утримуй і тягни плитку, щоб перемістити. Розмір змінює кнопка внизу плитки.
@@ -116,7 +104,7 @@ export default function HomeScreen() {
                 <WidgetView
                   widget={w}
                   data={data}
-                  width={tileWidth(w.size, rowWidth)}
+                  width={tileWidth(w, rowWidth)}
                   interactive={!editing}
                 />
                 {editing && (
@@ -161,12 +149,14 @@ function EditOverlay({
       <Sortable.Touchable onTap={onRemove} style={styles.remove}>
         <Ionicons name="close" size={16} color={colors.text} />
       </Sortable.Touchable>
-      <Sortable.Touchable onTap={onResize} style={styles.size}>
-        <Ionicons name="resize" size={14} color={colors.accentText} />
-        <Text variant="caption" style={styles.sizeText}>
-          {WIDGET_SIZE_LABELS[widget.size]}
-        </Text>
-      </Sortable.Touchable>
+      {!isFixedSize(widget.type) && (
+        <Sortable.Touchable onTap={onResize} style={styles.size}>
+          <Ionicons name="resize" size={14} color={colors.accentText} />
+          <Text variant="caption" style={styles.sizeText}>
+            {WIDGET_SIZE_LABELS[widget.size]}
+          </Text>
+        </Sortable.Touchable>
+      )}
     </View>
   );
 }
