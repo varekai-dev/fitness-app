@@ -68,7 +68,15 @@ Always use the **Pixel_10_Pro_API_37.0** emulator. `npm run android` boots it (s
 | `history.png` | Training tab, History section | `/training?view=history` |
 | `body-weight.png` | Body weight | `/body-weight` |
 
-How to retake (iPhone 17 Pro Max simulator with the app open in Expo Go and the dev server running):
+Screenshots may come from either platform. On Android (Pixel emulator, app open in Expo Go via `npm run android`):
+
+1. Clean status bar with System UI demo mode: `adb shell settings put global sysui_demo_allowed 1`, then `adb shell am broadcast -a com.android.systemui.demo -e command <cmd>` for `enter`, `clock -e hhmm 0941`, `battery -e level 100 -e plugged false`, `network -e wifi show -e level 4 -e fully true`, `network -e mobile hide` and `notifications -e visible false`.
+2. Hide the floating dev tools button: open the Expo menu (`adb shell input keyevent 82`) and switch off "Tools button".
+3. Open the screen: `adb reverse tcp:8081 tcp:8081`, then `adb shell am start -a android.intent.action.VIEW -d "exp://127.0.0.1:8081/--<route>" host.exp.exponent` (same `?home=1` trick for the home tab). Wait for it to load.
+4. Capture and shrink to 390 px wide: `adb exec-out screencap -p > shot.png`, then `magick shot.png -resize 390x -strip docs/screenshots/<file>` (without ImageMagick on Windows, resize with `System.Drawing` in PowerShell).
+5. Leave demo mode: the broadcast with `exit`.
+
+On iOS (iPhone 17 Pro Max simulator with the app open in Expo Go and the dev server running):
 
 1. Clean status bar: `xcrun simctl status_bar booted override --time "9:41" --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularMode notSupported`.
 2. Open the screen with a deep link: `xcrun simctl openurl booted "exp://<dev-server-host>:8081/--<route>"`. For the home tab add a query (`/--/?home=1`), since a bare `/` keeps the current screen. Wait for it to load.
