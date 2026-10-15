@@ -16,6 +16,8 @@ export const maskKey = (key: string) =>
 export type Nutrition = {
   name: string;
   portion: string | null;
+  portionG: number;
+  isDrink: boolean;
   kcal: number;
   proteinG: number;
   fatG: number;
@@ -33,12 +35,16 @@ export class GroqError extends Error {
   }
 }
 
-const SYSTEM_PROMPT = `Ти нутриціолог. Користувач описує страву або продукт (часто українською, можливо з кількістю чи вагою).
-Оціни харчову цінність саме описаної порції. Якщо кількість не вказана, бери типову одну порцію.
+const SYSTEM_PROMPT = `Ти нутриціолог. Користувач описує страву, продукт або напій (часто українською).
+Визнач кількість:
+- якщо в тексті є вага чи об'єм (напр. "200 г", "0,5 л", "330 мл"), portion_g дорівнює саме їй;
+- якщо вказано кількість штук чи посуду (напр. "2 яйця", "тарілка борщу"), переведи її в грами чи мл;
+- якщо кількість не вказано, бери середню звичайну порцію для дорослого.
 Поля:
-- name: коротка назва українською з великої літери;
-- portion: порція, яку ти оцінив, напр. "2 шт (≈120 г)" або "≈300 г";
-- kcal, protein_g, fat_g, carbs_g, fiber_g, sugar_g: числа для всієї порції, округлені до 1 знака;
+- name: коротка назва українською з великої літери, без кількості;
+- is_drink: true для напоїв (вода, чай, кава, сік, молоко, кефір, смузі, алкоголь тощо), false для їжі, зокрема для супів;
+- portion_g: кількість у грамах, а для напоїв — у мілілітрах, число більше 0;
+- kcal, protein_g, fat_g, carbs_g, fiber_g, sugar_g: числа саме для portion_g, округлені до 1 знака;
 - is_food: false, якщо текст не є їжею чи напоєм (тоді числа 0).`;
 
 const SCHEMA = {
@@ -46,7 +52,8 @@ const SCHEMA = {
   properties: {
     is_food: { type: 'boolean' },
     name: { type: 'string' },
-    portion: { type: 'string' },
+    portion_g: { type: 'number' },
+    is_drink: { type: 'boolean' },
     kcal: { type: 'number' },
     protein_g: { type: 'number' },
     fat_g: { type: 'number' },
@@ -57,7 +64,8 @@ const SCHEMA = {
   required: [
     'is_food',
     'name',
-    'portion',
+    'portion_g',
+    'is_drink',
     'kcal',
     'protein_g',
     'fat_g',
@@ -71,7 +79,8 @@ const SCHEMA = {
 type GroqNutrition = {
   is_food: boolean;
   name: string;
-  portion: string;
+  portion_g: number;
+  is_drink: boolean;
   kcal: number;
   protein_g: number;
   fat_g: number;
@@ -125,12 +134,17 @@ export async function askGroqNutrition(dish: string, apiKey?: string | null): Pr
   } catch {
     throw new GroqError('Не вдалося прочитати відповідь Groq.', 'bad-response');
   }
+  if (parsed.is_food && !(num(parsed.portion_g) > 0)) {
+    throw new GroqError('Groq не визначив вагу чи об’єм порції. Уточни опис.', 'bad-response');
+  }
   if (!parsed.is_food) {
     throw new GroqError('Схоже, це не страва. Опиши, що саме ти з’їв.', 'not-food');
   }
   return {
     name: parsed.name?.trim() || dish,
-    portion: parsed.portion?.trim() || null,
+    portion: null,
+    portionG: num(parsed.portion_g),
+    isDrink: parsed.is_drink === true,
     kcal: num(parsed.kcal),
     proteinG: num(parsed.protein_g),
     fatG: num(parsed.fat_g),

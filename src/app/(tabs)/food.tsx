@@ -11,7 +11,6 @@ import {
   Badge,
   Button,
   Card,
-  Chip,
   ChipScroller,
   CircleButton,
   EmptyState,
@@ -23,6 +22,7 @@ import {
   Text,
 } from '@/components/ui';
 import {
+  deleteFood,
   deleteFoodEntry,
   loadFood,
   logFood,
@@ -33,17 +33,44 @@ import {
 import { loadProfile } from '@/db/profile';
 import type { Food } from '@/db/schema';
 import { useDbQuery } from '@/hooks/use-db-query';
-import { formatGrams, formatKcal, normalizeDish, type Macros } from '@/lib/food';
+import {
+  amountUnit,
+  formatGrams,
+  formatKcal,
+  normalizeDish,
+  scaleNutrition,
+  type Macros,
+} from '@/lib/food';
 import { GroqError } from '@/lib/groq';
 import { WEEKDAY_SHORT, weekdayIndex } from '@/lib/labels';
+import { parseDecimal } from '@/lib/metrics';
 import { ACTIVITY, missingForRecommendation, recommendCalories, WEIGHT_GOAL } from '@/lib/profile';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 const timeFormatter = new Intl.DateTimeFormat('uk-UA', { hour: '2-digit', minute: '2-digit' });
 const CHART_HEIGHT = 100;
-const SERVING_STEP = 0.5;
+// Drinks come in bigger round volumes, so they step faster.
+const amountStep = (isDrink: boolean) => (isDrink ? 50 : 10);
+const MAX_AMOUNT = 5000;
 
-type Pending = { food: Food; cached: boolean; servings: number };
+/**
+ * A dish waiting to be logged. `amount` is the raw field text (grams, or ml when
+ * `isDrink`), so the user can clear it while typing; `isDrink` starts from the
+ * AI's guess and the user can flip it.
+ */
+type Pending = { food: Food; cached: boolean; amount: string; isDrink: boolean };
+
+const startPending = (food: Food, cached: boolean): Pending => ({
+  food,
+  cached,
+  amount: String(Math.round(food.portionG ?? 100)),
+  isDrink: food.isDrink,
+});
+
+function parseAmount(text: string) {
+  const a = parseDecimal(text);
+  return a !== null && a > 0 && a <= MAX_AMOUNT ? a : null;
+}
 
 export default function FoodScreen() {
   const tabBarSpace = useTabBarSpace();
@@ -66,7 +93,7 @@ export default function FoodScreen() {
     setLooking(true);
     try {
       const result = await lookupFood(text);
-      setPending({ ...result, servings: 1 });
+      setPending(startPending(result.food, result.cached));
       setInput('');
     } catch (e) {
       const noKey = e instanceof GroqError && (e.kind === 'no-key' || e.kind === 'auth');
@@ -87,13 +114,16 @@ export default function FoodScreen() {
   };
 
   const pick = (food: Food) => {
-    setPending({ food, cached: true, servings: 1 });
+    // Dishes cached before portions had a weight need a fresh estimate to scale by grams.
+    if (!food.portionG) return lookup(food.query);
+    setPending(startPending(food, true));
     setInput('');
   };
 
   const add = async () => {
-    if (!pending) return;
-    await logFood(pending.food, pending.servings);
+    const amount = pending && parseAmount(pending.amount);
+    if (!pending || !amount) return;
+    await logFood(pending.food, amount, pending.isDrink);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setPending(null);
   };
@@ -105,6 +135,17 @@ export default function FoodScreen() {
       buttons: [
         { text: 'Скасувати', style: 'cancel', onPress: close },
         { text: 'Видалити', style: 'destructive', onPress: () => deleteFoodEntry(id) },
+      ],
+    });
+
+  // Removes the dish from the cache only; meals already logged keep their values.
+  const forget = (food: Food) =>
+    dialog.show({
+      title: 'Прибрати з нещодавніх?',
+      message: `«${food.name}» зникне зі списку й підказок. Записи в журналі залишаться, а наступного разу страву порахує AI.`,
+      buttons: [
+        { text: 'Скасувати', style: 'cancel' },
+        { text: 'Прибрати', style: 'destructive', onPress: () => deleteFood(food.id) },
       ],
     });
 
@@ -185,7 +226,7 @@ export default function FoodScreen() {
         <Field
           value={input}
           onChangeText={setInput}
-          placeholder="Що з’їв? Напр. «2 яйця і тост з маслом»"
+          placeholder="Що з’їв чи випив? Напр. «2 яйця і тост з маслом»"
           multiline
           editable={!looking}
         />
@@ -213,7 +254,7 @@ export default function FoodScreen() {
       {pending && (
         <PendingCard
           pending={pending}
-          onServings={(servings) => setPending({ ...pending, servings })}
+          onChange={(patch) => setPending({ ...pending, ...patch })}
           onAdd={add}
           onCancel={() => setPending(null)}
         />
@@ -224,7 +265,7 @@ export default function FoodScreen() {
           <Text variant="caption">Нещодавні</Text>
           <ChipScroller>
             {recent.map((f) => (
-              <Chip key={f.id} label={f.name} selected={false} onPress={() => pick(f)} />
+              <RecentChip key={f.id} food={f} onPick={() => pick(f)} onRemove={() => forget(f)} />
             ))}
           </ChipScroller>
         </>
@@ -298,28 +339,40 @@ export default function FoodScreen() {
 }
 
 function PendingCard({
-  pending: { food, cached, servings },
-  onServings,
+  pending: { food, cached, amount: amountText, isDrink },
+  onChange,
   onAdd,
   onCancel,
 }: {
   pending: Pending;
-  onServings: (servings: number) => void;
+  onChange: (patch: Partial<Pick<Pending, 'amount' | 'isDrink'>>) => void;
   onAdd: () => void;
   onCancel: () => void;
 }) {
-  const scaled: Macros = {
-    kcal: food.kcal * servings,
-    proteinG: food.proteinG * servings,
-    fatG: food.fatG * servings,
-    carbsG: food.carbsG * servings,
+  const amount = parseAmount(amountText);
+  const scaled = scaleNutrition(food, amount ?? 0);
+  const per100 = scaleNutrition(food, 100);
+  const unit = amountUnit({ isDrink });
+  const stepSize = amountStep(isDrink);
+  const step = (delta: number) => {
+    const next = Math.min(Math.max((amount ?? 0) + delta, stepSize), MAX_AMOUNT);
+    Haptics.selectionAsync();
+    onChange({ amount: String(Math.round(next)) });
+  };
+  const setUnit = (drink: boolean) => {
+    if (drink === isDrink) return;
+    Haptics.selectionAsync();
+    onChange({ isDrink: drink });
   };
   return (
     <Card style={styles.pending}>
       <Row style={styles.spaceBetween}>
         <View style={styles.flex}>
           <Text variant="heading">{food.name}</Text>
-          {food.portion && <Text variant="muted">{food.portion}</Text>}
+          <Text variant="muted">
+            {cached ? 'Зазвичай' : 'Оцінка AI'}: {formatGrams(food.portionG ?? 100)} {unit} ·{' '}
+            {formatKcal(per100.kcal)} ккал / 100 {unit}
+          </Text>
         </View>
         <Badge label={cached ? 'З бази' : 'AI'} tone={cached ? 'muted' : 'accent'} />
       </Row>
@@ -328,33 +381,94 @@ function PendingCard({
         <Text style={styles.unit}> ккал</Text>
       </Text>
       <MacroRow macros={scaled} />
-      {(food.fiberG !== null || food.sugarG !== null) && (
+      {(scaled.fiberG !== null || scaled.sugarG !== null) && (
         <Text variant="muted">
-          {food.fiberG !== null ? `Клітковина ${formatGrams(food.fiberG * servings)} г` : ''}
-          {food.fiberG !== null && food.sugarG !== null ? ' · ' : ''}
-          {food.sugarG !== null ? `Цукор ${formatGrams(food.sugarG * servings)} г` : ''}
+          {scaled.fiberG !== null ? `Клітковина ${formatGrams(scaled.fiberG)} г` : ''}
+          {scaled.fiberG !== null && scaled.sugarG !== null ? ' · ' : ''}
+          {scaled.sugarG !== null ? `Цукор ${formatGrams(scaled.sugarG)} г` : ''}
         </Text>
       )}
       <Row style={styles.spaceBetween}>
-        <Text variant="body">Порцій</Text>
-        <Row style={styles.stepper}>
-          <CircleButton
-            icon="remove"
-            size={36}
-            disabled={servings <= SERVING_STEP}
-            onPress={() => onServings(servings - SERVING_STEP)}
-          />
-          <Text variant="heading" style={styles.servings}>
-            {formatGrams(servings)}
-          </Text>
-          <CircleButton icon="add" size={36} onPress={() => onServings(servings + SERVING_STEP)} />
+        <Text variant="body">Кількість</Text>
+        <Row style={styles.units}>
+          {[false, true].map((drink) => (
+            <Pressable
+              key={String(drink)}
+              onPress={() => setUnit(drink)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: drink === isDrink }}
+              style={[styles.unitChip, drink === isDrink && styles.unitChipActive]}>
+              <Text
+                variant="body"
+                style={[styles.unitText, drink === isDrink && styles.unitTextActive]}>
+                {amountUnit({ isDrink: drink })}
+              </Text>
+            </Pressable>
+          ))}
         </Row>
+      </Row>
+      <Row style={styles.amountRow}>
+        <CircleButton
+          icon="remove"
+          size={40}
+          disabled={!amount || amount <= stepSize}
+          onPress={() => step(-stepSize)}
+        />
+        <Field
+          value={amountText}
+          onChangeText={(t) => onChange({ amount: t.replace(/[^\d.,]/g, '') })}
+          keyboardType="decimal-pad"
+          selectTextOnFocus
+          maxLength={6}
+          containerStyle={styles.flex}
+          style={styles.amountInput}
+        />
+        <Text variant="heading" style={styles.amountUnit}>
+          {unit}
+        </Text>
+        <CircleButton
+          icon="add"
+          size={40}
+          disabled={amount !== null && amount >= MAX_AMOUNT}
+          onPress={() => step(stepSize)}
+        />
       </Row>
       <Row>
         <Button title="Скасувати" variant="secondary" onPress={onCancel} style={styles.flex} />
-        <Button title="Додати" icon="add" onPress={onAdd} style={styles.flex} />
+        <Button title="Додати" icon="add" onPress={onAdd} disabled={!amount} style={styles.flex} />
       </Row>
     </Card>
+  );
+}
+
+/** A recent dish: tap the name to log it again, the cross to forget it. */
+function RecentChip({
+  food,
+  onPick,
+  onRemove,
+}: {
+  food: Food;
+  onPick: () => void;
+  onRemove: () => void;
+}) {
+  return (
+    <View style={styles.recent}>
+      <Pressable
+        onPress={onPick}
+        onLongPress={onRemove}
+        style={({ pressed }) => [styles.recentName, pressed && styles.pressed]}>
+        <Text variant="body" style={styles.recentText} numberOfLines={1}>
+          {food.name}
+        </Text>
+      </Pressable>
+      <Pressable
+        onPress={onRemove}
+        hitSlop={8}
+        accessibilityLabel={`Прибрати «${food.name}» з нещодавніх`}
+        style={({ pressed }) => [styles.recentRemove, pressed && styles.pressed]}>
+        <Ionicons name="close" size={14} color={colors.textMuted} />
+      </Pressable>
+    </View>
   );
 }
 
@@ -413,7 +527,40 @@ const styles = StyleSheet.create({
   pending: { borderWidth: 1, borderColor: colors.accent },
   pendingKcal: { color: colors.text, fontSize: fontSize.xxl + 4, fontWeight: '800' },
   stepper: { gap: spacing.sm },
-  servings: { minWidth: 40, textAlign: 'center' },
+  units: {
+    gap: 2,
+    padding: 2,
+    borderRadius: radius.pill,
+    backgroundColor: colors.glass,
+  },
+  recent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+  },
+  recentName: {
+    paddingLeft: spacing.lg,
+    paddingRight: spacing.xs,
+    paddingVertical: spacing.sm + 2,
+  },
+  recentText: { fontSize: fontSize.sm, fontWeight: '600', maxWidth: 180 },
+  recentRemove: {
+    paddingLeft: spacing.xs,
+    paddingRight: spacing.md,
+    paddingVertical: spacing.sm + 2,
+  },
+  unitChip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
+  },
+  unitChipActive: { backgroundColor: colors.accent },
+  unitText: { color: colors.textSecondary, fontWeight: '700' },
+  unitTextActive: { color: colors.accentText },
+  amountRow: { gap: spacing.sm },
+  amountInput: { textAlign: 'center', fontSize: fontSize.xl, fontWeight: '700' },
+  amountUnit: { color: colors.textSecondary, minWidth: 28 },
   chart: {
     flexDirection: 'row',
     gap: spacing.sm,

@@ -1,6 +1,13 @@
 import { asc, desc, eq, gte, like } from 'drizzle-orm';
 
-import { DEFAULT_KCAL_GOAL, normalizeDish, sumMacros } from '@/lib/food';
+import {
+  amountUnit,
+  DEFAULT_KCAL_GOAL,
+  formatGrams,
+  normalizeDish,
+  scaleNutrition,
+  sumMacros,
+} from '@/lib/food';
 import { askGroqNutrition } from '@/lib/groq';
 import { addDays, startOfDay } from '@/lib/water';
 import { db } from './client';
@@ -34,12 +41,13 @@ export async function searchFoods(text: string, limit = 5) {
 
 /**
  * Nutrition for `text`: from the local cache when this dish was looked up
- * before, otherwise from Groq, storing the answer for next time.
+ * before, otherwise from Groq, storing the answer for next time. Dishes cached
+ * before portions had a weight are asked again, since logging is by grams.
  */
 export async function lookupFood(text: string): Promise<{ food: Food; cached: boolean }> {
   const query = normalizeDish(text);
   const existing = await db.query.foods.findFirst({ where: eq(foods.query, query) });
-  if (existing) return { food: existing, cached: true };
+  if (existing?.portionG) return { food: existing, cached: true };
 
   const nutrition = await askGroqNutrition(text.trim());
   const [food] = await db
@@ -54,23 +62,24 @@ export async function deleteFood(id: number) {
   await db.delete(foods).where(eq(foods.id, id));
 }
 
-export async function logFood(food: Food, servings = 1, at = Date.now()) {
+/**
+ * Logs `amount` of a cached dish, in grams or, when `isDrink`, millilitres,
+ * scaling its portion's nutrition. A unit the user switched is remembered on
+ * the cached dish for next time.
+ */
+export async function logFood(food: Food, amount: number, isDrink = food.isDrink, at = Date.now()) {
   await db.transaction((tx) => {
     tx.insert(foodEntries)
       .values({
         eatenAt: at,
         foodId: food.id,
         name: food.name,
-        portion: servings === 1 ? food.portion : `${servings} × ${food.portion ?? 'порція'}`,
-        kcal: food.kcal * servings,
-        proteinG: food.proteinG * servings,
-        fatG: food.fatG * servings,
-        carbsG: food.carbsG * servings,
-        fiberG: food.fiberG === null ? null : food.fiberG * servings,
-        sugarG: food.sugarG === null ? null : food.sugarG * servings,
+        portion: `${formatGrams(amount)} ${amountUnit({ isDrink })}`,
+        grams: amount,
+        ...scaleNutrition(food, amount),
       })
       .run();
-    tx.update(foods).set({ lastUsedAt: at }).where(eq(foods.id, food.id)).run();
+    tx.update(foods).set({ lastUsedAt: at, isDrink }).where(eq(foods.id, food.id)).run();
   });
 }
 

@@ -31,3 +31,25 @@ export const sumMacros = (rows: Macros[]): Macros =>
     }),
     { kcal: 0, proteinG: 0, fatG: 0, carbsG: 0 },
   );
+
+type PortionNutrition = Macros & {
+  portionG: number | null;
+  fiberG: number | null;
+  sugarG: number | null;
+};
+
+/** Nutrition of `grams` of a dish whose stored values describe one portion of `portionG`. */
+export function scaleNutrition(food: PortionNutrition, grams: number) {
+  const k = food.portionG ? grams / food.portionG : 1;
+  return {
+    kcal: food.kcal * k,
+    proteinG: food.proteinG * k,
+    fatG: food.fatG * k,
+    carbsG: food.carbsG * k,
+    fiberG: food.fiberG === null ? null : food.fiberG * k,
+    sugarG: food.sugarG === null ? null : food.sugarG * k,
+  };
+}
+
+/** Drinks are logged in millilitres, everything else in grams. */
+export const amountUnit = (food: { isDrink: boolean }) => (food.isDrink ? 'мл' : 'г');

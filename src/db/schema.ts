@@ -172,6 +172,9 @@ export const foods = sqliteTable('foods', {
   query: text('query').notNull().unique(),
   name: text('name').notNull(),
   portion: text('portion'),
+  // Weight of that portion (millilitres for drinks); nutrition scales linearly to the amount logged.
+  portionG: real('portion_g'),
+  isDrink: integer('is_drink', { mode: 'boolean' }).notNull().default(false),
   kcal: real('kcal').notNull(),
   proteinG: real('protein_g').notNull(),
   fatG: real('fat_g').notNull(),
@@ -191,6 +194,7 @@ export const foodEntries = sqliteTable(
     foodId: integer('food_id').references(() => foods.id, { onDelete: 'set null' }),
     name: text('name').notNull(),
     portion: text('portion'),
+    grams: real('grams'),
     kcal: real('kcal').notNull(),
     proteinG: real('protein_g').notNull(),
     fatG: real('fat_g').notNull(),

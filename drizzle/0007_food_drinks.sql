@@ -1,0 +1,1 @@
+ALTER TABLE `foods` ADD `is_drink` integer DEFAULT false NOT NULL;

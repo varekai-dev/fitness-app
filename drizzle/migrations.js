@@ -7,6 +7,8 @@ import m0002 from './0002_body_weight.sql';
 import m0003 from './0003_built_in.sql';
 import m0004 from './0004_water.sql';
 import m0005 from './0005_food.sql';
+import m0006 from './0006_food_grams.sql';
+import m0007 from './0007_food_drinks.sql';
 
   export default {
     journal,
@@ -16,7 +18,9 @@ m0001,
 m0002,
 m0003,
 m0004,
-m0005
+m0005,
+m0006,
+m0007
     }
   }
   
