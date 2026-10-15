@@ -160,7 +160,8 @@ function EditOverlay({
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   content: { paddingHorizontal: spacing.lg, gap: spacing.lg, flexGrow: 1 },
-  greeting: { gap: spacing.xs, marginTop: spacing.sm },
+  // No top margin: the actions line up with the ScreenHeader buttons on the other tabs.
+  greeting: { gap: spacing.xs },
   spaceBetween: { justifyContent: 'space-between' },
   // As tall as the 44 px CircleButtons used in every screen header.
   editButton: { minHeight: 44, paddingHorizontal: spacing.lg },

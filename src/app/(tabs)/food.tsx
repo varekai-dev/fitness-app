@@ -28,9 +28,7 @@ import {
   logFood,
   lookupFood,
   searchFoods,
-  setKcalGoal,
 } from '@/db/food';
-import { loadProfile } from '@/db/profile';
 import type { Food } from '@/db/schema';
 import { useDbQuery } from '@/hooks/use-db-query';
 import {
@@ -44,7 +42,6 @@ import {
 import { GroqError } from '@/lib/groq';
 import { WEEKDAY_SHORT, weekdayIndex } from '@/lib/labels';
 import { parseDecimal } from '@/lib/metrics';
-import { ACTIVITY, missingForRecommendation, recommendCalories, WEIGHT_GOAL } from '@/lib/profile';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 const timeFormatter = new Intl.DateTimeFormat('uk-UA', { hour: '2-digit', minute: '2-digit' });
@@ -77,15 +74,12 @@ export default function FoodScreen() {
   const { data } = useDbQuery(() => loadFood());
   const [input, setInput] = useState('');
   const { data: suggestions } = useDbQuery(() => searchFoods(input), [input]);
-  const { data: profileData } = useDbQuery(loadProfile);
   const [looking, setLooking] = useState(false);
   const [pending, setPending] = useState<Pending | null>(null);
   const dialog = useDialog();
 
-  if (!data || !profileData) return <Loading />;
+  if (!data) return <Loading />;
   const { goal, todayEntries, totals, days, today, recent } = data;
-  const { profile, latestWeight } = profileData;
-  const rec = recommendCalories(profile, latestWeight?.weightKg);
   const left = goal - totals.kcal;
 
   const lookup = async (text: string) => {
@@ -159,8 +153,10 @@ export default function FoodScreen() {
       title="Харчування"
       mode="root"
       bottomSpace={tabBarSpace}
-      headerRight={<CircleButton icon="person-outline" onPress={() => router.push('/profile')} />}>
-      <Card style={styles.hero}>
+      headerRight={
+        <CircleButton icon="settings-outline" onPress={() => router.push('/settings')} />
+      }>
+      <Card style={styles.hero} onPress={() => router.push('/settings')}>
         <Text style={styles.amount}>
           {formatKcal(totals.kcal)}
           <Text style={styles.unit}> ккал</Text>
@@ -180,41 +176,6 @@ export default function FoodScreen() {
           />
         </View>
         <MacroRow macros={totals} />
-      </Card>
-
-      <Card onPress={() => router.push('/profile')}>
-        <Row style={styles.spaceBetween}>
-          <Text variant="overline">Рекомендовано</Text>
-          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-        </Row>
-        {rec ? (
-          <>
-            <Text variant="title">
-              {formatKcal(rec.kcal)}
-              <Text style={styles.recUnit}> ккал/день</Text>
-            </Text>
-            <Text variant="muted">
-              {WEIGHT_GOAL[profile.goal].label} · {ACTIVITY[profile.activity].label.toLowerCase()}{' '}
-              активність · {rec.age} р.
-            </Text>
-            {rec.kcal !== goal && (
-              <Button
-                title={`Зробити ціллю (зараз ${formatKcal(goal)})`}
-                variant="secondary"
-                small
-                onPress={() => {
-                  Haptics.selectionAsync();
-                  setKcalGoal(rec.kcal);
-                }}
-              />
-            )}
-          </>
-        ) : (
-          <Text variant="muted">
-            Вкажи в профілі {missingForRecommendation(profile, latestWeight?.weightKg).join(', ')},
-            щоб отримати рекомендовану калорійність.
-          </Text>
-        )}
       </Card>
 
       <Card>
@@ -493,7 +454,6 @@ const styles = StyleSheet.create({
   hero: { alignItems: 'center', paddingTop: spacing.xl },
   amount: { color: colors.text, fontSize: fontSize.hero, fontWeight: '800', letterSpacing: -1 },
   unit: { color: colors.textSecondary, fontSize: fontSize.xl, fontWeight: '600' },
-  recUnit: { color: colors.textSecondary, fontSize: fontSize.md, fontWeight: '600' },
   track: {
     alignSelf: 'stretch',
     height: 10,

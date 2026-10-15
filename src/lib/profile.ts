@@ -5,13 +5,24 @@ export const SEX_LABELS: Record<Sex, string> = { male: 'Чоловік', female:
 export const ACTIVITY_LEVELS = ['sedentary', 'light', 'moderate', 'high', 'extreme'] as const;
 export type ActivityLevel = (typeof ACTIVITY_LEVELS)[number];
 
-/** Standard TDEE multipliers applied to the resting metabolic rate. */
-export const ACTIVITY: Record<ActivityLevel, { label: string; hint: string; factor: number }> = {
-  sedentary: { label: 'Мінімальна', hint: 'Сидяча робота, без тренувань', factor: 1.2 },
-  light: { label: 'Легка', hint: '1–3 тренування на тиждень', factor: 1.375 },
-  moderate: { label: 'Помірна', hint: '3–5 тренувань на тиждень', factor: 1.55 },
-  high: { label: 'Висока', hint: '6–7 тренувань на тиждень', factor: 1.725 },
-  extreme: { label: 'Дуже висока', hint: 'Фізична робота або 2 тренування на день', factor: 1.9 },
+/**
+ * Standard TDEE multipliers applied to the resting metabolic rate, and the
+ * extra water a day of that activity adds on top of the weight-based base.
+ */
+export const ACTIVITY: Record<
+  ActivityLevel,
+  { label: string; hint: string; factor: number; waterMl: number }
+> = {
+  sedentary: { label: 'Мінімальна', hint: 'Сидяча робота, без тренувань', factor: 1.2, waterMl: 0 },
+  light: { label: 'Легка', hint: '1–3 тренування на тиждень', factor: 1.375, waterMl: 250 },
+  moderate: { label: 'Помірна', hint: '3–5 тренувань на тиждень', factor: 1.55, waterMl: 500 },
+  high: { label: 'Висока', hint: '6–7 тренувань на тиждень', factor: 1.725, waterMl: 750 },
+  extreme: {
+    label: 'Дуже висока',
+    hint: 'Фізична робота або 2 тренування на день',
+    factor: 1.9,
+    waterMl: 1000,
+  },
 };
 
 export const WEIGHT_GOALS = ['lose', 'maintain', 'gain'] as const;
@@ -89,6 +100,21 @@ export function recommendCalories(
   const tdee = bmr * ACTIVITY[profile.activity].factor;
   const kcal = Math.round((tdee * WEIGHT_GOAL[profile.goal].factor) / 10) * 10;
   return { age, bmr, tdee, kcal };
+}
+
+const WATER_ML_PER_KG = 30;
+
+/**
+ * Daily water: 30 ml per kg of body weight plus the activity extra, rounded to
+ * 50 ml. Only the weight is required; null until it is logged.
+ */
+export function recommendWater(
+  profile: Pick<Profile, 'activity'>,
+  weightKg: number | null | undefined,
+) {
+  if (!weightKg) return null;
+  const ml = weightKg * WATER_ML_PER_KG + ACTIVITY[profile.activity].waterMl;
+  return Math.round(ml / 50) * 50;
 }
 
 /** Which inputs are still missing, in the order the profile screen shows them. */

@@ -1,5 +1,5 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import * as Haptics from 'expo-haptics';
+import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { useDialog } from '@/components/dialog';
@@ -17,18 +17,10 @@ import {
 } from '@/components/ui';
 import { WaterBottle } from '@/components/water-bottle';
 import { drinkWater, GlassButton } from '@/components/water-card';
-import { deleteWater, loadWater, setWaterGoal } from '@/db/water';
+import { deleteWater, loadWater } from '@/db/water';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { WEEKDAY_SHORT, weekdayIndex } from '@/lib/labels';
-import {
-  formatLiters,
-  formatMl,
-  GLASS_PRESETS,
-  glassForAmount,
-  MAX_WATER_GOAL_ML,
-  MIN_WATER_GOAL_ML,
-  WATER_GOAL_STEP_ML,
-} from '@/lib/water';
+import { formatLiters, formatMl, GLASS_PRESETS, glassForAmount } from '@/lib/water';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 const timeFormatter = new Intl.DateTimeFormat('uk-UA', { hour: '2-digit', minute: '2-digit' });
@@ -43,13 +35,6 @@ export default function WaterScreen() {
   const { goal, todayEntries, todayMl, days, today } = data;
   const percent = goal > 0 ? Math.round((todayMl / goal) * 100) : 0;
 
-  const changeGoal = (delta: number) => {
-    const next = Math.min(Math.max(goal + delta, MIN_WATER_GOAL_ML), MAX_WATER_GOAL_ML);
-    if (next === goal) return;
-    Haptics.selectionAsync();
-    setWaterGoal(next);
-  };
-
   const remove = (id: number, label: string, close: () => void) =>
     dialog.show({
       title: 'Видалити запис?',
@@ -63,8 +48,14 @@ export default function WaterScreen() {
   const chartMax = Math.max(goal, ...days.map((d) => d.totalMl));
 
   return (
-    <Screen title="Вода" mode="root" bottomSpace={tabBarSpace}>
-      <Card style={styles.hero}>
+    <Screen
+      title="Вода"
+      mode="root"
+      bottomSpace={tabBarSpace}
+      headerRight={
+        <CircleButton icon="settings-outline" onPress={() => router.push('/settings')} />
+      }>
+      <Card style={styles.hero} onPress={() => router.push('/settings')}>
         <Text style={styles.amount}>
           {formatMl(todayMl)}
           <Text style={styles.unit}> мл</Text>
@@ -92,32 +83,6 @@ export default function WaterScreen() {
           </View>
         ))}
       </View>
-
-      <Card>
-        <Row style={styles.spaceBetween}>
-          <View>
-            <Text variant="heading">Денна ціль</Text>
-            <Text variant="muted">Крок {WATER_GOAL_STEP_ML} мл</Text>
-          </View>
-          <Row style={styles.stepper}>
-            <CircleButton
-              icon="remove"
-              size={36}
-              disabled={goal <= MIN_WATER_GOAL_ML}
-              onPress={() => changeGoal(-WATER_GOAL_STEP_ML)}
-            />
-            <Text variant="heading" style={styles.goalValue}>
-              {formatMl(goal)} мл
-            </Text>
-            <CircleButton
-              icon="add"
-              size={36}
-              disabled={goal >= MAX_WATER_GOAL_ML}
-              onPress={() => changeGoal(WATER_GOAL_STEP_ML)}
-            />
-          </Row>
-        </Row>
-      </Card>
 
       <Card>
         <Text variant="caption">Останні 7 днів</Text>
@@ -196,8 +161,6 @@ const styles = StyleSheet.create({
   glasses: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   glassCell: { flexGrow: 1, flexBasis: '30%' },
   spaceBetween: { justifyContent: 'space-between' },
-  stepper: { gap: spacing.sm },
-  goalValue: { minWidth: 84, textAlign: 'center' },
   chart: {
     flexDirection: 'row',
     gap: spacing.sm,
