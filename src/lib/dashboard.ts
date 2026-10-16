@@ -46,22 +46,22 @@ export type WidgetType = (typeof WIDGET_TYPES)[number];
 export type Widget = { id: string; type: WidgetType; size: WidgetSize };
 
 export const STAT_INFO: Record<StatType, { title: string; icon: IconName }> = {
-  'stat-workouts-week': { title: 'Тренувань за тиждень', icon: 'flame' },
-  'stat-workouts-kcal': { title: 'Спалено за тиждень', icon: 'bonfire' },
-  'stat-workouts-total': { title: 'Усього тренувань', icon: 'trophy' },
-  'stat-workouts-time': { title: 'Час тренувань за тиждень', icon: 'time' },
+  'stat-workouts-week': { title: 'Тренувань за тиждень', icon: 'barbell' },
+  'stat-workouts-kcal': { title: 'Спалено за тиждень', icon: 'barbell' },
+  'stat-workouts-total': { title: 'Усього тренувань', icon: 'barbell' },
+  'stat-workouts-time': { title: 'Час тренувань за тиждень', icon: 'barbell' },
   'stat-workouts-volume': { title: 'Тоннаж за тиждень', icon: 'barbell' },
-  'stat-workouts-streak': { title: 'Тижнів поспіль', icon: 'ribbon' },
-  'stat-workouts-since': { title: 'Від останнього тренування', icon: 'hourglass' },
+  'stat-workouts-streak': { title: 'Тижнів поспіль', icon: 'barbell' },
+  'stat-workouts-since': { title: 'Від останнього тренування', icon: 'barbell' },
   'stat-food-left': { title: 'Лишилось ккал', icon: 'restaurant' },
-  'stat-food-protein': { title: 'Білок сьогодні', icon: 'nutrition' },
-  'stat-food-average': { title: 'Ккал у середньому', icon: 'stats-chart' },
-  'stat-food-streak': { title: 'Днів у межах цілі', icon: 'checkmark-circle' },
-  'stat-food-balance': { title: 'Баланс калорій', icon: 'swap-vertical' },
+  'stat-food-protein': { title: 'Білок сьогодні', icon: 'restaurant' },
+  'stat-food-average': { title: 'Ккал у середньому', icon: 'restaurant' },
+  'stat-food-streak': { title: 'Днів у межах цілі', icon: 'restaurant' },
+  'stat-food-balance': { title: 'Баланс калорій', icon: 'restaurant' },
   'stat-water-today': { title: 'Вода сьогодні', icon: 'water' },
-  'stat-water-average': { title: 'Вода в середньому', icon: 'stats-chart' },
-  'stat-water-goal-days': { title: 'Днів з ціллю', icon: 'calendar' },
-  'stat-water-streak': { title: 'Днів поспіль', icon: 'ribbon' },
+  'stat-water-average': { title: 'Вода в середньому', icon: 'water' },
+  'stat-water-goal-days': { title: 'Днів з ціллю', icon: 'water' },
+  'stat-water-streak': { title: 'Днів поспіль', icon: 'water' },
 };
 
 export const isStatType = (type: WidgetType): type is StatType =>
