@@ -39,13 +39,18 @@ import { colors, fontSize, radius, spacing } from '@/theme';
 export const TILE_HEIGHT = 156;
 export const TILE_GAP = 12;
 export const STAT_TILE_HEIGHT = 120;
+/**
+ * Fits the title and two lines of the phrase. Fixed rather than the height of the text:
+ * Sortable.Flex places tiles by measured heights, and a phrase that wrapped onto another
+ * line after measuring left the tiles below drawn over it.
+ */
+export const QUOTE_TILE_HEIGHT = 108;
 
-/** Undefined for the quote, which takes the height of its content. */
 export const tileHeight = ({ type, size }: Pick<Widget, 'type' | 'size'>) =>
   isStatType(type)
     ? STAT_TILE_HEIGHT
-    : isFixedSize(type)
-      ? undefined
+    : type === 'quote'
+      ? QUOTE_TILE_HEIGHT
       : size === 'large'
         ? TILE_HEIGHT * 2 + TILE_GAP
         : TILE_HEIGHT;
@@ -112,20 +117,16 @@ function Tile({
   children,
   onPress,
   accent,
-  fit,
 }: {
   children: ReactNode;
   onPress?: () => void;
   accent?: boolean;
-  /** Height of the content instead of filling the fixed tile box. */
-  fit?: boolean;
 }) {
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         styles.tile,
-        fit && styles.tileFit,
         accent && styles.tileAccent,
         pressed && styles.pressed,
       ]}>
@@ -247,10 +248,12 @@ const Unit = ({ children }: { children: ReactNode }) => <Text style={styles.unit
 
 function QuoteWidget({ data }: WidgetProps) {
   return (
-    <Tile fit>
+    <Tile>
       <View style={styles.quoteGlow} pointerEvents="none" />
       <TileTitle title="Цитата дня" icon="flash" />
-      <Text style={styles.quote}>{dailyPhrase(new Date(data.loadedAt))}</Text>
+      <RNText style={styles.quote} numberOfLines={2} adjustsFontSizeToFit>
+        {dailyPhrase(new Date(data.loadedAt))}
+      </RNText>
     </Tile>
   );
 }
@@ -1017,7 +1020,6 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     overflow: 'hidden',
   },
-  tileFit: { flex: 0 },
   tileAccent: { backgroundColor: colors.accent },
   quoteGlow: {
     position: 'absolute',
@@ -1028,7 +1030,13 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     backgroundColor: colors.accentSoft,
   },
-  quote: { color: colors.text, fontSize: fontSize.xl, fontWeight: '800', letterSpacing: -0.3 },
+  quote: {
+    color: colors.text,
+    fontSize: fontSize.xl,
+    lineHeight: 28,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
   pressed: { opacity: 0.85 },
   flex: { flex: 1 },
   fill: { flex: 1, justifyContent: 'flex-end' },
