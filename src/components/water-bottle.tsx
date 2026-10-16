@@ -178,6 +178,8 @@ function wavePath(levelY: number, angle: number, amplitude: number, phase: numbe
     xs = cx;
     ys = cy;
   }
+  // An empty bottle trims every point away, and a bare "Z" crashes the native SVG parser.
+  if (xs.length === 0) return 'M0 0Z';
   let d = '';
   for (let i = 0; i < xs.length; i++)
     d += `${i === 0 ? 'M' : 'L'}${xs[i].toFixed(2)} ${ys[i].toFixed(2)} `;

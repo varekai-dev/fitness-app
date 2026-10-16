@@ -1,7 +1,8 @@
 # On every push to main: if a GitHub release already ships this native
 # fingerprint (runtime version), publish the JS as an EAS Update; otherwise
 # build a signed APK right on the runner (no EAS Build) and publish it as a
-# GitHub release in the public releases repo.
+# GitHub release in the public releases repo. "[apk]" in the commit message
+# (or force_build on a manual run) builds an APK even for a known fingerprint.
 name: Release
 
 on:
@@ -50,14 +51,17 @@ jobs:
         id: existing
         env:
           HASH: ${{ steps.runtime.outputs.hash }}
+          FORCE: ${{ inputs.force_build || contains(github.event.head_commit.message, '[apk]') }}
         run: |
           tag=$(gh api "repos/$RELEASES_REPO/releases" --paginate \
             --jq ".[] | select(.body | contains(\"runtimeVersion: $HASH\")) | .tag_name" | head -1)
           echo "Existing release: ${tag:-none}"
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          if [ -z "$tag" ] || [ "$FORCE" = "true" ]; then
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Publish OTA update
-        if: steps.existing.outputs.tag != '' && !inputs.force_build
+        if: steps.existing.outputs.build != 'true'
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
@@ -65,16 +69,16 @@ jobs:
             --platform android --message "$(git log -1 --pretty=%s)" --non-interactive
 
       - uses: actions/setup-java@v4
-        if: steps.existing.outputs.tag == '' || inputs.force_build
+        if: steps.existing.outputs.build == 'true'
         with:
           distribution: temurin
           java-version: 17
 
       - uses: gradle/actions/setup-gradle@v4
-        if: steps.existing.outputs.tag == '' || inputs.force_build
+        if: steps.existing.outputs.build == 'true'
 
       - name: Build APK
-        if: steps.existing.outputs.tag == '' || inputs.force_build
+        if: steps.existing.outputs.build == 'true'
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -86,7 +90,7 @@ jobs:
           npm run build:android
 
       - name: Publish GitHub release
-        if: steps.existing.outputs.tag == '' || inputs.force_build
+        if: steps.existing.outputs.build == 'true'
         env:
           VERSION: ${{ steps.runtime.outputs.version }}
           HASH: ${{ steps.runtime.outputs.hash }}
