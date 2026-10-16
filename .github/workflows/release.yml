@@ -1,0 +1,91 @@
+# On every push to main: if the native fingerprint already has a finished
+# preview build, ship the JS as an EAS Update; otherwise build a new APK on
+# EAS and publish it as a GitHub release in the public releases repo.
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      force_build:
+        description: Build a new APK even if the fingerprint has a build
+        type: boolean
+        default: false
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+  PROFILE: preview
+  RELEASES_REPO: ${{ vars.RELEASES_REPO || 'varekai-dev/fitness-app-releases' }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Compute fingerprint
+        id: fingerprint
+        run: |
+          npx eas-cli@latest fingerprint:generate --platform android --build-profile "$PROFILE" --json > fingerprint.json
+          hash=$(jq -r '.hash' fingerprint.json)
+          echo "Fingerprint: $hash"
+          echo "hash=$hash" >> "$GITHUB_OUTPUT"
+
+      - name: Find a build with this fingerprint
+        id: existing
+        env:
+          HASH: ${{ steps.fingerprint.outputs.hash }}
+        run: |
+          npx eas-cli@latest build:list --platform android --build-profile "$PROFILE" \
+            --status finished --fingerprint-hash "$HASH" --limit 1 --json > builds.json
+          id=$(jq -r '.[0].id // empty' builds.json)
+          echo "Existing build: ${id:-none}"
+          echo "build_id=$id" >> "$GITHUB_OUTPUT"
+
+      - name: Publish OTA update
+        if: steps.existing.outputs.build_id != '' && !inputs.force_build
+        run: |
+          npx eas-cli@latest update --channel "$PROFILE" --environment "$PROFILE" \
+            --platform android --message "$(git log -1 --pretty=%s)" --non-interactive
+
+      - name: Build APK
+        id: build
+        if: steps.existing.outputs.build_id == '' || inputs.force_build
+        run: |
+          npx eas-cli@latest build --platform android --profile "$PROFILE" \
+            --message "$(git log -1 --pretty=%s)" --wait --json --non-interactive > build.json
+          jq -r '.[0] | "Build \(.id): \(.appVersion) (\(.appBuildVersion))"' build.json
+          echo "url=$(jq -r '.[0].artifacts.buildUrl' build.json)" >> "$GITHUB_OUTPUT"
+          echo "tag=v$(jq -r '.[0] | "\(.appVersion)-\(.appBuildVersion)"' build.json)" >> "$GITHUB_OUTPUT"
+          echo "version=$(jq -r '.[0].appVersion' build.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub release
+        if: steps.build.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+          URL: ${{ steps.build.outputs.url }}
+          TAG: ${{ steps.build.outputs.tag }}
+          VERSION: ${{ steps.build.outputs.version }}
+          HASH: ${{ steps.fingerprint.outputs.hash }}
+        run: |
+          curl -fsSL -o fitness.apk "$URL"
+          {
+            git log -1 --pretty=%B | grep -v '^Co-Authored-By:'
+            echo
+            echo "runtimeVersion: $HASH"
+          } > notes.md
+          gh release create "$TAG" fitness.apk --repo "$RELEASES_REPO" \
+            --title "Fitness $VERSION" --notes-file notes.md --latest
