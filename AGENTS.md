@@ -67,6 +67,8 @@ Always use the **Pixel_10_Pro_API_37.0** emulator. `npm run android` boots it (s
 | `exercise.png` | Exercise detail | `/exercise/<id>` |
 | `history.png` | Training tab, History section | `/training?view=history` |
 | `body-weight.png` | Body weight | `/body-weight` |
+| `food.png` | Food tab | `/food` |
+| `water.png` | Water tab | `/water` |
 
 Screenshots may come from either platform. On Android (Pixel emulator, app open in Expo Go via `npm run android`):
 

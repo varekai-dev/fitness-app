@@ -20,6 +20,10 @@
 |:-:|:-:|:-:|:-:|
 | <img src="docs/screenshots/exercises.png" width="200"> | <img src="docs/screenshots/exercise.png" width="200"> | <img src="docs/screenshots/history.png" width="200"> | <img src="docs/screenshots/body-weight.png" width="200"> |
 
+| Харчування | Вода |
+|:-:|:-:|
+| <img src="docs/screenshots/food.png" width="200"> | <img src="docs/screenshots/water.png" width="200"> |
+
 ## Стек
 
 Expo SDK 57 · Expo Router · TypeScript · expo-sqlite + Drizzle ORM
