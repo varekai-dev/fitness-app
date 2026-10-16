@@ -633,7 +633,13 @@ export function WorkoutPlayer({
                       : formatTargets(we)}
                   </Text>
                 </View>
-                {done && <Ionicons name="checkmark-circle" size={22} color={colors.accent} />}
+                {done && (
+                  <Ionicons
+                    name={we.sets.length === 0 ? 'play-forward-circle' : 'checkmark-circle'}
+                    size={22}
+                    color={we.sets.length === 0 ? colors.textSecondary : colors.accent}
+                  />
+                )}
               </Pressable>
             </SheetItem>
           );

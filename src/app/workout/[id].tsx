@@ -211,9 +211,12 @@ function ExerciseBlock({
   }
   const prSetId = best !== null && isBetter(type, best, record) ? bestId : null;
   const allDone = we.sets.length > 0 && we.sets.every((s) => s.completedAt !== null);
+  // A finished workout keeps only done sets, so an exercise left with none was skipped.
+  const skipped = !active && we.sets.length === 0;
 
   return (
-    <Card style={[styles.exercise, active && allDone && styles.exerciseDone]}>
+    <Card
+      style={[styles.exercise, active && allDone && styles.exerciseDone, skipped && styles.skipped]}>
       <Row>
         <IndexMarker n={index + 1} />
         <View style={styles.flex}>
@@ -225,6 +228,14 @@ function ExerciseBlock({
             {kcal ? ` · ${formatKcal(kcal)}` : ''}
           </Text>
         </View>
+        {skipped && (
+          <View style={styles.skippedBadge}>
+            <Ionicons name="play-forward" size={12} color={colors.textSecondary} />
+            <Text variant="caption" style={styles.skippedText}>
+              Пропущено
+            </Text>
+          </View>
+        )}
         {active && allDone && <Ionicons name="checkmark-circle" size={24} color={colors.accent} />}
       </Row>
       <View style={styles.last}>
@@ -296,6 +307,17 @@ const styles = StyleSheet.create({
   },
   exercise: { gap: spacing.sm },
   exerciseDone: { borderWidth: 1, borderColor: colors.accent },
+  skipped: { opacity: 0.6 },
+  skippedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surfaceRaised,
+  },
+  skippedText: { color: colors.textSecondary, fontWeight: '700' },
   last: {
     flexDirection: 'row',
     alignItems: 'center',

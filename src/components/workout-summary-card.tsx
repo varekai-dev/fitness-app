@@ -21,6 +21,8 @@ export function WorkoutSummaryCard({
 }) {
   const totalSets = workout.exercises.reduce((n, e) => n + e.sets.length, 0);
   const done = workout.exercises.filter((e) => e.sets.length > 0);
+  // Only done sets survive finishing, so an exercise with none was skipped.
+  const skipped = workout.exercises.length - done.length;
   const minutes = formatDuration(workoutDurationMs(workout, workout.startedAt) / 1000);
   return (
     <Card
@@ -49,6 +51,11 @@ export function WorkoutSummaryCard({
             {done.map((e) => e.exercise.name).join(' · ')}
           </Text>
         )}
+        {skipped > 0 && (
+          <Text variant="muted" style={styles.skipped} numberOfLines={1}>
+            Пропущено вправ: {skipped}
+          </Text>
+        )}
       </View>
       <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
     </Card>
@@ -74,4 +81,5 @@ const styles = StyleSheet.create({
   dateMonth: { fontSize: 11 },
   body: { flex: 1, gap: 2 },
   accent: { color: colors.accent },
+  skipped: { fontStyle: 'italic' },
 });
