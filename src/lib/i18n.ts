@@ -1,4 +1,5 @@
 import { reloadAppAsync } from 'expo';
+import { DevSettings } from 'react-native';
 
 import { sqlite } from '@/db/client';
 
@@ -75,5 +76,7 @@ export async function setLanguage(preference: LanguagePreference) {
       preference,
     );
   }
-  await reloadAppAsync();
+  // reloadAppAsync is a no-op in Expo Go; the dev reload works there and in dev builds.
+  if (__DEV__) DevSettings.reload('Language changed');
+  else await reloadAppAsync();
 }
