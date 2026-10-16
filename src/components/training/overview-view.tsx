@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useDialog } from '@/components/dialog';
@@ -22,6 +22,7 @@ import { listBodyWeights } from '@/db/body-weight';
 import { getActiveProgram, getNextDayId } from '@/db/programs';
 import { getActiveWorkout, listFinishedWorkouts, startWorkout } from '@/db/workouts';
 import { useDbQuery } from '@/hooks/use-db-query';
+import { useScrollResetOnTabLeave } from '@/hooks/use-scroll-reset-on-tab-leave';
 import { useToday } from '@/hooks/use-today';
 import { estimateKcal } from '@/lib/calories';
 import { plural, tr } from '@/lib/i18n';
@@ -54,6 +55,8 @@ export function OverviewView({
 }) {
   const today = useToday();
   const { data } = useDbQuery(loadOverview, [today]);
+  const scrollRef = useRef<ScrollView>(null);
+  useScrollResetOnTabLeave(scrollRef);
   const [pickedDayId, setPickedDayId] = useState<number | null>(null);
   const [starting, setStarting] = useState(false);
   const dialog = useDialog();
@@ -93,7 +96,7 @@ export function OverviewView({
   };
 
   return (
-    <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomSpace }]}>
+    <ScrollView ref={scrollRef} contentContainerStyle={[styles.content, { paddingBottom: bottomSpace }]}>
       <Row style={styles.stats}>
         <StatTile
           icon="flame"

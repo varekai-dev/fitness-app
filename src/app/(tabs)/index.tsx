@@ -13,6 +13,7 @@ import { Backdrop } from '@/components/glass';
 import { Button, CircleButton, EmptyState, Loading, Row, Text } from '@/components/ui';
 import { getDashboard, loadDashboardData, saveDashboard } from '@/db/dashboard';
 import { useDbQuery } from '@/hooks/use-db-query';
+import { useScrollResetOnTabLeave } from '@/hooks/use-scroll-reset-on-tab-leave';
 import { useToday } from '@/hooks/use-today';
 import { isFixedSize, nextSize, WIDGET_SIZE_LABELS, type Widget } from '@/lib/dashboard';
 import { tr } from '@/lib/i18n';
@@ -30,6 +31,7 @@ export default function HomeScreen() {
   const { width } = useWindowDimensions();
   const rowWidth = width - spacing.lg * 2;
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  useScrollResetOnTabLeave(scrollRef);
   const { data: widgets } = useDbQuery(getDashboard);
   const today = useToday();
   const { data } = useDbQuery(loadDashboardData, [today]);

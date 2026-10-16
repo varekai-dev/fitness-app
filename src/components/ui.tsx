@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import type { ComponentProps, ReactNode } from 'react';
+import { useRef, type ComponentProps, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -17,6 +17,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Backdrop, Glass } from '@/components/glass';
+import { useScrollResetOnTabLeave } from '@/hooks/use-scroll-reset-on-tab-leave';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 export type IconName = ComponentProps<typeof Ionicons>['name'];
@@ -154,11 +155,14 @@ export function Screen({
   bottomSpace?: number;
 }) {
   const insets = useSafeAreaInsets();
+  const scrollRef = useRef<ScrollView>(null);
+  useScrollResetOnTabLeave(scrollRef);
   return (
     <View style={styles.screenRoot}>
       <Backdrop />
       {header && <ScreenHeader title={title} mode={mode} right={headerRight} />}
       <ScrollView
+        ref={scrollRef}
         style={styles.flex}
         contentContainerStyle={[
           styles.screen,

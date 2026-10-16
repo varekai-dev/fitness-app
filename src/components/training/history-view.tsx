@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { FlatList, StyleSheet } from 'react-native';
 
 import { ActivityCalendar } from '@/components/activity-calendar';
@@ -11,6 +12,7 @@ import { listBodyWeights } from '@/db/body-weight';
 import { deleteWorkout, listFinishedWorkouts } from '@/db/workouts';
 import { estimateKcal } from '@/lib/calories';
 import { useDbQuery } from '@/hooks/use-db-query';
+import { useScrollResetOnTabLeave } from '@/hooks/use-scroll-reset-on-tab-leave';
 import { useToday } from '@/hooks/use-today';
 import { tr } from '@/lib/i18n';
 import { spacing } from '@/theme';
@@ -27,6 +29,8 @@ const startOf = (item: Item) =>
  * workouts and activities imported from Apple Health / Health Connect.
  */
 export function HistoryView({ bottomSpace }: { bottomSpace: number }) {
+  const listRef = useRef<FlatList<Item>>(null);
+  useScrollResetOnTabLeave(listRef);
   const today = useToday();
   const { data } = useDbQuery(async () => {
     const [workouts, activities, weights] = await Promise.all([
@@ -78,6 +82,7 @@ export function HistoryView({ bottomSpace }: { bottomSpace: number }) {
   return (
     <>
       <FlatList
+        ref={listRef}
         contentContainerStyle={[styles.content, { paddingBottom: bottomSpace }]}
         data={data.items}
         ListHeaderComponent={

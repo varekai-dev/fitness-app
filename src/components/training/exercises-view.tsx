@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
 import { useDialog } from '@/components/dialog';
@@ -10,8 +10,9 @@ import { confirmRemoveExercise } from '@/components/remove-dialogs';
 import { SwipeToDelete } from '@/components/swipe-to-delete';
 import { Card, Chip, ChipScroller, EmptyState, Loading, SearchField, Text } from '@/components/ui';
 import { listExercises } from '@/db/exercises';
-import { MUSCLE_GROUPS, type MuscleGroup } from '@/db/schema';
+import { MUSCLE_GROUPS, type Exercise, type MuscleGroup } from '@/db/schema';
 import { useDbQuery } from '@/hooks/use-db-query';
+import { useScrollResetOnTabLeave } from '@/hooks/use-scroll-reset-on-tab-leave';
 import { tr } from '@/lib/i18n';
 import { MUSCLE_GROUP_LABELS, TRACKING_TYPE_LABELS } from '@/lib/labels';
 import { colors, spacing } from '@/theme';
@@ -19,6 +20,8 @@ import { colors, spacing } from '@/theme';
 /** The Exercises section of the Training tab: the searchable exercise library. */
 export function ExercisesView({ bottomSpace }: { bottomSpace: number }) {
   const { data } = useDbQuery(listExercises);
+  const listRef = useRef<FlatList<Exercise>>(null);
+  useScrollResetOnTabLeave(listRef);
   const [group, setGroup] = useState<MuscleGroup | null>(null);
   const [search, setSearch] = useState('');
   const dialog = useDialog();
@@ -32,6 +35,7 @@ export function ExercisesView({ bottomSpace }: { bottomSpace: number }) {
   return (
     <>
       <FlatList
+        ref={listRef}
         contentContainerStyle={[styles.content, { paddingBottom: bottomSpace }]}
         keyboardShouldPersistTaps="handled"
         data={filtered}
