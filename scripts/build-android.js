@@ -62,6 +62,22 @@ if (!fs.existsSync(keys.storeFile)) {
 }
 const { version } = require(path.join(root, 'app.json')).expo;
 
+// The runtime version (native fingerprint) must be resolved before the build: Gradle
+// rewrites files the fingerprint hashes (React Native strips `package=` from library
+// manifests in node_modules, react-native-health-connect builds into android-expo/build),
+// so a fingerprint taken during the build no longer matches the one EAS Update publishes
+// for, and the APK never gets an update. EAS Build pins it the same way.
+const resolved = spawnSync('npx', ['expo-updates', 'runtimeversion:resolve', '--platform', 'android'], {
+  cwd: root,
+  stdio: ['ignore', 'pipe', 'inherit'],
+  encoding: 'utf8',
+  shell: isWindows,
+});
+if (resolved.status !== 0) process.exit(resolved.status ?? 1);
+const { runtimeVersion } = JSON.parse(resolved.stdout.trim().split('\n').pop());
+console.log(`› Runtime version: ${runtimeVersion}`);
+process.env.EXPO_UPDATES_FINGERPRINT_OVERRIDE = runtimeVersion;
+
 run('npx', ['expo', 'prebuild', '--platform', 'android', '--clean']);
 
 // android/ is regenerated above, so the signing settings never outlive this build.
