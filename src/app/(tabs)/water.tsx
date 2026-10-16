@@ -57,7 +57,7 @@ export default function WaterScreen() {
       headerRight={
         <CircleButton icon="settings-outline" onPress={() => router.push('/settings')} />
       }>
-      <Card style={styles.hero} onPress={() => router.push('/settings')}>
+      <Card style={styles.hero} onPress={() => router.push('/settings/water')}>
         <Text style={styles.amount}>
           {formatMl(todayMl)}
           <Text style={styles.unit}> мл</Text>

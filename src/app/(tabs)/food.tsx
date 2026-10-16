@@ -48,7 +48,7 @@ export default function FoodScreen() {
       headerRight={
         <CircleButton icon="settings-outline" onPress={() => router.push('/settings')} />
       }>
-      <Card style={styles.hero} onPress={() => router.push('/settings')}>
+      <Card style={styles.hero} onPress={() => router.push('/settings/food')}>
         <Text style={styles.amount}>
           {formatKcal(totals.kcal)}
           <Text style={styles.unit}> ккал</Text>

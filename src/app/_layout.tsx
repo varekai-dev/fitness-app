@@ -10,6 +10,7 @@ import { Text } from '@/components/ui';
 import { db } from '@/db/client';
 import { runContentSeeds, seedIfEmpty } from '@/db/seed';
 import { useHealthConnectAutoSync } from '@/hooks/use-health-connect-auto-sync';
+import { useNotifications } from '@/hooks/use-notifications';
 import { colors } from '@/theme';
 import migrations from '../../drizzle/migrations';
 
@@ -43,6 +44,7 @@ export default function RootLayout() {
   }, [success]);
 
   useHealthConnectAutoSync(ready);
+  useNotifications(ready);
 
   const error = migrationError ?? seedError;
   useEffect(() => {

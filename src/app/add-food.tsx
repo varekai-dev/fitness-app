@@ -76,7 +76,7 @@ export default function AddFoodScreen() {
         buttons: noKey
           ? [
               { text: 'Скасувати', style: 'cancel' },
-              { text: 'Налаштування', onPress: () => router.push('/settings') },
+              { text: 'Налаштування', onPress: () => router.push('/settings/integrations') },
             ]
           : undefined,
       });
