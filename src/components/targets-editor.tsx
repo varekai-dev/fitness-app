@@ -4,7 +4,8 @@ import { StyleSheet, TextInput, View } from 'react-native';
 import { Text } from '@/components/ui';
 import type { Targets, TrackingType } from '@/db/schema';
 import { tr } from '@/lib/i18n';
-import { parseDecimal } from '@/lib/metrics';
+import { formatDistance, parseDecimal } from '@/lib/metrics';
+import { DISTANCE_UNIT, displayToKm } from '@/lib/units';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 const str = (v: number | null) => (v === null ? '' : String(v));
@@ -27,18 +28,21 @@ export function TargetsEditor({
   const [repsMin, setRepsMin] = useState(str(targets.targetRepsMin));
   const [repsMax, setRepsMax] = useState(str(targets.targetRepsMax));
   const [duration, setDuration] = useState(str(targets.targetDurationSec));
-  const [distance, setDistance] = useState(str(targets.targetDistanceKm));
+  const [distance, setDistance] = useState(
+    targets.targetDistanceKm === null ? '' : formatDistance(targets.targetDistanceKm),
+  );
   const [rest, setRest] = useState(str(targets.restSec));
 
   const save = () => {
     const min = int(repsMin);
     const max = int(repsMax);
+    const km = parseDecimal(distance);
     const next: Targets = {
       targetSets: Math.max(int(sets) ?? 1, 1),
       targetRepsMin: min !== null && max !== null ? Math.min(min, max) : min,
       targetRepsMax: min !== null && max !== null ? Math.max(min, max) : max,
       targetDurationSec: int(duration),
-      targetDistanceKm: parseDecimal(distance),
+      targetDistanceKm: km === null ? null : displayToKm(km),
       restSec: int(rest) ?? 0,
     };
     setSets(str(next.targetSets));
@@ -74,7 +78,7 @@ export function TargetsEditor({
       )}
       {type === 'distance_duration' && (
         <Cell
-          label={tr('Км', 'Km')}
+          label={DISTANCE_UNIT.charAt(0).toUpperCase() + DISTANCE_UNIT.slice(1)}
           value={distance}
           onChange={setDistance}
           onSave={save}

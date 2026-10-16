@@ -5,6 +5,7 @@ import { Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/ui';
 import { addWater } from '@/db/water';
 import { tr } from '@/lib/i18n';
+import { formatVolume, VOLUME_UNIT } from '@/lib/units';
 import type { GlassPreset } from '@/lib/water';
 import { colors, radius, spacing } from '@/theme';
 
@@ -32,8 +33,8 @@ export function GlassButton({
     <Pressable
       onPress={onPress}
       accessibilityLabel={tr(
-        `Додати ${glass.label.toLowerCase()}, ${glass.ml} мл`,
-        `Add ${glass.label.toLowerCase()}, ${glass.ml} ml`,
+        `Додати ${glass.label.toLowerCase()}, ${formatVolume(glass.ml)} ${VOLUME_UNIT}`,
+        `Add ${glass.label.toLowerCase()}, ${formatVolume(glass.ml)} ${VOLUME_UNIT}`,
       )}
       style={({ pressed }) => [
         styles.glass,
@@ -43,7 +44,7 @@ export function GlassButton({
       <MaterialCommunityIcons name={glass.icon} size={compact ? 20 : 28} color={colors.accent} />
       {!compact && <Text variant="caption">{glass.label}</Text>}
       <Text variant="body" style={styles.glassMl}>
-        +{glass.ml}
+        +{formatVolume(glass.ml)}
       </Text>
     </Pressable>
   );

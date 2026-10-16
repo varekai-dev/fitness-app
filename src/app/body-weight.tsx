@@ -19,7 +19,8 @@ import { deleteBodyWeight, listBodyWeights, saveBodyWeight } from '@/db/body-wei
 import { useDbQuery } from '@/hooks/use-db-query';
 import { tr } from '@/lib/i18n';
 import { formatDate, formatShortDate, formatWeightDelta } from '@/lib/labels';
-import { formatNumber, parseDecimal } from '@/lib/metrics';
+import { formatNumber, formatWeight, parseDecimal } from '@/lib/metrics';
+import { displayToKg, kgToDisplay, WEIGHT_UNIT } from '@/lib/units';
 import { spacing } from '@/theme';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -32,13 +33,14 @@ export default function BodyWeightScreen() {
 
   if (!data) return <Loading />;
   const latest = data.at(-1);
-  const value = input ?? (latest ? formatNumber(latest.weightKg, 1) : '');
+  const value = input ?? (latest ? formatWeight(latest.weightKg, 1) : '');
   const parsed = parseDecimal(value);
-  const valid = parsed !== null && parsed > 0 && parsed < 500;
+  const kg = parsed === null ? null : displayToKg(parsed);
+  const valid = kg !== null && kg > 0 && kg < 500;
 
   const save = () => {
     if (!valid) return;
-    saveBodyWeight(parsed);
+    saveBodyWeight(kg);
     setInput(null);
   };
 
@@ -64,7 +66,9 @@ export default function BodyWeightScreen() {
   return (
     <Screen title={tr('Вага тіла', 'Body weight')}>
       <Card>
-        <Text variant="caption">{tr('Сьогоднішня вага, кг', 'Today’s weight, kg')}</Text>
+        <Text variant="caption">
+          {tr('Сьогоднішня вага', 'Today’s weight')}, {WEIGHT_UNIT}
+        </Text>
         <Row style={styles.entry}>
           <Field
             value={value}
@@ -105,20 +109,20 @@ export default function BodyWeightScreen() {
           <Row style={styles.stats}>
             <StatTile
               icon="scale-outline"
-              value={formatNumber(latest!.weightKg, 1)}
-              unit={tr('кг', 'kg')}
+              value={formatWeight(latest!.weightKg, 1)}
+              unit={WEIGHT_UNIT}
               label={tr('Зараз', 'Now')}
             />
             <StatTile
               icon="calendar"
               value={formatWeightDelta(latest!.weightKg - monthStart!.weightKg)}
-              unit={tr('кг', 'kg')}
+              unit={WEIGHT_UNIT}
               label={tr('За 30 днів', '30 days')}
             />
             <StatTile
               icon="trending-up"
               value={formatWeightDelta(latest!.weightKg - first.weightKg)}
-              unit={tr('кг', 'kg')}
+              unit={WEIGHT_UNIT}
               label={tr('Від початку', 'Since start')}
             />
           </Row>
@@ -132,9 +136,11 @@ export default function BodyWeightScreen() {
             </Text>
           ) : (
             <Card>
-              <Text variant="caption">{tr('Вага, кг', 'Weight, kg')}</Text>
+              <Text variant="caption">
+                {tr('Вага', 'Weight')}, {WEIGHT_UNIT}
+              </Text>
               <LineChart
-                points={data.map((w) => ({ x: w.measuredAt, y: w.weightKg }))}
+                points={data.map((w) => ({ x: w.measuredAt, y: kgToDisplay(w.weightKg) }))}
                 formatY={(v) => formatNumber(v, 1)}
                 formatX={formatShortDate}
               />
@@ -144,18 +150,18 @@ export default function BodyWeightScreen() {
           <SectionHeader title={tr('Записи', 'Entries')} />
           {[...data].reverse().map((w, i, list) => {
             const prev = list[i + 1];
-            const label = `${formatDate(w.measuredAt)} · ${formatNumber(w.weightKg, 1)} ${tr('кг', 'kg')}`;
+            const label = `${formatDate(w.measuredAt)} · ${formatWeight(w.weightKg, 1)} ${WEIGHT_UNIT}`;
             return (
               <Card key={w.id} onPress={() => remove(w.id, label)}>
                 <Row style={styles.spaceBetween}>
                   <Text variant="body">{formatDate(w.measuredAt)}</Text>
                   <View style={styles.entryValue}>
                     <Text variant="heading">
-                      {formatNumber(w.weightKg, 1)} {tr('кг', 'kg')}
+                      {formatWeight(w.weightKg, 1)} {WEIGHT_UNIT}
                     </Text>
                     {prev && (
                       <Text variant="muted">
-                        {formatWeightDelta(w.weightKg - prev.weightKg)} {tr('кг', 'kg')}
+                        {formatWeightDelta(w.weightKg - prev.weightKg)} {WEIGHT_UNIT}
                       </Text>
                     )}
                   </View>

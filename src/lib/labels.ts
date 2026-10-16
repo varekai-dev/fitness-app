@@ -1,7 +1,8 @@
 import type { ActivityKind, MuscleGroup, Targets, TrackingType } from '@/db/schema';
 
 import { locale, tr } from '@/lib/i18n';
-import { formatDuration, formatNumber } from './metrics';
+import { DISTANCE_UNIT, kgToDisplay } from '@/lib/units';
+import { formatDistance, formatDuration, formatNumber } from './metrics';
 
 export const MUSCLE_GROUP_LABELS: Record<MuscleGroup, string> = {
   chest: tr('Груди', 'Chest'),
@@ -84,7 +85,7 @@ function targetValue(t: Targets) {
       : String(t.targetRepsMin ?? t.targetRepsMax);
   }
   if (t.targetDurationSec !== null) return formatDuration(t.targetDurationSec);
-  if (t.targetDistanceKm !== null) return `${t.targetDistanceKm} ${tr('км', 'km')}`;
+  if (t.targetDistanceKm !== null) return `${formatDistance(t.targetDistanceKm)} ${DISTANCE_UNIT}`;
   return '';
 }
 
@@ -104,9 +105,9 @@ export function formatTargets(t: Targets) {
     : sets;
 }
 
-/** Signed change in kilograms with one decimal: "+0.4", "−1.2" or "0". */
+/** Signed change of a weight in kg, shown in the chosen unit with one decimal: "+0.4", "−1.2" or "0". */
 export function formatWeightDelta(kg: number) {
-  const rounded = Math.round(kg * 10) / 10;
+  const rounded = Math.round(kgToDisplay(kg) * 10) / 10;
   if (rounded === 0) return '0';
   return `${rounded > 0 ? '+' : '−'}${formatNumber(Math.abs(rounded), 1)}`;
 }

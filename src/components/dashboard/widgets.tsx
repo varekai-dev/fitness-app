@@ -30,15 +30,16 @@ import {
   WEEKDAY_SHORT,
   weekdayIndex,
 } from '@/lib/labels';
-import { formatNumber, notStarted, workoutDurationMs } from '@/lib/metrics';
+import { formatNumber, formatWeight, notStarted, workoutDurationMs } from '@/lib/metrics';
 import { dailyPhrase } from '@/lib/motivation';
 import { averageOfLogged, daysBetween, dayStreak, weekStreak } from '@/lib/stats';
-import { formatMl, GLASS_PRESETS } from '@/lib/water';
+import { formatVolume, kgToDisplay, unitSystem, VOLUME_UNIT, WEIGHT_UNIT } from '@/lib/units';
+import { GLASS_PRESETS } from '@/lib/water';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 const KCAL = tr('ккал', 'kcal');
-const KG = tr('кг', 'kg');
-const ML = tr('мл', 'ml');
+const KG = WEIGHT_UNIT;
+const ML = VOLUME_UNIT;
 const G = tr('г', 'g');
 
 /** Height of a small or medium tile; a large tile is two rows tall. */
@@ -631,10 +632,11 @@ function FoodMealsWidget({ size, data }: WidgetProps) {
 
 // ---------- water ----------
 
-const QUICK_ML = 250;
-const MEDIUM_GLASSES = GLASS_PRESETS.filter((g) => [250, 350, 500].includes(g.ml));
+// The glass, mug and bottle; the large tile adds the cup.
+const QUICK_ML = GLASS_PRESETS[1].ml;
+const MEDIUM_GLASSES = GLASS_PRESETS.slice(1, 4);
 // Two rows of two tiles fit beside the bottle.
-const LARGE_GLASSES = GLASS_PRESETS.filter((g) => [150, 250, 350, 500].includes(g.ml));
+const LARGE_GLASSES = GLASS_PRESETS.slice(0, 4);
 
 function WaterTodayWidget({ size, data }: WidgetProps) {
   const { todayMl, goal } = data.water;
@@ -658,17 +660,20 @@ function WaterTodayWidget({ size, data }: WidgetProps) {
         </View>
         <View style={styles.valueWithAction}>
           <Big small>
-            {formatMl(todayMl)}
+            {formatVolume(todayMl)}
             <Unit>
               {' '}
-              / {formatMl(goal)} {ML}
+              / {formatVolume(goal)} {ML}
             </Unit>
           </Big>
           <Pressable
             onPress={() => drink(QUICK_ML)}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel={tr(`Додати ${QUICK_ML} мл`, `Add ${QUICK_ML} ml`)}
+            accessibilityLabel={tr(
+              `Додати ${formatVolume(QUICK_ML)} ${ML}`,
+              `Add ${formatVolume(QUICK_ML)} ${ML}`,
+            )}
             style={({ pressed }) => [styles.addRound, pressed && styles.quickPressed]}>
             <Ionicons name="add" size={20} color={colors.accentText} />
           </Pressable>
@@ -685,10 +690,10 @@ function WaterTodayWidget({ size, data }: WidgetProps) {
           <ProgressRing progress={progress} icon="water" size={56} />
           <View style={styles.flex}>
             <Big>
-              {formatMl(todayMl)}
+              {formatVolume(todayMl)}
               <Unit>
                 {' '}
-                / {formatMl(goal)} {ML}
+                / {formatVolume(goal)} {ML}
               </Unit>
             </Big>
             <Text variant="muted">
@@ -698,7 +703,7 @@ function WaterTodayWidget({ size, data }: WidgetProps) {
         </View>
         <View style={styles.quickRow}>
           {MEDIUM_GLASSES.map((g) => (
-            <QuickButton key={g.ml} label={`${g.ml}`} onPress={() => drink(g.ml)} grow />
+            <QuickButton key={g.ml} label={formatVolume(g.ml)} onPress={() => drink(g.ml)} grow />
           ))}
         </View>
       </Tile>
@@ -713,11 +718,11 @@ function WaterTodayWidget({ size, data }: WidgetProps) {
         <View style={styles.waterSide}>
           <View>
             <Big>
-              {formatMl(todayMl)}
+              {formatVolume(todayMl)}
               <Unit> {ML}</Unit>
             </Big>
             <Text variant="muted">
-              {tr('з', 'of')} {formatMl(goal)} {ML} · {Math.round(progress * 100)}%
+              {tr('з', 'of')} {formatVolume(goal)} {ML} · {Math.round(progress * 100)}%
             </Text>
           </View>
           <View style={styles.glassGrid}>
@@ -767,7 +772,7 @@ function WaterWeekWidget({ size, data }: WidgetProps) {
           <View key={d.dayStart} style={styles.barColumn}>
             {size === 'large' && (
               <Text variant="muted" style={styles.barValue} numberOfLines={1}>
-                {d.totalMl > 0 ? formatMl(d.totalMl) : ''}
+                {d.totalMl > 0 ? formatVolume(d.totalMl) : ''}
               </Text>
             )}
             <View style={[styles.barTrack, { height: chartHeight }]}>
@@ -789,8 +794,8 @@ function WaterWeekWidget({ size, data }: WidgetProps) {
       {size === 'large' && (
         <Text variant="muted">
           {tr(
-            `У середньому ${formatMl(average)} мл на день`,
-            `${formatMl(average)} ml a day on average`,
+            `У середньому ${formatVolume(average)} ${ML} на день`,
+            `${formatVolume(average)} ${ML} a day on average`,
           )}
         </Text>
       )}
@@ -814,11 +819,18 @@ function formatHours(ms: number): Pick<StatValue, 'value' | 'unit'> {
     : { value: formatNumber(min / 60, 1), unit: tr('год', 'h') };
 }
 
-/** Kilograms lifted, in tonnes from a tonne up. */
-const formatTonnage = (kg: number): Pick<StatValue, 'value' | 'unit'> =>
-  kg < 1000
-    ? { value: formatNumber(kg, 0), unit: tr('кг', 'kg') }
+/** Weight lifted, in tonnes from a tonne up (thousands of pounds from 10 000 lb). */
+function formatTonnage(kg: number): Pick<StatValue, 'value' | 'unit'> {
+  if (unitSystem === 'imperial') {
+    const lb = kgToDisplay(kg);
+    return lb < 10_000
+      ? { value: formatNumber(lb, 0), unit: KG }
+      : { value: formatNumber(lb / 1000, 1), unit: tr('тис. фн', 'k lb') };
+  }
+  return kg < 1000
+    ? { value: formatNumber(kg, 0), unit: KG }
     : { value: formatNumber(kg / 1000, 1), unit: tr('т', 't') };
+}
 
 const pluralDays = (n: number) => plural(n, ['день', 'дні', 'днів'], ['day', 'days']);
 
@@ -949,7 +961,7 @@ function statValue(type: StatType, data: DashboardData): StatValue {
     case 'stat-water-today': {
       const pct = water.goal > 0 ? Math.round((water.todayMl / water.goal) * 100) : 0;
       return {
-        value: formatMl(water.todayMl),
+        value: formatVolume(water.todayMl),
         unit: ML,
         label: tr(`${pct}% норми`, `${pct}% of goal`),
         onPress: openWater,
@@ -958,7 +970,7 @@ function statValue(type: StatType, data: DashboardData): StatValue {
     case 'stat-water-average': {
       const avg = averageOfLogged(water.days.map((d) => d.totalMl));
       return {
-        value: avg !== null ? formatMl(avg) : '—',
+        value: avg !== null ? formatVolume(avg) : '—',
         unit: avg !== null ? ML : undefined,
         label: tr('Середнє', 'Average'),
         onPress: openWater,
@@ -1026,7 +1038,7 @@ function WeightWidget({ size, data }: WidgetProps) {
   const value = (
     <View>
       <Big small={size === 'small'}>
-        {formatNumber(latest.weightKg, 1)}
+        {formatWeight(latest.weightKg, 1)}
         <Unit> {KG}</Unit>
       </Big>
       <Text variant="muted" numberOfLines={1}>
@@ -1055,7 +1067,7 @@ function WeightWidget({ size, data }: WidgetProps) {
         <View>
           <View style={styles.valueWithAction}>
             <Big small>
-              {formatNumber(latest.weightKg, 1)}
+              {formatWeight(latest.weightKg, 1)}
               <Unit> {KG}</Unit>
             </Big>
             {delta !== null && (
@@ -1070,7 +1082,7 @@ function WeightWidget({ size, data }: WidgetProps) {
     );
   }
 
-  const ys = recent.map((w) => w.weightKg);
+  const ys = recent.map((w) => kgToDisplay(w.weightKg));
   return (
     <Tile onPress={open}>
       <TileTitle title={tr('Вага тіла', 'Body weight')} icon="scale" />

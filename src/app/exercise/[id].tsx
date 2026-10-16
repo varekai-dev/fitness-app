@@ -33,7 +33,13 @@ import {
   MUSCLE_GROUP_LABELS,
   TRACKING_TYPE_LABELS,
 } from '@/lib/labels';
-import { formatMetric, formatSet, METRIC_INFO } from '@/lib/metrics';
+import {
+  displayMetric,
+  formatDisplayMetric,
+  formatMetric,
+  formatSet,
+  METRIC_INFO,
+} from '@/lib/metrics';
 import { computeProgress } from '@/lib/progress';
 import { colors, spacing } from '@/theme';
 import { exerciseImageSource } from '@/lib/exercise-images';
@@ -152,10 +158,10 @@ export default function ExerciseDetailScreen() {
                 <LineChart
                   points={progress.map((p) => ({
                     x: p.date,
-                    y: p.best,
+                    y: displayMetric(type, p.best),
                     highlight: p.isPR,
                   }))}
-                  formatY={(v) => formatMetric(type, v).split(' ')[0]}
+                  formatY={(v) => formatDisplayMetric(type, v).split(' ')[0]}
                   formatX={formatShortDate}
                 />
               </Card>

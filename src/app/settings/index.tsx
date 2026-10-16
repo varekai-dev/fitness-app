@@ -1,22 +1,11 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Haptics from 'expo-haptics';
-import { Platform } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { AppUpdateCard } from '@/components/app-update';
 import { SettingsLink } from '@/components/settings';
-import { Card, ChipGroup, Row, Screen, Text } from '@/components/ui';
+import { Screen } from '@/components/ui';
 import { healthName } from '@/lib/health';
-import { languagePreference, setLanguage, tr, type LanguagePreference } from '@/lib/i18n';
+import { tr } from '@/lib/i18n';
 import { notificationsSupported } from '@/lib/notifications';
-import { colors } from '@/theme';
-
-const LANGUAGE_OPTIONS = ['system', 'uk', 'en'] as const;
-const LANGUAGE_LABELS: Record<LanguagePreference, string> = {
-  system: tr('Як у системі', 'System'),
-  // Each language is named in itself, so it can be found from either one.
-  uk: 'Українська',
-  en: 'English',
-};
 
 export default function SettingsScreen() {
   return (
@@ -53,22 +42,19 @@ export default function SettingsScreen() {
         hint={Platform.OS === 'web' ? 'Groq AI' : `${healthName}, Groq AI`}
         href="/settings/integrations"
       />
-      <Card>
-        <Row>
-          <Ionicons name="language-outline" size={20} color={colors.accent} />
-          <Text variant="heading">{tr('Мова', 'Language')}</Text>
-        </Row>
-        <ChipGroup
-          options={LANGUAGE_OPTIONS}
-          value={languagePreference}
-          onChange={(value) => {
-            Haptics.selectionAsync();
-            setLanguage(value);
-          }}
-          labels={LANGUAGE_LABELS}
-        />
-      </Card>
+      <SettingsLink
+        icon="options-outline"
+        title={tr('Застосунок', 'App')}
+        hint={tr('Мова, одиниці', 'Language, units')}
+        href="/settings/app"
+      />
+      {/* Fills the rest of the screen so the version sits at the bottom. */}
+      <View style={styles.spacer} />
       {Platform.OS !== 'web' && <AppUpdateCard />}
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  spacer: { flex: 1 },
+});

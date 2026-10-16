@@ -1,7 +1,4 @@
-import { reloadAppAsync } from 'expo';
-import { DevSettings } from 'react-native';
-
-import { sqlite } from '@/db/client';
+import { readSettingSync, reloadApp, writeSettingSync } from '@/lib/app-settings';
 
 export const LANGUAGES = ['uk', 'en'] as const;
 export type Language = (typeof LANGUAGES)[number];
@@ -10,17 +7,9 @@ export type LanguagePreference = Language | 'system';
 
 const KEY = 'language';
 
-/** Read synchronously from the settings table; it doesn't exist yet before the first migration. */
 function readPreference(): LanguagePreference {
-  try {
-    const value = sqlite.getFirstSync<{ value: string }>(
-      'SELECT value FROM settings WHERE key = ?',
-      KEY,
-    )?.value;
-    return value === 'uk' || value === 'en' ? value : 'system';
-  } catch {
-    return 'system';
-  }
+  const value = readSettingSync(KEY);
+  return value === 'uk' || value === 'en' ? value : 'system';
 }
 
 function deviceLanguage(): Language {
@@ -67,16 +56,6 @@ export const plural = (
 
 export async function setLanguage(preference: LanguagePreference) {
   if (preference === languagePreference) return;
-  if (preference === 'system') {
-    sqlite.runSync('DELETE FROM settings WHERE key = ?', KEY);
-  } else {
-    sqlite.runSync(
-      'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value',
-      KEY,
-      preference,
-    );
-  }
-  // reloadAppAsync is a no-op in Expo Go; the dev reload works there and in dev builds.
-  if (__DEV__) DevSettings.reload('Language changed');
-  else await reloadAppAsync();
+  writeSettingSync(KEY, preference === 'system' ? null : preference);
+  await reloadApp('Language changed');
 }

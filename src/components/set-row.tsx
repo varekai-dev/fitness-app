@@ -7,7 +7,15 @@ import { Wheel } from '@/components/wheel';
 import type { TrackingType, WorkoutSet } from '@/db/schema';
 import { tr } from '@/lib/i18n';
 import type { SetValues } from '@/lib/metrics';
-import { formatDuration, formatNumber, parseDecimal, parseDuration } from '@/lib/metrics';
+import {
+  formatDistance,
+  formatDuration,
+  formatNumber,
+  formatWeight,
+  parseDecimal,
+  parseDuration,
+} from '@/lib/metrics';
+import { DISTANCE_UNIT, displayToKg, displayToKm, unitSystem, WEIGHT_UNIT } from '@/lib/units';
 import { colors, radius, spacing } from '@/theme';
 
 export type Inputs = {
@@ -17,20 +25,23 @@ export type Inputs = {
   distance: string;
 };
 
+/** Field text is in the chosen units; the values are stored in kg and km. */
 export const toInputs = (s: SetValues): Inputs => ({
-  weight: s.weightKg === null ? '' : formatNumber(s.weightKg),
+  weight: s.weightKg === null ? '' : formatWeight(s.weightKg),
   reps: s.reps === null ? '' : String(s.reps),
   duration: s.durationSec === null ? '' : formatDuration(s.durationSec),
-  distance: s.distanceKm === null ? '' : formatNumber(s.distanceKm),
+  distance: s.distanceKm === null ? '' : formatDistance(s.distanceKm),
 });
+
+const orNull = <T,>(v: number | null, f: (n: number) => T) => (v === null ? null : f(v));
 
 export const toValues = (i: Inputs): SetValues => {
   const reps = parseDecimal(i.reps);
   return {
-    weightKg: parseDecimal(i.weight),
+    weightKg: orNull(parseDecimal(i.weight), displayToKg),
     reps: reps === null ? null : Math.round(reps),
     durationSec: parseDuration(i.duration),
-    distanceKm: parseDecimal(i.distance),
+    distanceKm: orNull(parseDecimal(i.distance), displayToKm),
   };
 };
 
@@ -39,30 +50,36 @@ const MIN_SEC = tr('хв:с', 'm:s');
 
 export const FIELDS: Record<TrackingType, { key: keyof Inputs; label: string }[]> = {
   weight_reps: [
-    { key: 'weight', label: tr('кг', 'kg') },
+    { key: 'weight', label: WEIGHT_UNIT },
     { key: 'reps', label: REPS },
   ],
   weighted_reps: [
-    { key: 'weight', label: tr('+кг', '+kg') },
+    { key: 'weight', label: `+${WEIGHT_UNIT}` },
     { key: 'reps', label: REPS },
   ],
   reps: [{ key: 'reps', label: REPS }],
   duration: [{ key: 'duration', label: MIN_SEC }],
   distance_duration: [
-    { key: 'distance', label: tr('км', 'km') },
+    { key: 'distance', label: DISTANCE_UNIT },
     { key: 'duration', label: MIN_SEC },
   ],
 };
 
-/** Range and step of the wheel for each field. */
+const imperial = unitSystem === 'imperial';
+
+/** Range and step of the wheel for each field, in the chosen units. */
 export const WHEELS: Record<
   keyof Inputs,
   { min: number; max: number; step: number; format: (v: number) => string }
 > = {
-  weight: { min: 0, max: 300, step: 0.5, format: (v) => formatNumber(v) },
+  weight: imperial
+    ? { min: 0, max: 660, step: 1, format: (v) => formatNumber(v) }
+    : { min: 0, max: 300, step: 0.5, format: (v) => formatNumber(v) },
   reps: { min: 0, max: 100, step: 1, format: (v) => String(v) },
   duration: { min: 0, max: 3600, step: 15, format: (v) => formatDuration(v) },
-  distance: { min: 0, max: 50, step: 0.1, format: (v) => formatNumber(v) },
+  distance: imperial
+    ? { min: 0, max: 30, step: 0.1, format: (v) => formatNumber(v) }
+    : { min: 0, max: 50, step: 0.1, format: (v) => formatNumber(v) },
 };
 
 export const numeric = (key: keyof Inputs, value: string) =>

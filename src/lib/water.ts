@@ -1,34 +1,33 @@
 import type MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { ComponentProps } from 'react';
 
-import { locale, tr } from '@/lib/i18n';
+import { tr } from '@/lib/i18n';
+import { flOz, unitSystem } from '@/lib/units';
 
 export type GlassIconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
 export type GlassPreset = { ml: number; label: string; icon: GlassIconName };
 
+const imperial = unitSystem === 'imperial';
+
+/** Sizes of the cup, glass, mug, bottle and sports bottle: round millilitres or round ounces. */
+const PRESET_ML = imperial ? [6, 8, 12, 16, 24].map(flOz) : [150, 250, 350, 500, 750];
+
 /** Containers offered for logging water, smallest first. */
 export const GLASS_PRESETS: GlassPreset[] = [
-  { ml: 150, label: tr('Чашка', 'Cup'), icon: 'cup-outline' },
-  { ml: 250, label: tr('Склянка', 'Glass'), icon: 'cup-water' },
-  { ml: 350, label: tr('Кухоль', 'Mug'), icon: 'glass-mug-variant' },
-  { ml: 500, label: tr('Пляшка', 'Bottle'), icon: 'bottle-soda-classic-outline' },
-  { ml: 750, label: tr('Спортпляшка', 'Sports bottle'), icon: 'bottle-tonic-outline' },
+  { ml: PRESET_ML[0], label: tr('Чашка', 'Cup'), icon: 'cup-outline' },
+  { ml: PRESET_ML[1], label: tr('Склянка', 'Glass'), icon: 'cup-water' },
+  { ml: PRESET_ML[2], label: tr('Кухоль', 'Mug'), icon: 'glass-mug-variant' },
+  { ml: PRESET_ML[3], label: tr('Пляшка', 'Bottle'), icon: 'bottle-soda-classic-outline' },
+  { ml: PRESET_ML[4], label: tr('Спортпляшка', 'Sports bottle'), icon: 'bottle-tonic-outline' },
 ];
 
 export const DEFAULT_WATER_GOAL_ML = 2500;
-export const WATER_GOAL_STEP_ML = 250;
-export const MIN_WATER_GOAL_ML = 500;
-export const MAX_WATER_GOAL_ML = 6000;
 
-const mlFormatter = new Intl.NumberFormat(locale);
-
-/** "1 800" — grouped like the rest of the UI. */
-export const formatMl = (ml: number) => mlFormatter.format(Math.round(ml));
-
-/** "1,8 л" for compact labels such as chart bars. */
-export const formatLiters = (ml: number) =>
-  `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(ml / 1000)} ${tr('л', 'L')}`;
+/** The goal stepper's grid, in the chosen unit (ml or fl oz). */
+export const WATER_GOAL_STEP = imperial ? 8 : 250;
+export const MIN_WATER_GOAL = imperial ? 16 : 500;
+export const MAX_WATER_GOAL = imperial ? 200 : 6000;
 
 export const glassForAmount = (ml: number) =>
   GLASS_PRESETS.find((g) => g.ml === ml) ?? {

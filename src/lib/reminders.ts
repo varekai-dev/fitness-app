@@ -1,5 +1,6 @@
 import { locale, tr } from '@/lib/i18n';
-import { addDays, formatMl } from '@/lib/water';
+import { formatVolume, VOLUME_UNIT } from '@/lib/units';
+import { addDays } from '@/lib/water';
 
 /** The waking part of the day, in minutes after midnight. Reminders only fire inside it. */
 export type DayWindow = { startMin: number; endMin: number };
@@ -103,12 +104,12 @@ export function planWaterReminders({
           : tr('Час випити води', 'Time to drink some water'),
         body: isEnd
           ? tr(
-              `Бракує ${formatMl(deficit)} мл до цілі ${formatMl(goal)} мл.`,
-              `${formatMl(deficit)} ml short of the ${formatMl(goal)} ml goal.`,
+              `Бракує ${formatVolume(deficit)} ${VOLUME_UNIT} до цілі ${formatVolume(goal)} ${VOLUME_UNIT}.`,
+              `${formatVolume(deficit)} ${VOLUME_UNIT} short of the ${formatVolume(goal)} ${VOLUME_UNIT} goal.`,
             )
           : tr(
-              `До ${formatClock(min)} варто випити ${formatMl(roundUp(expected))} мл — бракує ${formatMl(deficit)} мл.`,
-              `Aim for ${formatMl(roundUp(expected))} ml by ${formatClock(min)}: ${formatMl(deficit)} ml to go.`,
+              `До ${formatClock(min)} варто випити ${formatVolume(roundUp(expected))} ${VOLUME_UNIT} — бракує ${formatVolume(deficit)} ${VOLUME_UNIT}.`,
+              `Aim for ${formatVolume(roundUp(expected))} ${VOLUME_UNIT} by ${formatClock(min)}: ${formatVolume(deficit)} ${VOLUME_UNIT} to go.`,
             ),
       });
       if (reminders.length >= MAX_SCHEDULED) return reminders;

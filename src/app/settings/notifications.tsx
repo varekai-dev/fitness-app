@@ -18,7 +18,8 @@ import {
   planWaterReminders,
   REMINDER_INTERVALS_MIN,
 } from '@/lib/reminders';
-import { addDays, formatMl } from '@/lib/water';
+import { formatVolume, VOLUME_UNIT } from '@/lib/units';
+import { addDays } from '@/lib/water';
 import { colors, spacing } from '@/theme';
 
 const LAST_DAY_MIN = 24 * 60 - DAY_WINDOW_STEP_MIN;
@@ -167,8 +168,8 @@ export default function NotificationsScreen() {
         </Row>
         <Text variant="muted">
           {tr(
-            `Перевіряємо, чи випито стільки, скільки треба на цю годину, щоб дійти до ${formatMl(goal)} мл. Якщо ні — нагадаємо.`,
-            `We check whether you’ve drunk enough by this hour to reach ${formatMl(goal)} ml. If not, we’ll remind you.`,
+            `Перевіряємо, чи випито стільки, скільки треба на цю годину, щоб дійти до ${formatVolume(goal)} ${VOLUME_UNIT}. Якщо ні — нагадаємо.`,
+            `We check whether you’ve drunk enough by this hour to reach ${formatVolume(goal)} ${VOLUME_UNIT}. If not, we’ll remind you.`,
           )}
         </Text>
         {water.enabled && (

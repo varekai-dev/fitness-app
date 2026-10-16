@@ -10,7 +10,7 @@ import { useDbQuery } from '@/hooks/use-db-query';
 import { formatKcal } from '@/lib/food';
 import { tr } from '@/lib/i18n';
 import { formatShortDate } from '@/lib/labels';
-import { formatNumber, parseDecimal } from '@/lib/metrics';
+import { formatNumber, formatWeight, parseDecimal } from '@/lib/metrics';
 import {
   ACTIVITY,
   ACTIVITY_LEVELS,
@@ -26,7 +26,15 @@ import {
   WEIGHT_GOALS,
   type WeightGoal,
 } from '@/lib/profile';
+import { cmToDisplay, displayToCm, HEIGHT_UNIT, WEIGHT_UNIT } from '@/lib/units';
 import { colors, fontSize, radius, spacing } from '@/theme';
+
+const MIN_HEIGHT_CM = 100;
+const MAX_HEIGHT_CM = 250;
+const heightValidCm = (cm: number | null): cm is number =>
+  cm !== null && cm >= MIN_HEIGHT_CM && cm <= MAX_HEIGHT_CM;
+/** Height range in the chosen unit, for the hint below the field. */
+const HEIGHT_RANGE = [MIN_HEIGHT_CM, MAX_HEIGHT_CM].map((cm) => Math.round(cmToDisplay(cm)));
 
 const GOAL_LABELS = Object.fromEntries(
   WEIGHT_GOALS.map((g) => [g, WEIGHT_GOAL[g].label]),
@@ -42,17 +50,21 @@ export default function ProfileScreen() {
   const { profile, latestWeight } = data;
   const weightKg = latestWeight?.weightKg;
 
-  const heightValue = heightInput ?? (profile.heightCm ? formatNumber(profile.heightCm, 1) : '');
-  const parsedHeight = parseDecimal(heightValue);
-  const heightValid = parsedHeight !== null && parsedHeight >= 100 && parsedHeight <= 250;
+  const heightValue =
+    heightInput ?? (profile.heightCm ? formatNumber(cmToDisplay(profile.heightCm), 1) : '');
+  const toCm = (text: string) => {
+    const h = parseDecimal(text);
+    return h === null ? null : displayToCm(h);
+  };
+  const heightValid = heightValidCm(toCm(heightValue));
 
   const birthValue = birthInput ?? (profile.birthDate ? formatBirthDate(profile.birthDate) : '');
   const parsedBirth = parseBirthDate(birthValue);
 
   const changeHeight = (text: string) => {
     setHeightInput(text);
-    const h = parseDecimal(text);
-    if (h !== null && h >= 100 && h <= 250) setProfileField('heightCm', h);
+    const cm = toCm(text);
+    if (heightValidCm(cm)) setProfileField('heightCm', cm);
   };
 
   const changeBirth = (text: string) => {
@@ -83,7 +95,7 @@ export default function ProfileScreen() {
             {latestWeight ? (
               <View style={styles.right}>
                 <Text variant="heading">
-                  {formatNumber(latestWeight.weightKg, 1)} {tr('кг', 'kg')}
+                  {formatWeight(latestWeight.weightKg, 1)} {WEIGHT_UNIT}
                 </Text>
                 <Text variant="muted">{formatShortDate(latestWeight.measuredAt)}</Text>
               </View>
@@ -97,16 +109,19 @@ export default function ProfileScreen() {
 
       <Card>
         <Field
-          label={tr('Зріст, см', 'Height, cm')}
+          label={`${tr('Зріст', 'Height')}, ${HEIGHT_UNIT}`}
           value={heightValue}
           onChangeText={changeHeight}
           keyboardType="decimal-pad"
-          placeholder="175"
+          placeholder={String(Math.round(cmToDisplay(175)))}
           maxLength={5}
         />
         {heightValue !== '' && !heightValid && (
           <Text variant="muted" style={styles.error}>
-            {tr('Вкажи зріст від 100 до 250 см.', 'Enter a height from 100 to 250 cm.')}
+            {tr(
+              `Вкажи зріст від ${HEIGHT_RANGE[0]} до ${HEIGHT_RANGE[1]} ${HEIGHT_UNIT}.`,
+              `Enter a height from ${HEIGHT_RANGE[0]} to ${HEIGHT_RANGE[1]} ${HEIGHT_UNIT}.`,
+            )}
           </Text>
         )}
         <Field

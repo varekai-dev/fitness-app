@@ -1,5 +1,6 @@
 import type { TrackingType, WorkoutSet } from '@/db/schema';
 import { tr } from '@/lib/i18n';
+import { DISTANCE_UNIT, kgToDisplay, kmToDisplay, WEIGHT_UNIT } from '@/lib/units';
 
 export type SetValues = Pick<WorkoutSet, 'weightKg' | 'reps' | 'durationSec' | 'distanceKm'>;
 
@@ -17,8 +18,8 @@ export type MetricInfo = {
   higherIsBetter: boolean;
 };
 
-const KG = tr('кг', 'kg');
-const KM = tr('км', 'km');
+const KG = WEIGHT_UNIT;
+const KM = DISTANCE_UNIT;
 const REPS = tr('повт', 'reps');
 
 export const METRIC_INFO: Record<TrackingType, MetricInfo> = {
@@ -33,7 +34,7 @@ export const METRIC_INFO: Record<TrackingType, MetricInfo> = {
   duration: { label: tr('Макс. час', 'Max time'), unit: tr('с', 's'), higherIsBetter: true },
   distance_duration: {
     label: tr('Найкращий темп', 'Best pace'),
-    unit: tr('хв/км', 'min/km'),
+    unit: `${tr('хв', 'min')}/${DISTANCE_UNIT}`,
     higherIsBetter: false,
   },
 };
@@ -72,7 +73,22 @@ export function bestMetric(type: TrackingType, sets: SetValues[]): number | null
   return best;
 }
 
-export function formatMetric(type: TrackingType, value: number): string {
+/** A metric converted to the chosen units: weight in kg or lb, pace per km or per mile. */
+export function displayMetric(type: TrackingType, value: number): number {
+  switch (type) {
+    case 'weight_reps':
+    case 'weighted_reps':
+      return kgToDisplay(value);
+    case 'distance_duration':
+      // Seconds per km over km per display unit gives seconds per display unit.
+      return value / kmToDisplay(1);
+    default:
+      return value;
+  }
+}
+
+/** Formats a metric already converted with displayMetric, e.g. for chart axes. */
+export function formatDisplayMetric(type: TrackingType, value: number): string {
   switch (type) {
     case 'weight_reps':
     case 'weighted_reps':
@@ -86,10 +102,21 @@ export function formatMetric(type: TrackingType, value: number): string {
   }
 }
 
+export const formatMetric = (type: TrackingType, value: number) =>
+  formatDisplayMetric(type, displayMetric(type, value));
+
 export function formatNumber(value: number, maxFractionDigits = 2): string {
   const factor = 10 ** maxFractionDigits;
   return String(Math.round(value * factor) / factor);
 }
+
+/** Kilograms shown in the chosen unit, without the unit. */
+export const formatWeight = (kg: number, maxFractionDigits = 2) =>
+  formatNumber(kgToDisplay(kg), maxFractionDigits);
+
+/** Kilometres shown in the chosen unit, without the unit. */
+export const formatDistance = (km: number, maxFractionDigits = 2) =>
+  formatNumber(kmToDisplay(km), maxFractionDigits);
 
 export function formatDuration(totalSec: number): string {
   const sec = Math.round(totalSec);
@@ -105,15 +132,15 @@ export function formatDuration(totalSec: number): string {
 export function formatSet(type: TrackingType, s: SetValues): string {
   switch (type) {
     case 'weight_reps':
-      return `${formatNumber(s.weightKg ?? 0)} ${KG} × ${s.reps ?? 0}`;
+      return `${formatWeight(s.weightKg ?? 0)} ${KG} × ${s.reps ?? 0}`;
     case 'weighted_reps':
-      return s.weightKg ? `+${formatNumber(s.weightKg)} ${KG} × ${s.reps ?? 0}` : `${s.reps ?? 0}`;
+      return s.weightKg ? `+${formatWeight(s.weightKg)} ${KG} × ${s.reps ?? 0}` : `${s.reps ?? 0}`;
     case 'reps':
       return `${s.reps ?? 0}`;
     case 'duration':
       return formatDuration(s.durationSec ?? 0);
     case 'distance_duration':
-      return `${formatNumber(s.distanceKm ?? 0)} ${KM} ${tr('за', 'in')} ${formatDuration(s.durationSec ?? 0)}`;
+      return `${formatDistance(s.distanceKm ?? 0)} ${KM} ${tr('за', 'in')} ${formatDuration(s.durationSec ?? 0)}`;
   }
 }
 

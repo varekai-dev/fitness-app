@@ -47,14 +47,15 @@ import { exerciseKcal, formatKcal, workoutKcal } from '@/lib/calories';
 import { tr } from '@/lib/i18n';
 import { formatSetTarget, formatTargets } from '@/lib/labels';
 import {
-  formatNumber,
   formatSet,
+  formatWeight,
   isBetter,
   notStarted,
   setMetric,
   type SetValues,
   workoutDurationMs,
 } from '@/lib/metrics';
+import { WEIGHT_UNIT } from '@/lib/units';
 import { colors, fontSize, radius, spacing } from '@/theme';
 import { exerciseImageSource } from '@/lib/exercise-images';
 
@@ -68,9 +69,9 @@ function formatLastSet(type: TrackingType, s: SetValues) {
   const reps = `${s.reps ?? 0} ${tr('повт.', 'reps')}`;
   switch (type) {
     case 'weight_reps':
-      return `${formatNumber(s.weightKg ?? 0)} ${tr('кг', 'kg')} · ${reps}`;
+      return `${formatWeight(s.weightKg ?? 0)} ${WEIGHT_UNIT} · ${reps}`;
     case 'weighted_reps':
-      return s.weightKg ? `+${formatNumber(s.weightKg)} ${tr('кг', 'kg')} · ${reps}` : reps;
+      return s.weightKg ? `+${formatWeight(s.weightKg)} ${WEIGHT_UNIT} · ${reps}` : reps;
     case 'reps':
       return reps;
     default:
@@ -300,9 +301,10 @@ export function WorkoutPlayer({
   // done here, return to the exercise worked on before (else the one above).
   const lastDoneHere = current.sets
     .filter((s) => s.completedAt !== null)
-    .reduce<
-      (typeof current.sets)[number] | null
-    >((a, s) => (a && a.completedAt! > s.completedAt! ? a : s), null);
+    .reduce<(typeof current.sets)[number] | null>(
+      (a, s) => (a && a.completedAt! > s.completedAt! ? a : s),
+      null,
+    );
   let prevExerciseId: number | null = index > 0 ? exercises[index - 1].id : null;
   let latest = 0;
   for (const e of exercises) {

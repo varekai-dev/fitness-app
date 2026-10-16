@@ -22,7 +22,8 @@ import { useDbQuery } from '@/hooks/use-db-query';
 import { useToday } from '@/hooks/use-today';
 import { locale, tr } from '@/lib/i18n';
 import { WEEKDAY_SHORT, weekdayIndex } from '@/lib/labels';
-import { formatLiters, formatMl, GLASS_PRESETS, glassForAmount } from '@/lib/water';
+import { formatVolume, formatVolumeCompact, VOLUME_UNIT } from '@/lib/units';
+import { GLASS_PRESETS, glassForAmount } from '@/lib/water';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 const timeFormatter = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' });
@@ -60,8 +61,8 @@ export default function WaterScreen() {
       }>
       <Card style={styles.hero} onPress={() => router.push('/settings/water')}>
         <Text style={styles.amount}>
-          {formatMl(todayMl)}
-          <Text style={styles.unit}> {tr('мл', 'ml')}</Text>
+          {formatVolume(todayMl)}
+          <Text style={styles.unit}> {VOLUME_UNIT}</Text>
         </Text>
         <Text variant="muted">
           {todayMl >= goal
@@ -75,7 +76,7 @@ export default function WaterScreen() {
             <Text variant="caption" style={styles.goalLabel}>
               {tr('ЦІЛЬ', 'GOAL')}
             </Text>
-            <Text variant="heading">{formatMl(goal)}</Text>
+            <Text variant="heading">{formatVolume(goal)}</Text>
           </View>
         </Row>
       </Card>
@@ -98,7 +99,7 @@ export default function WaterScreen() {
             return (
               <View key={d.dayStart} style={styles.barColumn}>
                 <Text variant="muted" style={styles.barValue} numberOfLines={1}>
-                  {d.totalMl > 0 ? formatLiters(d.totalMl) : ''}
+                  {d.totalMl > 0 ? formatVolumeCompact(d.totalMl) : ''}
                 </Text>
                 <View style={styles.barTrack}>
                   <View style={[styles.goalLine, { bottom: (goal / chartMax) * CHART_HEIGHT }]} />
@@ -136,7 +137,7 @@ export default function WaterScreen() {
             <SwipeToDelete
               key={e.id}
               onDelete={(close) =>
-                remove(e.id, `${time} · ${formatMl(e.amountMl)} ${tr('мл', 'ml')}`, close)
+                remove(e.id, `${time} · ${formatVolume(e.amountMl)} ${VOLUME_UNIT}`, close)
               }>
               <Card>
                 <Row style={styles.spaceBetween}>
@@ -148,7 +149,7 @@ export default function WaterScreen() {
                   </Row>
                   <Row>
                     <Text variant="heading">
-                      {formatMl(e.amountMl)} {tr('мл', 'ml')}
+                      {formatVolume(e.amountMl)} {VOLUME_UNIT}
                     </Text>
                     <Text variant="muted">{time}</Text>
                   </Row>
