@@ -39,6 +39,18 @@ npm run android         # Expo Go на емуляторі Pixel
 npm run android:build   # dev build на емуляторі Pixel
 ```
 
+## Релізи
+
+Кожен пуш у `main` запускає [release.yml](.github/workflows/release.yml). Якщо нативна частина не змінилась (той самий fingerprint, що й в одного з релізів), JS публікується як OTA-оновлення через EAS Update. Інакше GitHub Actions збирає підписаний APK (без EAS Build) і публікує його як реліз у [fitness-app-releases](https://github.com/varekai-dev/fitness-app-releases). У налаштуваннях застосунок пропонує або встановити OTA-оновлення, або завантажити новий APK.
+
+Локально (потрібні JDK 17+ і Android SDK):
+
+```bash
+npm run build:android   # → dist/fitness-<version>.apk
+```
+
+Ключ підпису береться з `credentials.json` у корені (як його завантажує `eas credentials -p android`) або зі змінних `ANDROID_KEYSTORE_PATH`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`. У CI це секрети репозиторію з тими ж назвами, але сам keystore передається в base64 як `ANDROID_KEYSTORE_BASE64`. Плюс `RELEASES_TOKEN` для публікації в репозиторій релізів і `EXPO_TOKEN` для OTA-оновлень.
+
 ## Міграції БД
 
 Після зміни `src/db/schema.ts`:

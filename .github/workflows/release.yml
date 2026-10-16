@@ -1,6 +1,7 @@
-# On every push to main: if the native fingerprint already has a finished
-# preview build, ship the JS as an EAS Update; otherwise build a new APK on
-# EAS and publish it as a GitHub release in the public releases repo.
+# On every push to main: if a GitHub release already ships this native
+# fingerprint (runtime version), publish the JS as an EAS Update; otherwise
+# build a signed APK right on the runner (no EAS Build) and publish it as a
+# GitHub release in the public releases repo.
 name: Release
 
 on:
@@ -9,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       force_build:
-        description: Build a new APK even if the fingerprint has a build
+        description: Build a new APK even if a release has this fingerprint
         type: boolean
         default: false
 
@@ -18,9 +19,9 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-  PROFILE: preview
+  CHANNEL: preview
   RELEASES_REPO: ${{ vars.RELEASES_REPO || 'varekai-dev/fitness-app-releases' }}
+  GH_TOKEN: ${{ secrets.RELEASES_TOKEN }}
 
 jobs:
   release:
@@ -36,56 +37,65 @@ jobs:
 
       - run: npm ci
 
-      - name: Compute fingerprint
-        id: fingerprint
+      - name: Resolve runtime version
+        id: runtime
         run: |
-          npx eas-cli@latest fingerprint:generate --platform android --build-profile "$PROFILE" --json > fingerprint.json
-          hash=$(jq -r '.hash' fingerprint.json)
-          echo "Fingerprint: $hash"
+          hash=$(npx expo-updates runtimeversion:resolve --platform android | tail -1 | jq -r '.runtimeVersion')
+          echo "Runtime version: $hash"
           echo "hash=$hash" >> "$GITHUB_OUTPUT"
+          echo "version=$(jq -r '.expo.version' app.json)" >> "$GITHUB_OUTPUT"
 
-      - name: Find a build with this fingerprint
+      # Every release lists its runtime version in the notes.
+      - name: Find a release with this runtime version
         id: existing
         env:
-          HASH: ${{ steps.fingerprint.outputs.hash }}
+          HASH: ${{ steps.runtime.outputs.hash }}
         run: |
-          npx eas-cli@latest build:list --platform android --build-profile "$PROFILE" \
-            --status finished --fingerprint-hash "$HASH" --limit 1 --json > builds.json
-          id=$(jq -r '.[0].id // empty' builds.json)
-          echo "Existing build: ${id:-none}"
-          echo "build_id=$id" >> "$GITHUB_OUTPUT"
+          tag=$(gh api "repos/$RELEASES_REPO/releases" --paginate \
+            --jq ".[] | select(.body | contains(\"runtimeVersion: $HASH\")) | .tag_name" | head -1)
+          echo "Existing release: ${tag:-none}"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
       - name: Publish OTA update
-        if: steps.existing.outputs.build_id != '' && !inputs.force_build
+        if: steps.existing.outputs.tag != '' && !inputs.force_build
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          npx eas-cli@latest update --channel "$PROFILE" --environment "$PROFILE" \
+          npx eas-cli@latest update --channel "$CHANNEL" --environment "$CHANNEL" \
             --platform android --message "$(git log -1 --pretty=%s)" --non-interactive
 
+      - uses: actions/setup-java@v4
+        if: steps.existing.outputs.tag == '' || inputs.force_build
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+        if: steps.existing.outputs.tag == '' || inputs.force_build
+
       - name: Build APK
-        id: build
-        if: steps.existing.outputs.build_id == '' || inputs.force_build
+        if: steps.existing.outputs.tag == '' || inputs.force_build
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          npx eas-cli@latest build --platform android --profile "$PROFILE" \
-            --message "$(git log -1 --pretty=%s)" --wait --json --non-interactive > build.json
-          jq -r '.[0] | "Build \(.id): \(.appVersion) (\(.appBuildVersion))"' build.json
-          echo "url=$(jq -r '.[0].artifacts.buildUrl' build.json)" >> "$GITHUB_OUTPUT"
-          echo "tag=v$(jq -r '.[0] | "\(.appVersion)-\(.appBuildVersion)"' build.json)" >> "$GITHUB_OUTPUT"
-          echo "version=$(jq -r '.[0].appVersion' build.json)" >> "$GITHUB_OUTPUT"
+          export ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/release.jks"
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$ANDROID_KEYSTORE_PATH"
+          npm run build:android
 
       - name: Publish GitHub release
-        if: steps.build.outcome == 'success'
+        if: steps.existing.outputs.tag == '' || inputs.force_build
         env:
-          GH_TOKEN: ${{ secrets.RELEASES_TOKEN }}
-          URL: ${{ steps.build.outputs.url }}
-          TAG: ${{ steps.build.outputs.tag }}
-          VERSION: ${{ steps.build.outputs.version }}
-          HASH: ${{ steps.fingerprint.outputs.hash }}
+          VERSION: ${{ steps.runtime.outputs.version }}
+          HASH: ${{ steps.runtime.outputs.hash }}
         run: |
-          curl -fsSL -o fitness.apk "$URL"
+          cp "dist/fitness-$VERSION.apk" fitness.apk
           {
             git log -1 --pretty=%B | grep -v '^Co-Authored-By:'
             echo
             echo "runtimeVersion: $HASH"
           } > notes.md
-          gh release create "$TAG" fitness.apk --repo "$RELEASES_REPO" \
+          gh release create "v$VERSION" fitness.apk --repo "$RELEASES_REPO" \
             --title "Fitness $VERSION" --notes-file notes.md --latest

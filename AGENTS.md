@@ -29,21 +29,22 @@ Run lint and typecheck before declaring any task done.
 - Import `Link`, `router`, and `useLocalSearchParams` from `expo-router`.
 - Docs: https://docs.expo.dev/router/introduction.md
 
-## Building with EAS
+## Building and releasing
 
-Use EAS to build, sign, and submit the app in the cloud (`eas build`, `eas submit`) and to ship over-the-air updates (`eas update`) — no local Xcode or Android Studio required. Run EAS CLI as `bunx eas-cli <command>` in Bun projects, or `npx eas-cli@latest <command>` otherwise; substitute that for bare `eas` in docs examples.
-Docs: https://docs.expo.dev/eas/index.md
+No EAS Build (the free build quota runs out). Release APKs are built with `expo prebuild` + Gradle by `npm run build:android` (`scripts/build-android.js`, output in `dist/`). On every push to `main`, `.github/workflows/release.yml` resolves the runtime version (the native fingerprint, see `fingerprint.config.js`): if a GitHub release in `varekai-dev/fitness-app-releases` already lists it in its notes, the JS ships as an EAS Update on the `preview` channel (set for local builds via `updates.requestHeaders` in `app.json`); otherwise it builds an APK on the runner and publishes a new release. The app's update card (`src/components/app-update.tsx`) offers the OTA update first, then a newer APK from that repo's latest release.
+
+The APK must be signed with the same key as the installed app, or Android refuses to install it over the old one. The key comes from `credentials.json` (downloaded with `eas credentials -p android`, gitignored) or the `ANDROID_KEYSTORE_PATH` / `ANDROID_KEYSTORE_PASSWORD` / `ANDROID_KEY_ALIAS` / `ANDROID_KEY_PASSWORD` env vars; in CI from repository secrets (keystore as `ANDROID_KEYSTORE_BASE64`).
 
 ## Rules
 
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
-- Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
+- Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
 
 ## Versioning
 
-- Before every commit, bump `expo.version` in `app.json` (semver): patch (`1.0.0` → `1.0.1`) for fixes and small changes, minor (`1.0.1` → `1.1.0`) for new features. Include the bump in the same commit.
-- Do not edit `android.versionCode`: EAS manages it remotely (`appVersionSource: "remote"` + `autoIncrement` in `eas.json`) and increments it on every build.
+- Before every commit, bump `expo.version` in `app.json` (semver): patch (`1.0.0` → `1.0.1`) for fixes and small changes, minor (`1.0.1` → `1.1.0`) for new features. Include the bump in the same commit. Each new version pushed to `main` becomes a release.
+- Do not set `android.versionCode`: `app.config.js` derives it from `expo.version` (1.34.2 → 1034002).
 
 ## iOS Simulator
 

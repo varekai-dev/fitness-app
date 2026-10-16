@@ -1,15 +1,12 @@
 {
-  "cli": {
-    "appVersionSource": "remote"
-  },
+  "cli": {},
   "build": {
     "preview": {
       "channel": "preview",
       "distribution": "internal",
       "android": {
         "buildType": "apk"
-      },
-      "autoIncrement": true
+      }
     }
   }
 }

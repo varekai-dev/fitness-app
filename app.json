@@ -2,13 +2,16 @@
   "expo": {
     "name": "Fitness",
     "slug": "fitness",
-    "version": "1.33.0",
+    "version": "1.34.0",
     "runtimeVersion": {
       "policy": "fingerprint"
     },
     "updates": {
       "url": "https://u.expo.dev/89e0616b-90d4-4c0c-926c-ce52eeda2bd6",
-      "checkAutomatically": "NEVER"
+      "checkAutomatically": "NEVER",
+      "requestHeaders": {
+        "expo-channel-name": "preview"
+      }
     },
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -20,7 +23,6 @@
     },
     "android": {
       "package": "com.serhijsav.fitness",
-      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#EAF46B",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

@@ -60,6 +60,7 @@
     "start": "expo start",
     "android": "node scripts/android-pixel.js",
     "android:build": "node scripts/android-pixel.js build",
+    "build:android": "node scripts/build-android.js",
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
