@@ -1021,7 +1021,7 @@ function StatWidget({ type, data }: { type: StatType; data: DashboardData }) {
 function WeightWidget({ size, data }: WidgetProps) {
   const { bodyWeights } = data;
   const latest = bodyWeights.at(-1);
-  const prev = bodyWeights.at(-2);
+  const first = bodyWeights[0];
   const open = () => router.push('/body-weight');
 
   if (!latest) {
@@ -1033,7 +1033,8 @@ function WeightWidget({ size, data }: WidgetProps) {
     );
   }
 
-  const delta = prev ? latest.weightKg - prev.weightKg : null;
+  // Change since the first weigh-in.
+  const delta = bodyWeights.length > 1 ? latest.weightKg - first.weightKg : null;
   const recent = bodyWeights.slice(-30);
   const value = (
     <View>
