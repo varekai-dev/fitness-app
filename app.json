@@ -2,7 +2,14 @@
   "expo": {
     "name": "Fitness",
     "slug": "fitness",
-    "version": "1.28.1",
+    "version": "1.29.0",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/89e0616b-90d4-4c0c-926c-ce52eeda2bd6",
+      "checkAutomatically": "NEVER"
+    },
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "fitness",

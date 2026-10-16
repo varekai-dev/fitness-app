@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 
+import { AppUpdateCard } from '@/components/app-update';
 import { SettingsLink } from '@/components/settings';
 import { Screen } from '@/components/ui';
 import { healthName } from '@/lib/health';
@@ -30,6 +31,7 @@ export default function SettingsScreen() {
         hint={Platform.OS === 'web' ? 'Groq AI' : `${healthName}, Groq AI`}
         href="/settings/integrations"
       />
+      {Platform.OS !== 'web' && <AppUpdateCard />}
     </Screen>
   );
 }
