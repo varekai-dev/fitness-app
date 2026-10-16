@@ -1,5 +1,8 @@
+import { Platform } from 'react-native';
+
 import { SettingsLink } from '@/components/settings';
 import { Screen } from '@/components/ui';
+import { healthName } from '@/lib/health';
 import { notificationsSupported } from '@/lib/notifications';
 
 export default function SettingsScreen() {
@@ -22,9 +25,9 @@ export default function SettingsScreen() {
         />
       )}
       <SettingsLink
-        icon="key-outline"
+        icon="link-outline"
         title="Інтеграції"
-        hint="Groq AI"
+        hint={Platform.OS === 'web' ? 'Groq AI' : `${healthName}, Groq AI`}
         href="/settings/integrations"
       />
     </Screen>

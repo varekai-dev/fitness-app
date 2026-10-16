@@ -2,7 +2,7 @@
   "expo": {
     "name": "Fitness",
     "slug": "fitness",
-    "version": "1.26.0",
+    "version": "1.27.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "fitness",
@@ -24,6 +24,9 @@
       "permissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.health.READ_WEIGHT",
+        "android.permission.health.READ_EXERCISE",
+        "android.permission.health.READ_DISTANCE",
+        "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
         "android.permission.health.READ_HEALTH_DATA_HISTORY"
       ]
     },
@@ -73,6 +76,14 @@
         {
           "icon": "./assets/images/notification-icon.png",
           "color": "#EAF46B"
+        }
+      ],
+      [
+        "@kingstinct/react-native-healthkit",
+        {
+          "NSHealthShareUsageDescription": "Fitness читає вагу та тренування, щоб показувати їх у журналі ваги та історії тренувань.",
+          "NSHealthUpdateUsageDescription": false,
+          "background": false
         }
       ]
     ],

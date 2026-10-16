@@ -156,6 +156,45 @@ export const bodyWeights = sqliteTable(
   (t) => [index('body_weights_measured_idx').on(t.measuredAt)],
 );
 
+export const ACTIVITY_SOURCES = ['apple_health', 'health_connect'] as const;
+export type ActivitySource = (typeof ACTIVITY_SOURCES)[number];
+
+export const ACTIVITY_KINDS = [
+  'walking',
+  'running',
+  'cycling',
+  'hiking',
+  'swimming',
+  'strength',
+  'hiit',
+  'yoga',
+  'other',
+] as const;
+export type ActivityKind = (typeof ACTIVITY_KINDS)[number];
+
+/**
+ * Walks, runs and other sessions imported from Apple Health or Health Connect.
+ * Shown in the workout history next to workouts recorded in the app.
+ */
+export const activities = sqliteTable(
+  'activities',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    source: text('source', { enum: ACTIVITY_SOURCES }).notNull(),
+    // The record's id in the source app, so syncing again updates instead of duplicating.
+    externalId: text('external_id').notNull().unique(),
+    kind: text('kind', { enum: ACTIVITY_KINDS }).notNull(),
+    title: text('title'),
+    startedAt: integer('started_at').notNull(),
+    finishedAt: integer('finished_at').notNull(),
+    distanceKm: real('distance_km'),
+    kcal: real('kcal'),
+    // Removed from the history by the user; kept so the next sync doesn't bring it back.
+    hiddenAt: integer('hidden_at'),
+  },
+  (t) => [index('activities_started_idx').on(t.startedAt)],
+);
+
 /** Water log: one row per glass, summed per local day. */
 export const waterIntakes = sqliteTable(
   'water_intakes',
@@ -272,6 +311,7 @@ export type Workout = typeof workouts.$inferSelect;
 export type WorkoutExercise = typeof workoutExercises.$inferSelect;
 export type WorkoutSet = typeof workoutSets.$inferSelect;
 export type BodyWeight = typeof bodyWeights.$inferSelect;
+export type Activity = typeof activities.$inferSelect;
 export type WaterIntake = typeof waterIntakes.$inferSelect;
 export type Food = typeof foods.$inferSelect;
 export type FoodEntry = typeof foodEntries.$inferSelect;

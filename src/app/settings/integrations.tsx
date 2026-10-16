@@ -2,9 +2,10 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 import { useDialog } from '@/components/dialog';
+import { HealthCard } from '@/components/health-card';
 import { Button, Card, Field, Row, Screen, Text } from '@/components/ui';
 import {
   checkGroqKey,
@@ -78,6 +79,13 @@ export default function IntegrationsScreen() {
 
   return (
     <Screen title="Інтеграції">
+      {Platform.OS !== 'web' && (
+        <>
+          <Text variant="overline">Здоров’я</Text>
+          <HealthCard />
+        </>
+      )}
+
       <Text variant="overline">Groq AI</Text>
       <Card>
         <Row>

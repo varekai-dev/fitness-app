@@ -64,6 +64,13 @@
       "when": 1792145759349,
       "tag": "0008_food_meal",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1792150957189,
+      "tag": "0009_health_activities",
+      "breakpoints": true
     }
   ]
 }

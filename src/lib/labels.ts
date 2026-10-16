@@ -1,4 +1,4 @@
-import type { MuscleGroup, Targets, TrackingType } from '@/db/schema';
+import type { ActivityKind, MuscleGroup, Targets, TrackingType } from '@/db/schema';
 
 import { formatDuration, formatNumber } from './metrics';
 
@@ -21,7 +21,19 @@ export const TRACKING_TYPE_LABELS: Record<TrackingType, string> = {
   distance_duration: 'Дистанція + час',
 };
 
-const dateFormatter = new Intl.DateTimeFormat('uk-UA', {
+export const ACTIVITY_KIND_LABELS: Record<ActivityKind, string> = {
+  walking: 'Прогулянка',
+  running: 'Біг',
+  cycling: 'Велосипед',
+  hiking: 'Похід',
+  swimming: 'Плавання',
+  strength: 'Силове тренування',
+  hiit: 'Інтервальне тренування',
+  yoga: 'Йога та розтяжка',
+  other: 'Тренування',
+};
+
+const dateFormatter =new Intl.DateTimeFormat('uk-UA', {
   day: 'numeric',
   month: 'short',
   year: 'numeric',

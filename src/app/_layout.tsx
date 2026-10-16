@@ -9,7 +9,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Text } from '@/components/ui';
 import { db } from '@/db/client';
 import { runContentSeeds, seedIfEmpty } from '@/db/seed';
-import { useHealthConnectAutoSync } from '@/hooks/use-health-connect-auto-sync';
+import { useHealthAutoSync } from '@/hooks/use-health-auto-sync';
 import { useNotifications } from '@/hooks/use-notifications';
 import { colors } from '@/theme';
 import migrations from '../../drizzle/migrations';
@@ -43,7 +43,7 @@ export default function RootLayout() {
       .catch(setSeedError);
   }, [success]);
 
-  useHealthConnectAutoSync(ready);
+  useHealthAutoSync(ready);
   useNotifications(ready);
 
   const error = migrationError ?? seedError;
