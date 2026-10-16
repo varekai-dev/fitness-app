@@ -1,4 +1,4 @@
-import { and, count, eq, inArray, isNull, or } from 'drizzle-orm';
+import { and, count, eq, inArray, isNull, like, or } from 'drizzle-orm';
 
 import { bundledImageUri, DEFAULT_EXERCISE_IMAGES } from '@/lib/exercise-images';
 import {
@@ -317,6 +317,7 @@ function findOrCreateExercise(
       muscleGroup,
       trackingType,
       youtubeUrl: defaultYoutubeUrl(name),
+      imageUri: name in DEFAULT_EXERCISE_IMAGES ? bundledImageUri(DEFAULT_EXERCISE_IMAGES[name]) : null,
       builtIn: true,
     })
     .returning({ id: exercises.id })
@@ -359,13 +360,21 @@ function insertProgram(seed: ProgramSeed) {
   });
 }
 
-/** Bundled photos for library exercises that don't have one yet; user photos are kept. */
+/**
+ * Bundled photos for library exercises. Fills empty ones and swaps out older
+ * bundled photos; photos the user picked themselves are kept.
+ */
 function addDefaultImages() {
   db.transaction((tx) => {
     for (const [name, key] of Object.entries(DEFAULT_EXERCISE_IMAGES)) {
       tx.update(exercises)
         .set({ imageUri: bundledImageUri(key) })
-        .where(and(eq(exercises.name, name), isNull(exercises.imageUri)))
+        .where(
+          and(
+            eq(exercises.name, name),
+            or(isNull(exercises.imageUri), like(exercises.imageUri, bundledImageUri('%'))),
+          ),
+        )
         .run();
     }
   });
@@ -446,5 +455,10 @@ export function runContentSeeds() {
   if (version < 6) {
     markBuiltIn();
     sqlite.execSync('PRAGMA user_version = 6');
+  }
+  if (version < 7) {
+    // Photos for exercises the programs added, dumbbells instead of barbells.
+    addDefaultImages();
+    sqlite.execSync('PRAGMA user_version = 7');
   }
 }
