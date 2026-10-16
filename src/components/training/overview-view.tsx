@@ -22,6 +22,7 @@ import { listBodyWeights } from '@/db/body-weight';
 import { getActiveProgram, getNextDayId } from '@/db/programs';
 import { getActiveWorkout, listFinishedWorkouts, startWorkout } from '@/db/workouts';
 import { useDbQuery } from '@/hooks/use-db-query';
+import { useToday } from '@/hooks/use-today';
 import { estimateKcal } from '@/lib/calories';
 import { startOfWeek } from '@/lib/labels';
 import { notStarted } from '@/lib/metrics';
@@ -50,7 +51,8 @@ export function OverviewView({
   /** Switches the Training tab to another section. */
   onSection: (section: 'programs' | 'history') => void;
 }) {
-  const { data } = useDbQuery(loadOverview);
+  const today = useToday();
+  const { data } = useDbQuery(loadOverview, [today]);
   const [pickedDayId, setPickedDayId] = useState<number | null>(null);
   const [starting, setStarting] = useState(false);
   const dialog = useDialog();

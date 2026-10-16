@@ -9,14 +9,16 @@ import { listBodyWeights } from '@/db/body-weight';
 import { deleteWorkout, listFinishedWorkouts } from '@/db/workouts';
 import { estimateKcal } from '@/lib/calories';
 import { useDbQuery } from '@/hooks/use-db-query';
+import { useToday } from '@/hooks/use-today';
 import { spacing } from '@/theme';
 
 /** The History section of the Training tab: activity calendar and finished workouts. */
 export function HistoryView({ bottomSpace }: { bottomSpace: number }) {
+  const today = useToday();
   const { data } = useDbQuery(async () => {
     const [workouts, weights] = await Promise.all([listFinishedWorkouts(), listBodyWeights()]);
     return { workouts, weights, loadedAt: Date.now() };
-  });
+  }, [today]);
   const dialog = useDialog();
   if (!data) return <Loading />;
 

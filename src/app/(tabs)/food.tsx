@@ -31,6 +31,7 @@ import {
 } from '@/db/food';
 import type { Food } from '@/db/schema';
 import { useDbQuery } from '@/hooks/use-db-query';
+import { useToday } from '@/hooks/use-today';
 import {
   amountUnit,
   formatGrams,
@@ -71,7 +72,8 @@ function parseAmount(text: string) {
 
 export default function FoodScreen() {
   const tabBarSpace = useTabBarSpace();
-  const { data } = useDbQuery(() => loadFood());
+  const day = useToday();
+  const { data } = useDbQuery(() => loadFood(), [day]);
   const [input, setInput] = useState('');
   const { data: suggestions } = useDbQuery(() => searchFoods(input), [input]);
   const [looking, setLooking] = useState(false);

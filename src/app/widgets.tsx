@@ -7,6 +7,7 @@ import { TILE_GAP, tileWidth, WidgetView } from '@/components/dashboard/widgets'
 import { Button, Card, ChipGroup, goBack, Loading, Row, Screen, Text } from '@/components/ui';
 import { addWidget, getDashboard, loadDashboardData } from '@/db/dashboard';
 import { useDbQuery } from '@/hooks/use-db-query';
+import { useToday } from '@/hooks/use-today';
 import {
   isFixedSize,
   STAT_INFO,
@@ -26,7 +27,8 @@ const PREVIEW_INSET = spacing.lg * 2 + spacing.md * 2;
 export default function WidgetsScreen() {
   const { width } = useWindowDimensions();
   const rowWidth = width - spacing.lg * 2 - PREVIEW_INSET;
-  const { data } = useDbQuery(loadDashboardData);
+  const today = useToday();
+  const { data } = useDbQuery(loadDashboardData, [today]);
   const { data: widgets } = useDbQuery(getDashboard);
   const [sizes, setSizes] = useState<Partial<Record<WidgetType, WidgetSize>>>({});
 

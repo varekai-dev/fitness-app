@@ -19,6 +19,7 @@ import { WaterBottle } from '@/components/water-bottle';
 import { drinkWater, GlassButton } from '@/components/water-card';
 import { deleteWater, loadWater } from '@/db/water';
 import { useDbQuery } from '@/hooks/use-db-query';
+import { useToday } from '@/hooks/use-today';
 import { WEEKDAY_SHORT, weekdayIndex } from '@/lib/labels';
 import { formatLiters, formatMl, GLASS_PRESETS, glassForAmount } from '@/lib/water';
 import { colors, fontSize, radius, spacing } from '@/theme';
@@ -28,7 +29,8 @@ const CHART_HEIGHT = 120;
 
 export default function WaterScreen() {
   const tabBarSpace = useTabBarSpace();
-  const { data } = useDbQuery(() => loadWater());
+  const day = useToday();
+  const { data } = useDbQuery(() => loadWater(), [day]);
   const dialog = useDialog();
 
   if (!data) return <Loading />;
