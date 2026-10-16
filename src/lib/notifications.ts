@@ -1,5 +1,5 @@
 import type * as NotificationsModule from 'expo-notifications';
-import { Platform } from 'react-native';
+import { LogBox, Platform } from 'react-native';
 
 import { getDayWindow, getWaterReminders } from '@/db/reminders';
 import { loadWater } from '@/db/water';
@@ -13,6 +13,9 @@ import { planWaterReminders } from '@/lib/reminders';
  */
 function load(): typeof NotificationsModule | null {
   if (Platform.OS === 'web') return null;
+  // Expo Go on Android warns on import that push notifications are missing;
+  // the app only schedules local ones, which still work there.
+  LogBox.ignoreLogs(['[expo-notifications] Push notifications (remote notifications)']);
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     return require('expo-notifications');
