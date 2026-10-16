@@ -543,7 +543,7 @@ function FoodCaloriesWidget({ size, data }: WidgetProps) {
 const timeFormatter = new Intl.DateTimeFormat('uk-UA', { hour: '2-digit', minute: '2-digit' });
 
 function FoodMealsWidget({ size, data }: WidgetProps) {
-  const entries = [...data.food.todayEntries].reverse();
+  const entries = [...data.food.dayEntries].reverse();
   const open = () => router.navigate('/food');
   const limit = size === 'large' ? 7 : 3;
 

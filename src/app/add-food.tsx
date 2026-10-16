@@ -24,6 +24,7 @@ import { amountUnit, formatGrams, formatKcal, normalizeDish, scaleNutrition } fr
 import { GroqError } from '@/lib/groq';
 import { MEAL_LABELS, MEALS, mealAt, type Meal } from '@/lib/meals';
 import { parseDecimal } from '@/lib/metrics';
+import { addDays, startOfDay } from '@/lib/water';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 // Drinks come in bigger round volumes, so they step faster.
@@ -49,8 +50,16 @@ function parseAmount(text: string) {
   return a !== null && a > 0 && a <= MAX_AMOUNT ? a : null;
 }
 
+/** Now, or the same time of day on `day` (its local midnight) when logging a past day. */
+function eatenAt(day?: string) {
+  const now = Date.now();
+  const start = Number(day);
+  if (!day || !Number.isFinite(start)) return now;
+  return Math.min(start + (now - startOfDay(now)), addDays(start, 1) - 1, now);
+}
+
 export default function AddFoodScreen() {
-  const params = useLocalSearchParams<{ meal?: string }>();
+  const params = useLocalSearchParams<{ meal?: string; day?: string }>();
   // Opened without a meal (e.g. a deep link): pick it by the time of day.
   const [meal] = useState<Meal>(() => MEALS.find((m) => m === params.meal) ?? mealAt(Date.now()));
   const { data } = useDbQuery(() => loadFood());
@@ -95,7 +104,7 @@ export default function AddFoodScreen() {
   const add = async () => {
     const amount = pending && parseAmount(pending.amount);
     if (!pending || !amount) return;
-    await logFood(pending.food, amount, meal, pending.isDrink);
+    await logFood(pending.food, amount, meal, pending.isDrink, eatenAt(params.day));
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     goBack();
   };

@@ -94,14 +94,18 @@ export async function deleteFoodEntry(id: number) {
   await db.delete(foodEntries).where(eq(foodEntries.id, id));
 }
 
-/** Today's meals (oldest first), totals, the goal and per-day kcal for the last week. */
-export async function loadFood(now = Date.now()) {
+/**
+ * Meals of `day` (oldest first, today by default), their totals, the goal and
+ * per-day kcal for the week up to today.
+ */
+export async function loadFood(now = Date.now(), day = startOfDay(now)) {
   const today = startOfDay(now);
   const from = addDays(today, -(FOOD_HISTORY_DAYS - 1));
+  const dayEnd = addDays(day, 1);
   const [goal, rows, recent] = await Promise.all([
     getKcalGoal(),
     db.query.foodEntries.findMany({
-      where: gte(foodEntries.eatenAt, from),
+      where: gte(foodEntries.eatenAt, Math.min(from, day)),
       orderBy: [asc(foodEntries.eatenAt)],
     }),
     db.query.foods.findMany({ orderBy: [desc(foods.lastUsedAt)], limit: 12 }),
@@ -111,9 +115,9 @@ export async function loadFood(now = Date.now()) {
     kcal: 0,
   }));
   for (const r of rows) {
-    const day = days.findLast((d) => r.eatenAt >= d.dayStart);
-    if (day) day.kcal += r.kcal;
+    const d = days.findLast((x) => r.eatenAt >= x.dayStart);
+    if (d) d.kcal += r.kcal;
   }
-  const todayEntries = rows.filter((r) => r.eatenAt >= today);
-  return { goal, todayEntries, totals: sumMacros(todayEntries), days, today, recent };
+  const dayEntries = rows.filter((r) => r.eatenAt >= day && r.eatenAt < dayEnd);
+  return { goal, dayEntries, totals: sumMacros(dayEntries), days, today, recent };
 }

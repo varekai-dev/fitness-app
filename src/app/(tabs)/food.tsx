@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useDialog } from '@/components/dialog';
 import { useTabBarSpace } from '@/components/floating-tab-bar';
@@ -11,8 +12,9 @@ import { deleteFoodEntry, loadFood } from '@/db/food';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { useToday } from '@/hooks/use-today';
 import { formatGrams, formatKcal } from '@/lib/food';
-import { WEEKDAY_SHORT, weekdayIndex } from '@/lib/labels';
+import { formatLongDate, WEEKDAY_SHORT, weekdayIndex } from '@/lib/labels';
 import { MEAL_ICONS, MEAL_LABELS, MEALS, mealOf } from '@/lib/meals';
+import { addDays } from '@/lib/water';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 const timeFormatter = new Intl.DateTimeFormat('uk-UA', { hour: '2-digit', minute: '2-digit' });
@@ -20,12 +22,15 @@ const CHART_HEIGHT = 100;
 
 export default function FoodScreen() {
   const tabBarSpace = useTabBarSpace();
-  const day = useToday();
-  const { data } = useDbQuery(() => loadFood(), [day]);
+  const today = useToday();
+  // Counted back from today, so the selection follows the day rolling over.
+  const [daysAgo, setDaysAgo] = useState(0);
+  const day = addDays(today, -daysAgo);
+  const { data } = useDbQuery(() => loadFood(Date.now(), day), [day]);
   const dialog = useDialog();
 
   if (!data) return <Loading />;
-  const { goal, todayEntries, totals, days, today } = data;
+  const { goal, dayEntries, totals, days } = data;
   const left = goal - totals.kcal;
 
   const remove = (id: number, label: string, close: () => void) =>
@@ -70,8 +75,21 @@ export default function FoodScreen() {
         <MacroRow macros={totals} />
       </Card>
 
+      <Row style={styles.dayNav}>
+        <CircleButton icon="chevron-back" size={36} onPress={() => setDaysAgo(daysAgo + 1)} />
+        <View style={styles.dayTitle}>
+          <Text variant="heading">{daysAgo === 0 ? 'Сьогодні' : formatLongDate(day)}</Text>
+        </View>
+        <CircleButton
+          icon="chevron-forward"
+          size={36}
+          disabled={daysAgo === 0}
+          onPress={() => setDaysAgo(daysAgo - 1)}
+        />
+      </Row>
+
       {MEALS.map((meal) => {
-        const entries = todayEntries.filter((e) => mealOf(e) === meal);
+        const entries = dayEntries.filter((e) => mealOf(e) === meal);
         const kcal = entries.reduce((sum, e) => sum + e.kcal, 0);
         return (
           <Card key={meal} style={styles.meal}>
@@ -90,7 +108,7 @@ export default function FoodScreen() {
                 icon="add"
                 variant="primary"
                 small
-                onPress={() => router.push({ pathname: '/add-food', params: { meal } })}
+                onPress={() => router.push({ pathname: '/add-food', params: { meal, day: String(day) } })}
               />
             </Row>
             {entries.map((e) => {
@@ -128,7 +146,10 @@ export default function FoodScreen() {
         <Text variant="caption">Останні 7 днів</Text>
         <View style={styles.chart}>
           {days.map((d) => (
-            <View key={d.dayStart} style={styles.barColumn}>
+            <Pressable
+              key={d.dayStart}
+              style={styles.barColumn}
+              onPress={() => setDaysAgo(Math.round((today - d.dayStart) / 86_400_000))}>
               <Text variant="muted" style={styles.barValue} numberOfLines={1}>
                 {d.kcal > 0 ? formatKcal(d.kcal) : ''}
               </Text>
@@ -142,10 +163,10 @@ export default function FoodScreen() {
                   ]}
                 />
               </View>
-              <Text variant="caption" style={d.dayStart === today && styles.today}>
+              <Text variant="caption" style={d.dayStart === day && styles.today}>
                 {WEEKDAY_SHORT[weekdayIndex(d.dayStart)]}
               </Text>
-            </View>
+            </Pressable>
           ))}
         </View>
       </Card>
@@ -170,6 +191,8 @@ const styles = StyleSheet.create({
   },
   fill: { height: '100%', borderRadius: radius.pill, backgroundColor: colors.accent },
   fillOver: { backgroundColor: colors.warning },
+  dayNav: { gap: spacing.md, justifyContent: 'space-between' },
+  dayTitle: { flex: 1, alignItems: 'center' },
   meal: { gap: 0, paddingVertical: spacing.sm },
   mealHeader: { gap: spacing.md, paddingVertical: spacing.sm },
   mealIcon: {
