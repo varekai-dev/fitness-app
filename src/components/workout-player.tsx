@@ -2,8 +2,10 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import { useKeepAwake } from 'expo-keep-awake';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useNavigation } from 'expo-router';
+import { usePreventRemove } from 'expo-router/react-navigation';
 import * as WebBrowser from 'expo-web-browser';
-import { useState, type ComponentProps, type ReactNode } from 'react';
+import { useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { interpolate, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -129,6 +131,19 @@ export function WorkoutPlayer({
     exercises.findIndex((e) => e.id === currentId),
   );
   const current = exercises[index];
+  const videoOpen = videoFor !== null && videoFor === current?.id;
+  // Back (button, gesture or Android's key) closes the video first instead of leaving
+  // the workout; finishing or discarding still leaves.
+  const navigation = useNavigation();
+  const leaving = useRef(false);
+  usePreventRemove(videoOpen, ({ data }) => {
+    if (leaving.current) navigation.dispatch(data.action);
+    else setVideoFor(null);
+  });
+  const leave = () => {
+    leaving.current = true;
+    goBack();
+  };
   const allSets = exercises.flatMap((e) => e.sets);
   const doneSets = allSets.filter((s) => s.completedAt !== null).length;
   const workoutDone = allSets.length > 0 && doneSets === allSets.length;
@@ -138,7 +153,7 @@ export function WorkoutPlayer({
     const doFinish = () => {
       timer.stop();
       finishWorkout(workout.id);
-      goBack();
+      leave();
     };
     dialog.show({
       title: 'Завершити тренування?',
@@ -168,7 +183,7 @@ export function WorkoutPlayer({
           onPress: async () => {
             timer.stop();
             await deleteWorkout(workout.id);
-            goBack();
+            leave();
           },
         },
       ],
@@ -200,7 +215,7 @@ export function WorkoutPlayer({
   const extra = extras[index];
   const youtubeUrl = current.exercise.youtubeUrl;
   const videoId = youtubeVideoId(youtubeUrl);
-  const showVideo = videoId !== null && videoFor === current.id;
+  const showVideo = videoId !== null && videoOpen;
   // Search links and other pages can't be embedded, so they open in the browser.
   const toggleVideo = () => {
     if (!videoId) WebBrowser.openBrowserAsync(youtubeUrl!);
@@ -506,14 +521,15 @@ export function WorkoutPlayer({
       </Animated.View>
 
       <View style={[styles.topBar, { top: insets.top + spacing.sm }]}>
-        <CircleButton icon="chevron-back" background="rgba(0,0,0,0.35)" onPress={goBack} />
+        {showVideo ? (
+          // Takes the back button's place so a tap there closes the video, not the workout.
+          <CircleButton icon="close" background="rgba(0,0,0,0.35)" onPress={toggleVideo} />
+        ) : (
+          <CircleButton icon="chevron-back" background="rgba(0,0,0,0.35)" onPress={goBack} />
+        )}
         <View style={styles.topRight}>
-          {youtubeUrl && (
-            <CircleButton
-              icon={showVideo ? 'image-outline' : 'logo-youtube'}
-              background="rgba(0,0,0,0.35)"
-              onPress={toggleVideo}
-            />
+          {youtubeUrl && !showVideo && (
+            <CircleButton icon="logo-youtube" background="rgba(0,0,0,0.35)" onPress={toggleVideo} />
           )}
           <Glass tint="rgba(0,0,0,0.35)" style={styles.clock}>
             <Ionicons
