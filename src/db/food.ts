@@ -58,6 +58,32 @@ export async function lookupFood(text: string): Promise<{ food: Food; cached: bo
   return { food, cached: false };
 }
 
+export type ManualFood = Pick<
+  Food,
+  'name' | 'isDrink' | 'kcal' | 'proteinG' | 'fatG' | 'carbsG'
+>;
+
+/**
+ * Saves a dish entered by hand, its values per 100 g (or ml), replacing a cached
+ * dish of the same name.
+ */
+export async function saveFood(food: ManualFood): Promise<Food> {
+  const values = {
+    ...food,
+    name: food.name.trim(),
+    portion: `100 ${amountUnit(food)}`,
+    portionG: 100,
+    fiberG: null,
+    sugarG: null,
+  };
+  const [saved] = await db
+    .insert(foods)
+    .values({ query: normalizeDish(food.name), ...values })
+    .onConflictDoUpdate({ target: foods.query, set: values })
+    .returning();
+  return saved;
+}
+
 export async function deleteFood(id: number) {
   await db.delete(foods).where(eq(foods.id, id));
 }

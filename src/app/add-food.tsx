@@ -17,7 +17,15 @@ import {
   Screen,
   Text,
 } from '@/components/ui';
-import { deleteFood, loadFood, logFood, lookupFood, searchFoods } from '@/db/food';
+import {
+  deleteFood,
+  loadFood,
+  logFood,
+  lookupFood,
+  saveFood,
+  searchFoods,
+  type ManualFood,
+} from '@/db/food';
 import type { Food } from '@/db/schema';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { amountUnit, formatGrams, formatKcal, normalizeDish, scaleNutrition } from '@/lib/food';
@@ -68,7 +76,17 @@ export default function AddFoodScreen() {
   const { data: suggestions } = useDbQuery(() => searchFoods(input), [input]);
   const [looking, setLooking] = useState(false);
   const [pending, setPending] = useState<Pending | null>(null);
+  // Name the manual form starts with; null while it's closed.
+  const [manual, setManual] = useState<string | null>(null);
   const dialog = useDialog();
+
+  // A dish entered by hand goes to the cache, then on to picking the amount like any other.
+  const saveManual = async (food: ManualFood) => {
+    const saved = await saveFood(food);
+    setManual(null);
+    setInput('');
+    setPending(startPending(saved, true));
+  };
 
   const lookup = async (text: string) => {
     if (!text.trim() || looking) return;
@@ -145,6 +163,8 @@ export default function AddFoodScreen() {
           onAdd={add}
           onCancel={() => setPending(null)}
         />
+      ) : manual !== null ? (
+        <ManualCard initialName={manual} onSave={saveManual} onCancel={() => setManual(null)} />
       ) : (
         <>
           <Card>
@@ -179,6 +199,13 @@ export default function AddFoodScreen() {
               onPress={() => lookup(input)}
               loading={looking}
               disabled={!input.trim()}
+            />
+            <Button
+              title={tr('Ввести вручну', 'Enter manually')}
+              icon="create-outline"
+              variant="secondary"
+              onPress={() => setManual(input.trim())}
+              disabled={looking}
             />
           </Card>
           {recent.length > 0 && (
@@ -224,11 +251,7 @@ function PendingCard({
     Haptics.selectionAsync();
     onChange({ amount: String(Math.round(next)) });
   };
-  const setUnit = (drink: boolean) => {
-    if (drink === isDrink) return;
-    Haptics.selectionAsync();
-    onChange({ isDrink: drink });
-  };
+  const setUnit = (drink: boolean) => onChange({ isDrink: drink });
   return (
     <Card style={styles.pending}>
       <Row style={styles.spaceBetween}>
@@ -260,22 +283,7 @@ function PendingCard({
       )}
       <Row style={styles.spaceBetween}>
         <Text variant="body">{tr('Кількість', 'Amount')}</Text>
-        <Row style={styles.units}>
-          {[false, true].map((drink) => (
-            <Pressable
-              key={String(drink)}
-              onPress={() => setUnit(drink)}
-              accessibilityRole="button"
-              accessibilityState={{ selected: drink === isDrink }}
-              style={[styles.unitChip, drink === isDrink && styles.unitChipActive]}>
-              <Text
-                variant="body"
-                style={[styles.unitText, drink === isDrink && styles.unitTextActive]}>
-                {amountUnit({ isDrink: drink })}
-              </Text>
-            </Pressable>
-          ))}
-        </Row>
+        <UnitSwitch isDrink={isDrink} onChange={setUnit} />
       </Row>
       <Row style={styles.amountRow}>
         <CircleButton
@@ -315,6 +323,134 @@ function PendingCard({
           icon="add"
           onPress={onAdd}
           disabled={!amount}
+          style={styles.flex}
+        />
+      </Row>
+    </Card>
+  );
+}
+
+/** Grams or millilitres. */
+function UnitSwitch({
+  isDrink,
+  onChange,
+}: {
+  isDrink: boolean;
+  onChange: (isDrink: boolean) => void;
+}) {
+  return (
+    <Row style={styles.units}>
+      {[false, true].map((drink) => (
+        <Pressable
+          key={String(drink)}
+          onPress={() => {
+            if (drink === isDrink) return;
+            Haptics.selectionAsync();
+            onChange(drink);
+          }}
+          accessibilityRole="button"
+          accessibilityState={{ selected: drink === isDrink }}
+          style={[styles.unitChip, drink === isDrink && styles.unitChipActive]}>
+          <Text variant="body" style={[styles.unitText, drink === isDrink && styles.unitTextActive]}>
+            {amountUnit({ isDrink: drink })}
+          </Text>
+        </Pressable>
+      ))}
+    </Row>
+  );
+}
+
+const MACRO_FIELDS = [
+  { key: 'kcal', label: () => tr('Ккал', 'Kcal') },
+  { key: 'proteinG', label: () => tr('Білки, г', 'Protein, g') },
+  { key: 'fatG', label: () => tr('Жири, г', 'Fat, g') },
+  { key: 'carbsG', label: () => tr('Вуглеводи, г', 'Carbs, g') },
+] as const;
+type MacroKey = (typeof MACRO_FIELDS)[number]['key'];
+
+/** A dish typed in by hand: its name and nutrition per 100 g (or ml). */
+function ManualCard({
+  initialName,
+  onSave,
+  onCancel,
+}: {
+  initialName: string;
+  onSave: (food: ManualFood) => Promise<void>;
+  onCancel: () => void;
+}) {
+  const [name, setName] = useState(initialName);
+  const [isDrink, setIsDrink] = useState(false);
+  const [values, setValues] = useState<Record<MacroKey, string>>({
+    kcal: '',
+    proteinG: '',
+    fatG: '',
+    carbsG: '',
+  });
+  const [saving, setSaving] = useState(false);
+  const parsed = Object.fromEntries(
+    MACRO_FIELDS.map(({ key }) => [key, parseDecimal(values[key]) ?? 0]),
+  ) as Record<MacroKey, number>;
+  // Calories are required; macros left empty count as zero.
+  const valid =
+    name.trim() !== '' &&
+    parseDecimal(values.kcal) !== null &&
+    MACRO_FIELDS.every(({ key }) => values[key].trim() === '' || parseDecimal(values[key]) !== null);
+  const unit = amountUnit({ isDrink });
+
+  const save = async () => {
+    if (!valid || saving) return;
+    setSaving(true);
+    try {
+      await onSave({ name, isDrink, ...parsed });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Card style={styles.pending}>
+      <Field
+        label={tr('Назва', 'Name')}
+        value={name}
+        onChangeText={setName}
+        placeholder={tr('Напр. «Сирники»', 'E.g. “Pancakes”')}
+        autoFocus={!initialName}
+        maxLength={80}
+      />
+      <Row style={styles.spaceBetween}>
+        <Text variant="body">
+          {tr('На', 'Per')} 100 {unit}
+        </Text>
+        <UnitSwitch isDrink={isDrink} onChange={setIsDrink} />
+      </Row>
+      <View style={styles.macroGrid}>
+        {MACRO_FIELDS.map(({ key, label }) => (
+          <Field
+            key={key}
+            label={label()}
+            value={values[key]}
+            onChangeText={(t) => setValues({ ...values, [key]: t.replace(/[^\d.,]/g, '') })}
+            keyboardType="decimal-pad"
+            placeholder="0"
+            maxLength={6}
+            autoFocus={key === 'kcal' && !!initialName}
+            containerStyle={styles.macroField}
+          />
+        ))}
+      </View>
+      <Row>
+        <Button
+          title={tr('Скасувати', 'Cancel')}
+          variant="secondary"
+          onPress={onCancel}
+          style={styles.flex}
+        />
+        <Button
+          title={tr('Зберегти', 'Save')}
+          icon="checkmark"
+          onPress={save}
+          loading={saving}
+          disabled={!valid}
           style={styles.flex}
         />
       </Row>
@@ -403,6 +539,8 @@ const styles = StyleSheet.create({
   unitText: { color: colors.textSecondary, fontWeight: '700' },
   unitTextActive: { color: colors.accentText },
   amountRow: { gap: spacing.sm },
+  macroGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  macroField: { flexBasis: '45%', flexGrow: 1 },
   amountInput: { textAlign: 'center', fontSize: fontSize.xl, fontWeight: '700' },
   amountUnit: { color: colors.textSecondary, minWidth: 28 },
 });
