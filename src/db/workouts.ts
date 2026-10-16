@@ -11,6 +11,7 @@ export const getActiveWorkout = () =>
     where: isNull(workouts.finishedAt),
     columns: {
       id: true,
+      programDayId: true,
       dayName: true,
       programName: true,
       startedAt: true,
@@ -289,6 +290,17 @@ export function resumeWorkout(id: number) {
       .where(eq(workouts.id, id))
       .run();
   });
+}
+
+/** Whether any set of the workout has been marked done. */
+export async function hasCompletedSets(workoutId: number) {
+  const row = await db
+    .select({ id: workoutSets.id })
+    .from(workoutSets)
+    .innerJoin(workoutExercises, eq(workoutSets.workoutExerciseId, workoutExercises.id))
+    .where(and(eq(workoutExercises.workoutId, workoutId), isNotNull(workoutSets.completedAt)))
+    .limit(1);
+  return row.length > 0;
 }
 
 export async function deleteWorkout(id: number) {

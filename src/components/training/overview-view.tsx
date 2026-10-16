@@ -20,7 +20,13 @@ import {
 } from '@/components/ui';
 import { listBodyWeights } from '@/db/body-weight';
 import { getActiveProgram, getNextDayId } from '@/db/programs';
-import { getActiveWorkout, listFinishedWorkouts, startWorkout } from '@/db/workouts';
+import {
+  deleteWorkout,
+  getActiveWorkout,
+  hasCompletedSets,
+  listFinishedWorkouts,
+  startWorkout,
+} from '@/db/workouts';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { useScrollResetOnTabLeave } from '@/hooks/use-scroll-reset-on-tab-leave';
 import { useToday } from '@/hooks/use-today';
@@ -38,7 +44,16 @@ async function loadOverview() {
     listBodyWeights(),
   ]);
   const nextDayId = program ? await getNextDayId(program.id) : null;
-  return { activeWorkout, program, nextDayId, finished, bodyWeights, loadedAt: Date.now() };
+  // A workout opened but never started is only a draft of its day: the day can still
+  // be switched, which replaces it. Once the clock ran or a set was done, it stays.
+  const draft =
+    activeWorkout &&
+    notStarted(activeWorkout) &&
+    program?.days.some((d) => d.id === activeWorkout.programDayId) &&
+    !(await hasCompletedSets(activeWorkout.id))
+      ? activeWorkout
+      : null;
+  return { activeWorkout, draft, program, nextDayId, finished, bodyWeights, loadedAt: Date.now() };
 }
 
 /**
@@ -62,11 +77,12 @@ export function OverviewView({
   const dialog = useDialog();
 
   if (!data) return <Loading />;
-  const { activeWorkout, program, nextDayId, finished, bodyWeights, loadedAt } = data;
+  const { activeWorkout, draft, program, nextDayId, finished, bodyWeights, loadedAt } = data;
   // A manual pick may point to another program's day after switching programs.
   const selectedDay =
     program?.days.find((d) => d.id === pickedDayId) ??
-    program?.days.find((d) => d.id === nextDayId);
+    program?.days.find((d) => d.id === (draft?.programDayId ?? nextDayId));
+  const isDraftDay = draft !== null && selectedDay?.id === draft.programDayId;
   const daySets = selectedDay?.exercises.reduce((n, e) => n + e.targetSets, 0) ?? 0;
 
   const weekStart = startOfWeek(loadedAt);
@@ -77,13 +93,17 @@ export function OverviewView({
       ? thisWeek.reduce((sum, w) => sum + (estimateKcal(w, bodyWeights) ?? 0), 0)
       : null;
 
+  const openWorkout = (id: number) => router.push({ pathname: '/workout/[id]', params: { id } });
+
   const start = async () => {
     if (!selectedDay) return;
+    if (draft && isDraftDay) return openWorkout(draft.id);
     setStarting(true);
     try {
+      if (draft) await deleteWorkout(draft.id);
       const id = await startWorkout(selectedDay.id);
       setPickedDayId(null);
-      router.push({ pathname: '/workout/[id]', params: { id } });
+      openWorkout(id);
     } catch (e) {
       dialog.show({
         title: tr('Помилка', 'Error'),
@@ -112,7 +132,7 @@ export function OverviewView({
         <StatTile icon="trophy" value={String(finished.length)} label={tr('Усього', 'Total')} />
       </Row>
 
-      {activeWorkout ? (
+      {activeWorkout && !draft ? (
         <HeroCard
           overline={
             notStarted(activeWorkout)
@@ -125,12 +145,7 @@ export function OverviewView({
           subtitle={activeWorkout.programName}
           meta={<Elapsed workout={activeWorkout} style={styles.heroElapsed} />}
           actionIcon="play"
-          onAction={() =>
-            router.push({
-              pathname: '/workout/[id]',
-              params: { id: activeWorkout.id },
-            })
-          }
+          onAction={() => openWorkout(activeWorkout.id)}
         />
       ) : !program ? (
         <Card>
@@ -184,9 +199,11 @@ export function OverviewView({
           )}
           <HeroCard
             overline={
-              selectedDay.id === nextDayId
-                ? tr('Наступне тренування', 'Next workout')
-                : tr('Обраний день', 'Selected day')
+              isDraftDay
+                ? tr('Тренування не розпочато', 'Workout not started')
+                : selectedDay.id === nextDayId
+                  ? tr('Наступне тренування', 'Next workout')
+                  : tr('Обраний день', 'Selected day')
             }
             title={selectedDay.name}
             subtitle={program.name}
@@ -206,7 +223,7 @@ export function OverviewView({
             }
             details={selectedDay.exercises.slice(0, 4).map((e) => e.exercise.name)}
             moreCount={Math.max(0, selectedDay.exercises.length - 4)}
-            actionIcon="arrow-forward"
+            actionIcon={isDraftDay ? 'play' : 'arrow-forward'}
             actionLoading={starting}
             onAction={start}
           />
