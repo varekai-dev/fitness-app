@@ -4,6 +4,7 @@ import { loadProfile } from '@/db/profile';
 import { getWaterGoal, setWaterGoal } from '@/db/water';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { formatGrams } from '@/lib/food';
+import { tr } from '@/lib/i18n';
 import { ACTIVITY, recommendWater } from '@/lib/profile';
 import { formatMl, MAX_WATER_GOAL_ML, MIN_WATER_GOAL_ML, WATER_GOAL_STEP_ML } from '@/lib/water';
 
@@ -14,13 +15,16 @@ export default function WaterSettingsScreen() {
   const [waterGoal, { profile, latestWeight }] = data;
   const weightKg = latestWeight?.weightKg;
   const water = recommendWater(profile, weightKg);
-  const activity = `${ACTIVITY[profile.activity].label.toLowerCase()} активність`;
+  const activity = tr(
+    `${ACTIVITY[profile.activity].label.toLowerCase()} активність`,
+    `${ACTIVITY[profile.activity].label.toLowerCase()} activity`,
+  );
 
   return (
-    <Screen title="Вода">
+    <Screen title={tr('Вода', 'Water')}>
       <GoalStepper
-        title="Денна ціль"
-        unit="мл"
+        title={tr('Денна ціль', 'Daily goal')}
+        unit={tr('мл', 'ml')}
         value={waterGoal}
         step={WATER_GOAL_STEP_ML}
         min={MIN_WATER_GOAL_ML}
@@ -31,10 +35,10 @@ export default function WaterSettingsScreen() {
       <RecommendationCard
         value={water}
         goal={waterGoal}
-        unit="мл"
+        unit={tr('мл', 'ml')}
         format={formatMl}
-        details={weightKg ? `${formatGrams(weightKg)} кг · ${activity}` : ''}
-        missing="вагу"
+        details={weightKg ? `${formatGrams(weightKg)} ${tr('кг', 'kg')} · ${activity}` : ''}
+        missing={tr('вагу', 'weight')}
         onAdopt={setWaterGoal}
       />
     </Screen>

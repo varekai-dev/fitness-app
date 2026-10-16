@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { Card, Text } from '@/components/ui';
 import type { listFinishedWorkouts } from '@/db/workouts';
 import { formatKcal } from '@/lib/calories';
+import { tr } from '@/lib/i18n';
 import { formatShortDate } from '@/lib/labels';
 import { formatDuration, workoutDurationMs } from '@/lib/metrics';
 import { colors, radius, spacing } from '@/theme';
@@ -41,7 +42,7 @@ export function WorkoutSummaryCard({
           {workout.dayName}
         </Text>
         <Text variant="muted">
-          {minutes} · {totalSets} підх. ·{kcal ? ` ${formatKcal(kcal)} ·` : ''}{' '}
+          {minutes} · {totalSets} {tr('підх.', 'sets')} ·{kcal ? ` ${formatKcal(kcal)} ·` : ''}{' '}
           <Text variant="muted" style={styles.accent}>
             {workout.programName}
           </Text>
@@ -53,7 +54,7 @@ export function WorkoutSummaryCard({
         )}
         {skipped > 0 && (
           <Text variant="muted" style={styles.skipped} numberOfLines={1}>
-            Пропущено вправ: {skipped}
+            {tr('Пропущено вправ', 'Exercises skipped')}: {skipped}
           </Text>
         )}
       </View>

@@ -1,5 +1,7 @@
+import { tr } from '@/lib/i18n';
+
 /** Home screen headlines; a new one each day, in order. */
-const PHRASES = [
+const PHRASES_UK = [
   'Тренуйся сьогодні, прогресуй завтра',
   'Кожен підхід наближає до мети',
   'Сила росте тут і зараз',
@@ -51,6 +53,61 @@ const PHRASES = [
   'Сильне тіло — сильний дух',
   'Ще один день — ще один крок',
 ];
+
+const PHRASES_EN = [
+  'Train today, progress tomorrow',
+  'Every set brings you closer',
+  'Strength is built right here, right now',
+  'Small steps, big changes',
+  'Discipline beats motivation',
+  'The hardest set is the first one',
+  'Today’s sweat is tomorrow’s strength',
+  'Don’t quit: you’ve already started',
+  'The body achieves what the mind believes',
+  'Slow is better than never',
+  'One more rep, a little more strength',
+  'Your rival is yesterday’s record',
+  'Results love consistency',
+  'Fatigue fades, pride stays',
+  'Do today what you’ll thank yourself for tomorrow',
+  'Strength comes through effort',
+  'Don’t wait for the perfect day: make it',
+  'Every workout counts',
+  'Pain passes, results remain',
+  'If it’s hard, it’s working',
+  'You’re stronger than you think',
+  'Progress, not perfection',
+  'Training is the best habit',
+  'One day or day one: you decide',
+  'Dumbbells won’t lift themselves',
+  'No effort, no change',
+  'Start now, not on Monday',
+  'Harder today, easier tomorrow',
+  'Keep moving forward, even slowly',
+  'Your body is your project',
+  'Doubts fade with every rep',
+  'Champions train when they don’t feel like it',
+  'A goal without a plan is just a wish',
+  'Add a little more weight',
+  'Steel is forged in fire',
+  'Don’t compare yourself to others',
+  'Rest is part of training too',
+  'Train smart, not just hard',
+  'Every drop of sweat is an investment',
+  'Be stronger than your excuses',
+  'Victory starts with a decision',
+  'Strength is a choice you make daily',
+  'The best time to start is now',
+  'You showed up, and that’s already a win',
+  'Keep the pace, stay the course',
+  'Big goals are built every day',
+  'Stop when the job is done, not when you’re tired',
+  'Health is the best reward',
+  'Strong body, strong spirit',
+  'One more day, one more step',
+];
+
+const PHRASES = tr(PHRASES_UK, PHRASES_EN);
 
 /** Phrase for the local calendar day of `date`. */
 export function dailyPhrase(date: Date) {

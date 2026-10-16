@@ -1,6 +1,8 @@
 import { Directory, File, Paths } from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 
+import { tr } from '@/lib/i18n';
+
 const imagesDir = () => {
   const dir = new Directory(Paths.document, 'exercise-images');
   dir.create({ idempotent: true, intermediates: true });
@@ -30,14 +32,20 @@ export async function pickImageFromLibrary() {
 
 export async function takePhoto() {
   const permission = await ImagePicker.requestCameraPermissionsAsync();
-  if (!permission.granted) throw new Error('Немає доступу до камери');
+  if (!permission.granted)
+    throw new Error(tr('Немає доступу до камери', 'No access to the camera'));
   return persistPicked(await ImagePicker.launchCameraAsync(PICKER_OPTIONS));
 }
 
 /** Downloads an image once so it works offline. */
 export async function downloadImage(url: string) {
   if (!/^https?:\/\//i.test(url.trim()))
-    throw new Error('Посилання має починатися з http:// або https://');
+    throw new Error(
+      tr(
+        'Посилання має починатися з http:// або https://',
+        'The link must start with http:// or https://',
+      ),
+    );
   const file = await File.downloadFileAsync(url.trim(), newImageFile());
   return file.uri;
 }

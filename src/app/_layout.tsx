@@ -11,6 +11,7 @@ import { db } from '@/db/client';
 import { runContentSeeds, seedIfEmpty } from '@/db/seed';
 import { useHealthAutoSync } from '@/hooks/use-health-auto-sync';
 import { useNotifications } from '@/hooks/use-notifications';
+import { tr } from '@/lib/i18n';
 import { colors } from '@/theme';
 import migrations from '../../drizzle/migrations';
 
@@ -54,7 +55,9 @@ export default function RootLayout() {
   if (error) {
     return (
       <View style={styles.error}>
-        <Text variant="heading">Не вдалося відкрити базу даних</Text>
+        <Text variant="heading">
+          {tr('Не вдалося відкрити базу даних', 'Couldn’t open the database')}
+        </Text>
         <Text variant="secondary">{error.message}</Text>
       </View>
     );

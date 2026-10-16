@@ -12,6 +12,7 @@ import { Card, Chip, ChipScroller, EmptyState, Loading, SearchField, Text } from
 import { listExercises } from '@/db/exercises';
 import { MUSCLE_GROUPS, type MuscleGroup } from '@/db/schema';
 import { useDbQuery } from '@/hooks/use-db-query';
+import { tr } from '@/lib/i18n';
 import { MUSCLE_GROUP_LABELS, TRACKING_TYPE_LABELS } from '@/lib/labels';
 import { colors, spacing } from '@/theme';
 
@@ -38,13 +39,17 @@ export function ExercisesView({ bottomSpace }: { bottomSpace: number }) {
         ListHeaderComponent={
           <View style={styles.header}>
             <SearchField
-              placeholder="Пошук вправ…"
+              placeholder={tr('Пошук вправ…', 'Search exercises…')}
               value={search}
               onChangeText={setSearch}
               clearButtonMode="while-editing"
             />
             <ChipScroller>
-              <Chip label="Усі" selected={group === null} onPress={() => setGroup(null)} />
+              <Chip
+                label={tr('Усі', 'All')}
+                selected={group === null}
+                onPress={() => setGroup(null)}
+              />
               {MUSCLE_GROUPS.map((g) => (
                 <Chip
                   key={g}
@@ -55,7 +60,8 @@ export function ExercisesView({ bottomSpace }: { bottomSpace: number }) {
               ))}
             </ChipScroller>
             <Text variant="heading">
-              {group ? MUSCLE_GROUP_LABELS[group] : 'Усі вправи'} · {filtered.length}
+              {group ? MUSCLE_GROUP_LABELS[group] : tr('Усі вправи', 'All exercises')} ·{' '}
+              {filtered.length}
             </Text>
           </View>
         }
@@ -95,7 +101,9 @@ export function ExercisesView({ bottomSpace }: { bottomSpace: number }) {
             </SwipeToDelete>
           );
         }}
-        ListEmptyComponent={<EmptyState icon="barbell" title="Нічого не знайдено" />}
+        ListEmptyComponent={
+          <EmptyState icon="barbell" title={tr('Нічого не знайдено', 'Nothing found')} />
+        }
       />
       {dialog.element}
     </>

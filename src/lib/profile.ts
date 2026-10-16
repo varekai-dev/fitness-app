@@ -1,6 +1,11 @@
+import { tr } from '@/lib/i18n';
+
 export const SEXES = ['male', 'female'] as const;
 export type Sex = (typeof SEXES)[number];
-export const SEX_LABELS: Record<Sex, string> = { male: 'Чоловік', female: 'Жінка' };
+export const SEX_LABELS: Record<Sex, string> = {
+  male: tr('Чоловік', 'Male'),
+  female: tr('Жінка', 'Female'),
+};
 
 export const ACTIVITY_LEVELS = ['sedentary', 'light', 'moderate', 'high', 'extreme'] as const;
 export type ActivityLevel = (typeof ACTIVITY_LEVELS)[number];
@@ -13,13 +18,33 @@ export const ACTIVITY: Record<
   ActivityLevel,
   { label: string; hint: string; factor: number; waterMl: number }
 > = {
-  sedentary: { label: 'Мінімальна', hint: 'Сидяча робота, без тренувань', factor: 1.2, waterMl: 0 },
-  light: { label: 'Легка', hint: '1–3 тренування на тиждень', factor: 1.375, waterMl: 250 },
-  moderate: { label: 'Помірна', hint: '3–5 тренувань на тиждень', factor: 1.55, waterMl: 500 },
-  high: { label: 'Висока', hint: '6–7 тренувань на тиждень', factor: 1.725, waterMl: 750 },
+  sedentary: {
+    label: tr('Мінімальна', 'Minimal'),
+    hint: tr('Сидяча робота, без тренувань', 'Desk job, no workouts'),
+    factor: 1.2,
+    waterMl: 0,
+  },
+  light: {
+    label: tr('Легка', 'Light'),
+    hint: tr('1–3 тренування на тиждень', '1–3 workouts a week'),
+    factor: 1.375,
+    waterMl: 250,
+  },
+  moderate: {
+    label: tr('Помірна', 'Moderate'),
+    hint: tr('3–5 тренувань на тиждень', '3–5 workouts a week'),
+    factor: 1.55,
+    waterMl: 500,
+  },
+  high: {
+    label: tr('Висока', 'High'),
+    hint: tr('6–7 тренувань на тиждень', '6–7 workouts a week'),
+    factor: 1.725,
+    waterMl: 750,
+  },
   extreme: {
-    label: 'Дуже висока',
-    hint: 'Фізична робота або 2 тренування на день',
+    label: tr('Дуже висока', 'Very high'),
+    hint: tr('Фізична робота або 2 тренування на день', 'Physical job or 2 workouts a day'),
     factor: 1.9,
     waterMl: 1000,
   },
@@ -30,9 +55,9 @@ export type WeightGoal = (typeof WEIGHT_GOALS)[number];
 
 /** Moderate deficit and surplus, as fractions of maintenance. */
 export const WEIGHT_GOAL: Record<WeightGoal, { label: string; factor: number }> = {
-  lose: { label: 'Схуднення', factor: 0.8 },
-  maintain: { label: 'Підтримка', factor: 1 },
-  gain: { label: 'Набір маси', factor: 1.1 },
+  lose: { label: tr('Схуднення', 'Lose weight'), factor: 0.8 },
+  maintain: { label: tr('Підтримка', 'Maintain'), factor: 1 },
+  gain: { label: tr('Набір маси', 'Gain weight'), factor: 1.1 },
 };
 
 export type Profile = {
@@ -120,9 +145,9 @@ export function recommendWater(
 /** Which inputs are still missing, in the order the profile screen shows them. */
 export function missingForRecommendation(profile: Profile, weightKg: number | null | undefined) {
   const missing: string[] = [];
-  if (!weightKg) missing.push('вагу');
-  if (!profile.heightCm) missing.push('зріст');
-  if (!profile.birthDate) missing.push('дату народження');
-  if (!profile.sex) missing.push('стать');
+  if (!weightKg) missing.push(tr('вагу', 'weight'));
+  if (!profile.heightCm) missing.push(tr('зріст', 'height'));
+  if (!profile.birthDate) missing.push(tr('дату народження', 'date of birth'));
+  if (!profile.sex) missing.push(tr('стать', 'sex'));
   return missing;
 }

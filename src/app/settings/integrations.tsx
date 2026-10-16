@@ -15,6 +15,7 @@ import {
   maskKey,
   setGroqKey,
 } from '@/lib/groq';
+import { tr } from '@/lib/i18n';
 import { colors, spacing } from '@/theme';
 
 const KEYS_URL = 'https://console.groq.com/keys';
@@ -40,8 +41,11 @@ export default function IntegrationsScreen() {
       const check = await checkGroqKey(key);
       if (check === 'invalid') {
         dialog.show({
-          title: 'Ключ не підходить',
-          message: 'Groq відхилив цей ключ. Скопіюй його ще раз з консолі Groq.',
+          title: tr('Ключ не підходить', 'Key doesn’t work'),
+          message: tr(
+            'Groq відхилив цей ключ. Скопіюй його ще раз з консолі Groq.',
+            'Groq rejected this key. Copy it again from the Groq console.',
+          ),
           icon: 'alert-circle',
         });
         return;
@@ -52,12 +56,19 @@ export default function IntegrationsScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       if (check === 'error') {
         dialog.show({
-          title: 'Ключ збережено',
-          message: 'Не вдалося перевірити його зараз — перевіримо під час першого запиту.',
+          title: tr('Ключ збережено', 'Key saved'),
+          message: tr(
+            'Не вдалося перевірити його зараз — перевіримо під час першого запиту.',
+            'Couldn’t check it right now. It will be checked on the first request.',
+          ),
         });
       }
     } catch (e) {
-      dialog.show({ title: 'Не вдалося зберегти', message: String(e), icon: 'alert-circle' });
+      dialog.show({
+        title: tr('Не вдалося зберегти', 'Couldn’t save'),
+        message: String(e),
+        icon: 'alert-circle',
+      });
     } finally {
       setSaving(false);
     }
@@ -65,12 +76,15 @@ export default function IntegrationsScreen() {
 
   const remove = () =>
     dialog.show({
-      title: 'Видалити ключ?',
-      message: 'Нові страви не будуть розраховуватися, доки не додаси ключ знову.',
+      title: tr('Видалити ключ?', 'Delete key?'),
+      message: tr(
+        'Нові страви не будуть розраховуватися, доки не додаси ключ знову.',
+        'New dishes won’t be calculated until you add a key again.',
+      ),
       buttons: [
-        { text: 'Скасувати', style: 'cancel' },
+        { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
         {
-          text: 'Видалити',
+          text: tr('Видалити', 'Delete'),
           style: 'destructive',
           onPress: () => deleteGroqKey().then(() => setSavedKey(null)),
         },
@@ -78,10 +92,10 @@ export default function IntegrationsScreen() {
     });
 
   return (
-    <Screen title="Інтеграції">
+    <Screen title={tr('Інтеграції', 'Integrations')}>
       {Platform.OS !== 'web' && (
         <>
-          <Text variant="overline">Здоров’я</Text>
+          <Text variant="overline">{tr('Здоров’я', 'Health')}</Text>
           <HealthCard />
         </>
       )}
@@ -90,11 +104,14 @@ export default function IntegrationsScreen() {
       <Card>
         <Row>
           <Ionicons name="key-outline" size={20} color={colors.accent} />
-          <Text variant="heading">Ключ Groq API</Text>
+          <Text variant="heading">{tr('Ключ Groq API', 'Groq API key')}</Text>
         </Row>
         <Text variant="muted">
-          Потрібен, щоб рахувати калорії та БЖВ страв. Ключ зберігається лише на цьому пристрої в
-          захищеному сховищі. Модель: {GROQ_MODEL}.
+          {tr(
+            'Потрібен, щоб рахувати калорії та БЖВ страв. Ключ зберігається лише на цьому пристрої в захищеному сховищі.',
+            'Needed to calculate calories and macros of dishes. The key is stored only on this device, in secure storage.',
+          )}{' '}
+          {tr('Модель', 'Model')}: {GROQ_MODEL}.
         </Text>
         {savedKey ? (
           <Row style={styles.saved}>
@@ -102,29 +119,29 @@ export default function IntegrationsScreen() {
             <Text variant="body" style={styles.flex}>
               {maskKey(savedKey)}
             </Text>
-            <Button title="Видалити" variant="danger" small onPress={remove} />
+            <Button title={tr('Видалити', 'Delete')} variant="danger" small onPress={remove} />
           </Row>
         ) : savedKey === null ? (
-          <Text variant="caption">Ключ ще не додано.</Text>
+          <Text variant="caption">{tr('Ключ ще не додано.', 'No key added yet.')}</Text>
         ) : null}
         <Field
           value={input}
           onChangeText={setInput}
-          placeholder={savedKey ? 'Новий ключ, щоб замінити' : 'gsk_…'}
+          placeholder={savedKey ? tr('Новий ключ, щоб замінити', 'New key to replace it') : 'gsk_…'}
           autoCapitalize="none"
           autoCorrect={false}
           secureTextEntry
           onSubmitEditing={save}
         />
         <Button
-          title={savedKey ? 'Замінити ключ' : 'Зберегти ключ'}
+          title={savedKey ? tr('Замінити ключ', 'Replace key') : tr('Зберегти ключ', 'Save key')}
           icon="save-outline"
           onPress={save}
           loading={saving}
           disabled={!input.trim()}
         />
         <Button
-          title="Отримати ключ у консолі Groq"
+          title={tr('Отримати ключ у консолі Groq', 'Get a key in the Groq console')}
           variant="ghost"
           small
           trailingIcon="open-outline"

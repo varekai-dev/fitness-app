@@ -44,6 +44,7 @@ import {
 import type { TrackingType } from '@/db/schema';
 import { useRestTimer } from '@/hooks/use-rest-timer';
 import { exerciseKcal, formatKcal, workoutKcal } from '@/lib/calories';
+import { tr } from '@/lib/i18n';
 import { formatSetTarget, formatTargets } from '@/lib/labels';
 import {
   formatNumber,
@@ -62,14 +63,14 @@ type Extra = { last: Awaited<ReturnType<typeof getLastSets>>; record: number | n
 
 const isDone = (we: WorkoutExercise) => we.sets.every((s) => s.completedAt !== null);
 
-/** A past set spelled out, so "12 кг · 5 повт." can't be read as 5 sets. */
+/** A past set spelled out, so "12 kg · 5 reps" can't be read as 5 sets. */
 function formatLastSet(type: TrackingType, s: SetValues) {
-  const reps = `${s.reps ?? 0} повт.`;
+  const reps = `${s.reps ?? 0} ${tr('повт.', 'reps')}`;
   switch (type) {
     case 'weight_reps':
-      return `${formatNumber(s.weightKg ?? 0)} кг · ${reps}`;
+      return `${formatNumber(s.weightKg ?? 0)} ${tr('кг', 'kg')} · ${reps}`;
     case 'weighted_reps':
-      return s.weightKg ? `+${formatNumber(s.weightKg)} кг · ${reps}` : reps;
+      return s.weightKg ? `+${formatNumber(s.weightKg)} ${tr('кг', 'kg')} · ${reps}` : reps;
     case 'reps':
       return reps;
     default:
@@ -126,7 +127,7 @@ export function WorkoutPlayer({
 
   const paused = workout.pausedAt !== null;
   const waiting = notStarted(workout);
-  const pausedTag = waiting ? '' : paused ? 'НА ПАУЗІ · ' : '';
+  const pausedTag = waiting ? '' : paused ? tr('НА ПАУЗІ · ', 'PAUSED · ') : '';
   const index = Math.max(
     0,
     exercises.findIndex((e) => e.id === currentId),
@@ -157,29 +158,35 @@ export function WorkoutPlayer({
       leave();
     };
     dialog.show({
-      title: 'Завершити тренування?',
+      title: tr('Завершити тренування?', 'Finish workout?'),
       message:
         workoutDurationMs(workout, Date.now()) < MIN_WORKOUT_MS
-          ? 'Тренування коротше 30 с не збережеться в історії.'
+          ? tr(
+              'Тренування коротше 30 с не збережеться в історії.',
+              'A workout shorter than 30 s won’t be saved to history.',
+            )
           : pending > 0
-            ? `Невиконані підходи (${pending}) не збережуться.`
-            : 'Усі підходи виконано.',
+            ? tr(
+                `Невиконані підходи (${pending}) не збережуться.`,
+                `Unfinished sets (${pending}) won’t be saved.`,
+              )
+            : tr('Усі підходи виконано.', 'All sets done.'),
       icon: 'flag',
       buttons: [
-        { text: 'Скасувати', style: 'cancel' },
-        { text: 'Завершити', onPress: doFinish },
+        { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
+        { text: tr('Завершити', 'Finish'), onPress: doFinish },
       ],
     });
   };
 
   const discard = () =>
     dialog.show({
-      title: 'Скасувати тренування?',
-      message: 'Усі записані підходи буде видалено.',
+      title: tr('Скасувати тренування?', 'Discard workout?'),
+      message: tr('Усі записані підходи буде видалено.', 'All logged sets will be deleted.'),
       buttons: [
-        { text: 'Ні', style: 'cancel' },
+        { text: tr('Ні', 'No'), style: 'cancel' },
         {
-          text: 'Скасувати',
+          text: tr('Скасувати', 'Discard'),
           style: 'destructive',
           onPress: async () => {
             timer.stop();
@@ -203,10 +210,17 @@ export function WorkoutPlayer({
   if (!current) {
     return (
       <View style={[styles.root, { paddingTop: insets.top + spacing.xl }]}>
-        <EmptyState icon="barbell" title="У цьому дні немає вправ" />
+        <EmptyState
+          icon="barbell"
+          title={tr('У цьому дні немає вправ', 'This day has no exercises')}
+        />
         <View style={styles.emptyActions}>
-          <Button title="Завершити" onPress={finish} />
-          <Button title="Скасувати тренування" variant="ghost" onPress={discard} />
+          <Button title={tr('Завершити', 'Finish')} onPress={finish} />
+          <Button
+            title={tr('Скасувати тренування', 'Discard workout')}
+            variant="ghost"
+            onPress={discard}
+          />
         </View>
         {dialog.element}
       </View>
@@ -254,17 +268,22 @@ export function WorkoutPlayer({
   const skipExercise = () => {
     if (!currentSet) return goToNextExercise();
     dialog.show({
-      title: 'Пропустити вправу?',
-      message: `${current.exercise.name}: можна виконати пізніше або пропустити зовсім.`,
+      title: tr('Пропустити вправу?', 'Skip exercise?'),
+      message: tr(
+        `${current.exercise.name}: можна виконати пізніше або пропустити зовсім.`,
+        `${current.exercise.name}: do it later or skip it entirely.`,
+      ),
       icon: 'play-forward',
       buttons: [
-        { text: 'Виконати пізніше', onPress: goToNextExercise },
+        { text: tr('Виконати пізніше', 'Do it later'), onPress: goToNextExercise },
         {
-          text: 'Пропустити зовсім',
+          text: tr('Пропустити зовсім', 'Skip entirely'),
           style: 'destructive',
           onPress: async () => {
             const after = exercises.map((e) =>
-              e.id === current.id ? { ...e, sets: e.sets.filter((s) => s.completedAt !== null) } : e,
+              e.id === current.id
+                ? { ...e, sets: e.sets.filter((s) => s.completedAt !== null) }
+                : e,
             );
             await dropPendingSets(current.id);
             timer.stop();
@@ -272,7 +291,7 @@ export function WorkoutPlayer({
             if (nextIdx !== null) setCurrentId(exercises[nextIdx].id);
           },
         },
-        { text: 'Скасувати', style: 'cancel' },
+        { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
       ],
     });
   };
@@ -281,10 +300,9 @@ export function WorkoutPlayer({
   // done here, return to the exercise worked on before (else the one above).
   const lastDoneHere = current.sets
     .filter((s) => s.completedAt !== null)
-    .reduce<(typeof current.sets)[number] | null>(
-      (a, s) => (a && a.completedAt! > s.completedAt! ? a : s),
-      null,
-    );
+    .reduce<
+      (typeof current.sets)[number] | null
+    >((a, s) => (a && a.completedAt! > s.completedAt! ? a : s), null);
   let prevExerciseId: number | null = index > 0 ? exercises[index - 1].id : null;
   let latest = 0;
   for (const e of exercises) {
@@ -303,7 +321,9 @@ export function WorkoutPlayer({
   };
   const back = {
     icon: 'play-skip-back' as const,
-    label: lastDoneHere ? 'Попередній підхід' : 'Попередня вправа',
+    label: lastDoneHere
+      ? tr('Попередній підхід', 'Previous set')
+      : tr('Попередня вправа', 'Previous exercise'),
     onPress: goBackStep,
     disabled: !lastDoneHere && prevExerciseId === null,
   };
@@ -312,7 +332,11 @@ export function WorkoutPlayer({
   const pauseStop = {
     icon: paused ? ('play' as const) : ('pause' as const),
     holdIcon: 'stop' as const,
-    label: waiting ? 'Почати' : paused ? 'Продовжити' : 'Пауза',
+    label: waiting
+      ? tr('Почати', 'Start')
+      : paused
+        ? tr('Продовжити', 'Resume')
+        : tr('Пауза', 'Pause'),
     onPress: togglePause,
     onHold: finish,
   };
@@ -320,11 +344,13 @@ export function WorkoutPlayer({
     <>
       <Transport left={back} main={pauseStop} right={{ ...next, icon: 'play-skip-forward' }} />
       {/* Always laid out, only hidden, so pausing doesn't change the card's height. */}
-      <Text
-        variant="caption"
-        numberOfLines={1}
-        style={[styles.hint, !paused && styles.hidden]}>
-        {waiting ? 'Натисніть ▶, щоб почати тренування' : 'Утримуйте кнопку, щоб завершити тренування'}
+      <Text variant="caption" numberOfLines={1} style={[styles.hint, !paused && styles.hidden]}>
+        {waiting
+          ? tr('Натисніть ▶, щоб почати тренування', 'Tap ▶ to start the workout')
+          : tr(
+              'Утримуйте кнопку, щоб завершити тренування',
+              'Hold the button to finish the workout',
+            )}
       </Text>
     </>
   );
@@ -362,12 +388,12 @@ export function WorkoutPlayer({
 
   const undoSet = (setId: number, label: string) =>
     dialog.show({
-      title: 'Повернути підхід?',
-      message: `${label} — знову стане невиконаним.`,
+      title: tr('Повернути підхід?', 'Undo set?'),
+      message: tr(`${label} — знову стане невиконаним.`, `${label} will be marked as not done.`),
       icon: 'arrow-undo',
       buttons: [
-        { text: 'Ні', style: 'cancel' },
-        { text: 'Повернути', onPress: () => setCompleted(setId, false) },
+        { text: tr('Ні', 'No'), style: 'cancel' },
+        { text: tr('Повернути', 'Undo'), onPress: () => setCompleted(setId, false) },
       ],
     });
 
@@ -393,7 +419,7 @@ export function WorkoutPlayer({
           </Text>
         )}
         <Text variant="caption" style={styles.subtle}>
-          {doneSets} / {allSets.length} підх.
+          {doneSets} / {allSets.length} {tr('підх.', 'sets')}
         </Text>
       </Row>
     </>
@@ -412,24 +438,25 @@ export function WorkoutPlayer({
     body = (
       <>
         <Text variant="caption" style={[styles.overline, styles.centered]}>
-          {pausedTag}ВІДПОЧИНОК
+          {pausedTag}
+          {tr('ВІДПОЧИНОК', 'REST')}
         </Text>
         <Text variant="title" style={[styles.title, styles.centered]} numberOfLines={2}>
           {current.exercise.name}
         </Text>
         <Text variant="caption" style={[styles.subtle, styles.centered]} numberOfLines={1}>
-          Підхід {setNumber} з {current.sets.length}
-          {target ? ` · ціль ${target}` : ''}
+          {tr('Підхід', 'Set')} {setNumber} {tr('з', 'of')} {current.sets.length}
+          {target ? ` · ${tr('ціль', 'target')} ${target}` : ''}
         </Text>
         <View style={styles.restRing}>
           <RestRing remainingSec={timer.remainingSec} totalSec={timer.totalSec} />
         </View>
-        {transport({ label: 'Пропустити відпочинок', onPress: timer.stop })}
+        {transport({ label: tr('Пропустити відпочинок', 'Skip rest'), onPress: timer.stop })}
         <Pressable
           onPress={() => timer.extend(15)}
           style={({ pressed }) => [styles.extend, pressed && styles.pressed]}>
           <Text variant="caption" style={styles.extendText}>
-            +15 с
+            +15 {tr('с', 's')}
           </Text>
         </Pressable>
       </>
@@ -440,19 +467,19 @@ export function WorkoutPlayer({
         <Text variant="caption" style={styles.overline} numberOfLines={1}>
           {pausedTag}
           {currentSet
-            ? `Підхід ${setNumber} з ${current.sets.length}`
+            ? `${tr('Підхід', 'Set')} ${setNumber} ${tr('з', 'of')} ${current.sets.length}`
             : current.sets.length > 0
-              ? 'Вправу виконано'
-              : 'Вправу пропущено'} · Вправа{' '}
-          {index + 1} з {exercises.length}
+              ? tr('Вправу виконано', 'Exercise done')
+              : tr('Вправу пропущено', 'Exercise skipped')}{' '}
+          · {tr('Вправа', 'Exercise')} {index + 1} {tr('з', 'of')} {exercises.length}
         </Text>
         <Text variant="title" style={styles.title} numberOfLines={2}>
           {current.exercise.name}
         </Text>
         <Text variant="caption" style={styles.subtle} numberOfLines={2}>
-          Ціль: {formatTargets(current)}
+          {tr('Ціль', 'Target')}: {formatTargets(current)}
           {!currentSet && extra.last
-            ? `\nМинулого разу: ${extra.last.sets.map((s) => formatSet(type, s)).join(', ')}`
+            ? `\n${tr('Минулого разу', 'Last time')}: ${extra.last.sets.map((s) => formatSet(type, s)).join(', ')}`
             : ''}
         </Text>
 
@@ -465,7 +492,9 @@ export function WorkoutPlayer({
                 <Pressable
                   key={s.id}
                   disabled={!done}
-                  onPress={() => undoSet(s.id, `Підхід ${i + 1}: ${formatSet(type, s)}`)}
+                  onPress={() =>
+                    undoSet(s.id, `${tr('Підхід', 'Set')} ${i + 1}: ${formatSet(type, s)}`)
+                  }
                   style={[styles.chip, done && styles.chipDone, isCurrent && styles.chipCurrent]}>
                   {s.id === prSetId && (
                     <Ionicons name="trophy" size={11} color={colors.accentText} />
@@ -489,7 +518,7 @@ export function WorkoutPlayer({
                 {progressBar}
                 {/* Next completes the set; after the last one it moves to the next exercise. */}
                 {transport({
-                  label: 'Наступний підхід',
+                  label: tr('Наступний підхід', 'Next set'),
                   onPress: () => completeSet(values()),
                   disabled: paused,
                 })}
@@ -500,13 +529,24 @@ export function WorkoutPlayer({
           <>
             {progressBar}
             {transport({
-              label: 'Наступна вправа',
+              label: tr('Наступна вправа', 'Next exercise'),
               onPress: goToNextExercise,
               disabled: !canSkipExercise,
             })}
             <View style={styles.actions}>
-              <PillButton label="Ще підхід" icon="add" onPress={() => addSet(current.id, false)} />
-              {workoutDone && <PillButton label="Завершити" icon="flag" primary onPress={finish} />}
+              <PillButton
+                label={tr('Ще підхід', 'Add set')}
+                icon="add"
+                onPress={() => addSet(current.id, false)}
+              />
+              {workoutDone && (
+                <PillButton
+                  label={tr('Завершити', 'Finish')}
+                  icon="flag"
+                  primary
+                  onPress={finish}
+                />
+              )}
             </View>
           </>
         )}
@@ -539,7 +579,7 @@ export function WorkoutPlayer({
         {!showVideo && lastSame && (
           <Glass tint="rgba(0,0,0,0.55)" style={styles.last}>
             <Text variant="caption" style={styles.lastLabel}>
-              МИНУЛОГО РАЗУ
+              {tr('МИНУЛОГО РАЗУ', 'LAST TIME')}
             </Text>
             <Text variant="body" style={styles.lastValue} numberOfLines={1}>
               {formatLastSet(type, lastSame)}
@@ -586,13 +626,17 @@ export function WorkoutPlayer({
               <Pressable
                 onPress={skipExercise}
                 hitSlop={6}
-                accessibilityLabel="Пропустити вправу"
+                accessibilityLabel={tr('Пропустити вправу', 'Skip exercise')}
                 style={({ pressed }) => [styles.skipExercise, pressed && styles.pressed]}>
                 <Ionicons name="play-forward" size={16} color={colors.text} />
               </Pressable>
             )}
             {/* Rest and exercise views share one height, so switching between them doesn't jump. */}
-            <View style={{ minHeight: bodyMinHeight, justifyContent: resting ? 'center' : 'flex-start' }}>
+            <View
+              style={{
+                minHeight: bodyMinHeight,
+                justifyContent: resting ? 'center' : 'flex-start',
+              }}>
               <View onLayout={(e) => measureBody(resting, e.nativeEvent.layout.height)}>
                 {body}
               </View>
@@ -601,7 +645,7 @@ export function WorkoutPlayer({
         }>
         {queue.length > 0 && (
           <SheetItem progress={sheetProgress} index={0}>
-            <SectionHeader title={`Далі · ${queue.length}`} />
+            <SectionHeader title={`${tr('Далі', 'Up next')} · ${queue.length}`} />
           </SheetItem>
         )}
         {queue.map((we, i) => {
@@ -625,12 +669,12 @@ export function WorkoutPlayer({
                   </Text>
                   <Text variant="muted" numberOfLines={1}>
                     {done && we.sets.length === 0
-                      ? 'Пропущено'
+                      ? tr('Пропущено', 'Skipped')
                       : done
-                      ? bodyKg !== null
-                        ? `Виконано · ${formatKcal(exerciseKcal(we.exercise.trackingType, we.sets, we.restSec, bodyKg))}`
-                        : 'Виконано'
-                      : formatTargets(we)}
+                        ? bodyKg !== null
+                          ? `${tr('Виконано', 'Done')} · ${formatKcal(exerciseKcal(we.exercise.trackingType, we.sets, we.restSec, bodyKg))}`
+                          : tr('Виконано', 'Done')
+                        : formatTargets(we)}
                   </Text>
                 </View>
                 {done && (
@@ -646,7 +690,11 @@ export function WorkoutPlayer({
         })}
 
         <SheetItem progress={sheetProgress} index={queue.length + 1}>
-          <Button title="Скасувати тренування" variant="ghost" onPress={discard} />
+          <Button
+            title={tr('Скасувати тренування', 'Discard workout')}
+            variant="ghost"
+            onPress={discard}
+          />
         </SheetItem>
       </PlayerSheet>
       {dialog.element}

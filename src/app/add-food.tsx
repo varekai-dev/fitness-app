@@ -22,6 +22,7 @@ import type { Food } from '@/db/schema';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { amountUnit, formatGrams, formatKcal, normalizeDish, scaleNutrition } from '@/lib/food';
 import { GroqError } from '@/lib/groq';
+import { tr } from '@/lib/i18n';
 import { MEAL_LABELS, MEALS, mealAt, type Meal } from '@/lib/meals';
 import { parseDecimal } from '@/lib/metrics';
 import { addDays, startOfDay } from '@/lib/water';
@@ -79,13 +80,16 @@ export default function AddFoodScreen() {
     } catch (e) {
       const noKey = e instanceof GroqError && (e.kind === 'no-key' || e.kind === 'auth');
       dialog.show({
-        title: 'Не вдалося порахувати',
+        title: tr('Не вдалося порахувати', 'Couldn’t calculate'),
         message: (e as Error).message,
         icon: 'alert-circle',
         buttons: noKey
           ? [
-              { text: 'Скасувати', style: 'cancel' },
-              { text: 'Налаштування', onPress: () => router.push('/settings/integrations') },
+              { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
+              {
+                text: tr('Налаштування', 'Settings'),
+                onPress: () => router.push('/settings/integrations'),
+              },
             ]
           : undefined,
       });
@@ -112,11 +116,18 @@ export default function AddFoodScreen() {
   // Removes the dish from the cache only; meals already logged keep their values.
   const forget = (food: Food) =>
     dialog.show({
-      title: 'Прибрати з нещодавніх?',
-      message: `«${food.name}» зникне зі списку й підказок. Записи в журналі залишаться, а наступного разу страву порахує AI.`,
+      title: tr('Прибрати з нещодавніх?', 'Remove from recent?'),
+      message: tr(
+        `«${food.name}» зникне зі списку й підказок. Записи в журналі залишаться, а наступного разу страву порахує AI.`,
+        `“${food.name}” will disappear from the list and suggestions. Log entries stay, and next time AI will calculate the dish.`,
+      ),
       buttons: [
-        { text: 'Скасувати', style: 'cancel' },
-        { text: 'Прибрати', style: 'destructive', onPress: () => deleteFood(food.id) },
+        { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
+        {
+          text: tr('Прибрати', 'Remove'),
+          style: 'destructive',
+          onPress: () => deleteFood(food.id),
+        },
       ],
     });
 
@@ -140,7 +151,10 @@ export default function AddFoodScreen() {
             <Field
               value={input}
               onChangeText={setInput}
-              placeholder="Що з’їв чи випив? Напр. «2 яйця і тост з маслом»"
+              placeholder={tr(
+                'Що з’їв чи випив? Напр. «2 яйця і тост з маслом»',
+                'What did you eat or drink? E.g. “2 eggs and buttered toast”',
+              )}
               multiline
               autoFocus
               editable={!looking}
@@ -154,11 +168,13 @@ export default function AddFoodScreen() {
                 <Text variant="body" style={styles.flex} numberOfLines={1}>
                   {f.name}
                 </Text>
-                <Text variant="muted">{formatKcal(f.kcal)} ккал</Text>
+                <Text variant="muted">
+                  {formatKcal(f.kcal)} {tr('ккал', 'kcal')}
+                </Text>
               </Pressable>
             ))}
             <Button
-              title={looking ? 'Рахую…' : 'Порахувати'}
+              title={looking ? tr('Рахую…', 'Calculating…') : tr('Порахувати', 'Calculate')}
               icon="sparkles"
               onPress={() => lookup(input)}
               loading={looking}
@@ -167,7 +183,7 @@ export default function AddFoodScreen() {
           </Card>
           {recent.length > 0 && (
             <>
-              <Text variant="caption">Нещодавні</Text>
+              <Text variant="caption">{tr('Нещодавні', 'Recent')}</Text>
               <View style={styles.recentList}>
                 {recent.map((f) => (
                   <RecentChip
@@ -219,26 +235,31 @@ function PendingCard({
         <View style={styles.flex}>
           <Text variant="heading">{food.name}</Text>
           <Text variant="muted">
-            {cached ? 'Зазвичай' : 'Оцінка AI'}: {formatGrams(food.portionG ?? 100)} {unit} ·{' '}
-            {formatKcal(per100.kcal)} ккал / 100 {unit}
+            {cached ? tr('Зазвичай', 'Usually') : tr('Оцінка AI', 'AI estimate')}:{' '}
+            {formatGrams(food.portionG ?? 100)} {unit} · {formatKcal(per100.kcal)}{' '}
+            {tr('ккал', 'kcal')} / 100 {unit}
           </Text>
         </View>
-        <Badge label={cached ? 'З бази' : 'AI'} tone={cached ? 'muted' : 'accent'} />
+        <Badge label={cached ? tr('З бази', 'Saved') : 'AI'} tone={cached ? 'muted' : 'accent'} />
       </Row>
       <Text style={styles.pendingKcal}>
         {formatKcal(scaled.kcal)}
-        <Text style={styles.unit}> ккал</Text>
+        <Text style={styles.unit}> {tr('ккал', 'kcal')}</Text>
       </Text>
       <MacroRow macros={scaled} />
       {(scaled.fiberG !== null || scaled.sugarG !== null) && (
         <Text variant="muted">
-          {scaled.fiberG !== null ? `Клітковина ${formatGrams(scaled.fiberG)} г` : ''}
+          {scaled.fiberG !== null
+            ? `${tr('Клітковина', 'Fiber')} ${formatGrams(scaled.fiberG)} ${tr('г', 'g')}`
+            : ''}
           {scaled.fiberG !== null && scaled.sugarG !== null ? ' · ' : ''}
-          {scaled.sugarG !== null ? `Цукор ${formatGrams(scaled.sugarG)} г` : ''}
+          {scaled.sugarG !== null
+            ? `${tr('Цукор', 'Sugar')} ${formatGrams(scaled.sugarG)} ${tr('г', 'g')}`
+            : ''}
         </Text>
       )}
       <Row style={styles.spaceBetween}>
-        <Text variant="body">Кількість</Text>
+        <Text variant="body">{tr('Кількість', 'Amount')}</Text>
         <Row style={styles.units}>
           {[false, true].map((drink) => (
             <Pressable
@@ -283,8 +304,19 @@ function PendingCard({
         />
       </Row>
       <Row>
-        <Button title="Скасувати" variant="secondary" onPress={onCancel} style={styles.flex} />
-        <Button title="Додати" icon="add" onPress={onAdd} disabled={!amount} style={styles.flex} />
+        <Button
+          title={tr('Скасувати', 'Cancel')}
+          variant="secondary"
+          onPress={onCancel}
+          style={styles.flex}
+        />
+        <Button
+          title={tr('Додати', 'Add')}
+          icon="add"
+          onPress={onAdd}
+          disabled={!amount}
+          style={styles.flex}
+        />
       </Row>
     </Card>
   );
@@ -313,7 +345,10 @@ function RecentChip({
       <Pressable
         onPress={onRemove}
         hitSlop={8}
-        accessibilityLabel={`Прибрати «${food.name}» з нещодавніх`}
+        accessibilityLabel={tr(
+          `Прибрати «${food.name}» з нещодавніх`,
+          `Remove “${food.name}” from recent`,
+        )}
         style={({ pressed }) => [styles.recentRemove, pressed && styles.pressed]}>
         <Ionicons name="close" size={14} color={colors.textMuted} />
       </Pressable>

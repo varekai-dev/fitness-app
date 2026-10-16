@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 
 import { getDayWindow, getWaterReminders } from '@/db/reminders';
 import { loadWater } from '@/db/water';
+import { tr } from '@/lib/i18n';
 import { planWaterReminders } from '@/lib/reminders';
 
 /**
@@ -49,7 +50,7 @@ async function ensureChannels(N: typeof NotificationsModule) {
   if (Platform.OS !== 'android') return false;
   try {
     await N.setNotificationChannelAsync(WATER_CHANNEL, {
-      name: 'Нагадування про воду',
+      name: tr('Нагадування про воду', 'Water reminders'),
       importance: N.AndroidImportance.HIGH,
     });
     return true;

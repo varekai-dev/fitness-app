@@ -12,12 +12,13 @@ import { deleteFoodEntry, loadFood } from '@/db/food';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { useToday } from '@/hooks/use-today';
 import { formatGrams, formatKcal } from '@/lib/food';
+import { locale, tr } from '@/lib/i18n';
 import { formatLongDate, WEEKDAY_SHORT, weekdayIndex } from '@/lib/labels';
 import { MEAL_ICONS, MEAL_LABELS, MEALS, mealOf } from '@/lib/meals';
 import { addDays } from '@/lib/water';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
-const timeFormatter = new Intl.DateTimeFormat('uk-UA', { hour: '2-digit', minute: '2-digit' });
+const timeFormatter = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' });
 const CHART_HEIGHT = 100;
 
 export default function FoodScreen() {
@@ -35,11 +36,15 @@ export default function FoodScreen() {
 
   const remove = (id: number, label: string, close: () => void) =>
     dialog.show({
-      title: 'Видалити запис?',
+      title: tr('Видалити запис?', 'Delete entry?'),
       message: label,
       buttons: [
-        { text: 'Скасувати', style: 'cancel', onPress: close },
-        { text: 'Видалити', style: 'destructive', onPress: () => deleteFoodEntry(id) },
+        { text: tr('Скасувати', 'Cancel'), style: 'cancel', onPress: close },
+        {
+          text: tr('Видалити', 'Delete'),
+          style: 'destructive',
+          onPress: () => deleteFoodEntry(id),
+        },
       ],
     });
 
@@ -47,7 +52,7 @@ export default function FoodScreen() {
 
   return (
     <Screen
-      title="Харчування"
+      title={tr('Харчування', 'Food')}
       mode="root"
       bottomSpace={tabBarSpace}
       headerRight={
@@ -56,12 +61,15 @@ export default function FoodScreen() {
       <Card style={styles.hero} onPress={() => router.push('/settings/food')}>
         <Text style={styles.amount}>
           {formatKcal(totals.kcal)}
-          <Text style={styles.unit}> ккал</Text>
+          <Text style={styles.unit}> {tr('ккал', 'kcal')}</Text>
         </Text>
         <Text variant="muted">
           {left >= 0
-            ? `ще ${formatKcal(left)} з ${formatKcal(goal)}`
-            : `понад ціль на ${formatKcal(-left)}`}
+            ? tr(
+                `ще ${formatKcal(left)} з ${formatKcal(goal)}`,
+                `${formatKcal(left)} of ${formatKcal(goal)} left`,
+              )
+            : tr(`понад ціль на ${formatKcal(-left)}`, `${formatKcal(-left)} over goal`)}
         </Text>
         <View style={styles.track}>
           <View
@@ -78,7 +86,9 @@ export default function FoodScreen() {
       <Row style={styles.dayNav}>
         <CircleButton icon="chevron-back" size={36} onPress={() => setDaysAgo(daysAgo + 1)} />
         <View style={styles.dayTitle}>
-          <Text variant="heading">{daysAgo === 0 ? 'Сьогодні' : formatLongDate(day)}</Text>
+          <Text variant="heading">
+            {daysAgo === 0 ? tr('Сьогодні', 'Today') : formatLongDate(day)}
+          </Text>
         </View>
         <CircleButton
           icon="chevron-forward"
@@ -100,15 +110,19 @@ export default function FoodScreen() {
               <View style={styles.flex}>
                 <Text variant="heading">{MEAL_LABELS[meal]}</Text>
                 <Text variant="muted">
-                  {entries.length > 0 ? `${formatKcal(kcal)} ккал` : 'Ще нічого'}
+                  {entries.length > 0
+                    ? `${formatKcal(kcal)} ${tr('ккал', 'kcal')}`
+                    : tr('Ще нічого', 'Nothing yet')}
                 </Text>
               </View>
               <Button
-                title="Додати"
+                title={tr('Додати', 'Add')}
                 icon="add"
                 variant="primary"
                 small
-                onPress={() => router.push({ pathname: '/add-food', params: { meal, day: String(day) } })}
+                onPress={() =>
+                  router.push({ pathname: '/add-food', params: { meal, day: String(day) } })
+                }
               />
             </Row>
             {entries.map((e) => {
@@ -128,11 +142,13 @@ export default function FoodScreen() {
                           {e.portion ? ` · ${e.portion}` : ''}
                         </Text>
                       </View>
-                      <Text variant="heading">{formatKcal(e.kcal)} ккал</Text>
+                      <Text variant="heading">
+                        {formatKcal(e.kcal)} {tr('ккал', 'kcal')}
+                      </Text>
                     </Row>
                     <Text variant="caption">
-                      Б {formatGrams(e.proteinG)} · Ж {formatGrams(e.fatG)} · В{' '}
-                      {formatGrams(e.carbsG)} г
+                      {tr('Б', 'P')} {formatGrams(e.proteinG)} · {tr('Ж', 'F')}{' '}
+                      {formatGrams(e.fatG)} · {tr('В', 'C')} {formatGrams(e.carbsG)} {tr('г', 'g')}
                     </Text>
                   </View>
                 </SwipeToDelete>
@@ -143,7 +159,7 @@ export default function FoodScreen() {
       })}
 
       <Card>
-        <Text variant="caption">Останні 7 днів</Text>
+        <Text variant="caption">{tr('Останні 7 днів', 'Last 7 days')}</Text>
         <View style={styles.chart}>
           {days.map((d) => (
             <Pressable

@@ -1,12 +1,13 @@
 import type { IconName } from '@/components/ui';
 import { MEALS, type Meal } from '@/db/schema';
+import { tr } from '@/lib/i18n';
 
 export { MEALS, type Meal };
 
 export const MEAL_LABELS: Record<Meal, string> = {
-  breakfast: 'Сніданок',
-  lunch: 'Обід',
-  dinner: 'Вечеря',
+  breakfast: tr('Сніданок', 'Breakfast'),
+  lunch: tr('Обід', 'Lunch'),
+  dinner: tr('Вечеря', 'Dinner'),
 };
 
 export const MEAL_ICONS: Record<Meal, IconName> = {

@@ -8,6 +8,7 @@ import { getDayWindow, getWaterReminders, setDayWindow, setWaterReminders } from
 import { loadWater } from '@/db/water';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { useNow } from '@/hooks/use-now';
+import { tr } from '@/lib/i18n';
 import { getNotificationPermission, requestNotificationPermission } from '@/lib/notifications';
 import {
   DAY_WINDOW_STEP_MIN,
@@ -62,7 +63,11 @@ function TimeStepper({
 }
 
 const dayLabel = (at: number, today: number) =>
-  at < addDays(today, 1) ? 'сьогодні' : at < addDays(today, 2) ? 'завтра' : 'пізніше';
+  at < addDays(today, 1)
+    ? tr('сьогодні', 'today')
+    : at < addDays(today, 2)
+      ? tr('завтра', 'tomorrow')
+      : tr('пізніше', 'later');
 
 const clockOf = (at: number) => {
   const d = new Date(at);
@@ -96,12 +101,18 @@ export default function NotificationsScreen() {
   const toggle = async (enabled: boolean) => {
     if (enabled && !(await requestNotificationPermission())) {
       dialog.show({
-        title: 'Сповіщення вимкнені',
-        message: 'Дозволь сповіщення для застосунку в налаштуваннях телефону.',
+        title: tr('Сповіщення вимкнені', 'Notifications are off'),
+        message: tr(
+          'Дозволь сповіщення для застосунку в налаштуваннях телефону.',
+          'Allow notifications for the app in your phone settings.',
+        ),
         icon: 'notifications-off-outline',
         buttons: [
-          { text: 'Скасувати', style: 'cancel' },
-          { text: 'Відкрити налаштування', onPress: () => Linking.openSettings() },
+          { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
+          {
+            text: tr('Відкрити налаштування', 'Open settings'),
+            onPress: () => Linking.openSettings(),
+          },
         ],
       });
       return;
@@ -111,26 +122,29 @@ export default function NotificationsScreen() {
   };
 
   return (
-    <Screen title="Сповіщення">
+    <Screen title={tr('Сповіщення', 'Notifications')}>
       <Card>
         <Row>
           <Ionicons name="sunny-outline" size={20} color={colors.accent} />
-          <Text variant="heading">Мій день</Text>
+          <Text variant="heading">{tr('Мій день', 'My day')}</Text>
         </Row>
         <Text variant="muted">
-          Нагадування приходять лише в ці години ({hours}). До кінця дня має бути випита вся норма.
+          {tr(
+            `Нагадування приходять лише в ці години (${hours}). До кінця дня має бути випита вся норма.`,
+            `Reminders come only during these hours (${hours}). The whole goal should be drunk by the end of the day.`,
+          )}
         </Text>
         <TimeStepper
-          title="Початок"
-          hint="Підйом"
+          title={tr('Початок', 'Start')}
+          hint={tr('Підйом', 'Wake up')}
           value={dayWindow.startMin}
           min={0}
           max={dayWindow.endMin - MIN_DAY_LENGTH_MIN}
           onChange={(startMin) => setDayWindow({ ...dayWindow, startMin })}
         />
         <TimeStepper
-          title="Кінець"
-          hint="Відбій"
+          title={tr('Кінець', 'End')}
+          hint={tr('Відбій', 'Bedtime')}
           value={dayWindow.endMin}
           min={dayWindow.startMin + MIN_DAY_LENGTH_MIN}
           max={LAST_DAY_MIN}
@@ -142,7 +156,7 @@ export default function NotificationsScreen() {
         <Row style={styles.spaceBetween}>
           <Row style={styles.flex}>
             <Ionicons name="water-outline" size={20} color={colors.accent} />
-            <Text variant="heading">Нагадування пити воду</Text>
+            <Text variant="heading">{tr('Нагадування пити воду', 'Water reminders')}</Text>
           </Row>
           <Switch
             value={water.enabled}
@@ -152,12 +166,14 @@ export default function NotificationsScreen() {
           />
         </Row>
         <Text variant="muted">
-          Перевіряємо, чи випито стільки, скільки треба на цю годину, щоб дійти до {formatMl(goal)}{' '}
-          мл. Якщо ні — нагадаємо.
+          {tr(
+            `Перевіряємо, чи випито стільки, скільки треба на цю годину, щоб дійти до ${formatMl(goal)} мл. Якщо ні — нагадаємо.`,
+            `We check whether you’ve drunk enough by this hour to reach ${formatMl(goal)} ml. If not, we’ll remind you.`,
+          )}
         </Text>
         {water.enabled && (
           <>
-            <Text variant="caption">Перевіряти кожні</Text>
+            <Text variant="caption">{tr('Перевіряти кожні', 'Check every')}</Text>
             <View style={styles.chips}>
               {REMINDER_INTERVALS_MIN.map((m) => (
                 <Chip
@@ -173,15 +189,20 @@ export default function NotificationsScreen() {
             </View>
             {!permitted ? (
               <Button
-                title="Сповіщення заборонені — відкрити налаштування"
+                title={tr(
+                  'Сповіщення заборонені — відкрити налаштування',
+                  'Notifications blocked: open settings',
+                )}
                 variant="danger"
                 small
                 onPress={() => Linking.openSettings()}
               />
             ) : next ? (
               <Text variant="secondary">
-                Наступне нагадування {dayLabel(next.at, today)} о {clockOf(next.at)}, якщо не
-                доп’єш.
+                {tr(
+                  `Наступне нагадування ${dayLabel(next.at, today)} о ${clockOf(next.at)}, якщо не доп’єш.`,
+                  `Next reminder ${dayLabel(next.at, today)} at ${clockOf(next.at)} if you’re behind.`,
+                )}
               </Text>
             ) : null}
           </>

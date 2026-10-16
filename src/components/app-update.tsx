@@ -5,6 +5,7 @@ import * as Updates from 'expo-updates';
 import { useEffect } from 'react';
 
 import { Button, Card, Row, Text } from '@/components/ui';
+import { tr } from '@/lib/i18n';
 import { colors } from '@/theme';
 
 /** Over-the-air updates only work in release builds, not in Expo Go or a dev server. */
@@ -15,8 +16,14 @@ const updatesAvailable = Updates.isEnabled && !__DEV__;
  * Updates are never downloaded on their own (`checkAutomatically: NEVER`), only from here.
  */
 export function AppUpdateCard() {
-  const { isChecking, isDownloading, isUpdateAvailable, isUpdatePending, checkError, downloadError } =
-    Updates.useUpdates();
+  const {
+    isChecking,
+    isDownloading,
+    isUpdateAvailable,
+    isUpdatePending,
+    checkError,
+    downloadError,
+  } = Updates.useUpdates();
 
   useEffect(() => {
     if (updatesAvailable) Updates.checkForUpdateAsync().catch(() => {});
@@ -33,30 +40,38 @@ export function AppUpdateCard() {
   };
 
   const status = !updatesAvailable
-    ? 'Оновлення працюють лише в зібраному застосунку'
+    ? tr('Оновлення працюють лише в зібраному застосунку', 'Updates work only in a built app')
     : isChecking
-      ? 'Перевіряю оновлення…'
+      ? tr('Перевіряю оновлення…', 'Checking for updates…')
       : checkError
-        ? 'Не вдалося перевірити оновлення'
+        ? tr('Не вдалося перевірити оновлення', 'Couldn’t check for updates')
         : downloadError
-          ? 'Не вдалося завантажити оновлення'
+          ? tr('Не вдалося завантажити оновлення', 'Couldn’t download the update')
           : isUpdateAvailable || isUpdatePending
-            ? 'Доступна нова версія'
-            : 'У тебе остання версія';
+            ? tr('Доступна нова версія', 'A new version is available')
+            : tr('У тебе остання версія', 'You’re on the latest version');
 
   return (
     <Card>
       <Row>
         <Ionicons name="cloud-download-outline" size={20} color={colors.accent} />
-        <Text variant="heading">Версія {Constants.expoConfig?.version}</Text>
+        <Text variant="heading">
+          {tr('Версія', 'Version')} {Constants.expoConfig?.version}
+        </Text>
       </Row>
       <Text variant="muted">{status}</Text>
       {updatesAvailable &&
         (isUpdateAvailable || isUpdatePending ? (
-          <Button title="Оновити" icon="refresh" small loading={isDownloading} onPress={install} />
+          <Button
+            title={tr('Оновити', 'Update')}
+            icon="refresh"
+            small
+            loading={isDownloading}
+            onPress={install}
+          />
         ) : (
           <Button
-            title="Перевірити"
+            title={tr('Перевірити', 'Check')}
             variant="secondary"
             small
             loading={isChecking}

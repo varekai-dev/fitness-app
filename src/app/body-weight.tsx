@@ -17,6 +17,7 @@ import {
 } from '@/components/ui';
 import { deleteBodyWeight, listBodyWeights, saveBodyWeight } from '@/db/body-weight';
 import { useDbQuery } from '@/hooks/use-db-query';
+import { tr } from '@/lib/i18n';
 import { formatDate, formatShortDate, formatWeightDelta } from '@/lib/labels';
 import { formatNumber, parseDecimal } from '@/lib/metrics';
 import { spacing } from '@/theme';
@@ -43,11 +44,15 @@ export default function BodyWeightScreen() {
 
   const remove = (id: number, label: string) =>
     dialog.show({
-      title: 'Видалити запис?',
+      title: tr('Видалити запис?', 'Delete entry?'),
       message: label,
       buttons: [
-        { text: 'Скасувати', style: 'cancel' },
-        { text: 'Видалити', style: 'destructive', onPress: () => deleteBodyWeight(id) },
+        { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
+        {
+          text: tr('Видалити', 'Delete'),
+          style: 'destructive',
+          onPress: () => deleteBodyWeight(id),
+        },
       ],
     });
 
@@ -57,9 +62,9 @@ export default function BodyWeightScreen() {
   const first = data[0];
 
   return (
-    <Screen title="Вага тіла">
+    <Screen title={tr('Вага тіла', 'Body weight')}>
       <Card>
-        <Text variant="caption">Сьогоднішня вага, кг</Text>
+        <Text variant="caption">{tr('Сьогоднішня вага, кг', 'Today’s weight, kg')}</Text>
         <Row style={styles.entry}>
           <Field
             value={value}
@@ -71,16 +76,29 @@ export default function BodyWeightScreen() {
             onSubmitEditing={save}
             containerStyle={styles.flex}
           />
-          <Button title="Зберегти" icon="checkmark" disabled={!valid} onPress={save} />
+          <Button
+            title={tr('Зберегти', 'Save')}
+            icon="checkmark"
+            disabled={!valid}
+            onPress={save}
+          />
         </Row>
-        <Text variant="muted">Повторне зважування того ж дня замінить запис.</Text>
+        <Text variant="muted">
+          {tr(
+            'Повторне зважування того ж дня замінить запис.',
+            'Weighing in again on the same day replaces the entry.',
+          )}
+        </Text>
       </Card>
 
       {data.length === 0 ? (
         <EmptyState
           icon="scale-outline"
-          title="Ще немає записів"
-          hint="Додай вагу, і тут з’явиться графік."
+          title={tr('Ще немає записів', 'No entries yet')}
+          hint={tr(
+            'Додай вагу, і тут з’явиться графік.',
+            'Add your weight and a chart appears here.',
+          )}
         />
       ) : (
         <>
@@ -88,30 +106,33 @@ export default function BodyWeightScreen() {
             <StatTile
               icon="scale-outline"
               value={formatNumber(latest!.weightKg, 1)}
-              unit="кг"
-              label="Зараз"
+              unit={tr('кг', 'kg')}
+              label={tr('Зараз', 'Now')}
             />
             <StatTile
               icon="calendar"
               value={formatWeightDelta(latest!.weightKg - monthStart!.weightKg)}
-              unit="кг"
-              label="За 30 днів"
+              unit={tr('кг', 'kg')}
+              label={tr('За 30 днів', '30 days')}
             />
             <StatTile
               icon="trending-up"
               value={formatWeightDelta(latest!.weightKg - first.weightKg)}
-              unit="кг"
-              label="Від початку"
+              unit={tr('кг', 'kg')}
+              label={tr('Від початку', 'Since start')}
             />
           </Row>
 
           {data.length === 1 ? (
             <Text variant="muted" style={styles.chartHint}>
-              Графік з’явиться після зважування в інший день.
+              {tr(
+                'Графік з’явиться після зважування в інший день.',
+                'The chart appears after a weigh-in on another day.',
+              )}
             </Text>
           ) : (
             <Card>
-              <Text variant="caption">Вага, кг</Text>
+              <Text variant="caption">{tr('Вага, кг', 'Weight, kg')}</Text>
               <LineChart
                 points={data.map((w) => ({ x: w.measuredAt, y: w.weightKg }))}
                 formatY={(v) => formatNumber(v, 1)}
@@ -120,19 +141,21 @@ export default function BodyWeightScreen() {
             </Card>
           )}
 
-          <SectionHeader title="Записи" />
+          <SectionHeader title={tr('Записи', 'Entries')} />
           {[...data].reverse().map((w, i, list) => {
             const prev = list[i + 1];
-            const label = `${formatDate(w.measuredAt)} · ${formatNumber(w.weightKg, 1)} кг`;
+            const label = `${formatDate(w.measuredAt)} · ${formatNumber(w.weightKg, 1)} ${tr('кг', 'kg')}`;
             return (
               <Card key={w.id} onPress={() => remove(w.id, label)}>
                 <Row style={styles.spaceBetween}>
                   <Text variant="body">{formatDate(w.measuredAt)}</Text>
                   <View style={styles.entryValue}>
-                    <Text variant="heading">{formatNumber(w.weightKg, 1)} кг</Text>
+                    <Text variant="heading">
+                      {formatNumber(w.weightKg, 1)} {tr('кг', 'kg')}
+                    </Text>
                     {prev && (
                       <Text variant="muted">
-                        {formatWeightDelta(w.weightKg - prev.weightKg)} кг
+                        {formatWeightDelta(w.weightKg - prev.weightKg)} {tr('кг', 'kg')}
                       </Text>
                     )}
                   </View>

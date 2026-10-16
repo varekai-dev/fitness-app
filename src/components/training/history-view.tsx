@@ -12,6 +12,7 @@ import { deleteWorkout, listFinishedWorkouts } from '@/db/workouts';
 import { estimateKcal } from '@/lib/calories';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { useToday } from '@/hooks/use-today';
+import { tr } from '@/lib/i18n';
 import { spacing } from '@/theme';
 
 type Workout = Awaited<ReturnType<typeof listFinishedWorkouts>>[number];
@@ -46,24 +47,27 @@ export function HistoryView({ bottomSpace }: { bottomSpace: number }) {
     dialog.show(
       item.kind === 'workout'
         ? {
-            title: 'Видалити тренування?',
-            message: 'Усі записані підходи буде видалено.',
+            title: tr('Видалити тренування?', 'Delete workout?'),
+            message: tr('Усі записані підходи буде видалено.', 'All logged sets will be deleted.'),
             buttons: [
-              { text: 'Ні', style: 'cancel', onPress: close },
+              { text: tr('Ні', 'No'), style: 'cancel', onPress: close },
               {
-                text: 'Видалити',
+                text: tr('Видалити', 'Delete'),
                 style: 'destructive',
                 onPress: () => deleteWorkout(item.workout.id),
               },
             ],
           }
         : {
-            title: 'Прибрати з історії?',
-            message: 'Запис залишиться в застосунку здоров’я, але сюди більше не потрапить.',
+            title: tr('Прибрати з історії?', 'Remove from history?'),
+            message: tr(
+              'Запис залишиться в застосунку здоров’я, але сюди більше не потрапить.',
+              'The record stays in the health app but won’t come back here.',
+            ),
             buttons: [
-              { text: 'Ні', style: 'cancel', onPress: close },
+              { text: tr('Ні', 'No'), style: 'cancel', onPress: close },
               {
-                text: 'Прибрати',
+                text: tr('Прибрати', 'Remove'),
                 style: 'destructive',
                 onPress: () => hideActivity(item.activity.id),
               },
@@ -77,10 +81,7 @@ export function HistoryView({ bottomSpace }: { bottomSpace: number }) {
         contentContainerStyle={[styles.content, { paddingBottom: bottomSpace }]}
         data={data.items}
         ListHeaderComponent={
-          <ActivityCalendar
-            workoutDates={data.items.map(startOf)}
-            now={data.loadedAt}
-          />
+          <ActivityCalendar workoutDates={data.items.map(startOf)} now={data.loadedAt} />
         }
         ListHeaderComponentStyle={styles.calendar}
         keyExtractor={(item) =>
@@ -101,8 +102,11 @@ export function HistoryView({ bottomSpace }: { bottomSpace: number }) {
         ListEmptyComponent={
           <EmptyState
             icon="time"
-            title="Історія порожня"
-            hint="Тут з'являться завершені тренування та активності з застосунку здоров’я."
+            title={tr('Історія порожня', 'History is empty')}
+            hint={tr(
+              'Тут з’являться завершені тренування та активності з застосунку здоров’я.',
+              'Finished workouts and activities from the health app will appear here.',
+            )}
           />
         }
       />

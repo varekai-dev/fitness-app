@@ -1,44 +1,45 @@
 import type { ActivityKind, MuscleGroup, Targets, TrackingType } from '@/db/schema';
 
+import { locale, tr } from '@/lib/i18n';
 import { formatDuration, formatNumber } from './metrics';
 
 export const MUSCLE_GROUP_LABELS: Record<MuscleGroup, string> = {
-  chest: 'Груди',
-  back: 'Спина',
-  legs: 'Ноги',
-  shoulders: 'Плечі',
-  biceps: 'Біцепс',
-  triceps: 'Трицепс',
-  abs: 'Прес',
-  cardio: 'Кардіо',
+  chest: tr('Груди', 'Chest'),
+  back: tr('Спина', 'Back'),
+  legs: tr('Ноги', 'Legs'),
+  shoulders: tr('Плечі', 'Shoulders'),
+  biceps: tr('Біцепс', 'Biceps'),
+  triceps: tr('Трицепс', 'Triceps'),
+  abs: tr('Прес', 'Abs'),
+  cardio: tr('Кардіо', 'Cardio'),
 };
 
 export const TRACKING_TYPE_LABELS: Record<TrackingType, string> = {
-  weight_reps: 'Вага × повторення',
-  reps: 'Тільки повторення',
-  weighted_reps: 'Повторення + додаткова вага',
-  duration: 'Час',
-  distance_duration: 'Дистанція + час',
+  weight_reps: tr('Вага × повторення', 'Weight × reps'),
+  reps: tr('Тільки повторення', 'Reps only'),
+  weighted_reps: tr('Повторення + додаткова вага', 'Reps + added weight'),
+  duration: tr('Час', 'Time'),
+  distance_duration: tr('Дистанція + час', 'Distance + time'),
 };
 
 export const ACTIVITY_KIND_LABELS: Record<ActivityKind, string> = {
-  walking: 'Прогулянка',
-  running: 'Біг',
-  cycling: 'Велосипед',
-  hiking: 'Похід',
-  swimming: 'Плавання',
-  strength: 'Силове тренування',
-  hiit: 'Інтервальне тренування',
-  yoga: 'Йога та розтяжка',
-  other: 'Тренування',
+  walking: tr('Прогулянка', 'Walk'),
+  running: tr('Біг', 'Run'),
+  cycling: tr('Велосипед', 'Cycling'),
+  hiking: tr('Похід', 'Hike'),
+  swimming: tr('Плавання', 'Swimming'),
+  strength: tr('Силове тренування', 'Strength training'),
+  hiit: tr('Інтервальне тренування', 'Interval training'),
+  yoga: tr('Йога та розтяжка', 'Yoga and stretching'),
+  other: tr('Тренування', 'Workout'),
 };
 
-const dateFormatter =new Intl.DateTimeFormat('uk-UA', {
+const dateFormatter = new Intl.DateTimeFormat(locale, {
   day: 'numeric',
   month: 'short',
   year: 'numeric',
 });
-const shortDateFormatter = new Intl.DateTimeFormat('uk-UA', {
+const shortDateFormatter = new Intl.DateTimeFormat(locale, {
   day: 'numeric',
   month: 'short',
 });
@@ -46,7 +47,7 @@ const shortDateFormatter = new Intl.DateTimeFormat('uk-UA', {
 export const formatDate = (ms: number) => dateFormatter.format(new Date(ms));
 export const formatShortDate = (ms: number) => shortDateFormatter.format(new Date(ms));
 
-const longDateFormatter = new Intl.DateTimeFormat('uk-UA', {
+const longDateFormatter = new Intl.DateTimeFormat(locale, {
   weekday: 'long',
   day: 'numeric',
   month: 'long',
@@ -56,7 +57,10 @@ export const formatLongDate = (ms: number) => {
   return s.charAt(0).toUpperCase() + s.slice(1);
 };
 
-export const WEEKDAY_SHORT = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'] as const;
+export const WEEKDAY_SHORT = tr(
+  ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'],
+  ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'],
+);
 
 /** Local midnight of the Monday that starts the week containing `ms`. */
 export function startOfWeek(ms: number) {
@@ -70,7 +74,7 @@ export function startOfWeek(ms: number) {
 /** 0 = Monday … 6 = Sunday. */
 export const weekdayIndex = (ms: number) => (new Date(ms).getDay() + 6) % 7;
 
-/** e.g. "3 × 8–12 · відпочинок 1:30". */
+/** e.g. "3 × 8–12 · rest 1:30". */
 function targetValue(t: Targets) {
   if (t.targetRepsMin !== null || t.targetRepsMax !== null) {
     return t.targetRepsMin !== null &&
@@ -80,20 +84,24 @@ function targetValue(t: Targets) {
       : String(t.targetRepsMin ?? t.targetRepsMax);
   }
   if (t.targetDurationSec !== null) return formatDuration(t.targetDurationSec);
-  if (t.targetDistanceKm !== null) return `${t.targetDistanceKm} км`;
+  if (t.targetDistanceKm !== null) return `${t.targetDistanceKm} ${tr('км', 'km')}`;
   return '';
 }
 
-/** Per-set target: "8–12 повт.", a duration or a distance; empty when none is set. */
+/** Per-set target: "8–12 reps", a duration or a distance; empty when none is set. */
 export function formatSetTarget(t: Targets) {
   const what = targetValue(t);
-  return what && (t.targetRepsMin !== null || t.targetRepsMax !== null) ? `${what} повт.` : what;
+  return what && (t.targetRepsMin !== null || t.targetRepsMax !== null)
+    ? `${what} ${tr('повт.', 'reps')}`
+    : what;
 }
 
 export function formatTargets(t: Targets) {
   const what = targetValue(t);
-  const sets = what ? `${t.targetSets} × ${what}` : `${t.targetSets} підх.`;
-  return t.restSec > 0 ? `${sets} · відпочинок ${formatDuration(t.restSec)}` : sets;
+  const sets = what ? `${t.targetSets} × ${what}` : `${t.targetSets} ${tr('підх.', 'sets')}`;
+  return t.restSec > 0
+    ? `${sets} · ${tr('відпочинок', 'rest')} ${formatDuration(t.restSec)}`
+    : sets;
 }
 
 /** Signed change in kilograms with one decimal: "+0.4", "−1.2" or "0". */

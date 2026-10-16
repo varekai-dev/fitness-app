@@ -1,6 +1,7 @@
 import type { DialogOptions } from '@/components/dialog';
 import { removeExercise } from '@/db/exercises';
 import { removeProgram } from '@/db/programs';
+import { tr } from '@/lib/i18n';
 import { deleteStoredImage } from '@/lib/images';
 
 type Show = (options: DialogOptions) => void;
@@ -15,20 +16,26 @@ export function confirmRemoveProgram(
   { onRemoved, onKept }: { onRemoved?: () => void; onKept?: () => void } = {},
 ) {
   show({
-    title: 'Видалити програму?',
-    message: 'Якщо за нею вже були тренування, програма піде в архів, а історія залишиться.',
+    title: tr('Видалити програму?', 'Delete program?'),
+    message: tr(
+      'Якщо за нею вже були тренування, програма піде в архів, а історія залишиться.',
+      'If it already has workouts, the program is archived and the history stays.',
+    ),
     buttons: [
-      { text: 'Скасувати', style: 'cancel', onPress: onKept },
+      { text: tr('Скасувати', 'Cancel'), style: 'cancel', onPress: onKept },
       {
-        text: 'Видалити',
+        text: tr('Видалити', 'Delete'),
         style: 'destructive',
         onPress: async () => {
           const result = await removeProgram(id);
           if (result === 'workout_in_progress') {
             onKept?.();
             show({
-              title: 'Неможливо',
-              message: 'Спершу заверши або скасуй поточне тренування за цією програмою.',
+              title: tr('Неможливо', 'Not possible'),
+              message: tr(
+                'Спершу заверши або скасуй поточне тренування за цією програмою.',
+                'First finish or discard the current workout from this program.',
+              ),
               icon: 'alert-circle',
             });
             return;
@@ -47,20 +54,23 @@ export function confirmRemoveExercise(
   { onRemoved, onKept }: { onRemoved?: () => void; onKept?: () => void } = {},
 ) {
   show({
-    title: 'Видалити вправу?',
+    title: tr('Видалити вправу?', 'Delete exercise?'),
     message: exercise.name,
     buttons: [
-      { text: 'Скасувати', style: 'cancel', onPress: onKept },
+      { text: tr('Скасувати', 'Cancel'), style: 'cancel', onPress: onKept },
       {
-        text: 'Видалити',
+        text: tr('Видалити', 'Delete'),
         style: 'destructive',
         onPress: async () => {
           const result = await removeExercise(exercise.id);
           if (typeof result === 'object') {
             onKept?.();
             show({
-              title: 'Вправа використовується',
-              message: `Спершу прибери її з програм: ${result.blockedBy.join(', ')}.`,
+              title: tr('Вправа використовується', 'Exercise in use'),
+              message: tr(
+                `Спершу прибери її з програм: ${result.blockedBy.join(', ')}.`,
+                `First remove it from these programs: ${result.blockedBy.join(', ')}.`,
+              ),
               icon: 'alert-circle',
             });
             return;

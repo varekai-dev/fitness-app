@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/ui';
 import { Wheel } from '@/components/wheel';
 import type { TrackingType, WorkoutSet } from '@/db/schema';
+import { tr } from '@/lib/i18n';
 import type { SetValues } from '@/lib/metrics';
 import { formatDuration, formatNumber, parseDecimal, parseDuration } from '@/lib/metrics';
 import { colors, radius, spacing } from '@/theme';
@@ -33,20 +34,23 @@ export const toValues = (i: Inputs): SetValues => {
   };
 };
 
+const REPS = tr('повт', 'reps');
+const MIN_SEC = tr('хв:с', 'm:s');
+
 export const FIELDS: Record<TrackingType, { key: keyof Inputs; label: string }[]> = {
   weight_reps: [
-    { key: 'weight', label: 'кг' },
-    { key: 'reps', label: 'повт' },
+    { key: 'weight', label: tr('кг', 'kg') },
+    { key: 'reps', label: REPS },
   ],
   weighted_reps: [
-    { key: 'weight', label: '+кг' },
-    { key: 'reps', label: 'повт' },
+    { key: 'weight', label: tr('+кг', '+kg') },
+    { key: 'reps', label: REPS },
   ],
-  reps: [{ key: 'reps', label: 'повт' }],
-  duration: [{ key: 'duration', label: 'хв:с' }],
+  reps: [{ key: 'reps', label: REPS }],
+  duration: [{ key: 'duration', label: MIN_SEC }],
   distance_duration: [
-    { key: 'distance', label: 'км' },
-    { key: 'duration', label: 'хв:с' },
+    { key: 'distance', label: tr('км', 'km') },
+    { key: 'duration', label: MIN_SEC },
   ],
 };
 

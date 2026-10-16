@@ -30,6 +30,7 @@ import {
   updateDayExercise,
 } from '@/db/programs';
 import { useDbQuery } from '@/hooks/use-db-query';
+import { tr } from '@/lib/i18n';
 import { colors, spacing } from '@/theme';
 
 export default function ProgramDayScreen() {
@@ -40,20 +41,23 @@ export default function ProgramDayScreen() {
   if (day === undefined) return <Loading />;
   if (day === null) {
     return (
-      <Screen title="День">
-        <EmptyState icon="alert-circle" title="День не знайдено" />
+      <Screen title={tr('День', 'Day')}>
+        <EmptyState icon="alert-circle" title={tr('День не знайдено', 'Day not found')} />
       </Screen>
     );
   }
 
   const remove = () =>
     dialog.show({
-      title: 'Видалити день?',
-      message: 'Минулі тренування цього дня залишаться в історії.',
+      title: tr('Видалити день?', 'Delete day?'),
+      message: tr(
+        'Минулі тренування цього дня залишаться в історії.',
+        'Past workouts of this day stay in the history.',
+      ),
       buttons: [
-        { text: 'Скасувати', style: 'cancel' },
+        { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
         {
-          text: 'Видалити',
+          text: tr('Видалити', 'Delete'),
           style: 'destructive',
           onPress: async () => {
             await deleteDay(id);
@@ -70,8 +74,15 @@ export default function ProgramDayScreen() {
       <Text variant="overline">{day.program.name}</Text>
       <DayNameField key={day.name} id={id} name={day.name} />
 
-      <SectionHeader title={`Послідовність вправ · ${day.exercises.length}`} />
-      {day.exercises.length === 0 && <EmptyState icon="barbell" title="Додай вправи в цей день" />}
+      <SectionHeader
+        title={`${tr('Послідовність вправ', 'Exercise order')} · ${day.exercises.length}`}
+      />
+      {day.exercises.length === 0 && (
+        <EmptyState
+          icon="barbell"
+          title={tr('Додай вправи в цей день', 'Add exercises to this day')}
+        />
+      )}
       {day.exercises.map((e, i) => (
         <Card key={e.id} style={styles.card}>
           <Row>
@@ -109,7 +120,7 @@ export default function ProgramDayScreen() {
       ))}
 
       <Button
-        title="Додати вправу"
+        title={tr('Додати вправу', 'Add exercise')}
         icon="add"
         onPress={() => router.push({ pathname: '/pick-exercise', params: { dayId: id } })}
       />
@@ -127,7 +138,7 @@ function DayNameField({ id, name }: { id: number; name: string }) {
   };
   return (
     <Field
-      label="Назва дня"
+      label={tr('Назва дня', 'Day name')}
       value={value}
       onChangeText={setValue}
       onEndEditing={save}

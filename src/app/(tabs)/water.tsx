@@ -20,11 +20,12 @@ import { drinkWater, GlassButton } from '@/components/water-card';
 import { deleteWater, loadWater } from '@/db/water';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { useToday } from '@/hooks/use-today';
+import { locale, tr } from '@/lib/i18n';
 import { WEEKDAY_SHORT, weekdayIndex } from '@/lib/labels';
 import { formatLiters, formatMl, GLASS_PRESETS, glassForAmount } from '@/lib/water';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
-const timeFormatter = new Intl.DateTimeFormat('uk-UA', { hour: '2-digit', minute: '2-digit' });
+const timeFormatter = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' });
 const CHART_HEIGHT = 120;
 
 export default function WaterScreen() {
@@ -39,11 +40,11 @@ export default function WaterScreen() {
 
   const remove = (id: number, label: string, close: () => void) =>
     dialog.show({
-      title: 'Видалити запис?',
+      title: tr('Видалити запис?', 'Delete entry?'),
       message: label,
       buttons: [
-        { text: 'Скасувати', style: 'cancel', onPress: close },
-        { text: 'Видалити', style: 'destructive', onPress: () => deleteWater(id) },
+        { text: tr('Скасувати', 'Cancel'), style: 'cancel', onPress: close },
+        { text: tr('Видалити', 'Delete'), style: 'destructive', onPress: () => deleteWater(id) },
       ],
     });
 
@@ -51,7 +52,7 @@ export default function WaterScreen() {
 
   return (
     <Screen
-      title="Вода"
+      title={tr('Вода', 'Water')}
       mode="root"
       bottomSpace={tabBarSpace}
       headerRight={
@@ -60,24 +61,26 @@ export default function WaterScreen() {
       <Card style={styles.hero} onPress={() => router.push('/settings/water')}>
         <Text style={styles.amount}>
           {formatMl(todayMl)}
-          <Text style={styles.unit}> мл</Text>
+          <Text style={styles.unit}> {tr('мл', 'ml')}</Text>
         </Text>
         <Text variant="muted">
-          {todayMl >= goal ? 'Ціль на сьогодні виконано!' : `${percent}% денної норми`}
+          {todayMl >= goal
+            ? tr('Ціль на сьогодні виконано!', 'Today’s goal reached!')
+            : tr(`${percent}% денної норми`, `${percent}% of daily goal`)}
         </Text>
         <Row style={styles.heroBody}>
           <View style={styles.heroSide} />
           <WaterBottle progress={goal > 0 ? todayMl / goal : 0} height={300} />
           <View style={[styles.heroSide, styles.heroGoal]}>
             <Text variant="caption" style={styles.goalLabel}>
-              ЦІЛЬ
+              {tr('ЦІЛЬ', 'GOAL')}
             </Text>
             <Text variant="heading">{formatMl(goal)}</Text>
           </View>
         </Row>
       </Card>
 
-      <SectionHeader title="Додати" />
+      <SectionHeader title={tr('Додати', 'Add')} />
       <View style={styles.glasses}>
         {GLASS_PRESETS.map((g) => (
           <View key={g.ml} style={styles.glassCell}>
@@ -87,7 +90,7 @@ export default function WaterScreen() {
       </View>
 
       <Card>
-        <Text variant="caption">Останні 7 днів</Text>
+        <Text variant="caption">{tr('Останні 7 днів', 'Last 7 days')}</Text>
         <View style={styles.chart}>
           {days.map((d) => {
             const isToday = d.dayStart === today;
@@ -118,9 +121,13 @@ export default function WaterScreen() {
         </View>
       </Card>
 
-      <SectionHeader title="Сьогодні" />
+      <SectionHeader title={tr('Сьогодні', 'Today')} />
       {todayEntries.length === 0 ? (
-        <EmptyState icon="water-outline" title="Ще нічого не випито" hint="Обери склянку вище." />
+        <EmptyState
+          icon="water-outline"
+          title={tr('Ще нічого не випито', 'Nothing drunk yet')}
+          hint={tr('Обери склянку вище.', 'Pick a glass above.')}
+        />
       ) : (
         [...todayEntries].reverse().map((e) => {
           const glass = glassForAmount(e.amountMl);
@@ -128,7 +135,9 @@ export default function WaterScreen() {
           return (
             <SwipeToDelete
               key={e.id}
-              onDelete={(close) => remove(e.id, `${time} · ${formatMl(e.amountMl)} мл`, close)}>
+              onDelete={(close) =>
+                remove(e.id, `${time} · ${formatMl(e.amountMl)} ${tr('мл', 'ml')}`, close)
+              }>
               <Card>
                 <Row style={styles.spaceBetween}>
                   <Row>
@@ -138,7 +147,9 @@ export default function WaterScreen() {
                     <Text variant="body">{glass.label}</Text>
                   </Row>
                   <Row>
-                    <Text variant="heading">{formatMl(e.amountMl)} мл</Text>
+                    <Text variant="heading">
+                      {formatMl(e.amountMl)} {tr('мл', 'ml')}
+                    </Text>
                     <Text variant="muted">{time}</Text>
                   </Row>
                 </Row>

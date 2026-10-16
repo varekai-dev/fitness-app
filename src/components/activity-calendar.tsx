@@ -4,23 +4,40 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 import { Card, IconButton, Row, Text } from '@/components/ui';
+import { tr } from '@/lib/i18n';
 import { startOfWeek, WEEKDAY_SHORT, weekdayIndex } from '@/lib/labels';
 import { colors, radius, spacing } from '@/theme';
 
-const MONTHS = [
-  'Січень',
-  'Лютий',
-  'Березень',
-  'Квітень',
-  'Травень',
-  'Червень',
-  'Липень',
-  'Серпень',
-  'Вересень',
-  'Жовтень',
-  'Листопад',
-  'Грудень',
-];
+const MONTHS = tr(
+  [
+    'Січень',
+    'Лютий',
+    'Березень',
+    'Квітень',
+    'Травень',
+    'Червень',
+    'Липень',
+    'Серпень',
+    'Вересень',
+    'Жовтень',
+    'Листопад',
+    'Грудень',
+  ],
+  [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ],
+);
 
 const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 
@@ -49,10 +66,12 @@ export function ActivityCalendar({ workoutDates, now }: { workoutDates: number[]
     <Card>
       <Pressable onPress={toggle} hitSlop={8}>
         <Row style={styles.spaceBetween}>
-          <Text variant="heading">{expanded ? 'Активність' : 'Цей тиждень'}</Text>
+          <Text variant="heading">
+            {expanded ? tr('Активність', 'Activity') : tr('Цей тиждень', 'This week')}
+          </Text>
           <Row style={styles.streak}>
             <Text variant="caption" style={styles.accent}>
-              {trainedThisWeek.size} дн.
+              {trainedThisWeek.size} {tr('дн.', 'd')}
             </Text>
             <Ionicons name="flame" size={14} color={colors.accent} />
             <Ionicons
@@ -138,7 +157,9 @@ function Month({
           <Text variant="body">
             {MONTHS[first.getMonth()]} {first.getFullYear()}
           </Text>
-          <Text variant="muted">Тренувальних днів: {count}</Text>
+          <Text variant="muted">
+            {tr('Тренувальних днів', 'Training days')}: {count}
+          </Text>
         </View>
         <IconButton icon="chevron-forward" onPress={onNext} disabled={offset === 0} />
       </Row>

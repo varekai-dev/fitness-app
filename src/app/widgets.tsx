@@ -18,6 +18,7 @@ import {
   type WidgetSize,
   type WidgetType,
 } from '@/lib/dashboard';
+import { tr } from '@/lib/i18n';
 import { colors, radius, spacing } from '@/theme';
 
 /** Card padding plus the preview well's padding, on both sides. */
@@ -41,7 +42,7 @@ export default function WidgetsScreen() {
   };
 
   return (
-    <Screen title="Додати віджет" mode="modal">
+    <Screen title={tr('Додати віджет', 'Add widget')} mode="modal">
       {WIDGET_GROUPS.map((group) => (
         <View key={group.title} style={styles.group}>
           <Text variant="overline">{group.title}</Text>
@@ -56,7 +57,11 @@ export default function WidgetsScreen() {
                   <Text variant="heading" style={styles.flex}>
                     {info.title}
                   </Text>
-                  {count > 0 && <Text variant="muted">вже є: {count}</Text>}
+                  {count > 0 && (
+                    <Text variant="muted">
+                      {tr('вже є', 'added')}: {count}
+                    </Text>
+                  )}
                 </Row>
                 <Text variant="muted">{info.description}</Text>
                 <View style={styles.preview}>
@@ -75,7 +80,11 @@ export default function WidgetsScreen() {
                     labels={WIDGET_SIZE_LABELS}
                   />
                 )}
-                <Button title="Додати на головну" icon="add" onPress={() => add(type, size)} />
+                <Button
+                  title={tr('Додати на головну', 'Add to home')}
+                  icon="add"
+                  onPress={() => add(type, size)}
+                />
               </Card>
             );
           })}
@@ -84,10 +93,15 @@ export default function WidgetsScreen() {
               <Row>
                 <Ionicons name="apps" size={18} color={colors.accent} />
                 <Text variant="heading" style={styles.flex}>
-                  Плитки
+                  {tr('Плитки', 'Tiles')}
                 </Text>
               </Row>
-              <Text variant="muted">Одне число на третину ширини. Торкнись плитки, щоб додати.</Text>
+              <Text variant="muted">
+                {tr(
+                  'Одне число на третину ширини. Торкнись плитки, щоб додати.',
+                  'One number, a third of the width. Tap a tile to add it.',
+                )}
+              </Text>
               <View style={[styles.preview, styles.statGrid]}>
                 {group.stats.map((type) => {
                   const count = widgets.filter((w) => w.type === type).length;
@@ -96,7 +110,10 @@ export default function WidgetsScreen() {
                       key={type}
                       onPress={() => add(type, 'small')}
                       accessibilityRole="button"
-                      accessibilityLabel={`Додати плитку «${STAT_INFO[type].title}»`}
+                      accessibilityLabel={tr(
+                        `Додати плитку «${STAT_INFO[type].title}»`,
+                        `Add tile “${STAT_INFO[type].title}”`,
+                      )}
                       style={({ pressed }) => pressed && styles.pressed}>
                       <WidgetView
                         widget={{ id: `preview-${type}`, type, size: 'small' }}

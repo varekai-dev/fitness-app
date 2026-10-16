@@ -2,6 +2,7 @@ import { Tabs } from 'expo-router/js-tabs';
 
 import { FloatingTabBar } from '@/components/floating-tab-bar';
 import type { IconName } from '@/components/ui';
+import { tr } from '@/lib/i18n';
 import { colors } from '@/theme';
 
 const ICONS: Record<string, IconName> = {
@@ -19,10 +20,10 @@ export default function TabsLayout() {
         headerShown: false,
         sceneStyle: { backgroundColor: colors.background },
       }}>
-      <Tabs.Screen name="index" options={{ title: 'Головна' }} />
-      <Tabs.Screen name="training" options={{ title: 'Тренування' }} />
-      <Tabs.Screen name="food" options={{ title: 'Харчування' }} />
-      <Tabs.Screen name="water" options={{ title: 'Вода' }} />
+      <Tabs.Screen name="index" options={{ title: tr('Головна', 'Home') }} />
+      <Tabs.Screen name="training" options={{ title: tr('Тренування', 'Training') }} />
+      <Tabs.Screen name="food" options={{ title: tr('Харчування', 'Food') }} />
+      <Tabs.Screen name="water" options={{ title: tr('Вода', 'Water') }} />
     </Tabs>
   );
 }

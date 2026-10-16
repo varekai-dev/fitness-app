@@ -8,6 +8,7 @@ import { confirmRemoveProgram } from '@/components/remove-dialogs';
 import { SwipeToDelete } from '@/components/swipe-to-delete';
 import { listPrograms } from '@/db/programs';
 import { useDbQuery } from '@/hooks/use-db-query';
+import { tr } from '@/lib/i18n';
 import { colors, radius, spacing } from '@/theme';
 
 /** The Programs section of the Training tab. */
@@ -21,12 +22,15 @@ export function ProgramsView({ bottomSpace }: { bottomSpace: number }) {
     <ScrollView
       contentContainerStyle={[styles.content, { paddingBottom: bottomSpace }]}
       keyboardShouldPersistTaps="handled">
-      <SectionHeader title="Мої програми" />
+      <SectionHeader title={tr('Мої програми', 'My programs')} />
       {data.length === 0 ? (
         <EmptyState
           icon="calendar"
-          title="Програм ще немає"
-          hint="Програма — це набір днів (наприклад, Push / Pull / Legs), які йдуть по колу."
+          title={tr('Програм ще немає', 'No programs yet')}
+          hint={tr(
+            'Програма — це набір днів (наприклад, Push / Pull / Legs), які йдуть по колу.',
+            'A program is a set of days (for example, Push / Pull / Legs) that repeat in a cycle.',
+          )}
         />
       ) : (
         data.map((p) => {
@@ -46,8 +50,10 @@ export function ProgramsView({ bottomSpace }: { bottomSpace: number }) {
                 <Text variant="body" numberOfLines={1}>
                   {p.name}
                 </Text>
-                <Text variant="muted">{p.days.length} дн. по колу</Text>
-                {p.isActive && <Badge label="Активна" />}
+                <Text variant="muted">
+                  {tr(`${p.days.length} дн. по колу`, `${p.days.length}-day cycle`)}
+                </Text>
+                {p.isActive && <Badge label={tr('Активна', 'Active')} />}
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </Card>

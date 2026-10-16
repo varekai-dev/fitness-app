@@ -17,6 +17,7 @@ import {
 import { listExercises } from '@/db/exercises';
 import { addDayExercise } from '@/db/programs';
 import { useDbQuery } from '@/hooks/use-db-query';
+import { tr } from '@/lib/i18n';
 import { MUSCLE_GROUP_LABELS } from '@/lib/labels';
 import { colors, spacing } from '@/theme';
 
@@ -36,7 +37,7 @@ export default function PickExerciseScreen() {
 
   return (
     <View style={styles.list}>
-      <ScreenHeader mode="modal" title="Додати вправу" />
+      <ScreenHeader mode="modal" title={tr('Додати вправу', 'Add exercise')} />
       <FlatList
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
@@ -44,9 +45,13 @@ export default function PickExerciseScreen() {
         keyExtractor={(e) => String(e.id)}
         ListHeaderComponent={
           <View style={styles.header}>
-            <SearchField placeholder="Пошук вправ…" value={search} onChangeText={setSearch} />
+            <SearchField
+              placeholder={tr('Пошук вправ…', 'Search exercises…')}
+              value={search}
+              onChangeText={setSearch}
+            />
             <Button
-              title="Створити нову вправу"
+              title={tr('Створити нову вправу', 'Create new exercise')}
               icon="add"
               variant="ghost"
               onPress={() => router.push('/exercise/edit')}
@@ -63,7 +68,9 @@ export default function PickExerciseScreen() {
             <MuscleIcon group={item.muscleGroup} size={40} />
           </Card>
         )}
-        ListEmptyComponent={<EmptyState icon="search" title="Нічого не знайдено" />}
+        ListEmptyComponent={
+          <EmptyState icon="search" title={tr('Нічого не знайдено', 'Nothing found')} />
+        }
       />
     </View>
   );

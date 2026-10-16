@@ -8,6 +8,7 @@ import { Card, ChipGroup, Field, Loading, Row, Screen, Text } from '@/components
 import { loadProfile, setProfileField } from '@/db/profile';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { formatKcal } from '@/lib/food';
+import { tr } from '@/lib/i18n';
 import { formatShortDate } from '@/lib/labels';
 import { formatNumber, parseDecimal } from '@/lib/metrics';
 import {
@@ -71,21 +72,23 @@ export default function ProfileScreen() {
   const missing = missingForRecommendation(profile, weightKg);
 
   return (
-    <Screen title="Профіль">
+    <Screen title={tr('Профіль', 'Profile')}>
       <Card onPress={() => router.push('/body-weight')}>
         <Row style={styles.spaceBetween}>
           <Row>
             <Ionicons name="scale-outline" size={20} color={colors.accent} />
-            <Text variant="heading">Поточна вага</Text>
+            <Text variant="heading">{tr('Поточна вага', 'Current weight')}</Text>
           </Row>
           <Row>
             {latestWeight ? (
               <View style={styles.right}>
-                <Text variant="heading">{formatNumber(latestWeight.weightKg, 1)} кг</Text>
+                <Text variant="heading">
+                  {formatNumber(latestWeight.weightKg, 1)} {tr('кг', 'kg')}
+                </Text>
                 <Text variant="muted">{formatShortDate(latestWeight.measuredAt)}</Text>
               </View>
             ) : (
-              <Text variant="muted">Додати</Text>
+              <Text variant="muted">{tr('Додати', 'Add')}</Text>
             )}
             <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           </Row>
@@ -94,7 +97,7 @@ export default function ProfileScreen() {
 
       <Card>
         <Field
-          label="Зріст, см"
+          label={tr('Зріст, см', 'Height, cm')}
           value={heightValue}
           onChangeText={changeHeight}
           keyboardType="decimal-pad"
@@ -103,27 +106,29 @@ export default function ProfileScreen() {
         />
         {heightValue !== '' && !heightValid && (
           <Text variant="muted" style={styles.error}>
-            Вкажи зріст від 100 до 250 см.
+            {tr('Вкажи зріст від 100 до 250 см.', 'Enter a height from 100 to 250 cm.')}
           </Text>
         )}
         <Field
-          label="Дата народження"
+          label={tr('Дата народження', 'Date of birth')}
           value={birthValue}
           onChangeText={changeBirth}
           keyboardType="number-pad"
-          placeholder="ДД.ММ.РРРР"
+          placeholder={tr('ДД.ММ.РРРР', 'DD.MM.YYYY')}
           maxLength={10}
         />
         {birthValue.length === 10 && !parsedBirth ? (
           <Text variant="muted" style={styles.error}>
-            Перевір дату: формат ДД.ММ.РРРР.
+            {tr('Перевір дату: формат ДД.ММ.РРРР.', 'Check the date: the format is DD.MM.YYYY.')}
           </Text>
         ) : parsedBirth ? (
-          <Text variant="muted">Вік: {ageOn(parsedBirth)}</Text>
+          <Text variant="muted">
+            {tr('Вік', 'Age')}: {ageOn(parsedBirth)}
+          </Text>
         ) : null}
       </Card>
 
-      <Text variant="caption">Стать</Text>
+      <Text variant="caption">{tr('Стать', 'Sex')}</Text>
       <ChipGroup
         options={SEXES}
         value={profile.sex}
@@ -131,7 +136,7 @@ export default function ProfileScreen() {
         labels={SEX_LABELS}
       />
 
-      <Text variant="caption">Активність</Text>
+      <Text variant="caption">{tr('Активність', 'Activity')}</Text>
       <View style={styles.options}>
         {ACTIVITY_LEVELS.map((level) => {
           const selected = profile.activity === level;
@@ -154,7 +159,7 @@ export default function ProfileScreen() {
         })}
       </View>
 
-      <Text variant="caption">Мета</Text>
+      <Text variant="caption">{tr('Мета', 'Goal')}</Text>
       <ChipGroup
         options={WEIGHT_GOALS}
         value={profile.goal}
@@ -163,20 +168,33 @@ export default function ProfileScreen() {
       />
 
       <Card>
-        <Text variant="overline">Рекомендована калорійність</Text>
+        <Text variant="overline">{tr('Рекомендована калорійність', 'Recommended calories')}</Text>
         {rec ? (
           <>
             <Text style={styles.kcal}>
               {formatKcal(rec.kcal)}
-              <Text style={styles.unit}> ккал/день</Text>
+              <Text style={styles.unit}> {tr('ккал/день', 'kcal/day')}</Text>
             </Text>
             <Text variant="muted">
-              Базовий обмін {formatKcal(rec.bmr)} ккал · підтримка {formatKcal(rec.tdee)} ккал
+              {tr(
+                `Базовий обмін ${formatKcal(rec.bmr)} ккал · підтримка ${formatKcal(rec.tdee)} ккал`,
+                `BMR ${formatKcal(rec.bmr)} kcal · maintenance ${formatKcal(rec.tdee)} kcal`,
+              )}
             </Text>
-            <Text variant="muted">Формула Міффліна — Сан-Жеора, орієнтовне значення.</Text>
+            <Text variant="muted">
+              {tr(
+                'Формула Міффліна — Сан-Жеора, орієнтовне значення.',
+                'Mifflin–St Jeor formula, an estimate.',
+              )}
+            </Text>
           </>
         ) : (
-          <Text variant="muted">Щоб порахувати, вкажи {missing.join(', ')}.</Text>
+          <Text variant="muted">
+            {tr(
+              `Щоб порахувати, вкажи ${missing.join(', ')}.`,
+              `To calculate, enter your ${missing.join(', ')}.`,
+            )}
+          </Text>
         )}
       </Card>
     </Screen>

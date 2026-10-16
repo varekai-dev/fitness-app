@@ -23,6 +23,7 @@ import { addDay, getProgram, moveDay, renameProgram, setActiveProgram } from '@/
 import { useDialog } from '@/components/dialog';
 import { confirmRemoveProgram } from '@/components/remove-dialogs';
 import { useDbQuery } from '@/hooks/use-db-query';
+import { plural, tr } from '@/lib/i18n';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 export default function ProgramScreen() {
@@ -35,8 +36,8 @@ export default function ProgramScreen() {
   if (program === undefined) return <Loading />;
   if (program === null) {
     return (
-      <Screen title="Програма">
-        <EmptyState icon="alert-circle" title="Програму не знайдено" />
+      <Screen title={tr('Програма', 'Program')}>
+        <EmptyState icon="alert-circle" title={tr('Програму не знайдено', 'Program not found')} />
       </Screen>
     );
   }
@@ -44,7 +45,7 @@ export default function ProgramScreen() {
   const totalExercises = program.days.reduce((n, d) => n + d.exercises.length, 0);
 
   const createDay = async () => {
-    const trimmed = dayName.trim() || `День ${program.days.length + 1}`;
+    const trimmed = dayName.trim() || `${tr('День', 'Day')} ${program.days.length + 1}`;
     await addDay(id, trimmed);
     setDayName('');
   };
@@ -63,21 +64,29 @@ export default function ProgramScreen() {
       />
 
       <Row style={styles.badges}>
-        {program.isActive && <Badge label="Активна" />}
-        <Badge label={`${program.days.length} дн.`} tone="muted" />
-        <Badge label={`${totalExercises} вправ`} tone="muted" />
+        {program.isActive && <Badge label={tr('Активна', 'Active')} />}
+        <Badge
+          label={`${program.days.length} ${tr('дн.', program.days.length === 1 ? 'day' : 'days')}`}
+          tone="muted"
+        />
+        <Badge
+          label={`${totalExercises} ${plural(totalExercises, ['вправа', 'вправи', 'вправ'], ['exercise', 'exercises'])}`}
+          tone="muted"
+        />
       </Row>
 
       {!program.isActive && (
         <Button
-          title="Зробити активною"
+          title={tr('Зробити активною', 'Make active')}
           icon="checkmark-circle"
           onPress={() => setActiveProgram(id)}
         />
       )}
 
-      <SectionHeader title="Послідовність днів" />
-      {program.days.length === 0 && <EmptyState icon="calendar" title="Додай перший день" />}
+      <SectionHeader title={tr('Послідовність днів', 'Day order')} />
+      {program.days.length === 0 && (
+        <EmptyState icon="calendar" title={tr('Додай перший день', 'Add the first day')} />
+      )}
       {program.days.map((d, i) => (
         <Card
           key={d.id}
@@ -88,8 +97,8 @@ export default function ProgramScreen() {
             <Text variant="body">{d.name}</Text>
             <Text variant="muted" numberOfLines={1}>
               {d.exercises.length === 0
-                ? 'Без вправ'
-                : `${d.exercises.length} вправ · ${d.exercises.map((e) => e.exercise.name).join(', ')}`}
+                ? tr('Без вправ', 'No exercises')
+                : `${d.exercises.length} ${plural(d.exercises.length, ['вправа', 'вправи', 'вправ'], ['exercise', 'exercises'])} · ${d.exercises.map((e) => e.exercise.name).join(', ')}`}
             </Text>
           </View>
           <View style={styles.reorder}>
@@ -115,7 +124,10 @@ export default function ProgramScreen() {
           style={styles.addDayInput}
           value={dayName}
           onChangeText={setDayName}
-          placeholder={`Новий день: День ${program.days.length + 1}`}
+          placeholder={tr(
+            `Новий день: День ${program.days.length + 1}`,
+            `New day: Day ${program.days.length + 1}`,
+          )}
           placeholderTextColor={colors.textMuted}
           onSubmitEditing={createDay}
           returnKeyType="done"
@@ -142,7 +154,7 @@ function ProgramNameField({ id, name, focus }: { id: number; name: string; focus
   };
   return (
     <Field
-      label="Назва програми"
+      label={tr('Назва програми', 'Program name')}
       value={value}
       onChangeText={setValue}
       onEndEditing={save}

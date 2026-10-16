@@ -15,11 +15,12 @@ import { getDashboard, loadDashboardData, saveDashboard } from '@/db/dashboard';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { useToday } from '@/hooks/use-today';
 import { isFixedSize, nextSize, WIDGET_SIZE_LABELS, type Widget } from '@/lib/dashboard';
+import { tr } from '@/lib/i18n';
 import { formatLongDate } from '@/lib/labels';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 /**
- * Home is a dashboard of widgets the user picks. "Змінити" switches to edit
+ * Home is a dashboard of widgets the user picks. "Edit" switches to edit
  * mode: tiles can be dragged into a new order, resized and removed, and new
  * ones added from the widget picker.
  */
@@ -63,7 +64,7 @@ export default function HomeScreen() {
             <Text variant="secondary">{formatLongDate(data.loadedAt)}</Text>
             <Row>
               <Button
-                title={editing ? 'Готово' : 'Змінити'}
+                title={editing ? tr('Готово', 'Done') : tr('Змінити', 'Edit')}
                 icon={editing ? 'checkmark' : 'grid-outline'}
                 variant={editing ? 'primary' : 'secondary'}
                 onPress={toggleEditing}
@@ -76,7 +77,10 @@ export default function HomeScreen() {
           </Row>
           {editing && (
             <Text variant="muted">
-              Утримуй і тягни плитку, щоб перемістити. Розмір змінює кнопка внизу плитки.
+              {tr(
+                'Утримуй і тягни плитку, щоб перемістити. Розмір змінює кнопка внизу плитки.',
+                'Hold and drag a tile to move it. The button at the bottom of a tile changes its size.',
+              )}
             </Text>
           )}
         </View>
@@ -84,8 +88,11 @@ export default function HomeScreen() {
         {widgets.length === 0 ? (
           <EmptyState
             icon="grid-outline"
-            title="На головній ще немає віджетів"
-            hint="Додай плитки з тренуваннями, харчуванням, водою чи вагою."
+            title={tr('На головній ще немає віджетів', 'No widgets on the home screen yet')}
+            hint={tr(
+              'Додай плитки з тренуваннями, харчуванням, водою чи вагою.',
+              'Add tiles with workouts, food, water or weight.',
+            )}
           />
         ) : (
           <Sortable.Flex
@@ -119,7 +126,7 @@ export default function HomeScreen() {
 
         {(editing || widgets.length === 0) && (
           <Button
-            title="Додати віджет"
+            title={tr('Додати віджет', 'Add widget')}
             icon="add"
             variant={widgets.length === 0 ? 'primary' : 'secondary'}
             onPress={() => router.push('/widgets')}

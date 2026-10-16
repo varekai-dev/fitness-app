@@ -1,3 +1,4 @@
+import { locale, tr } from '@/lib/i18n';
 import { addDays, formatMl } from '@/lib/water';
 
 /** The waking part of the day, in minutes after midnight. Reminders only fire inside it. */
@@ -29,7 +30,7 @@ export const formatClock = (min: number) =>
 
 /** "2 год", "1,5 год". */
 export const formatInterval = (min: number) =>
-  `${new Intl.NumberFormat('uk-UA', { maximumFractionDigits: 1 }).format(min / 60)} год`;
+  `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(min / 60)} ${tr('год', 'h')}`;
 
 /** Time of day `min` minutes after the local midnight `dayStart` (DST-safe). */
 const at = (dayStart: number, min: number) => {
@@ -97,10 +98,18 @@ export function planWaterReminders({
       const isEnd = min === window.endMin;
       reminders.push({
         at: time,
-        title: isEnd ? 'Денна норма води ще не випита' : 'Час випити води',
+        title: isEnd
+          ? tr('Денна норма води ще не випита', 'Daily water goal not reached yet')
+          : tr('Час випити води', 'Time to drink some water'),
         body: isEnd
-          ? `Бракує ${formatMl(deficit)} мл до цілі ${formatMl(goal)} мл.`
-          : `До ${formatClock(min)} варто випити ${formatMl(roundUp(expected))} мл — бракує ${formatMl(deficit)} мл.`,
+          ? tr(
+              `Бракує ${formatMl(deficit)} мл до цілі ${formatMl(goal)} мл.`,
+              `${formatMl(deficit)} ml short of the ${formatMl(goal)} ml goal.`,
+            )
+          : tr(
+              `До ${formatClock(min)} варто випити ${formatMl(roundUp(expected))} мл — бракує ${formatMl(deficit)} мл.`,
+              `Aim for ${formatMl(roundUp(expected))} ml by ${formatClock(min)}: ${formatMl(deficit)} ml to go.`,
+            ),
       });
       if (reminders.length >= MAX_SCHEDULED) return reminders;
     }

@@ -1,3 +1,5 @@
+import { locale, tr } from '@/lib/i18n';
+
 export const DEFAULT_KCAL_GOAL = 2000;
 export const KCAL_GOAL_STEP = 50;
 export const MIN_KCAL_GOAL = 1000;
@@ -13,8 +15,8 @@ export function normalizeDish(text: string) {
     .trim();
 }
 
-const kcalFormatter = new Intl.NumberFormat('uk-UA', { maximumFractionDigits: 0 });
-const gramFormatter = new Intl.NumberFormat('uk-UA', { maximumFractionDigits: 1 });
+const kcalFormatter = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
+const gramFormatter = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
 
 export const formatKcal = (kcal: number) => kcalFormatter.format(kcal);
 export const formatGrams = (g: number) => gramFormatter.format(g);
@@ -52,4 +54,5 @@ export function scaleNutrition(food: PortionNutrition, grams: number) {
 }
 
 /** Drinks are logged in millilitres, everything else in grams. */
-export const amountUnit = (food: { isDrink: boolean }) => (food.isDrink ? 'мл' : 'г');
+export const amountUnit = (food: { isDrink: boolean }) =>
+  food.isDrink ? tr('мл', 'ml') : tr('г', 'g');

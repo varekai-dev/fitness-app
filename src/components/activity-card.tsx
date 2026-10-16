@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Card, Text, type IconName } from '@/components/ui';
 import type { Activity, ActivityKind, ActivitySource } from '@/db/schema';
+import { tr } from '@/lib/i18n';
 import { ACTIVITY_KIND_LABELS, formatShortDate } from '@/lib/labels';
 import { formatDuration, formatNumber } from '@/lib/metrics';
 import { colors, radius, spacing } from '@/theme';
@@ -28,8 +29,8 @@ const SOURCE_NAMES: Record<ActivitySource, string> = {
 export function ActivityCard({ activity }: { activity: Activity }) {
   const details = [
     formatDuration((activity.finishedAt - activity.startedAt) / 1000),
-    activity.distanceKm ? `${formatNumber(activity.distanceKm, 2)} км` : null,
-    activity.kcal ? `${Math.round(activity.kcal)} ккал` : null,
+    activity.distanceKm ? `${formatNumber(activity.distanceKm, 2)} ${tr('км', 'km')}` : null,
+    activity.kcal ? `${Math.round(activity.kcal)} ${tr('ккал', 'kcal')}` : null,
   ].filter(Boolean);
   return (
     <Card style={styles.card}>

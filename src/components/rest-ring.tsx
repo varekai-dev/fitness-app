@@ -9,6 +9,7 @@ import Animated, {
 import Svg, { Circle } from 'react-native-svg';
 
 import { Text } from '@/components/ui';
+import { tr } from '@/lib/i18n';
 import { formatDuration } from '@/lib/metrics';
 import { colors, fontSize } from '@/theme';
 
@@ -55,7 +56,7 @@ export function RestRing({ remainingSec, totalSec }: { remainingSec: number; tot
         {formatDuration(remainingSec)}
       </Text>
       <Text variant="caption" style={styles.label}>
-        ЗАЛИШИЛОСЬ
+        {tr('ЗАЛИШИЛОСЬ', 'LEFT')}
       </Text>
     </View>
   );

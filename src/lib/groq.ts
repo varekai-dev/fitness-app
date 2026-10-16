@@ -1,5 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 
+import { tr } from '@/lib/i18n';
+
 const KEY_NAME = 'groq_api_key';
 const API = 'https://api.groq.com/openai/v1';
 // Supports strict JSON Schema output on Groq; low reasoning keeps it fast and cheap.
@@ -35,7 +37,7 @@ export class GroqError extends Error {
   }
 }
 
-const SYSTEM_PROMPT = `Ти нутриціолог. Користувач описує страву, продукт або напій (часто українською).
+const SYSTEM_PROMPT_UK = `Ти нутриціолог. Користувач описує страву, продукт або напій (часто українською).
 Визнач кількість:
 - якщо в тексті є вага чи об'єм (напр. "200 г", "0,5 л", "330 мл"), portion_g дорівнює саме їй;
 - якщо вказано кількість штук чи посуду (напр. "2 яйця", "тарілка борщу"), переведи її в грами чи мл;
@@ -46,6 +48,21 @@ const SYSTEM_PROMPT = `Ти нутриціолог. Користувач опи�
 - portion_g: кількість у грамах, а для напоїв — у мілілітрах, число більше 0;
 - kcal, protein_g, fat_g, carbs_g, fiber_g, sugar_g: числа саме для portion_g, округлені до 1 знака;
 - is_food: false, якщо текст не є їжею чи напоєм (тоді числа 0).`;
+
+const SYSTEM_PROMPT_EN = `You are a nutritionist. The user describes a dish, product or drink (in any language).
+Determine the amount:
+- if the text has a weight or volume (e.g. "200 g", "0.5 l", "330 ml"), portion_g equals exactly that;
+- if it gives a count of items or dishes (e.g. "2 eggs", "a bowl of soup"), convert it to grams or ml;
+- if no amount is given, use an average regular adult portion.
+Fields:
+- name: a short name in English, capitalized, without the amount;
+- is_drink: true for drinks (water, tea, coffee, juice, milk, kefir, smoothies, alcohol, etc.), false for food, including soups;
+- portion_g: the amount in grams, or for drinks in millilitres, a number greater than 0;
+- kcal, protein_g, fat_g, carbs_g, fiber_g, sugar_g: numbers for exactly portion_g, rounded to 1 decimal;
+- is_food: false if the text is not a food or drink (then all numbers are 0).`;
+
+/** Dish names come back in the app's language, like the rest of the food log. */
+const SYSTEM_PROMPT = tr(SYSTEM_PROMPT_UK, SYSTEM_PROMPT_EN);
 
 const SCHEMA = {
   type: 'object',
@@ -94,7 +111,11 @@ const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >=
 /** Asks Groq for the nutrition of `dish`; throws `GroqError` with a user-facing message. */
 export async function askGroqNutrition(dish: string, apiKey?: string | null): Promise<Nutrition> {
   const key = apiKey ?? (await getGroqKey());
-  if (!key) throw new GroqError('Додай ключ Groq API у налаштуваннях.', 'no-key');
+  if (!key)
+    throw new GroqError(
+      tr('Додай ключ Groq API у налаштуваннях.', 'Add a Groq API key in settings.'),
+      'no-key',
+    );
 
   let res: Response;
   try {
@@ -116,15 +137,27 @@ export async function askGroqNutrition(dish: string, apiKey?: string | null): Pr
       }),
     });
   } catch {
-    throw new GroqError('Немає з’єднання з Groq. Перевір інтернет.', 'network');
+    throw new GroqError(
+      tr('Немає з’єднання з Groq. Перевір інтернет.', 'Can’t reach Groq. Check your internet.'),
+      'network',
+    );
   }
 
   if (res.status === 401 || res.status === 403) {
-    throw new GroqError('Groq відхилив ключ. Перевір його в налаштуваннях.', 'auth');
+    throw new GroqError(
+      tr(
+        'Groq відхилив ключ. Перевір його в налаштуваннях.',
+        'Groq rejected the key. Check it in settings.',
+      ),
+      'auth',
+    );
   }
   if (!res.ok) {
     const body = await res.text().catch(() => '');
-    throw new GroqError(`Groq повернув помилку ${res.status}. ${body.slice(0, 200)}`, 'network');
+    throw new GroqError(
+      `${tr('Groq повернув помилку', 'Groq returned error')} ${res.status}. ${body.slice(0, 200)}`,
+      'network',
+    );
   }
 
   let parsed: GroqNutrition;
@@ -132,13 +165,28 @@ export async function askGroqNutrition(dish: string, apiKey?: string | null): Pr
     const json = await res.json();
     parsed = JSON.parse(json.choices[0].message.content);
   } catch {
-    throw new GroqError('Не вдалося прочитати відповідь Groq.', 'bad-response');
+    throw new GroqError(
+      tr('Не вдалося прочитати відповідь Groq.', 'Couldn’t read the Groq response.'),
+      'bad-response',
+    );
   }
   if (parsed.is_food && !(num(parsed.portion_g) > 0)) {
-    throw new GroqError('Groq не визначив вагу чи об’єм порції. Уточни опис.', 'bad-response');
+    throw new GroqError(
+      tr(
+        'Groq не визначив вагу чи об’єм порції. Уточни опис.',
+        'Groq couldn’t tell the portion size. Add more detail.',
+      ),
+      'bad-response',
+    );
   }
   if (!parsed.is_food) {
-    throw new GroqError('Схоже, це не страва. Опиши, що саме ти з’їв.', 'not-food');
+    throw new GroqError(
+      tr(
+        'Схоже, це не страва. Опиши, що саме ти з’їв.',
+        'That doesn’t look like food. Describe what you ate.',
+      ),
+      'not-food',
+    );
   }
   return {
     name: parsed.name?.trim() || dish,

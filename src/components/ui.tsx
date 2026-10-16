@@ -22,7 +22,14 @@ import { colors, fontSize, radius, spacing } from '@/theme';
 export type IconName = ComponentProps<typeof Ionicons>['name'];
 
 type TextVariant =
-  'hero' | 'title' | 'heading' | 'body' | 'secondary' | 'muted' | 'caption' | 'overline';
+  | 'hero'
+  | 'title'
+  | 'heading'
+  | 'body'
+  | 'secondary'
+  | 'muted'
+  | 'caption'
+  | 'overline';
 
 export function Text({
   variant = 'body',
@@ -355,7 +362,7 @@ export function ChipGroup<T extends string>({
   );
 }
 
-/** Small rounded label, e.g. "АКТИВНА" or "PR". */
+/** Small rounded label, e.g. "ACTIVE" or "PR". */
 export function Badge({
   label,
   tone = 'accent',

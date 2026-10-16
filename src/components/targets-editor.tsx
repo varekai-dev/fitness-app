@@ -3,6 +3,7 @@ import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Text } from '@/components/ui';
 import type { Targets, TrackingType } from '@/db/schema';
+import { tr } from '@/lib/i18n';
 import { parseDecimal } from '@/lib/metrics';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
@@ -51,20 +52,36 @@ export function TargetsEditor({
 
   return (
     <View style={styles.row}>
-      <Cell label="Підходи" value={sets} onChange={setSets} onSave={save} />
+      <Cell label={tr('Підходи', 'Sets')} value={sets} onChange={setSets} onSave={save} />
       {hasReps && (
         <>
-          <Cell label="Повт. від" value={repsMin} onChange={setRepsMin} onSave={save} />
-          <Cell label="до" value={repsMax} onChange={setRepsMax} onSave={save} />
+          <Cell
+            label={tr('Повт. від', 'Reps from')}
+            value={repsMin}
+            onChange={setRepsMin}
+            onSave={save}
+          />
+          <Cell label={tr('до', 'to')} value={repsMax} onChange={setRepsMax} onSave={save} />
         </>
       )}
       {type === 'duration' && (
-        <Cell label="Час, с" value={duration} onChange={setDuration} onSave={save} />
+        <Cell
+          label={tr('Час, с', 'Time, s')}
+          value={duration}
+          onChange={setDuration}
+          onSave={save}
+        />
       )}
       {type === 'distance_duration' && (
-        <Cell label="Км" value={distance} onChange={setDistance} onSave={save} decimal />
+        <Cell
+          label={tr('Км', 'Km')}
+          value={distance}
+          onChange={setDistance}
+          onSave={save}
+          decimal
+        />
       )}
-      <Cell label="Відпоч., с" value={rest} onChange={setRest} onSave={save} />
+      <Cell label={tr('Відпоч., с', 'Rest, s')} value={rest} onChange={setRest} onSave={save} />
     </View>
   );
 }

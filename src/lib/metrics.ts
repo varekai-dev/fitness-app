@@ -1,4 +1,5 @@
 import type { TrackingType, WorkoutSet } from '@/db/schema';
+import { tr } from '@/lib/i18n';
 
 export type SetValues = Pick<WorkoutSet, 'weightKg' | 'reps' | 'durationSec' | 'distanceKm'>;
 
@@ -16,19 +17,23 @@ export type MetricInfo = {
   higherIsBetter: boolean;
 };
 
+const KG = tr('кг', 'kg');
+const KM = tr('км', 'km');
+const REPS = tr('повт', 'reps');
+
 export const METRIC_INFO: Record<TrackingType, MetricInfo> = {
-  weight_reps: { label: 'Розрахунковий 1ПМ', unit: 'кг', higherIsBetter: true },
+  weight_reps: { label: tr('Розрахунковий 1ПМ', 'Estimated 1RM'), unit: KG, higherIsBetter: true },
   // Body weight is not tracked, so the estimate covers only the added weight.
   weighted_reps: {
-    label: '1ПМ додаткової ваги',
-    unit: 'кг',
+    label: tr('1ПМ додаткової ваги', 'Added-weight 1RM'),
+    unit: KG,
     higherIsBetter: true,
   },
-  reps: { label: 'Макс. повторень', unit: 'повт', higherIsBetter: true },
-  duration: { label: 'Макс. час', unit: 'с', higherIsBetter: true },
+  reps: { label: tr('Макс. повторень', 'Max reps'), unit: REPS, higherIsBetter: true },
+  duration: { label: tr('Макс. час', 'Max time'), unit: tr('с', 's'), higherIsBetter: true },
   distance_duration: {
-    label: 'Найкращий темп',
-    unit: 'хв/км',
+    label: tr('Найкращий темп', 'Best pace'),
+    unit: tr('хв/км', 'min/km'),
     higherIsBetter: false,
   },
 };
@@ -71,13 +76,13 @@ export function formatMetric(type: TrackingType, value: number): string {
   switch (type) {
     case 'weight_reps':
     case 'weighted_reps':
-      return `${formatNumber(value, 1)} кг`;
+      return `${formatNumber(value, 1)} ${KG}`;
     case 'reps':
-      return `${Math.round(value)} повт`;
+      return `${Math.round(value)} ${REPS}`;
     case 'duration':
       return formatDuration(value);
     case 'distance_duration':
-      return `${formatDuration(value)} /км`;
+      return `${formatDuration(value)} /${KM}`;
   }
 }
 
@@ -96,19 +101,19 @@ export function formatDuration(totalSec: number): string {
   return `${m}:${ss}`;
 }
 
-/** Human-readable set, e.g. "20 кг × 10" or "5 км за 25:00". */
+/** Human-readable set, e.g. "20 kg × 10" or "5 km in 25:00". */
 export function formatSet(type: TrackingType, s: SetValues): string {
   switch (type) {
     case 'weight_reps':
-      return `${formatNumber(s.weightKg ?? 0)} кг × ${s.reps ?? 0}`;
+      return `${formatNumber(s.weightKg ?? 0)} ${KG} × ${s.reps ?? 0}`;
     case 'weighted_reps':
-      return s.weightKg ? `+${formatNumber(s.weightKg)} кг × ${s.reps ?? 0}` : `${s.reps ?? 0}`;
+      return s.weightKg ? `+${formatNumber(s.weightKg)} ${KG} × ${s.reps ?? 0}` : `${s.reps ?? 0}`;
     case 'reps':
       return `${s.reps ?? 0}`;
     case 'duration':
       return formatDuration(s.durationSec ?? 0);
     case 'distance_duration':
-      return `${formatNumber(s.distanceKm ?? 0)} км за ${formatDuration(s.durationSec ?? 0)}`;
+      return `${formatNumber(s.distanceKm ?? 0)} ${KM} ${tr('за', 'in')} ${formatDuration(s.durationSec ?? 0)}`;
   }
 }
 

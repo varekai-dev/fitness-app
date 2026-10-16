@@ -1,12 +1,13 @@
 import type { IconName } from '@/components/ui';
+import { tr } from '@/lib/i18n';
 
 export const WIDGET_SIZES = ['small', 'medium', 'large'] as const;
 export type WidgetSize = (typeof WIDGET_SIZES)[number];
 
 export const WIDGET_SIZE_LABELS: Record<WidgetSize, string> = {
-  small: 'Малий',
-  medium: 'Середній',
-  large: 'Великий',
+  small: tr('Малий', 'Small'),
+  medium: tr('Середній', 'Medium'),
+  large: tr('Великий', 'Large'),
 };
 
 /** One-number tiles, a third of the row wide, like the Training tab's stats. */
@@ -46,22 +47,31 @@ export type WidgetType = (typeof WIDGET_TYPES)[number];
 export type Widget = { id: string; type: WidgetType; size: WidgetSize };
 
 export const STAT_INFO: Record<StatType, { title: string; icon: IconName }> = {
-  'stat-workouts-week': { title: 'Тренувань за тиждень', icon: 'barbell' },
-  'stat-workouts-kcal': { title: 'Спалено за тиждень', icon: 'barbell' },
-  'stat-workouts-total': { title: 'Усього тренувань', icon: 'barbell' },
-  'stat-workouts-time': { title: 'Час тренувань за тиждень', icon: 'barbell' },
-  'stat-workouts-volume': { title: 'Тоннаж за тиждень', icon: 'barbell' },
-  'stat-workouts-streak': { title: 'Тижнів поспіль', icon: 'barbell' },
-  'stat-workouts-since': { title: 'Від останнього тренування', icon: 'barbell' },
-  'stat-food-left': { title: 'Лишилось ккал', icon: 'restaurant' },
-  'stat-food-protein': { title: 'Білок сьогодні', icon: 'restaurant' },
-  'stat-food-average': { title: 'Ккал у середньому', icon: 'restaurant' },
-  'stat-food-streak': { title: 'Днів у межах цілі', icon: 'restaurant' },
-  'stat-food-balance': { title: 'Баланс калорій', icon: 'restaurant' },
-  'stat-water-today': { title: 'Вода сьогодні', icon: 'water' },
-  'stat-water-average': { title: 'Вода в середньому', icon: 'water' },
-  'stat-water-goal-days': { title: 'Днів з ціллю', icon: 'water' },
-  'stat-water-streak': { title: 'Днів поспіль', icon: 'water' },
+  'stat-workouts-week': {
+    title: tr('Тренувань за тиждень', 'Workouts this week'),
+    icon: 'barbell',
+  },
+  'stat-workouts-kcal': { title: tr('Спалено за тиждень', 'Burned this week'), icon: 'barbell' },
+  'stat-workouts-total': { title: tr('Усього тренувань', 'Total workouts'), icon: 'barbell' },
+  'stat-workouts-time': {
+    title: tr('Час тренувань за тиждень', 'Workout time this week'),
+    icon: 'barbell',
+  },
+  'stat-workouts-volume': { title: tr('Тоннаж за тиждень', 'Volume this week'), icon: 'barbell' },
+  'stat-workouts-streak': { title: tr('Тижнів поспіль', 'Weeks in a row'), icon: 'barbell' },
+  'stat-workouts-since': {
+    title: tr('Від останнього тренування', 'Since last workout'),
+    icon: 'barbell',
+  },
+  'stat-food-left': { title: tr('Лишилось ккал', 'Kcal left'), icon: 'restaurant' },
+  'stat-food-protein': { title: tr('Білок сьогодні', 'Protein today'), icon: 'restaurant' },
+  'stat-food-average': { title: tr('Ккал у середньому', 'Average kcal'), icon: 'restaurant' },
+  'stat-food-streak': { title: tr('Днів у межах цілі', 'Days within goal'), icon: 'restaurant' },
+  'stat-food-balance': { title: tr('Баланс калорій', 'Calorie balance'), icon: 'restaurant' },
+  'stat-water-today': { title: tr('Вода сьогодні', 'Water today'), icon: 'water' },
+  'stat-water-average': { title: tr('Вода в середньому', 'Average water'), icon: 'water' },
+  'stat-water-goal-days': { title: tr('Днів з ціллю', 'Days at goal'), icon: 'water' },
+  'stat-water-streak': { title: tr('Днів поспіль', 'Days in a row'), icon: 'water' },
 };
 
 export const isStatType = (type: WidgetType): type is StatType =>
@@ -72,43 +82,64 @@ export const WIDGET_INFO: Record<
   { title: string; description: string; icon: IconName }
 > = {
   quote: {
-    title: 'Цитата дня',
-    description: 'Мотиваційна фраза, щодня нова.',
+    title: tr('Цитата дня', 'Quote of the day'),
+    description: tr('Мотиваційна фраза, щодня нова.', 'A motivational phrase, new every day.'),
     icon: 'flash',
   },
   'workout-next': {
-    title: 'Наступне тренування',
-    description: 'День програми, який іде далі, або тренування, що триває. Старт одним дотиком.',
+    title: tr('Наступне тренування', 'Next workout'),
+    description: tr(
+      'День програми, який іде далі, або тренування, що триває. Старт одним дотиком.',
+      'The next program day, or the workout in progress. Start with one tap.',
+    ),
     icon: 'play-circle',
   },
   'workout-week': {
-    title: 'Тиждень тренувань',
-    description: 'Скільки тренувань цього тижня, спалені калорії та дні активності.',
+    title: tr('Тиждень тренувань', 'Training week'),
+    description: tr(
+      'Скільки тренувань цього тижня, спалені калорії та дні активності.',
+      'Workouts this week, calories burned and active days.',
+    ),
     icon: 'flame',
   },
   'food-calories': {
-    title: 'Калорії',
-    description: 'З’їдено за сьогодні проти цілі, білки, жири й вуглеводи.',
+    title: tr('Калорії', 'Calories'),
+    description: tr(
+      'З’їдено за сьогодні проти цілі, білки, жири й вуглеводи.',
+      'Eaten today against your goal, with protein, fat and carbs.',
+    ),
     icon: 'restaurant',
   },
   'food-meals': {
-    title: 'Прийоми їжі',
-    description: 'Що вже з’їдено сьогодні, з калоріями кожної страви.',
+    title: tr('Прийоми їжі', 'Meals'),
+    description: tr(
+      'Що вже з’їдено сьогодні, з калоріями кожної страви.',
+      'What you’ve eaten today, with the calories of each dish.',
+    ),
     icon: 'list',
   },
   'water-today': {
-    title: 'Вода сьогодні',
-    description: 'Випито за день і швидке додавання склянок.',
+    title: tr('Вода сьогодні', 'Water today'),
+    description: tr(
+      'Випито за день і швидке додавання склянок.',
+      'Drunk today, with quick buttons to add a glass.',
+    ),
     icon: 'water',
   },
   'water-week': {
-    title: 'Вода за тиждень',
-    description: 'Скільки випито в кожен з останніх 7 днів і в які дні ціль виконано.',
+    title: tr('Вода за тиждень', 'Water this week'),
+    description: tr(
+      'Скільки випито в кожен з останніх 7 днів і в які дні ціль виконано.',
+      'How much you drank on each of the last 7 days, and which days hit the goal.',
+    ),
     icon: 'bar-chart',
   },
   weight: {
-    title: 'Вага тіла',
-    description: 'Остання вага, зміна з попереднього зважування і графік.',
+    title: tr('Вага тіла', 'Body weight'),
+    description: tr(
+      'Остання вага, зміна з попереднього зважування і графік.',
+      'Latest weight, change since the previous weigh-in, and a chart.',
+    ),
     icon: 'scale',
   },
 };
@@ -120,22 +151,22 @@ export const WIDGET_GROUPS: {
   stats: StatType[];
 }[] = [
   {
-    title: 'Тренування',
+    title: tr('Тренування', 'Training'),
     types: ['workout-next', 'workout-week'],
     stats: STAT_TYPES.filter((t) => t.startsWith('stat-workouts-')),
   },
   {
-    title: 'Харчування',
+    title: tr('Харчування', 'Food'),
     types: ['food-calories', 'food-meals'],
     stats: STAT_TYPES.filter((t) => t.startsWith('stat-food-')),
   },
   {
-    title: 'Вода',
+    title: tr('Вода', 'Water'),
     types: ['water-today', 'water-week'],
     stats: STAT_TYPES.filter((t) => t.startsWith('stat-water-')),
   },
-  { title: 'Тіло', types: ['weight'], stats: [] },
-  { title: 'Інше', types: ['quote'], stats: [] },
+  { title: tr('Тіло', 'Body'), types: ['weight'], stats: [] },
+  { title: tr('Інше', 'Other'), types: ['quote'], stats: [] },
 ];
 
 export const newWidgetId = () =>

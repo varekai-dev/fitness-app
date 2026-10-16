@@ -22,6 +22,7 @@ import {
   type WidgetSize,
 } from '@/lib/dashboard';
 import { formatGrams, formatKcal } from '@/lib/food';
+import { locale, plural, tr } from '@/lib/i18n';
 import {
   formatShortDate,
   formatWeightDelta,
@@ -34,6 +35,11 @@ import { dailyPhrase } from '@/lib/motivation';
 import { averageOfLogged, daysBetween, dayStreak, weekStreak } from '@/lib/stats';
 import { formatMl, GLASS_PRESETS } from '@/lib/water';
 import { colors, fontSize, radius, spacing } from '@/theme';
+
+const KCAL = tr('ккал', 'kcal');
+const KG = tr('кг', 'kg');
+const ML = tr('мл', 'ml');
+const G = tr('г', 'g');
 
 /** Height of a small or medium tile; a large tile is two rows tall. */
 export const TILE_HEIGHT = 156;
@@ -250,7 +256,7 @@ function QuoteWidget({ data }: WidgetProps) {
   return (
     <Tile>
       <View style={styles.quoteGlow} pointerEvents="none" />
-      <TileTitle title="Цитата дня" icon="flash" />
+      <TileTitle title={tr('Цитата дня', 'Quote of the day')} icon="flash" />
       <RNText style={styles.quote} numberOfLines={2} adjustsFontSizeToFit>
         {dailyPhrase(new Date(data.loadedAt))}
       </RNText>
@@ -265,10 +271,10 @@ function WorkoutNextWidget({ size, data }: WidgetProps) {
 
   if (activeWorkout) {
     const status = notStarted(activeWorkout)
-      ? 'Не розпочато'
+      ? tr('Не розпочато', 'Not started')
       : activeWorkout.pausedAt
-        ? 'На паузі'
-        : 'Триває';
+        ? tr('На паузі', 'Paused')
+        : tr('Триває', 'In progress');
     return (
       <Tile
         accent
@@ -297,7 +303,13 @@ function WorkoutNextWidget({ size, data }: WidgetProps) {
       <Tile
         onPress={() => router.navigate({ pathname: '/training', params: { view: 'programs' } })}>
         <TileTitle title={WIDGET_INFO['workout-next'].title} icon="play-circle" />
-        <Empty text={program ? `У «${program.name}» ще немає днів` : 'Обери програму тренувань'} />
+        <Empty
+          text={
+            program
+              ? tr(`У «${program.name}» ще немає днів`, `“${program.name}” has no days yet`)
+              : tr('Обери програму тренувань', 'Choose a training program')
+          }
+        />
       </Tile>
     );
   }
@@ -314,13 +326,19 @@ function WorkoutNextWidget({ size, data }: WidgetProps) {
   const shown = nextDay.exercises.slice(0, 6);
   return (
     <Tile accent onPress={start}>
-      <TileTitle title="Наступне тренування" icon="barbell" accent />
+      <TileTitle title={tr('Наступне тренування', 'Next workout')} icon="barbell" accent />
       <Text style={[styles.heroTitle, size === 'small' && styles.heroTitleSmall]} numberOfLines={2}>
         {nextDay.name}
       </Text>
       {size !== 'small' && (
         <Text variant="caption" style={styles.onAccentMuted} numberOfLines={1}>
-          {program.name} · {nextDay.exercises.length} вправ · {sets} підходів
+          {program.name} · {nextDay.exercises.length}{' '}
+          {plural(
+            nextDay.exercises.length,
+            ['вправа', 'вправи', 'вправ'],
+            ['exercise', 'exercises'],
+          )}{' '}
+          · {sets} {plural(sets, ['підхід', 'підходи', 'підходів'], ['set', 'sets'])}
         </Text>
       )}
       {size === 'large' && (
@@ -337,7 +355,7 @@ function WorkoutNextWidget({ size, data }: WidgetProps) {
           ))}
           {nextDay.exercises.length > shown.length && (
             <Text variant="caption" style={styles.onAccentMuted}>
-              + ще {nextDay.exercises.length - shown.length}
+              + {tr('ще', 'more')} {nextDay.exercises.length - shown.length}
             </Text>
           )}
         </View>
@@ -369,11 +387,16 @@ function WorkoutWeekWidget({ size, data }: WidgetProps) {
   if (size === 'small') {
     return (
       <Tile onPress={open}>
-        <TileTitle title="Цей тиждень" icon="flame" />
+        <TileTitle title={tr('Цей тиждень', 'This week')} icon="flame" />
         <View style={styles.fill}>
           <Big>{thisWeek.length}</Big>
           <Text variant="muted">
-            {thisWeek.length === 1 ? 'тренування' : 'тренувань'} · усього {finished.length}
+            {plural(
+              thisWeek.length,
+              ['тренування', 'тренування', 'тренувань'],
+              ['workout', 'workouts'],
+            )}{' '}
+            · {tr('усього', 'total')} {finished.length}
           </Text>
         </View>
       </Tile>
@@ -385,15 +408,15 @@ function WorkoutWeekWidget({ size, data }: WidgetProps) {
   const last = finished[0];
   return (
     <Tile onPress={open}>
-      <TileTitle title="Тиждень тренувань" icon="flame" />
+      <TileTitle title={tr('Тиждень тренувань', 'Training week')} icon="flame" />
       <View style={styles.statsRow}>
-        <Stat value={String(thisWeek.length)} label="за тиждень" />
+        <Stat value={String(thisWeek.length)} label={tr('за тиждень', 'this week')} />
         <Stat
           value={weekKcal !== null ? formatKcal(weekKcal) : '—'}
-          unit={weekKcal !== null ? 'ккал' : undefined}
-          label="спалено"
+          unit={weekKcal !== null ? KCAL : undefined}
+          label={tr('спалено', 'burned')}
         />
-        <Stat value={String(finished.length)} label="усього" />
+        <Stat value={String(finished.length)} label={tr('усього', 'total')} />
       </View>
       {size === 'large' && (
         <>
@@ -418,8 +441,8 @@ function WorkoutWeekWidget({ size, data }: WidgetProps) {
           </View>
           <Text variant="muted" numberOfLines={1}>
             {last
-              ? `Останнє: ${last.dayName} · ${formatShortDate(last.startedAt)}`
-              : 'Ще немає завершених тренувань'}
+              ? `${tr('Останнє', 'Last')}: ${last.dayName} · ${formatShortDate(last.startedAt)}`
+              : tr('Ще немає завершених тренувань', 'No finished workouts yet')}
           </Text>
         </>
       )}
@@ -450,16 +473,16 @@ function FoodCaloriesWidget({ size, data }: WidgetProps) {
   if (size === 'small') {
     // No macro goals exist, so each bar is that macro's share of today's kcal.
     const macroKcal = [
-      { label: 'Б', grams: totals.proteinG, kcal: totals.proteinG * 4 },
-      { label: 'Ж', grams: totals.fatG, kcal: totals.fatG * 9 },
-      { label: 'В', grams: totals.carbsG, kcal: totals.carbsG * 4 },
+      { label: tr('Б', 'P'), grams: totals.proteinG, kcal: totals.proteinG * 4 },
+      { label: tr('Ж', 'F'), grams: totals.fatG, kcal: totals.fatG * 9 },
+      { label: tr('В', 'C'), grams: totals.carbsG, kcal: totals.carbsG * 4 },
     ];
     const macroTotal = macroKcal.reduce((sum, m) => sum + m.kcal, 0);
     return (
       <Tile onPress={open}>
         <View style={styles.titleWithRing}>
           <View style={styles.flex}>
-            <TileTitle title="Калорії" icon="restaurant" />
+            <TileTitle title={tr('Калорії', 'Calories')} icon="restaurant" />
           </View>
           <ProgressRing
             progress={progress}
@@ -483,27 +506,30 @@ function FoodCaloriesWidget({ size, data }: WidgetProps) {
                 />
               </View>
               <Text variant="caption" style={styles.macroBarValue}>
-                {formatGrams(m.grams)} г
+                {formatGrams(m.grams)} {G}
               </Text>
             </View>
           ))}
         </View>
         <Big small>
           {formatKcal(totals.kcal)}
-          <Unit> / {formatKcal(goal)} ккал</Unit>
+          <Unit>
+            {' '}
+            / {formatKcal(goal)} {KCAL}
+          </Unit>
         </Big>
       </Tile>
     );
   }
 
   const macros = [
-    { label: 'Білки', value: totals.proteinG },
-    { label: 'Жири', value: totals.fatG },
-    { label: 'Вуглеводи', value: totals.carbsG },
+    { label: tr('Білки', 'Protein'), value: totals.proteinG },
+    { label: tr('Жири', 'Fat'), value: totals.fatG },
+    { label: tr('Вуглеводи', 'Carbs'), value: totals.carbsG },
   ];
   return (
     <Tile onPress={open}>
-      <TileTitle title="Калорії сьогодні" icon="restaurant" />
+      <TileTitle title={tr('Калорії сьогодні', 'Calories today')} icon="restaurant" />
       <View style={styles.rowCenter}>
         <ProgressRing
           progress={progress}
@@ -517,7 +543,9 @@ function FoodCaloriesWidget({ size, data }: WidgetProps) {
             <Unit> / {formatKcal(goal)}</Unit>
           </Big>
           <Text variant="muted">
-            {left >= 0 ? `ще ${formatKcal(left)} ккал` : `понад ціль на ${formatKcal(-left)}`}
+            {left >= 0
+              ? tr(`ще ${formatKcal(left)} ккал`, `${formatKcal(left)} kcal left`)
+              : tr(`понад ціль на ${formatKcal(-left)}`, `${formatKcal(-left)} over goal`)}
           </Text>
         </View>
       </View>
@@ -528,7 +556,7 @@ function FoodCaloriesWidget({ size, data }: WidgetProps) {
             key={m.label}
             style={[styles.macro, size === 'large' ? styles.macroLarge : styles.macroInline]}>
             <Text variant={size === 'large' ? 'heading' : 'body'} style={styles.macroValue}>
-              {formatGrams(m.value)} г
+              {formatGrams(m.value)} {G}
             </Text>
             <Text variant="muted" numberOfLines={1}>
               {size === 'large' ? m.label : m.label.slice(0, 1)}
@@ -540,7 +568,7 @@ function FoodCaloriesWidget({ size, data }: WidgetProps) {
   );
 }
 
-const timeFormatter = new Intl.DateTimeFormat('uk-UA', { hour: '2-digit', minute: '2-digit' });
+const timeFormatter = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' });
 
 function FoodMealsWidget({ size, data }: WidgetProps) {
   const entries = [...data.food.dayEntries].reverse();
@@ -550,8 +578,8 @@ function FoodMealsWidget({ size, data }: WidgetProps) {
   if (entries.length === 0) {
     return (
       <Tile onPress={open}>
-        <TileTitle title="Прийоми їжі" icon="list" />
-        <Empty text="Ще нічого не з’їдено" />
+        <TileTitle title={tr('Прийоми їжі', 'Meals')} icon="list" />
+        <Empty text={tr('Ще нічого не з’їдено', 'Nothing eaten yet')} />
       </Tile>
     );
   }
@@ -560,14 +588,14 @@ function FoodMealsWidget({ size, data }: WidgetProps) {
     const last = entries[0];
     return (
       <Tile onPress={open}>
-        <TileTitle title="Прийоми їжі" icon="list" />
+        <TileTitle title={tr('Прийоми їжі', 'Meals')} icon="list" />
         <View style={styles.fill}>
           <Big>{entries.length}</Big>
           <Text variant="body" numberOfLines={1}>
             {last.name}
           </Text>
           <Text variant="muted">
-            {timeFormatter.format(new Date(last.eatenAt))} · {formatKcal(last.kcal)} ккал
+            {timeFormatter.format(new Date(last.eatenAt))} · {formatKcal(last.kcal)} {KCAL}
           </Text>
         </View>
       </Tile>
@@ -576,7 +604,7 @@ function FoodMealsWidget({ size, data }: WidgetProps) {
 
   return (
     <Tile onPress={open}>
-      <TileTitle title={`Прийоми їжі · ${entries.length}`} icon="list" />
+      <TileTitle title={`${tr('Прийоми їжі', 'Meals')} · ${entries.length}`} icon="list" />
       <View style={styles.list}>
         {entries.slice(0, limit).map((e) => (
           <View key={e.id} style={styles.listRow}>
@@ -591,7 +619,11 @@ function FoodMealsWidget({ size, data }: WidgetProps) {
             </Text>
           </View>
         ))}
-        {entries.length > limit && <Text variant="muted">+ ще {entries.length - limit}</Text>}
+        {entries.length > limit && (
+          <Text variant="muted">
+            + {tr('ще', 'more')} {entries.length - limit}
+          </Text>
+        )}
       </View>
     </Tile>
   );
@@ -613,7 +645,7 @@ function WaterTodayWidget({ size, data }: WidgetProps) {
   if (size === 'small') {
     return (
       <Tile onPress={open}>
-        <TileTitle title="Вода" icon="water" />
+        <TileTitle title={tr('Вода', 'Water')} icon="water" />
         <View style={styles.bottleRow}>
           <WaterBottle progress={progress} height={64} />
           <View>
@@ -621,19 +653,22 @@ function WaterTodayWidget({ size, data }: WidgetProps) {
               {Math.round(progress * 100)}
               <Unit> %</Unit>
             </Big>
-            <Text variant="muted">норми</Text>
+            <Text variant="muted">{tr('норми', 'of goal')}</Text>
           </View>
         </View>
         <View style={styles.valueWithAction}>
           <Big small>
             {formatMl(todayMl)}
-            <Unit> / {formatMl(goal)} мл</Unit>
+            <Unit>
+              {' '}
+              / {formatMl(goal)} {ML}
+            </Unit>
           </Big>
           <Pressable
             onPress={() => drink(QUICK_ML)}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel={`Додати ${QUICK_ML} мл`}
+            accessibilityLabel={tr(`Додати ${QUICK_ML} мл`, `Add ${QUICK_ML} ml`)}
             style={({ pressed }) => [styles.addRound, pressed && styles.quickPressed]}>
             <Ionicons name="add" size={20} color={colors.accentText} />
           </Pressable>
@@ -645,15 +680,20 @@ function WaterTodayWidget({ size, data }: WidgetProps) {
   if (size === 'medium') {
     return (
       <Tile onPress={open}>
-        <TileTitle title="Вода сьогодні" icon="water" />
+        <TileTitle title={tr('Вода сьогодні', 'Water today')} icon="water" />
         <View style={styles.rowCenter}>
           <ProgressRing progress={progress} icon="water" size={56} />
           <View style={styles.flex}>
             <Big>
               {formatMl(todayMl)}
-              <Unit> / {formatMl(goal)} мл</Unit>
+              <Unit>
+                {' '}
+                / {formatMl(goal)} {ML}
+              </Unit>
             </Big>
-            <Text variant="muted">{Math.round(progress * 100)}% денної норми</Text>
+            <Text variant="muted">
+              {Math.round(progress * 100)}% {tr('денної норми', 'of daily goal')}
+            </Text>
           </View>
         </View>
         <View style={styles.quickRow}>
@@ -667,17 +707,17 @@ function WaterTodayWidget({ size, data }: WidgetProps) {
 
   return (
     <Tile onPress={open}>
-      <TileTitle title="Вода сьогодні" icon="water" />
+      <TileTitle title={tr('Вода сьогодні', 'Water today')} icon="water" />
       <View style={styles.waterLarge}>
         <WaterBottle progress={progress} height={230} />
         <View style={styles.waterSide}>
           <View>
             <Big>
               {formatMl(todayMl)}
-              <Unit> мл</Unit>
+              <Unit> {ML}</Unit>
             </Big>
             <Text variant="muted">
-              з {formatMl(goal)} мл · {Math.round(progress * 100)}%
+              {tr('з', 'of')} {formatMl(goal)} {ML} · {Math.round(progress * 100)}%
             </Text>
           </View>
           <View style={styles.glassGrid}>
@@ -701,13 +741,13 @@ function WaterWeekWidget({ size, data }: WidgetProps) {
   if (size === 'small') {
     return (
       <Tile onPress={open}>
-        <TileTitle title="Вода за тиждень" icon="bar-chart" />
+        <TileTitle title={tr('Вода за тиждень', 'Water this week')} icon="bar-chart" />
         <View style={styles.fill}>
           <Big>
             {reached}
             <Unit> / 7</Unit>
           </Big>
-          <Text variant="muted">днів з виконаною ціллю</Text>
+          <Text variant="muted">{tr('днів з виконаною ціллю', 'days at goal')}</Text>
         </View>
       </Tile>
     );
@@ -718,7 +758,10 @@ function WaterWeekWidget({ size, data }: WidgetProps) {
   const average = days.reduce((s, d) => s + d.totalMl, 0) / days.length;
   return (
     <Tile onPress={open}>
-      <TileTitle title={`Вода за тиждень · ціль ${reached}/7`} icon="bar-chart" />
+      <TileTitle
+        title={`${tr('Вода за тиждень · ціль', 'Water this week · goal')} ${reached}/7`}
+        icon="bar-chart"
+      />
       <View style={styles.bars}>
         {days.map((d) => (
           <View key={d.dayStart} style={styles.barColumn}>
@@ -743,7 +786,14 @@ function WaterWeekWidget({ size, data }: WidgetProps) {
           </View>
         ))}
       </View>
-      {size === 'large' && <Text variant="muted">У середньому {formatMl(average)} мл на день</Text>}
+      {size === 'large' && (
+        <Text variant="muted">
+          {tr(
+            `У середньому ${formatMl(average)} мл на день`,
+            `${formatMl(average)} ml a day on average`,
+          )}
+        </Text>
+      )}
     </Tile>
   );
 }
@@ -756,25 +806,21 @@ const openHistory = () => router.navigate({ pathname: '/training', params: { vie
 const openFood = () => router.navigate('/food');
 const openWater = () => router.navigate('/water');
 
-/** "45 хв" under an hour, "3,5 год" from there on. */
+/** "45 min" under an hour, "3.5 h" from there on. */
 function formatHours(ms: number): Pick<StatValue, 'value' | 'unit'> {
   const min = Math.round(ms / 60_000);
   return min < 60
-    ? { value: String(min), unit: 'хв' }
-    : { value: formatNumber(min / 60, 1), unit: 'год' };
+    ? { value: String(min), unit: tr('хв', 'min') }
+    : { value: formatNumber(min / 60, 1), unit: tr('год', 'h') };
 }
 
 /** Kilograms lifted, in tonnes from a tonne up. */
 const formatTonnage = (kg: number): Pick<StatValue, 'value' | 'unit'> =>
   kg < 1000
-    ? { value: formatNumber(kg, 0), unit: 'кг' }
-    : { value: formatNumber(kg / 1000, 1), unit: 'т' };
+    ? { value: formatNumber(kg, 0), unit: tr('кг', 'kg') }
+    : { value: formatNumber(kg / 1000, 1), unit: tr('т', 't') };
 
-function pluralDays(n: number) {
-  if (n % 10 === 1 && n % 100 !== 11) return 'день';
-  if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) return 'дні';
-  return 'днів';
-}
+const pluralDays = (n: number) => plural(n, ['день', 'дні', 'днів'], ['day', 'days']);
 
 function statValue(type: StatType, data: DashboardData): StatValue {
   const { finished, bodyWeights, food, water, daily, loadedAt } = data;
@@ -787,21 +833,25 @@ function statValue(type: StatType, data: DashboardData): StatValue {
 
   switch (type) {
     case 'stat-workouts-week':
-      return { value: String(thisWeek.length), label: 'За тиждень', onPress: openHistory };
+      return {
+        value: String(thisWeek.length),
+        label: tr('За тиждень', 'This week'),
+        onPress: openHistory,
+      };
     case 'stat-workouts-kcal': {
       const kcal = kcalOf(thisWeek);
       return {
         value: kcal !== null ? formatKcal(kcal) : '—',
-        unit: kcal !== null ? 'ккал' : undefined,
-        label: 'Спалено',
+        unit: kcal !== null ? KCAL : undefined,
+        label: tr('Спалено', 'Burned'),
         onPress: openHistory,
       };
     }
     case 'stat-workouts-total':
-      return { value: String(finished.length), label: 'Усього', onPress: openHistory };
+      return { value: String(finished.length), label: tr('Усього', 'Total'), onPress: openHistory };
     case 'stat-workouts-time': {
       const ms = thisWeek.reduce((sum, w) => sum + workoutDurationMs(w, loadedAt), 0);
-      return { ...formatHours(ms), label: 'Час', onPress: openHistory };
+      return { ...formatHours(ms), label: tr('Час', 'Time'), onPress: openHistory };
     }
     case 'stat-workouts-volume': {
       let kg = 0;
@@ -812,45 +862,64 @@ function statValue(type: StatType, data: DashboardData): StatValue {
           for (const set of e.sets)
             if (set.completedAt !== null) kg += (set.weightKg ?? 0) * (set.reps ?? 0);
         }
-      return { ...formatTonnage(kg), label: 'Тоннаж', onPress: openHistory };
+      return { ...formatTonnage(kg), label: tr('Тоннаж', 'Volume'), onPress: openHistory };
     }
     case 'stat-workouts-streak': {
       const n = weekStreak(
         loadedAt,
         finished.map((w) => w.startedAt),
       );
-      return { value: String(n), unit: 'тиж.', label: 'Поспіль', onPress: openHistory };
+      return {
+        value: String(n),
+        unit: tr('тиж.', n === 1 ? 'wk' : 'wks'),
+        label: tr('Поспіль', 'In a row'),
+        onPress: openHistory,
+      };
     }
     case 'stat-workouts-since': {
       const last = finished[0];
-      if (!last) return { value: '—', label: 'Ще без тренувань', onPress: openHistory };
+      if (!last)
+        return {
+          value: '—',
+          label: tr('Ще без тренувань', 'No workouts yet'),
+          onPress: openHistory,
+        };
       const days = daysBetween(last.startedAt, loadedAt);
       return days === 0
-        ? { value: 'Сьогодні', label: 'Тренування', onPress: openHistory }
-        : { value: String(days), unit: pluralDays(days), label: 'Перерва', onPress: openHistory };
+        ? {
+            value: tr('Сьогодні', 'Today'),
+            label: tr('Тренування', 'Workout'),
+            onPress: openHistory,
+          }
+        : {
+            value: String(days),
+            unit: pluralDays(days),
+            label: tr('Перерва', 'Break'),
+            onPress: openHistory,
+          };
     }
     case 'stat-food-left': {
       const left = food.goal - food.totals.kcal;
       return {
         value: formatKcal(Math.abs(left)),
-        unit: 'ккал',
-        label: left >= 0 ? 'Лишилось' : 'Понад ціль',
+        unit: KCAL,
+        label: left >= 0 ? tr('Лишилось', 'Left') : tr('Понад ціль', 'Over goal'),
         onPress: openFood,
       };
     }
     case 'stat-food-protein':
       return {
         value: formatGrams(food.totals.proteinG),
-        unit: 'г',
-        label: 'Білок',
+        unit: G,
+        label: tr('Білок', 'Protein'),
         onPress: openFood,
       };
     case 'stat-food-average': {
       const avg = averageOfLogged(food.days.map((d) => d.kcal));
       return {
         value: avg !== null ? formatKcal(avg) : '—',
-        unit: avg !== null ? 'ккал' : undefined,
-        label: 'Середнє',
+        unit: avg !== null ? KCAL : undefined,
+        label: tr('Середнє', 'Average'),
         onPress: openFood,
       };
     }
@@ -859,7 +928,12 @@ function statValue(type: StatType, data: DashboardData): StatValue {
         const kcal = daily.foodKcal.get(day) ?? 0;
         return kcal > 0 && kcal <= food.goal;
       });
-      return { value: String(n), unit: pluralDays(n), label: 'У межах цілі', onPress: openFood };
+      return {
+        value: String(n),
+        unit: pluralDays(n),
+        label: tr('У межах цілі', 'Within goal'),
+        onPress: openFood,
+      };
     }
     case 'stat-food-balance': {
       const today = finished.filter((w) => w.startedAt >= food.today);
@@ -867,8 +941,8 @@ function statValue(type: StatType, data: DashboardData): StatValue {
       const sign = balance > 0 ? '+' : balance < 0 ? '−' : '';
       return {
         value: `${sign}${formatKcal(Math.abs(balance))}`,
-        unit: 'ккал',
-        label: 'Баланс',
+        unit: KCAL,
+        label: tr('Баланс', 'Balance'),
         onPress: openFood,
       };
     }
@@ -876,8 +950,8 @@ function statValue(type: StatType, data: DashboardData): StatValue {
       const pct = water.goal > 0 ? Math.round((water.todayMl / water.goal) * 100) : 0;
       return {
         value: formatMl(water.todayMl),
-        unit: 'мл',
-        label: `${pct}% норми`,
+        unit: ML,
+        label: tr(`${pct}% норми`, `${pct}% of goal`),
         onPress: openWater,
       };
     }
@@ -885,18 +959,28 @@ function statValue(type: StatType, data: DashboardData): StatValue {
       const avg = averageOfLogged(water.days.map((d) => d.totalMl));
       return {
         value: avg !== null ? formatMl(avg) : '—',
-        unit: avg !== null ? 'мл' : undefined,
-        label: 'Середнє',
+        unit: avg !== null ? ML : undefined,
+        label: tr('Середнє', 'Average'),
         onPress: openWater,
       };
     }
     case 'stat-water-goal-days': {
       const reached = water.days.filter((d) => d.totalMl >= water.goal).length;
-      return { value: String(reached), unit: '/ 7', label: 'З нормою', onPress: openWater };
+      return {
+        value: String(reached),
+        unit: '/ 7',
+        label: tr('З нормою', 'At goal'),
+        onPress: openWater,
+      };
     }
     case 'stat-water-streak': {
       const n = dayStreak(loadedAt, (day) => (daily.waterMl.get(day) ?? 0) >= water.goal);
-      return { value: String(n), unit: pluralDays(n), label: 'Поспіль', onPress: openWater };
+      return {
+        value: String(n),
+        unit: pluralDays(n),
+        label: tr('Поспіль', 'In a row'),
+        onPress: openWater,
+      };
     }
   }
 }
@@ -931,8 +1015,8 @@ function WeightWidget({ size, data }: WidgetProps) {
   if (!latest) {
     return (
       <Tile onPress={open}>
-        <TileTitle title="Вага тіла" icon="scale" />
-        <Empty text="Додай перше зважування" />
+        <TileTitle title={tr('Вага тіла', 'Body weight')} icon="scale" />
+        <Empty text={tr('Додай перше зважування', 'Log your first weigh-in')} />
       </Tile>
     );
   }
@@ -943,10 +1027,10 @@ function WeightWidget({ size, data }: WidgetProps) {
     <View>
       <Big small={size === 'small'}>
         {formatNumber(latest.weightKg, 1)}
-        <Unit> кг</Unit>
+        <Unit> {KG}</Unit>
       </Big>
       <Text variant="muted" numberOfLines={1}>
-        {delta !== null ? `${formatWeightDelta(delta)} кг · ` : ''}
+        {delta !== null ? `${formatWeightDelta(delta)} ${KG} · ` : ''}
         {formatShortDate(latest.measuredAt)}
       </Text>
     </View>
@@ -955,7 +1039,7 @@ function WeightWidget({ size, data }: WidgetProps) {
   if (size === 'small') {
     return (
       <Tile onPress={open}>
-        <TileTitle title="Вага тіла" icon="scale" />
+        <TileTitle title={tr('Вага тіла', 'Body weight')} icon="scale" />
         <View style={styles.fillCenter}>
           {recent.length > 1 ? (
             <Sparkline
@@ -964,7 +1048,7 @@ function WeightWidget({ size, data }: WidgetProps) {
             />
           ) : (
             <Text variant="muted" style={styles.centerText}>
-              Графік — після наступного зважування
+              {tr('Графік — після наступного зважування', 'Chart after the next weigh-in')}
             </Text>
           )}
         </View>
@@ -972,7 +1056,7 @@ function WeightWidget({ size, data }: WidgetProps) {
           <View style={styles.valueWithAction}>
             <Big small>
               {formatNumber(latest.weightKg, 1)}
-              <Unit> кг</Unit>
+              <Unit> {KG}</Unit>
             </Big>
             {delta !== null && (
               <View style={styles.chip}>
@@ -989,7 +1073,7 @@ function WeightWidget({ size, data }: WidgetProps) {
   const ys = recent.map((w) => w.weightKg);
   return (
     <Tile onPress={open}>
-      <TileTitle title="Вага тіла" icon="scale" />
+      <TileTitle title={tr('Вага тіла', 'Body weight')} icon="scale" />
       {value}
       <View style={styles.fillEnd}>
         {recent.length > 1 ? (
@@ -998,12 +1082,18 @@ function WeightWidget({ size, data }: WidgetProps) {
             height={size === 'large' ? 170 : 48}
           />
         ) : (
-          <Text variant="muted">Графік з’явиться після зважування в інший день.</Text>
+          <Text variant="muted">
+            {tr(
+              'Графік з’явиться після зважування в інший день.',
+              'The chart appears after a weigh-in on another day.',
+            )}
+          </Text>
         )}
         {size === 'large' && recent.length > 1 && (
           <Text variant="muted">
-            Останні {recent.length}: від {formatNumber(Math.min(...ys), 1)} до{' '}
-            {formatNumber(Math.max(...ys), 1)} кг
+            {tr('Останні', 'Last')} {recent.length}: {tr('від', 'from')}{' '}
+            {formatNumber(Math.min(...ys), 1)} {tr('до', 'to')} {formatNumber(Math.max(...ys), 1)}{' '}
+            {KG}
           </Text>
         )}
       </View>

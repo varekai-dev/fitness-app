@@ -10,16 +10,17 @@ import { OverviewView } from '@/components/training/overview-view';
 import { ProgramsView } from '@/components/training/programs-view';
 import { CircleButton, ScreenHeader } from '@/components/ui';
 import { createProgram } from '@/db/programs';
+import { tr } from '@/lib/i18n';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 const SECTIONS = ['today', 'programs', 'exercises', 'history'] as const;
 export type TrainingSection = (typeof SECTIONS)[number];
 
 const LABELS: Record<TrainingSection, string> = {
-  today: 'Сьогодні',
-  programs: 'Програми',
-  exercises: 'Вправи',
-  history: 'Історія',
+  today: tr('Сьогодні', 'Today'),
+  programs: tr('Програми', 'Programs'),
+  exercises: tr('Вправи', 'Exercises'),
+  history: tr('Історія', 'History'),
 };
 
 const isSection = (v: unknown): v is TrainingSection => SECTIONS.includes(v as TrainingSection);
@@ -37,7 +38,7 @@ export default function TrainingScreen() {
 
   // A new program starts with a placeholder name; the editor opens with it selected to retype.
   const newProgram = async () => {
-    const id = await createProgram('Нова програма');
+    const id = await createProgram(tr('Нова програма', 'New program'));
     router.push({ pathname: '/program/[id]', params: { id, isNew: '1' } });
   };
 
@@ -51,7 +52,7 @@ export default function TrainingScreen() {
     <View style={styles.root}>
       <Backdrop />
       <ScreenHeader
-        title="Тренування"
+        title={tr('Тренування', 'Training')}
         mode="root"
         right={
           (section === 'exercises' || section === 'programs') && (

@@ -1,4 +1,5 @@
 import type { BodyWeight, TrackingType, WorkoutSet } from '@/db/schema';
+import { tr } from '@/lib/i18n';
 
 /**
  * Rough energy estimates: kcal = MET × body weight (kg) × hours.
@@ -82,4 +83,4 @@ export function estimateKcal(
   return kg === null ? null : workoutKcal(workout.exercises, kg);
 }
 
-export const formatKcal = (kcal: number) => `~${Math.round(kcal)} ккал`;
+export const formatKcal = (kcal: number) => `~${Math.round(kcal)} ${tr('ккал', 'kcal')}`;
