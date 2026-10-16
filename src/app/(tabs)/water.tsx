@@ -59,24 +59,40 @@ export default function WaterScreen() {
       headerRight={
         <CircleButton icon="settings-outline" onPress={() => router.push('/settings')} />
       }>
-      <Card style={styles.hero} onPress={() => router.push('/settings/water')}>
-        <Text style={styles.amount}>
-          {formatVolume(todayMl)}
-          <Text style={styles.unit}> {VOLUME_UNIT}</Text>
-        </Text>
-        <Text variant="muted">
-          {todayMl >= goal
-            ? tr('Ціль на сьогодні виконано!', 'Today’s goal reached!')
-            : tr(`${percent}% денної норми`, `${percent}% of daily goal`)}
-        </Text>
-        <Row style={styles.heroBody}>
-          <View style={styles.heroSide} />
-          <WaterBottle progress={goal > 0 ? todayMl / goal : 0} height={300} />
-          <View style={[styles.heroSide, styles.heroGoal]}>
-            <Text variant="caption" style={styles.goalLabel}>
-              {tr('ЦІЛЬ', 'GOAL')}
+      <Card onPress={() => router.push('/settings/water')}>
+        <Row style={styles.hero}>
+          <WaterBottle progress={goal > 0 ? todayMl / goal : 0} height={170} />
+          <View style={styles.heroInfo}>
+            <Text style={styles.amount}>
+              {formatVolume(todayMl)}
+              <Text style={styles.unit}> {VOLUME_UNIT}</Text>
             </Text>
-            <Text variant="heading">{formatVolume(goal)}</Text>
+            <Text variant="muted">
+              {todayMl >= goal
+                ? tr('Ціль на сьогодні виконано!', 'Today’s goal reached!')
+                : tr(`${percent}% денної норми`, `${percent}% of daily goal`)}
+            </Text>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${Math.min(percent, 100)}%` }]} />
+            </View>
+            <Row style={styles.heroStats}>
+              <View style={styles.heroStat}>
+                <Text variant="caption" style={styles.goalLabel}>
+                  {tr('ЦІЛЬ', 'GOAL')}
+                </Text>
+                <Text variant="heading">
+                  {formatVolume(goal)} {VOLUME_UNIT}
+                </Text>
+              </View>
+              <View style={styles.heroStat}>
+                <Text variant="caption" style={styles.goalLabel}>
+                  {tr('ЗАЛИШИЛОСЬ', 'LEFT')}
+                </Text>
+                <Text variant="heading">
+                  {formatVolume(Math.max(goal - todayMl, 0))} {VOLUME_UNIT}
+                </Text>
+              </View>
+            </Row>
           </View>
         </Row>
       </Card>
@@ -165,12 +181,20 @@ export default function WaterScreen() {
 }
 
 const styles = StyleSheet.create({
-  hero: { alignItems: 'center', paddingTop: spacing.xl },
+  hero: { gap: spacing.lg },
+  heroInfo: { flex: 1, gap: spacing.xs },
   amount: { color: colors.text, fontSize: fontSize.hero, fontWeight: '800', letterSpacing: -1 },
   unit: { color: colors.textSecondary, fontSize: fontSize.xl, fontWeight: '600' },
-  heroBody: { alignItems: 'flex-end', marginTop: spacing.md },
-  heroSide: { flex: 1 },
-  heroGoal: { paddingLeft: spacing.md, paddingBottom: spacing.sm },
+  progressTrack: {
+    height: 6,
+    marginTop: spacing.sm,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surfaceRaised,
+    overflow: 'hidden',
+  },
+  progressFill: { height: '100%', borderRadius: radius.pill, backgroundColor: colors.accent },
+  heroStats: { marginTop: spacing.md, alignItems: 'flex-start' },
+  heroStat: { flex: 1, gap: 2 },
   goalLabel: { letterSpacing: 1 },
   glasses: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   glassCell: { flexGrow: 1, flexBasis: '30%' },
