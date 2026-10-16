@@ -217,6 +217,15 @@ export async function deleteSet(id: number) {
   await db.delete(workoutSets).where(eq(workoutSets.id, id));
 }
 
+/** Skips the rest of an exercise: its sets not yet done are dropped, done ones stay. */
+export async function dropPendingSets(workoutExerciseId: number) {
+  await db
+    .delete(workoutSets)
+    .where(
+      and(eq(workoutSets.workoutExerciseId, workoutExerciseId), isNull(workoutSets.completedAt)),
+    );
+}
+
 /** Shorter workouts are discarded on finish instead of landing in history. */
 export const MIN_WORKOUT_MS = 30_000;
 

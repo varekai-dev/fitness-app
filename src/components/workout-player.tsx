@@ -31,6 +31,7 @@ import {
 import {
   addSet,
   deleteWorkout,
+  dropPendingSets,
   finishWorkout,
   MIN_WORKOUT_MS,
   pauseWorkout,
@@ -248,6 +249,34 @@ export function WorkoutPlayer({
     setCurrentId(exercises[nextIdx ?? (index + 1) % exercises.length].id);
   };
 
+  // The corner button asks whether to come back to this exercise later or drop
+  // what's left of it, so it no longer counts as pending.
+  const skipExercise = () => {
+    if (!currentSet) return goToNextExercise();
+    dialog.show({
+      title: 'Пропустити вправу?',
+      message: `${current.exercise.name}: можна виконати пізніше або пропустити зовсім.`,
+      icon: 'play-forward',
+      buttons: [
+        { text: 'Виконати пізніше', onPress: goToNextExercise },
+        {
+          text: 'Пропустити зовсім',
+          style: 'destructive',
+          onPress: async () => {
+            const after = exercises.map((e) =>
+              e.id === current.id ? { ...e, sets: e.sets.filter((s) => s.completedAt !== null) } : e,
+            );
+            await dropPendingSets(current.id);
+            timer.stop();
+            const nextIdx = nextIncomplete(after, index + 1);
+            if (nextIdx !== null) setCurrentId(exercises[nextIdx].id);
+          },
+        },
+        { text: 'Скасувати', style: 'cancel' },
+      ],
+    });
+  };
+
   // Back steps through history: reopen this exercise's latest set, or once none is
   // done here, return to the exercise worked on before (else the one above).
   const lastDoneHere = current.sets
@@ -410,7 +439,11 @@ export function WorkoutPlayer({
       <>
         <Text variant="caption" style={styles.overline} numberOfLines={1}>
           {pausedTag}
-          {currentSet ? `Підхід ${setNumber} з ${current.sets.length}` : 'Вправу виконано'} · Вправа{' '}
+          {currentSet
+            ? `Підхід ${setNumber} з ${current.sets.length}`
+            : current.sets.length > 0
+              ? 'Вправу виконано'
+              : 'Вправу пропущено'} · Вправа{' '}
           {index + 1} з {exercises.length}
         </Text>
         <Text variant="title" style={styles.title} numberOfLines={2}>
@@ -551,7 +584,7 @@ export function WorkoutPlayer({
           <View style={[styles.player, { paddingBottom: insets.bottom + spacing.xl }]}>
             {canSkipExercise && (
               <Pressable
-                onPress={goToNextExercise}
+                onPress={skipExercise}
                 hitSlop={6}
                 accessibilityLabel="Пропустити вправу"
                 style={({ pressed }) => [styles.skipExercise, pressed && styles.pressed]}>
@@ -591,7 +624,9 @@ export function WorkoutPlayer({
                     {we.exercise.name}
                   </Text>
                   <Text variant="muted" numberOfLines={1}>
-                    {done
+                    {done && we.sets.length === 0
+                      ? 'Пропущено'
+                      : done
                       ? bodyKg !== null
                         ? `Виконано · ${formatKcal(exerciseKcal(we.exercise.trackingType, we.sets, we.restSec, bodyKg))}`
                         : 'Виконано'
