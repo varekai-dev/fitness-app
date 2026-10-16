@@ -11,7 +11,7 @@ import {
 import { askGroqNutrition } from '@/lib/groq';
 import { addDays, startOfDay } from '@/lib/water';
 import { db } from './client';
-import { foodEntries, foods, settings, type Food } from './schema';
+import { foodEntries, foods, settings, type Food, type Meal } from './schema';
 
 const GOAL_KEY = 'kcal_goal';
 export const FOOD_HISTORY_DAYS = 7;
@@ -63,15 +63,22 @@ export async function deleteFood(id: number) {
 }
 
 /**
- * Logs `amount` of a cached dish, in grams or, when `isDrink`, millilitres,
- * scaling its portion's nutrition. A unit the user switched is remembered on
- * the cached dish for next time.
+ * Logs `amount` of a cached dish into `meal`, in grams or, when `isDrink`,
+ * millilitres, scaling its portion's nutrition. A unit the user switched is
+ * remembered on the cached dish for next time.
  */
-export async function logFood(food: Food, amount: number, isDrink = food.isDrink, at = Date.now()) {
+export async function logFood(
+  food: Food,
+  amount: number,
+  meal: Meal,
+  isDrink = food.isDrink,
+  at = Date.now(),
+) {
   await db.transaction((tx) => {
     tx.insert(foodEntries)
       .values({
         eatenAt: at,
+        meal,
         foodId: food.id,
         name: food.name,
         portion: `${formatGrams(amount)} ${amountUnit({ isDrink })}`,

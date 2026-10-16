@@ -57,6 +57,13 @@
       "when": 1792074816953,
       "tag": "0007_food_drinks",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1792145759349,
+      "tag": "0008_food_meal",
+      "breakpoints": true
     }
   ]
 }

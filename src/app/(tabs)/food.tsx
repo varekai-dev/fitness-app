@@ -1,128 +1,32 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { useDialog } from '@/components/dialog';
 import { useTabBarSpace } from '@/components/floating-tab-bar';
+import { MacroRow } from '@/components/macro-row';
 import { SwipeToDelete } from '@/components/swipe-to-delete';
-import {
-  Badge,
-  Button,
-  Card,
-  ChipScroller,
-  CircleButton,
-  EmptyState,
-  Field,
-  Loading,
-  Row,
-  Screen,
-  SectionHeader,
-  Text,
-} from '@/components/ui';
-import {
-  deleteFood,
-  deleteFoodEntry,
-  loadFood,
-  logFood,
-  lookupFood,
-  searchFoods,
-} from '@/db/food';
-import type { Food } from '@/db/schema';
+import { Button, Card, CircleButton, Loading, Row, Screen, Text } from '@/components/ui';
+import { deleteFoodEntry, loadFood } from '@/db/food';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { useToday } from '@/hooks/use-today';
-import {
-  amountUnit,
-  formatGrams,
-  formatKcal,
-  normalizeDish,
-  scaleNutrition,
-  type Macros,
-} from '@/lib/food';
-import { GroqError } from '@/lib/groq';
+import { formatGrams, formatKcal } from '@/lib/food';
 import { WEEKDAY_SHORT, weekdayIndex } from '@/lib/labels';
-import { parseDecimal } from '@/lib/metrics';
+import { MEAL_ICONS, MEAL_LABELS, MEALS, mealOf } from '@/lib/meals';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 const timeFormatter = new Intl.DateTimeFormat('uk-UA', { hour: '2-digit', minute: '2-digit' });
 const CHART_HEIGHT = 100;
-// Drinks come in bigger round volumes, so they step faster.
-const amountStep = (isDrink: boolean) => (isDrink ? 50 : 10);
-const MAX_AMOUNT = 5000;
-
-/**
- * A dish waiting to be logged. `amount` is the raw field text (grams, or ml when
- * `isDrink`), so the user can clear it while typing; `isDrink` starts from the
- * AI's guess and the user can flip it.
- */
-type Pending = { food: Food; cached: boolean; amount: string; isDrink: boolean };
-
-const startPending = (food: Food, cached: boolean): Pending => ({
-  food,
-  cached,
-  amount: String(Math.round(food.portionG ?? 100)),
-  isDrink: food.isDrink,
-});
-
-function parseAmount(text: string) {
-  const a = parseDecimal(text);
-  return a !== null && a > 0 && a <= MAX_AMOUNT ? a : null;
-}
 
 export default function FoodScreen() {
   const tabBarSpace = useTabBarSpace();
   const day = useToday();
   const { data } = useDbQuery(() => loadFood(), [day]);
-  const [input, setInput] = useState('');
-  const { data: suggestions } = useDbQuery(() => searchFoods(input), [input]);
-  const [looking, setLooking] = useState(false);
-  const [pending, setPending] = useState<Pending | null>(null);
   const dialog = useDialog();
 
   if (!data) return <Loading />;
-  const { goal, todayEntries, totals, days, today, recent } = data;
+  const { goal, todayEntries, totals, days, today } = data;
   const left = goal - totals.kcal;
-
-  const lookup = async (text: string) => {
-    if (!text.trim() || looking) return;
-    setLooking(true);
-    try {
-      const result = await lookupFood(text);
-      setPending(startPending(result.food, result.cached));
-      setInput('');
-    } catch (e) {
-      const noKey = e instanceof GroqError && (e.kind === 'no-key' || e.kind === 'auth');
-      dialog.show({
-        title: 'Не вдалося порахувати',
-        message: (e as Error).message,
-        icon: 'alert-circle',
-        buttons: noKey
-          ? [
-              { text: 'Скасувати', style: 'cancel' },
-              { text: 'Налаштування', onPress: () => router.push('/settings') },
-            ]
-          : undefined,
-      });
-    } finally {
-      setLooking(false);
-    }
-  };
-
-  const pick = (food: Food) => {
-    // Dishes cached before portions had a weight need a fresh estimate to scale by grams.
-    if (!food.portionG) return lookup(food.query);
-    setPending(startPending(food, true));
-    setInput('');
-  };
-
-  const add = async () => {
-    const amount = pending && parseAmount(pending.amount);
-    if (!pending || !amount) return;
-    await logFood(pending.food, amount, pending.isDrink);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setPending(null);
-  };
 
   const remove = (id: number, label: string, close: () => void) =>
     dialog.show({
@@ -134,20 +38,6 @@ export default function FoodScreen() {
       ],
     });
 
-  // Removes the dish from the cache only; meals already logged keep their values.
-  const forget = (food: Food) =>
-    dialog.show({
-      title: 'Прибрати з нещодавніх?',
-      message: `«${food.name}» зникне зі списку й підказок. Записи в журналі залишаться, а наступного разу страву порахує AI.`,
-      buttons: [
-        { text: 'Скасувати', style: 'cancel' },
-        { text: 'Прибрати', style: 'destructive', onPress: () => deleteFood(food.id) },
-      ],
-    });
-
-  const typed = normalizeDish(input);
-  // Hide the suggestion that exactly matches: submitting already reuses it.
-  const shownSuggestions = typed ? (suggestions ?? []).filter((f) => f.query !== typed) : [];
   const chartMax = Math.max(goal, ...days.map((d) => d.kcal));
 
   return (
@@ -180,91 +70,59 @@ export default function FoodScreen() {
         <MacroRow macros={totals} />
       </Card>
 
-      <Card>
-        <Field
-          value={input}
-          onChangeText={setInput}
-          placeholder="Що з’їв чи випив? Напр. «2 яйця і тост з маслом»"
-          multiline
-          editable={!looking}
-        />
-        {shownSuggestions.map((f) => (
-          <Pressable
-            key={f.id}
-            onPress={() => pick(f)}
-            style={({ pressed }) => [styles.suggestion, pressed && styles.pressed]}>
-            <Ionicons name="time-outline" size={16} color={colors.textMuted} />
-            <Text variant="body" style={styles.flex} numberOfLines={1}>
-              {f.name}
-            </Text>
-            <Text variant="muted">{formatKcal(f.kcal)} ккал</Text>
-          </Pressable>
-        ))}
-        <Button
-          title={looking ? 'Рахую…' : 'Порахувати'}
-          icon="sparkles"
-          onPress={() => lookup(input)}
-          loading={looking}
-          disabled={!input.trim()}
-        />
-      </Card>
-
-      {pending && (
-        <PendingCard
-          pending={pending}
-          onChange={(patch) => setPending({ ...pending, ...patch })}
-          onAdd={add}
-          onCancel={() => setPending(null)}
-        />
-      )}
-
-      {recent.length > 0 && !pending && (
-        <>
-          <Text variant="caption">Нещодавні</Text>
-          <ChipScroller>
-            {recent.map((f) => (
-              <RecentChip key={f.id} food={f} onPick={() => pick(f)} onRemove={() => forget(f)} />
-            ))}
-          </ChipScroller>
-        </>
-      )}
-
-      <SectionHeader title="Сьогодні" />
-      {todayEntries.length === 0 ? (
-        <EmptyState
-          icon="restaurant-outline"
-          title="Ще нічого не з’їдено"
-          hint="Опиши страву вище — AI порахує калорії та БЖВ."
-        />
-      ) : (
-        [...todayEntries].reverse().map((e) => {
-          const time = timeFormatter.format(new Date(e.eatenAt));
-          return (
-            <SwipeToDelete
-              key={e.id}
-              onDelete={(close) => remove(e.id, `${time} · ${e.name}`, close)}>
-              <Card>
-                <Row style={styles.spaceBetween}>
-                  <View style={styles.flex}>
-                    <Text variant="body" numberOfLines={1}>
-                      {e.name}
-                    </Text>
-                    <Text variant="muted" numberOfLines={1}>
-                      {time}
-                      {e.portion ? ` · ${e.portion}` : ''}
+      {MEALS.map((meal) => {
+        const entries = todayEntries.filter((e) => mealOf(e) === meal);
+        const kcal = entries.reduce((sum, e) => sum + e.kcal, 0);
+        return (
+          <Card key={meal} style={styles.meal}>
+            <Row style={styles.mealHeader}>
+              <View style={styles.mealIcon}>
+                <Ionicons name={MEAL_ICONS[meal]} size={20} color={colors.accent} />
+              </View>
+              <View style={styles.flex}>
+                <Text variant="heading">{MEAL_LABELS[meal]}</Text>
+                <Text variant="muted">
+                  {entries.length > 0 ? `${formatKcal(kcal)} ккал` : 'Ще нічого'}
+                </Text>
+              </View>
+              <Button
+                title="Додати"
+                icon="add"
+                variant="primary"
+                small
+                onPress={() => router.push({ pathname: '/add-food', params: { meal } })}
+              />
+            </Row>
+            {entries.map((e) => {
+              const time = timeFormatter.format(new Date(e.eatenAt));
+              return (
+                <SwipeToDelete
+                  key={e.id}
+                  onDelete={(close) => remove(e.id, `${time} · ${e.name}`, close)}>
+                  <View style={styles.entry}>
+                    <Row style={styles.spaceBetween}>
+                      <View style={styles.flex}>
+                        <Text variant="body" numberOfLines={1}>
+                          {e.name}
+                        </Text>
+                        <Text variant="muted" numberOfLines={1}>
+                          {time}
+                          {e.portion ? ` · ${e.portion}` : ''}
+                        </Text>
+                      </View>
+                      <Text variant="heading">{formatKcal(e.kcal)} ккал</Text>
+                    </Row>
+                    <Text variant="caption">
+                      Б {formatGrams(e.proteinG)} · Ж {formatGrams(e.fatG)} · В{' '}
+                      {formatGrams(e.carbsG)} г
                     </Text>
                   </View>
-                  <Text variant="heading">{formatKcal(e.kcal)} ккал</Text>
-                </Row>
-                <Text variant="caption">
-                  Б {formatGrams(e.proteinG)} · Ж {formatGrams(e.fatG)} · В {formatGrams(e.carbsG)}{' '}
-                  г
-                </Text>
-              </Card>
-            </SwipeToDelete>
-          );
-        })
-      )}
+                </SwipeToDelete>
+              );
+            })}
+          </Card>
+        );
+      })}
 
       <Card>
         <Text variant="caption">Останні 7 днів</Text>
@@ -296,162 +154,8 @@ export default function FoodScreen() {
   );
 }
 
-function PendingCard({
-  pending: { food, cached, amount: amountText, isDrink },
-  onChange,
-  onAdd,
-  onCancel,
-}: {
-  pending: Pending;
-  onChange: (patch: Partial<Pick<Pending, 'amount' | 'isDrink'>>) => void;
-  onAdd: () => void;
-  onCancel: () => void;
-}) {
-  const amount = parseAmount(amountText);
-  const scaled = scaleNutrition(food, amount ?? 0);
-  const per100 = scaleNutrition(food, 100);
-  const unit = amountUnit({ isDrink });
-  const stepSize = amountStep(isDrink);
-  const step = (delta: number) => {
-    const next = Math.min(Math.max((amount ?? 0) + delta, stepSize), MAX_AMOUNT);
-    Haptics.selectionAsync();
-    onChange({ amount: String(Math.round(next)) });
-  };
-  const setUnit = (drink: boolean) => {
-    if (drink === isDrink) return;
-    Haptics.selectionAsync();
-    onChange({ isDrink: drink });
-  };
-  return (
-    <Card style={styles.pending}>
-      <Row style={styles.spaceBetween}>
-        <View style={styles.flex}>
-          <Text variant="heading">{food.name}</Text>
-          <Text variant="muted">
-            {cached ? 'Зазвичай' : 'Оцінка AI'}: {formatGrams(food.portionG ?? 100)} {unit} ·{' '}
-            {formatKcal(per100.kcal)} ккал / 100 {unit}
-          </Text>
-        </View>
-        <Badge label={cached ? 'З бази' : 'AI'} tone={cached ? 'muted' : 'accent'} />
-      </Row>
-      <Text style={styles.pendingKcal}>
-        {formatKcal(scaled.kcal)}
-        <Text style={styles.unit}> ккал</Text>
-      </Text>
-      <MacroRow macros={scaled} />
-      {(scaled.fiberG !== null || scaled.sugarG !== null) && (
-        <Text variant="muted">
-          {scaled.fiberG !== null ? `Клітковина ${formatGrams(scaled.fiberG)} г` : ''}
-          {scaled.fiberG !== null && scaled.sugarG !== null ? ' · ' : ''}
-          {scaled.sugarG !== null ? `Цукор ${formatGrams(scaled.sugarG)} г` : ''}
-        </Text>
-      )}
-      <Row style={styles.spaceBetween}>
-        <Text variant="body">Кількість</Text>
-        <Row style={styles.units}>
-          {[false, true].map((drink) => (
-            <Pressable
-              key={String(drink)}
-              onPress={() => setUnit(drink)}
-              accessibilityRole="button"
-              accessibilityState={{ selected: drink === isDrink }}
-              style={[styles.unitChip, drink === isDrink && styles.unitChipActive]}>
-              <Text
-                variant="body"
-                style={[styles.unitText, drink === isDrink && styles.unitTextActive]}>
-                {amountUnit({ isDrink: drink })}
-              </Text>
-            </Pressable>
-          ))}
-        </Row>
-      </Row>
-      <Row style={styles.amountRow}>
-        <CircleButton
-          icon="remove"
-          size={40}
-          disabled={!amount || amount <= stepSize}
-          onPress={() => step(-stepSize)}
-        />
-        <Field
-          value={amountText}
-          onChangeText={(t) => onChange({ amount: t.replace(/[^\d.,]/g, '') })}
-          keyboardType="decimal-pad"
-          selectTextOnFocus
-          maxLength={6}
-          containerStyle={styles.flex}
-          style={styles.amountInput}
-        />
-        <Text variant="heading" style={styles.amountUnit}>
-          {unit}
-        </Text>
-        <CircleButton
-          icon="add"
-          size={40}
-          disabled={amount !== null && amount >= MAX_AMOUNT}
-          onPress={() => step(stepSize)}
-        />
-      </Row>
-      <Row>
-        <Button title="Скасувати" variant="secondary" onPress={onCancel} style={styles.flex} />
-        <Button title="Додати" icon="add" onPress={onAdd} disabled={!amount} style={styles.flex} />
-      </Row>
-    </Card>
-  );
-}
-
-/** A recent dish: tap the name to log it again, the cross to forget it. */
-function RecentChip({
-  food,
-  onPick,
-  onRemove,
-}: {
-  food: Food;
-  onPick: () => void;
-  onRemove: () => void;
-}) {
-  return (
-    <View style={styles.recent}>
-      <Pressable
-        onPress={onPick}
-        onLongPress={onRemove}
-        style={({ pressed }) => [styles.recentName, pressed && styles.pressed]}>
-        <Text variant="body" style={styles.recentText} numberOfLines={1}>
-          {food.name}
-        </Text>
-      </Pressable>
-      <Pressable
-        onPress={onRemove}
-        hitSlop={8}
-        accessibilityLabel={`Прибрати «${food.name}» з нещодавніх`}
-        style={({ pressed }) => [styles.recentRemove, pressed && styles.pressed]}>
-        <Ionicons name="close" size={14} color={colors.textMuted} />
-      </Pressable>
-    </View>
-  );
-}
-
-const MACROS = [
-  { key: 'proteinG', label: 'Білки' },
-  { key: 'fatG', label: 'Жири' },
-  { key: 'carbsG', label: 'Вуглеводи' },
-] as const;
-
-function MacroRow({ macros }: { macros: Macros }) {
-  return (
-    <Row style={styles.macros}>
-      {MACROS.map((m) => (
-        <View key={m.key} style={styles.macro}>
-          <Text variant="heading">{formatGrams(macros[m.key])} г</Text>
-          <Text variant="muted">{m.label}</Text>
-        </View>
-      ))}
-    </Row>
-  );
-}
-
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  pressed: { opacity: 0.6 },
   spaceBetween: { justifyContent: 'space-between' },
   hero: { alignItems: 'center', paddingTop: spacing.xl },
   amount: { color: colors.text, fontSize: fontSize.hero, fontWeight: '800', letterSpacing: -1 },
@@ -466,58 +170,24 @@ const styles = StyleSheet.create({
   },
   fill: { height: '100%', borderRadius: radius.pill, backgroundColor: colors.accent },
   fillOver: { backgroundColor: colors.warning },
-  macros: { alignSelf: 'stretch', marginTop: spacing.sm },
-  macro: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderRadius: radius.md,
-    backgroundColor: colors.glass,
-  },
-  suggestion: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.xs,
-  },
-  pending: { borderWidth: 1, borderColor: colors.accent },
-  pendingKcal: { color: colors.text, fontSize: fontSize.xxl + 4, fontWeight: '800' },
-  stepper: { gap: spacing.sm },
-  units: {
-    gap: 2,
-    padding: 2,
+  meal: { gap: 0, paddingVertical: spacing.sm },
+  mealHeader: { gap: spacing.md, paddingVertical: spacing.sm },
+  mealIcon: {
+    width: 40,
+    height: 40,
     borderRadius: radius.pill,
-    backgroundColor: colors.glass,
-  },
-  recent: {
-    flexDirection: 'row',
+    backgroundColor: colors.accentSoft,
     alignItems: 'center',
-    borderRadius: radius.pill,
+    justifyContent: 'center',
+  },
+  // Rows sit inside the meal card; the solid fill hides the trash while swiping.
+  entry: {
+    gap: spacing.xs,
+    paddingVertical: spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.glassBorder,
     backgroundColor: colors.surface,
   },
-  recentName: {
-    paddingLeft: spacing.lg,
-    paddingRight: spacing.xs,
-    paddingVertical: spacing.sm + 2,
-  },
-  recentText: { fontSize: fontSize.sm, fontWeight: '600', maxWidth: 180 },
-  recentRemove: {
-    paddingLeft: spacing.xs,
-    paddingRight: spacing.md,
-    paddingVertical: spacing.sm + 2,
-  },
-  unitChip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.pill,
-  },
-  unitChipActive: { backgroundColor: colors.accent },
-  unitText: { color: colors.textSecondary, fontWeight: '700' },
-  unitTextActive: { color: colors.accentText },
-  amountRow: { gap: spacing.sm },
-  amountInput: { textAlign: 'center', fontSize: fontSize.xl, fontWeight: '700' },
-  amountUnit: { color: colors.textSecondary, minWidth: 28 },
   chart: {
     flexDirection: 'row',
     gap: spacing.sm,

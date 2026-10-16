@@ -1,6 +1,10 @@
 import { relations } from 'drizzle-orm';
 import { index, integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
+/** Meals the food log is grouped by, in order through the day. */
+export const MEALS = ['breakfast', 'lunch', 'dinner'] as const;
+export type Meal = (typeof MEALS)[number];
+
 export const TRACKING_TYPES = [
   'weight_reps',
   'reps',
@@ -191,6 +195,8 @@ export const foodEntries = sqliteTable(
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
     eatenAt: integer('eaten_at').notNull(),
+    // Null for entries logged before meals existed: those go by time of day.
+    meal: text('meal', { enum: MEALS }),
     foodId: integer('food_id').references(() => foods.id, { onDelete: 'set null' }),
     name: text('name').notNull(),
     portion: text('portion'),
