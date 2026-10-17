@@ -15,13 +15,11 @@ import { Text } from '@/components/ui';
 import { colors, fontSize, radius } from '@/theme';
 
 const ITEM = 40;
-const VISIBLE = 3; // rows shown; the middle one is selected
-const PAD = (ITEM * (VISIBLE - 1)) / 2;
 
 const tick = () => Haptics.selectionAsync();
 
-// Wheels sit inside scrolling screens (the workout editor). Each one has a fixed
-// height and scrolls on its own, so the nesting warning doesn't apply to it.
+// A wheel may sit inside a scrolling screen. It has a fixed height and scrolls on
+// its own, so the nesting warning doesn't apply to it.
 LogBox.ignoreLogs(['VirtualizedLists should never be nested inside plain ScrollViews']);
 
 /**
@@ -36,6 +34,7 @@ export function Wheel({
   step,
   unit,
   format,
+  rows = 3,
   onChange,
 }: {
   value: number;
@@ -44,8 +43,11 @@ export function Wheel({
   step: number;
   unit: string;
   format: (v: number) => string;
+  /** Rows shown, an odd number: the middle one is selected. */
+  rows?: number;
   onChange: (v: number) => void;
 }) {
+  const pad = (ITEM * (rows - 1)) / 2;
   const count = Math.round((max - min) / step) + 1;
   const toIndex = (v: number) => Math.min(count - 1, Math.max(0, Math.round((v - min) / step)));
   const [initialIndex] = useState(() => toIndex(value));
@@ -77,15 +79,15 @@ export function Wheel({
   });
 
   return (
-    <View style={styles.root}>
-      <View pointerEvents="none" style={styles.band} />
+    <View style={[styles.root, { height: ITEM * rows }]}>
+      <View pointerEvents="none" style={[styles.band, { top: pad }]} />
       <Animated.FlatList
         data={labels}
         keyExtractor={(_, i) => String(i)}
         renderItem={({ item, index }) => <Row label={item} index={index} y={y} />}
         getItemLayout={(_, i) => ({ length: ITEM, offset: ITEM * i, index: i })}
         initialScrollIndex={initialIndex}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={{ paddingVertical: pad }}
         showsVerticalScrollIndicator={false}
         snapToInterval={ITEM}
         decelerationRate="fast"
@@ -96,7 +98,7 @@ export function Wheel({
         windowSize={5}
         nestedScrollEnabled
       />
-      <View pointerEvents="none" style={styles.unitBox}>
+      <View pointerEvents="none" style={[styles.unitBox, { top: pad }]}>
         <Text variant="caption" style={styles.unit}>
           {unit}
         </Text>
@@ -131,19 +133,17 @@ const Row = memo(function Row({
 });
 
 const styles = StyleSheet.create({
-  root: { flex: 1, height: ITEM * VISIBLE, justifyContent: 'center' },
+  root: { flex: 1, justifyContent: 'center' },
   band: {
     position: 'absolute',
     left: 0,
     right: 0,
-    top: PAD,
     height: ITEM,
     borderRadius: radius.md,
     backgroundColor: 'rgba(0,0,0,0.25)',
   },
-  content: { paddingVertical: PAD },
   row: { height: ITEM, alignItems: 'center', justifyContent: 'center' },
   label: { color: colors.text, fontSize: fontSize.xl, fontWeight: '800' },
-  unitBox: { position: 'absolute', right: 12, top: PAD, height: ITEM, justifyContent: 'center' },
+  unitBox: { position: 'absolute', right: 12, height: ITEM, justifyContent: 'center' },
   unit: { color: colors.textSecondary },
 });

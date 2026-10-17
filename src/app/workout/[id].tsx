@@ -1,10 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useDialog } from '@/components/dialog';
-import { SetRow } from '@/components/set-row';
+import { SetRow, SetSheet, type SetEdit } from '@/components/set-row';
 import { WorkoutPlayer } from '@/components/workout-player';
 import {
   Button,
@@ -89,6 +90,7 @@ function FinishedWorkout({
   const insets = useSafeAreaInsets();
   const doneSets = workout.exercises.reduce((n, e) => n + e.sets.length, 0);
   const dialog = useDialog();
+  const [edit, setEdit] = useState<SetEdit | null>(null);
 
   const remove = () =>
     dialog.show({
@@ -172,17 +174,19 @@ function FinishedWorkout({
                 ? exerciseKcal(we.exercise.trackingType, we.sets, we.restSec, bodyKg)
                 : null
             }
+            onEdit={setEdit}
             onSetDone={() => {}}
           />
         ))}
 
         <Text variant="muted" style={styles.hint}>
           {tr(
-            'Довге натискання на номер підходу — видалити його.',
-            'Long-press a set number to delete it.',
+            'Торкнись підходу, щоб змінити його, або свайпни вліво, щоб видалити.',
+            'Tap a set to change it, or swipe it left to delete it.',
           )}
         </Text>
       </ScrollView>
+      <SetSheet edit={edit} onClose={() => setEdit(null)} />
       {dialog.element}
     </KeyboardAvoidingView>
   );
@@ -195,6 +199,7 @@ function ExerciseBlock({
   last,
   record,
   kcal,
+  onEdit,
   onSetDone,
 }: {
   index: number;
@@ -203,6 +208,7 @@ function ExerciseBlock({
   last: Awaited<ReturnType<typeof getLastSets>>;
   record: number | null;
   kcal: number | null;
+  onEdit: (edit: SetEdit) => void;
   onSetDone: () => void;
 }) {
   const type = we.exercise.trackingType;
@@ -265,6 +271,7 @@ function ExerciseBlock({
           type={type}
           showCheck={active}
           isPR={s.id === prSetId}
+          onEdit={onEdit}
           onSave={(values) => updateSet(s.id, values)}
           onToggle={async (values) => {
             const completing = s.completedAt === null;
