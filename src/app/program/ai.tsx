@@ -34,6 +34,7 @@ import { ACTIVITY, ageOn, SEX_LABELS, WEIGHT_GOAL, type Profile } from '@/lib/pr
 import {
   askProgramPlan,
   askReplacement,
+  downloadPlanPhotos,
   EMPTY_ANSWERS,
   PROGRAM_QUESTIONS,
   WISH_SUGGESTIONS,
@@ -69,6 +70,7 @@ export default function AiProgramScreen() {
   const [replacing, setReplacing] = useState<string[]>([]);
   // Every exercise a slot has held, so asking again brings something new.
   const [tried, setTried] = useState<Record<string, string[]>>({});
+  const [saving, setSaving] = useState(false);
   const dialog = useDialog();
 
   if (!profileData || !library) return <Loading />;
@@ -151,11 +153,12 @@ export default function AiProgramScreen() {
     }
   };
 
-  const save = () => {
-    if (!plan) return;
+  const save = async () => {
+    if (!plan || saving) return;
     let id: number;
+    setSaving(true);
     try {
-      id = saveProgramPlan(plan, intoProgramId);
+      id = saveProgramPlan(await downloadPlanPhotos(plan), intoProgramId);
     } catch (e) {
       dialog.show({
         title: tr('Не вдалося зберегти', 'Couldn’t save'),
@@ -163,6 +166,8 @@ export default function AiProgramScreen() {
         icon: 'alert-circle',
       });
       return;
+    } finally {
+      setSaving(false);
     }
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     if (intoProgramId !== undefined) goBack();
@@ -194,6 +199,7 @@ export default function AiProgramScreen() {
           plan={plan}
           replacing={replacing}
           onReplace={replace}
+          saving={saving}
           onSave={save}
           onRegenerate={generate}
           onEdit={() => setPlan(null)}
@@ -474,6 +480,7 @@ function PlanPreview({
   plan,
   replacing,
   onReplace,
+  saving,
   onSave,
   onRegenerate,
   onEdit,
@@ -481,6 +488,7 @@ function PlanPreview({
   plan: ProgramPlan;
   replacing: string[];
   onReplace: (dayIndex: number, index: number) => void;
+  saving: boolean;
   onSave: () => void;
   onRegenerate: () => void;
   onEdit: () => void;
@@ -515,8 +523,8 @@ function PlanPreview({
       {newCount > 0 && (
         <Text variant="muted">
           {tr(
-            'Нових вправ ще немає в бібліотеці — вони додадуться туди з описом техніки й відео.',
-            'New exercises aren’t in your library yet; they’ll be added with technique notes and a video.',
+            'Нових вправ ще немає в бібліотеці — вони додадуться туди з фото, описом техніки й відео.',
+            'New exercises aren’t in your library yet; they’ll be added with a photo, technique notes and a video.',
           )}
         </Text>
       )}
@@ -563,6 +571,7 @@ function PlanPreview({
       <Button
         title={tr('Зберегти програму', 'Save program')}
         icon="checkmark-circle"
+        loading={saving}
         onPress={onSave}
       />
       <Button

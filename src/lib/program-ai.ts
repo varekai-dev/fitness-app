@@ -6,9 +6,11 @@ import {
   type Targets,
   type TrackingType,
 } from '@/db/schema';
+import { EXERCISE_CATALOG } from '@/lib/exercise-catalog';
 import { bundledImageUri, DEFAULT_EXERCISE_IMAGES } from '@/lib/exercise-images';
 import { groqJson } from '@/lib/groq';
 import { tr } from '@/lib/i18n';
+import { downloadImage } from '@/lib/images';
 import { formatTargets } from '@/lib/labels';
 import { ACTIVITY, ageOn, WEIGHT_GOAL, type Profile } from '@/lib/profile';
 
@@ -214,8 +216,8 @@ export type PlanExercise = {
   muscleGroup: MuscleGroup;
   trackingType: TrackingType;
   notes: string | null;
-  /** The library exercise's photo, or a bundled one for a new exercise when there is one. */
-  imageUri: string | null;
+  /** Every exercise has a photo: the library's, a bundled one or one from the catalog. */
+  imageUri: string;
   targets: Targets;
 };
 
@@ -230,10 +232,10 @@ type Library = Pick<Exercise, 'id' | 'name' | 'muscleGroup' | 'trackingType' | '
 /** What the program and a replacement have to follow alike. */
 const EXERCISE_RULES = `- Use only the listed equipment. Never give exercises that load the listed limitations.
 - Pick reps and rest for the goal: strength 3–6 reps and 120–180 s rest, muscle 6–12 reps and 60–120 s, toning 10–15 reps and 45–75 s, fat loss and endurance 12–20 reps and 30–60 s. Beginners get fewer sets.
-- Use library exercises where they suit the goal and equipment, copying their names exactly. When the equipment allows better choices the library lacks (barbell, machines, cables, kettlebell, bands…) or the focus needs them, add new exercises; give each a common English name in the library's style (e.g. "Barbell Back Squat"), never a library name.
+- Use only exercises from the two lists below, copying their names exactly; never invent others. Prefer the library where it suits the goal and equipment; when the equipment allows better choices the library lacks (barbell, machines, cables, kettlebell, bands…) or the focus needs them, add exercises from the list of more exercises.
 - muscle_group: the main muscle worked; tracking_type: weight_reps for exercises with external load, reps for bodyweight reps, weighted_reps for bodyweight exercises that can take added weight (pull-ups, dips), duration for holds and timed work, distance_duration for running, cycling, rowing and similar.
 - Targets: sets; reps_min and reps_max for rep exercises, else 0; duration_sec for timed exercises (and optionally for distance ones), else 0; distance_km for distance exercises when it makes sense, else 0; rest_sec between sets.
-- notes: for a new exercise, 1–2 sentences on technique in ${tr('Ukrainian', 'English')}; empty for library exercises.`;
+- notes: for an exercise from the list of more exercises, 1–2 sentences on technique in ${tr('Ukrainian', 'English')}; empty for library exercises.`;
 
 const SYSTEM_PROMPT = `You are an experienced strength and conditioning coach. Design a training program for the user.
 A program is a cycle of workout days that repeat in order (e.g. Push / Pull / Legs); one day is one workout.
@@ -370,23 +372,66 @@ function toTargets(type: TrackingType, e: GroqExercise): Targets {
   }
 }
 
-/** The AI's exercise matched to the library by name; unmatched ones become new exercises. */
-function toPlanExercise(e: GroqExercise, library: Library): PlanExercise {
-  const known = library.find((l) => nameKey(l.name) === nameKey(e.name));
+const CATALOG_PHOTOS = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
+
+/** An exercise the AI may use: one from the library, or a new one with a photo. */
+type Choice = {
+  name: string;
+  imageUri: string;
+  /** Library exercise, or undefined for a new one. */
+  known?: Library[number];
+  muscleGroup?: MuscleGroup;
+};
+
+type Choices = {
+  library: (Choice & { known: Library[number] })[];
+  more: Choice[];
+  byName: Map<string, Choice>;
+};
+
+/**
+ * Only exercises with a photo: library ones that have one (or whose photo is
+ * bundled or in the catalog), then new ones the equipment and limitations allow.
+ */
+function choicesFor({ answers, library }: Pick<ProgramRequest, 'answers' | 'library'>): Choices {
+  const catalog = new Map<string, Choice>();
+  const equipment = new Set(answers.equipment);
+  const noJumps = answers.limits.includes('no_jumps');
+  for (const [name, photo, muscleGroup, needs, jumps] of EXERCISE_CATALOG) {
+    // Bodyweight exercises need nothing; the prompt rules out what needs a bar or bench.
+    const fits = equipment.has('gym') || equipment.has(needs) || needs === 'bodyweight';
+    if (!fits || (noJumps && jumps)) continue;
+    catalog.set(nameKey(name), { name, imageUri: encodeURI(CATALOG_PHOTOS + photo), muscleGroup });
+  }
+  for (const [name, key] of Object.entries(DEFAULT_EXERCISE_IMAGES)) {
+    catalog.set(nameKey(name), { name, imageUri: bundledImageUri(key) });
+  }
+
+  const known = new Set(library.map((l) => nameKey(l.name)));
+  const libraryChoices = library.flatMap((l) => {
+    const imageUri = l.imageUri ?? catalog.get(nameKey(l.name))?.imageUri;
+    return imageUri ? [{ name: l.name, imageUri, known: l }] : [];
+  });
+  const more = [...catalog.values()].filter((c) => !known.has(nameKey(c.name)));
+  const byName = new Map([...more, ...libraryChoices].map((c) => [nameKey(c.name), c]));
+  return { library: libraryChoices, more, byName };
+}
+
+/** The AI's exercise matched by name; null when it isn't one with a photo. */
+function toPlanExercise(e: GroqExercise, choices: Choices): PlanExercise | null {
+  const choice = choices.byName.get(nameKey(e.name ?? ''));
+  if (!choice) return null;
+  const { known } = choice;
   // A library exercise keeps its own type, so its targets match how it is logged.
   const trackingType = known?.trackingType ?? oneOf(TRACKING_TYPES, e.tracking_type, 'weight_reps');
-  const name = known?.name ?? e.name.trim();
   return {
-    name,
+    name: choice.name,
     exerciseId: known?.id ?? null,
-    muscleGroup: known?.muscleGroup ?? oneOf(MUSCLE_GROUPS, e.muscle_group, 'chest'),
+    muscleGroup:
+      known?.muscleGroup ?? choice.muscleGroup ?? oneOf(MUSCLE_GROUPS, e.muscle_group, 'chest'),
     trackingType,
     notes: known ? null : e.notes?.trim() || null,
-    imageUri: known
-      ? known.imageUri
-      : name in DEFAULT_EXERCISE_IMAGES
-        ? bundledImageUri(DEFAULT_EXERCISE_IMAGES[name])
-        : null,
+    imageUri: choice.imageUri,
     targets: toTargets(trackingType, e),
   };
 }
@@ -412,28 +457,39 @@ export type ProgramRequest = {
   onAttempt?: (attempt: number) => void;
 };
 
-/** The user's profile, answers and the library, as the prompt sees them. */
-function userContext({ answers, wishes, profile, weightKg, library }: ProgramRequest) {
+/** The user's profile, answers and the exercises to pick from, as the prompt sees them. */
+function userContext({ answers, wishes, profile, weightKg }: ProgramRequest, choices: Choices) {
   const answerLines = PROGRAM_QUESTIONS.map((q) => {
     const picked = q.options.filter((o) => answers[q.key].includes(o.value));
     return `${q.prompt}: ${picked.map((o) => o.prompt).join(', ') || 'none'}`;
   });
+  // Grouped by muscle, which keeps the long list short in tokens.
+  const more = new Map<string, string[]>();
+  for (const c of choices.more) {
+    const group = c.muscleGroup ?? 'other';
+    more.set(group, [...(more.get(group) ?? []), c.name]);
+  }
   return [
     `Profile: ${profileText(profile, weightKg)}`,
     ...answerLines,
     `Wishes: ${wishes.trim() || 'none'}`,
     '',
     'Exercise library (name | muscle group | tracking type):',
-    ...library.map((e) => `${e.name} | ${e.muscleGroup} | ${e.trackingType}`),
+    ...choices.library.map(({ known: e }) => `${e.name} | ${e.muscleGroup} | ${e.trackingType}`),
+    '',
+    'More exercises you may add, by muscle group (names separated by ";"):',
+    ...[...more].map(([group, names]) => `${group}: ${names.join('; ')}`),
   ].join('\n');
 }
 
 /** Asks Groq for a program; throws `GroqError` with a user-facing message. */
 export async function askProgramPlan(request: ProgramRequest): Promise<ProgramPlan> {
   const requestedDays = Number(request.answers.days[0]) || null;
+  const choices = choicesFor(request);
+  const withPhoto = (e: GroqExercise) => choices.byName.has(nameKey(e.name ?? ''));
   const raw = await groqJson<GroqPlan>({
     system: SYSTEM_PROMPT,
-    user: userContext(request),
+    user: userContext(request, choices),
     schema: SCHEMA,
     schemaName: 'program',
     // Some variety, so asking again gives a different program.
@@ -441,19 +497,21 @@ export async function askProgramPlan(request: ProgramRequest): Promise<ProgramPl
     reasoningEffort: 'medium',
     // A 6-day plan with reasoning runs to several thousand tokens.
     maxTokens: 16000,
-    // Sometimes it drops a day or leaves one nearly empty; ask again then.
+    // Sometimes it drops a day, leaves one nearly empty or makes up an exercise
+    // without a photo; ask again then.
     accept: (reply) =>
       (!requestedDays || reply.days?.length === requestedDays) &&
-      (reply.days ?? []).every((d) => (d.exercises?.length ?? 0) >= MIN_DAY_EXERCISES),
+      (reply.days ?? []).every(
+        (d) => (d.exercises?.length ?? 0) >= MIN_DAY_EXERCISES && d.exercises.every(withPhoto),
+      ),
     onAttempt: request.onAttempt,
   });
 
   const days = (raw.days ?? [])
     .map((d, i) => ({
       name: d.name?.trim() || `${tr('День', 'Day')} ${i + 1}`,
-      exercises: (d.exercises ?? [])
-        .filter((e) => e.name?.trim())
-        .map((e) => toPlanExercise(e, request.library)),
+      // An exercise without a photo is left out even on the last try.
+      exercises: (d.exercises ?? []).flatMap((e) => toPlanExercise(e, choices) ?? []),
     }))
     .filter((d) => d.exercises.length > 0);
 
@@ -489,8 +547,9 @@ export async function askReplacement({
   avoid: string[];
 }): Promise<PlanExercise> {
   const taken = new Set([...day.exercises.map((e) => e.name), ...avoid].map(nameKey));
+  const choices = choicesFor(request);
   const user = [
-    userContext(request),
+    userContext(request, choices),
     '',
     `Workout day "${day.name}":`,
     ...day.exercises.map((e) => `- ${describe(e)}`),
@@ -499,6 +558,8 @@ export async function askReplacement({
     `Avoid: ${avoid.join(', ') || 'none'}`,
   ].join('\n');
 
+  const pick = (reply: GroqExercise) =>
+    taken.has(nameKey(reply.name ?? '')) ? null : toPlanExercise(reply, choices);
   const raw = await groqJson<GroqExercise>({
     system: REPLACE_PROMPT,
     user,
@@ -506,9 +567,10 @@ export async function askReplacement({
     schemaName: 'exercise',
     // Variety, so asking again for the same slot brings something else.
     temperature: 0.9,
-    accept: (reply) => !!reply.name?.trim() && !taken.has(nameKey(reply.name)),
+    accept: (reply) => pick(reply) !== null,
   });
-  if (!raw.name?.trim() || taken.has(nameKey(raw.name))) {
+  const next = pick(raw);
+  if (!next) {
     throw new Error(
       tr(
         'AI не знайшов іншої схожої вправи. Спробуй ще раз.',
@@ -516,5 +578,30 @@ export async function askReplacement({
       ),
     );
   }
-  return toPlanExercise(raw, request.library);
+  return next;
+}
+
+/**
+ * Saves catalog photos of the plan's exercises into app storage, so they work
+ * offline. A photo that fails to download stays a link, cached once it is shown.
+ */
+export async function downloadPlanPhotos(plan: ProgramPlan): Promise<ProgramPlan> {
+  const urls = new Set(
+    plan.days.flatMap((d) => d.exercises.map((e) => e.imageUri)).filter((u) => /^https?:/.test(u)),
+  );
+  const saved = new Map<string, string>();
+  await Promise.all(
+    [...urls].map(async (url) => {
+      try {
+        saved.set(url, await downloadImage(url));
+      } catch {}
+    }),
+  );
+  return {
+    ...plan,
+    days: plan.days.map((d) => ({
+      ...d,
+      exercises: d.exercises.map((e) => ({ ...e, imageUri: saved.get(e.imageUri) ?? e.imageUri })),
+    })),
+  };
 }

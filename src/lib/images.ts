@@ -9,7 +9,9 @@ const imagesDir = () => {
   return dir;
 };
 
-const newImageFile = (ext = 'jpg') => new File(imagesDir(), `${Date.now()}.${ext}`);
+// The random part keeps names apart when several images are saved at once.
+const newImageFile = (ext = 'jpg') =>
+  new File(imagesDir(), `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`);
 
 const PICKER_OPTIONS: ImagePicker.ImagePickerOptions = {
   mediaTypes: ['images'],

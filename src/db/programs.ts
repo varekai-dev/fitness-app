@@ -178,7 +178,14 @@ export function saveProgramPlan(plan: ProgramPlan, intoProgramId?: number) {
     // An exercise new to the library may appear on several days; create it once.
     const created = new Map<string, number>();
     const exerciseId = (e: ProgramPlan['days'][number]['exercises'][number]) => {
-      if (e.exerciseId !== null) return e.exerciseId;
+      if (e.exerciseId !== null) {
+        // A library exercise without a photo gets the one the plan found for it.
+        tx.update(exercises)
+          .set({ imageUri: e.imageUri })
+          .where(and(eq(exercises.id, e.exerciseId), isNull(exercises.imageUri)))
+          .run();
+        return e.exerciseId;
+      }
       const key = e.name.toLowerCase();
       const id =
         created.get(key) ??
