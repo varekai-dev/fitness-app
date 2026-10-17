@@ -19,7 +19,13 @@ import {
   Screen,
   Text,
 } from '@/components/ui';
-import { deleteFoodEntry, loadFood, repeatMeal, saveMealTemplate } from '@/db/food';
+import {
+  deleteFoodEntry,
+  deleteMealTemplate,
+  loadFood,
+  repeatMeal,
+  saveMealTemplate,
+} from '@/db/food';
 import type { FoodEntry, Meal } from '@/db/schema';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { useToday } from '@/hooks/use-today';
@@ -48,6 +54,11 @@ export default function FoodScreen() {
   const repeat = async (meal: Meal, entries: FoodEntry[]) => {
     await repeatMeal(entries, meal, day);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  };
+
+  const unsaveTemplate = async (id: number) => {
+    await deleteMealTemplate(id);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   const saveTemplate = async (entries: FoodEntry[]) => {
@@ -118,7 +129,7 @@ export default function FoodScreen() {
         const entries = dayEntries.filter((e) => mealOf(e) === meal);
         const kcal = entries.reduce((sum, e) => sum + e.kcal, 0);
         const last = entries.length === 0 ? previous[meal] : null;
-        const saved = templates.some((t) => t.name === describeDishes(entries.map((e) => e.name)));
+        const saved = templates.find((t) => t.name === describeDishes(entries.map((e) => e.name)));
         return (
           <Card key={meal} style={styles.meal}>
             <Row style={styles.mealHeader}>
@@ -137,7 +148,7 @@ export default function FoodScreen() {
                 <IconButton
                   icon={saved ? 'bookmark' : 'bookmark-outline'}
                   color={saved ? colors.accent : colors.textSecondary}
-                  onPress={() => saveTemplate(entries)}
+                  onPress={() => (saved ? unsaveTemplate(saved.id) : saveTemplate(entries))}
                 />
               )}
               <Button
