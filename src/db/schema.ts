@@ -274,6 +274,29 @@ export const foodEntries = sqliteTable(
   (t) => [index('food_entries_eaten_idx').on(t.eatenAt)],
 );
 
+/** One dish of a meal template: a copy of a logged entry's values. */
+export type MealTemplateItem = {
+  foodId: number | null;
+  name: string;
+  portion: string | null;
+  grams: number | null;
+  kcal: number;
+  proteinG: number;
+  fatG: number;
+  carbsG: number;
+  fiberG: number | null;
+  sugarG: number | null;
+};
+
+/** A meal saved to log again in one tap, e.g. the usual breakfast. */
+export const mealTemplates = sqliteTable('meal_templates', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  // Named after its dishes; saving the same dishes again replaces it.
+  name: text('name').notNull().unique(),
+  items: text('items', { mode: 'json' }).$type<MealTemplateItem[]>().notNull(),
+  lastUsedAt: integer('last_used_at').notNull().$defaultFn(now),
+});
+
 /** Small key/value store for user preferences such as the daily water goal. */
 export const settings = sqliteTable('settings', {
   key: text('key').primaryKey(),
@@ -339,6 +362,7 @@ export type Activity = typeof activities.$inferSelect;
 export type WaterIntake = typeof waterIntakes.$inferSelect;
 export type Food = typeof foods.$inferSelect;
 export type FoodEntry = typeof foodEntries.$inferSelect;
+export type MealTemplate = typeof mealTemplates.$inferSelect;
 export type Targets = Pick<
   ProgramDayExercise,
   | 'targetSets'

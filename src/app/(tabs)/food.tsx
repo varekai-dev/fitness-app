@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -7,13 +8,23 @@ import { CalorieSummary } from '@/components/calorie-summary';
 import { useDialog } from '@/components/dialog';
 import { useTabBarSpace } from '@/components/floating-tab-bar';
 import { SwipeToDelete } from '@/components/swipe-to-delete';
-import { Button, Card, CircleButton, Loading, Row, Screen, Text } from '@/components/ui';
-import { deleteFoodEntry, loadFood } from '@/db/food';
+import {
+  Button,
+  Card,
+  CircleButton,
+  IconButton,
+  Loading,
+  Row,
+  Screen,
+  Text,
+} from '@/components/ui';
+import { deleteFoodEntry, loadFood, repeatMeal, saveMealTemplate } from '@/db/food';
+import type { FoodEntry, Meal } from '@/db/schema';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { useToday } from '@/hooks/use-today';
-import { formatGrams, formatKcal } from '@/lib/food';
+import { describeDishes, formatGrams, formatKcal } from '@/lib/food';
 import { locale, tr } from '@/lib/i18n';
-import { formatLongDate, WEEKDAY_SHORT, weekdayIndex } from '@/lib/labels';
+import { formatLongDate, formatShortDate, WEEKDAY_SHORT, weekdayIndex } from '@/lib/labels';
 import { MEAL_ICONS, MEAL_LABELS, MEALS, mealOf } from '@/lib/meals';
 import { addDays } from '@/lib/water';
 import { colors, fontSize, radius, spacing } from '@/theme';
@@ -31,7 +42,25 @@ export default function FoodScreen() {
   const dialog = useDialog();
 
   if (!data) return <Loading />;
-  const { goal, dayEntries, totals, days } = data;
+  const { goal, dayEntries, totals, days, previous, templates } = data;
+
+  const repeat = async (meal: Meal, entries: FoodEntry[]) => {
+    await repeatMeal(entries, meal, day);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  };
+
+  const saveTemplate = async (entries: FoodEntry[]) => {
+    const name = await saveMealTemplate(entries);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    dialog.show({
+      title: tr('Збережено як шаблон', 'Saved as a template'),
+      message: tr(
+        `«${name}» тепер можна додати в один тап з екрана додавання їжі.`,
+        `“${name}” can now be added in one tap from the add food screen.`,
+      ),
+      icon: 'bookmark',
+    });
+  };
 
   const remove = (id: number, label: string, close: () => void) =>
     dialog.show({
@@ -77,6 +106,8 @@ export default function FoodScreen() {
       {MEALS.map((meal) => {
         const entries = dayEntries.filter((e) => mealOf(e) === meal);
         const kcal = entries.reduce((sum, e) => sum + e.kcal, 0);
+        const last = entries.length === 0 ? previous[meal] : null;
+        const saved = templates.some((t) => t.name === describeDishes(entries.map((e) => e.name)));
         return (
           <Card key={meal} style={styles.meal}>
             <Row style={styles.mealHeader}>
@@ -91,6 +122,13 @@ export default function FoodScreen() {
                     : tr('Ще нічого', 'Nothing yet')}
                 </Text>
               </View>
+              {entries.length > 0 && (
+                <IconButton
+                  icon={saved ? 'bookmark' : 'bookmark-outline'}
+                  color={saved ? colors.accent : colors.textSecondary}
+                  onPress={() => saveTemplate(entries)}
+                />
+              )}
               <Button
                 title={tr('Додати', 'Add')}
                 icon="add"
@@ -101,6 +139,13 @@ export default function FoodScreen() {
                 }
               />
             </Row>
+            {last && (
+              <RepeatRow
+                label={sameMealLabel(last.day, day)}
+                entries={last.entries}
+                onPress={() => repeat(meal, last.entries)}
+              />
+            )}
             {entries.map((e) => {
               const time = timeFormatter.format(new Date(e.eatenAt));
               return (
@@ -167,6 +212,53 @@ export default function FoodScreen() {
   );
 }
 
+/** "Як учора", "Як у середу" or "Як 3 жовт." for the day a meal is repeated from. */
+function sameMealLabel(from: number, day: number) {
+  const daysBack = Math.round((day - from) / 86_400_000);
+  if (daysBack === 1) return tr('Як учора', 'Same as yesterday');
+  if (daysBack < 7) {
+    const weekday = new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(new Date(from));
+    return tr(`Як ${weekdayAccusative(weekday)}`, `Same as ${weekday}`);
+  }
+  return tr(`Як ${formatShortDate(from)}`, `Same as ${formatShortDate(from)}`);
+}
+
+/** "у понеділок", "у середу", "у п’ятницю": the weekday after "як". */
+const weekdayAccusative = (weekday: string) =>
+  `у ${weekday.toLocaleLowerCase('uk-UA').replace(/а$/, 'у').replace(/я$/, 'ю')}`;
+
+/** One tap logs the dishes of this meal's last time again. */
+function RepeatRow({
+  label,
+  entries,
+  onPress,
+}: {
+  label: string;
+  entries: FoodEntry[];
+  onPress: () => void;
+}) {
+  const kcal = entries.reduce((sum, e) => sum + e.kcal, 0);
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      style={({ pressed }) => [styles.repeat, pressed && styles.pressed]}>
+      <Ionicons name="repeat" size={18} color={colors.accent} />
+      <View style={styles.flex}>
+        <Text variant="body" style={styles.repeatLabel}>
+          {label}
+        </Text>
+        <Text variant="muted" numberOfLines={1}>
+          {describeDishes(entries.map((e) => e.name))}
+        </Text>
+      </View>
+      <Text variant="body" style={styles.repeatKcal}>
+        +{formatKcal(kcal)} {tr('ккал', 'kcal')}
+      </Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   spaceBetween: { justifyContent: 'space-between' },
@@ -209,4 +301,18 @@ const styles = StyleSheet.create({
   bar: { width: '100%', borderRadius: radius.sm, backgroundColor: colors.accent },
   barOver: { backgroundColor: colors.warning },
   today: { color: colors.accent, fontWeight: '700' },
+  pressed: { opacity: 0.6 },
+  repeat: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginBottom: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: colors.glassBorder,
+  },
+  repeatLabel: { fontWeight: '700' },
+  repeatKcal: { color: colors.accent, fontWeight: '700' },
 });

@@ -1,20 +1,43 @@
-import { asc, desc, eq, gte, like } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, like, lt } from 'drizzle-orm';
 
 import {
   amountUnit,
   DEFAULT_KCAL_GOAL,
+  describeDishes,
   formatGrams,
   normalizeDish,
   scaleNutrition,
   sumMacros,
 } from '@/lib/food';
 import { askGroqHealth, askGroqNutrition } from '@/lib/groq';
+import { MEALS, mealOf } from '@/lib/meals';
 import { addDays, startOfDay } from '@/lib/water';
 import { db } from './client';
-import { foodEntries, foods, settings, type Food, type Meal } from './schema';
+import {
+  foodEntries,
+  foods,
+  mealTemplates,
+  settings,
+  type Food,
+  type FoodEntry,
+  type Meal,
+  type MealTemplate,
+  type MealTemplateItem,
+} from './schema';
 
 const GOAL_KEY = 'kcal_goal';
 export const FOOD_HISTORY_DAYS = 7;
+/** How far back a meal is looked for to offer repeating it. */
+const REPEAT_LOOKBACK_DAYS = 14;
+
+/**
+ * The time of day of `timeOf` (now by default) on `day`, a local midnight, but
+ * never in the future: logging into a past day or today keeps a sensible time.
+ */
+export function timeOnDay(day: number, timeOf = Date.now()) {
+  const now = Date.now();
+  return Math.min(day + (timeOf - startOfDay(timeOf)), addDays(day, 1) - 1, now);
+}
 
 export async function getKcalGoal() {
   const row = await db.query.settings.findFirst({ where: eq(settings.key, GOAL_KEY) });
@@ -127,21 +150,115 @@ export async function deleteFoodEntry(id: number) {
   await db.delete(foodEntries).where(eq(foodEntries.id, id));
 }
 
+const toItem = (e: FoodEntry): MealTemplateItem => ({
+  foodId: e.foodId,
+  name: e.name,
+  portion: e.portion,
+  grams: e.grams,
+  kcal: e.kcal,
+  proteinG: e.proteinG,
+  fatG: e.fatG,
+  carbsG: e.carbsG,
+  fiberG: e.fiberG,
+  sugarG: e.sugarG,
+});
+
+/** Logs copies of `items` into `meal`, at `at(item index)`. Links to dishes since removed are dropped. */
+async function logItems(items: MealTemplateItem[], meal: Meal, at: (i: number) => number) {
+  if (items.length === 0) return;
+  const ids = items.map((i) => i.foodId).filter((id) => id !== null);
+  const known = new Set(
+    ids.length
+      ? (await db.select({ id: foods.id }).from(foods).where(inArray(foods.id, ids))).map(
+          (f) => f.id,
+        )
+      : [],
+  );
+  await db.insert(foodEntries).values(
+    items.map((item, i) => ({
+      ...item,
+      foodId: item.foodId !== null && known.has(item.foodId) ? item.foodId : null,
+      meal,
+      eatenAt: at(i),
+    })),
+  );
+}
+
+/** Copies a meal from another day into `day`, each dish at the time of day it was eaten then. */
+export async function repeatMeal(entries: FoodEntry[], meal: Meal, day: number) {
+  await logItems(entries.map(toItem), meal, (i) => timeOnDay(day, entries[i].eatenAt));
+}
+
+export const listMealTemplates = () =>
+  db.query.mealTemplates.findMany({ orderBy: [desc(mealTemplates.lastUsedAt)] });
+
+/** Saves a logged meal as a template named after its dishes. Resolves to that name. */
+export async function saveMealTemplate(entries: FoodEntry[]) {
+  const name = describeDishes(entries.map((e) => e.name));
+  const items = entries.map(toItem);
+  await db
+    .insert(mealTemplates)
+    .values({ name, items })
+    .onConflictDoUpdate({ target: mealTemplates.name, set: { items, lastUsedAt: Date.now() } });
+  return name;
+}
+
+/** Logs a template's dishes into `meal` at `at`. */
+export async function applyMealTemplate(template: MealTemplate, meal: Meal, at = Date.now()) {
+  await logItems(template.items, meal, () => at);
+  await db
+    .update(mealTemplates)
+    .set({ lastUsedAt: Date.now() })
+    .where(eq(mealTemplates.id, template.id));
+}
+
+export async function deleteMealTemplate(id: number) {
+  await db.delete(mealTemplates).where(eq(mealTemplates.id, id));
+}
+
 /**
- * Meals of `day` (oldest first, today by default), their totals, the goal and
- * per-day kcal for the week up to today.
+ * For each meal, the latest earlier day it was logged on (within two weeks of
+ * `day`) and its dishes, to offer repeating it.
+ */
+async function previousMeals(day: number) {
+  const rows = await db.query.foodEntries.findMany({
+    where: and(
+      gte(foodEntries.eatenAt, addDays(day, -REPEAT_LOOKBACK_DAYS)),
+      lt(foodEntries.eatenAt, day),
+    ),
+    orderBy: [asc(foodEntries.eatenAt)],
+  });
+  const previous = {} as Record<Meal, { day: number; entries: FoodEntry[] } | null>;
+  for (const meal of MEALS) {
+    const ofMeal = rows.filter((e) => mealOf(e) === meal);
+    const last = ofMeal.at(-1);
+    const lastDay = last ? startOfDay(last.eatenAt) : null;
+    previous[meal] =
+      lastDay === null
+        ? null
+        : { day: lastDay, entries: ofMeal.filter((e) => startOfDay(e.eatenAt) === lastDay) };
+  }
+  return previous;
+}
+
+/**
+ * Meals of `day` (oldest first, today by default), their totals, the goal,
+ * per-day kcal for the week up to today, and what can be logged again: each
+ * meal's last earlier occurrence and the saved templates.
  */
 export async function loadFood(now = Date.now(), day = startOfDay(now)) {
   const today = startOfDay(now);
   const from = addDays(today, -(FOOD_HISTORY_DAYS - 1));
   const dayEnd = addDays(day, 1);
-  const [goal, rows, recent] = await Promise.all([
+  const [goal, rows, recent, previous, templates] = await Promise.all([
     getKcalGoal(),
     db.query.foodEntries.findMany({
       where: gte(foodEntries.eatenAt, Math.min(from, day)),
       orderBy: [asc(foodEntries.eatenAt)],
     }),
     db.query.foods.findMany({ orderBy: [desc(foods.lastUsedAt)], limit: 12 }),
+    previousMeals(day),
+    listMealTemplates(),
   ]);
   const days = Array.from({ length: FOOD_HISTORY_DAYS }, (_, i) => ({
     dayStart: addDays(from, i),
@@ -152,5 +269,14 @@ export async function loadFood(now = Date.now(), day = startOfDay(now)) {
     if (d) d.kcal += r.kcal;
   }
   const dayEntries = rows.filter((r) => r.eatenAt >= day && r.eatenAt < dayEnd);
-  return { goal, dayEntries, totals: sumMacros(dayEntries), days, today, recent };
+  return {
+    goal,
+    dayEntries,
+    totals: sumMacros(dayEntries),
+    days,
+    today,
+    recent,
+    previous,
+    templates,
+  };
 }

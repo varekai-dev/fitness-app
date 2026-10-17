@@ -20,16 +20,19 @@ import {
   Text,
 } from '@/components/ui';
 import {
+  applyMealTemplate,
   deleteFood,
+  deleteMealTemplate,
   loadFood,
   logFood,
   lookupFood,
   rateFood,
   saveFood,
   searchFoods,
+  timeOnDay,
   type ManualFood,
 } from '@/db/food';
-import type { Food, HealthRating } from '@/db/schema';
+import type { Food, HealthRating, MealTemplate } from '@/db/schema';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { amountUnit, formatGrams, formatKcal, normalizeDish, scaleNutrition } from '@/lib/food';
 import { describeFoodPhoto, GroqError } from '@/lib/groq';
@@ -37,7 +40,6 @@ import { tr } from '@/lib/i18n';
 import { captureForAi } from '@/lib/images';
 import { MEAL_LABELS, MEALS, mealAt, type Meal } from '@/lib/meals';
 import { parseDecimal } from '@/lib/metrics';
-import { addDays, startOfDay } from '@/lib/water';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 // Drinks come in bigger round volumes, so they step faster.
@@ -65,10 +67,8 @@ function parseAmount(text: string) {
 
 /** Now, or the same time of day on `day` (its local midnight) when logging a past day. */
 function eatenAt(day?: string) {
-  const now = Date.now();
   const start = Number(day);
-  if (!day || !Number.isFinite(start)) return now;
-  return Math.min(start + (now - startOfDay(now)), addDays(start, 1) - 1, now);
+  return day && Number.isFinite(start) ? timeOnDay(start) : Date.now();
 }
 
 export default function AddFoodScreen() {
@@ -182,6 +182,29 @@ export default function AddFoodScreen() {
     goBack();
   };
 
+  const pickTemplate = async (template: MealTemplate) => {
+    await applyMealTemplate(template, meal, eatenAt(params.day));
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    goBack();
+  };
+
+  const forgetTemplate = (template: MealTemplate) =>
+    dialog.show({
+      title: tr('Видалити шаблон?', 'Delete template?'),
+      message: tr(
+        `«${template.name}» зникне зі списку шаблонів. Записи в журналі залишаться.`,
+        `“${template.name}” will disappear from templates. Log entries stay.`,
+      ),
+      buttons: [
+        { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
+        {
+          text: tr('Видалити', 'Delete'),
+          style: 'destructive',
+          onPress: () => deleteMealTemplate(template.id),
+        },
+      ],
+    });
+
   // Removes the dish from the cache only; meals already logged keep their values.
   const forget = (food: Food) =>
     dialog.show({
@@ -204,6 +227,7 @@ export default function AddFoodScreen() {
   // Hide the suggestion that exactly matches: submitting already reuses it.
   const shownSuggestions = typed ? (suggestions ?? []).filter((f) => f.query !== typed) : [];
   const recent = data?.recent ?? [];
+  const templates = data?.templates ?? [];
 
   return (
     <Screen title={MEAL_LABELS[meal]} mode="modal">
@@ -285,6 +309,21 @@ export default function AddFoodScreen() {
               />
             </Row>
           </Card>
+          {templates.length > 0 && (
+            <>
+              <Text variant="caption">{tr('Шаблони', 'Templates')}</Text>
+              <Card style={styles.templates}>
+                {templates.map((t) => (
+                  <TemplateRow
+                    key={t.id}
+                    template={t}
+                    onPick={() => pickTemplate(t)}
+                    onRemove={() => forgetTemplate(t)}
+                  />
+                ))}
+              </Card>
+            </>
+          )}
           {recent.length > 0 && (
             <>
               <Text variant="caption">{tr('Нещодавні', 'Recent')}</Text>
@@ -596,6 +635,46 @@ function ManualCard({
   );
 }
 
+/** A saved meal: tap to log all its dishes, the cross to delete the template. */
+function TemplateRow({
+  template,
+  onPick,
+  onRemove,
+}: {
+  template: MealTemplate;
+  onPick: () => void;
+  onRemove: () => void;
+}) {
+  const kcal = template.items.reduce((sum, i) => sum + i.kcal, 0);
+  return (
+    <Row style={styles.template}>
+      <Pressable
+        onPress={onPick}
+        onLongPress={onRemove}
+        accessibilityRole="button"
+        style={({ pressed }) => [styles.templatePick, pressed && styles.pressed]}>
+        <Ionicons name="bookmark" size={16} color={colors.accent} />
+        <Text variant="body" style={styles.flex} numberOfLines={2}>
+          {template.name}
+        </Text>
+        <Text variant="muted">
+          {formatKcal(kcal)} {tr('ккал', 'kcal')}
+        </Text>
+      </Pressable>
+      <Pressable
+        onPress={onRemove}
+        hitSlop={8}
+        accessibilityLabel={tr(
+          `Видалити шаблон «${template.name}»`,
+          `Delete template “${template.name}”`,
+        )}
+        style={({ pressed }) => pressed && styles.pressed}>
+        <Ionicons name="close" size={16} color={colors.textMuted} />
+      </Pressable>
+    </Row>
+  );
+}
+
 /** A recent dish: tap the name to log it again, the cross to forget it. */
 function RecentChip({
   food,
@@ -692,5 +771,14 @@ const styles = StyleSheet.create({
   amountInput: { textAlign: 'center', fontSize: fontSize.xl, fontWeight: '700' },
   amountUnit: { color: colors.textSecondary, minWidth: 28 },
   photoRow: { gap: spacing.md },
+  templates: { gap: 0, paddingVertical: spacing.xs },
+  template: { gap: spacing.md },
+  templatePick: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm + 2,
+  },
   photo: { width: 56, height: 56, borderRadius: radius.sm, backgroundColor: colors.surfaceRaised },
 });
