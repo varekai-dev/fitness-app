@@ -5,6 +5,10 @@ import { index, integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core
 export const MEALS = ['breakfast', 'lunch', 'dinner'] as const;
 export type Meal = (typeof MEALS)[number];
 
+/** How good a dish is for you, as AI rates it. */
+export const HEALTH_RATINGS = ['healthy', 'moderate', 'unhealthy'] as const;
+export type HealthRating = (typeof HEALTH_RATINGS)[number];
+
 export const TRACKING_TYPES = [
   'weight_reps',
   'reps',
@@ -224,6 +228,9 @@ export const foods = sqliteTable('foods', {
   carbsG: real('carbs_g').notNull(),
   fiberG: real('fiber_g'),
   sugarG: real('sugar_g'),
+  // Null for dishes cached before ratings existed: rated when next picked.
+  health: text('health', { enum: HEALTH_RATINGS }),
+  healthNote: text('health_note'),
   lastUsedAt: integer('last_used_at').notNull().$defaultFn(now),
   createdAt: integer('created_at').notNull().$defaultFn(now),
 });

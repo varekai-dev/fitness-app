@@ -1,5 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 
+import { HEALTH_RATINGS, type HealthRating } from '@/db/schema';
 import { tr } from '@/lib/i18n';
 
 const KEY_NAME = 'groq_api_key';
@@ -26,6 +27,8 @@ export type Nutrition = {
   carbsG: number;
   fiberG: number | null;
   sugarG: number | null;
+  health: HealthRating | null;
+  healthNote: string | null;
 };
 
 export class GroqError extends Error {
@@ -37,6 +40,12 @@ export class GroqError extends Error {
   }
 }
 
+const HEALTH_RULES_UK = `- health: наскільки страва корисна для щоденного харчування: "healthy" (цільні продукти, овочі, фрукти, нежирний білок, крупи, вода, несолодкі напої), "moderate" (нормально в міру: випічка з цільного зерна, сир, м'ясо з жиром, сухофрукти), "unhealthy" (багато цукру, транс- чи насичених жирів, солі або сильна обробка: фастфуд, солодощі, газовані солодкі напої, ковбаси, алкоголь);
+- health_note: одне коротке речення українською (до 80 символів), чому саме така оцінка.`;
+
+const HEALTH_RULES_EN = `- health: how good the dish is for everyday eating: "healthy" (whole foods, vegetables, fruit, lean protein, grains, water, unsweetened drinks), "moderate" (fine in moderation: wholegrain baking, cheese, fatty meat, dried fruit), "unhealthy" (much sugar, trans or saturated fat, salt, or heavily processed: fast food, sweets, sugary sodas, sausages, alcohol);
+- health_note: one short sentence in English (up to 80 characters) on why.`;
+
 const SYSTEM_PROMPT_UK = `Ти нутриціолог. Користувач описує страву, продукт або напій (часто українською).
 Визнач кількість:
 - якщо в тексті є вага чи об'єм (напр. "200 г", "0,5 л", "330 мл"), portion_g дорівнює саме їй;
@@ -47,6 +56,7 @@ const SYSTEM_PROMPT_UK = `Ти нутриціолог. Користувач оп
 - is_drink: true для напоїв (вода, чай, кава, сік, молоко, кефір, смузі, алкоголь тощо), false для їжі, зокрема для супів;
 - portion_g: кількість у грамах, а для напоїв — у мілілітрах, число більше 0;
 - kcal, protein_g, fat_g, carbs_g, fiber_g, sugar_g: числа саме для portion_g, округлені до 1 знака;
+${HEALTH_RULES_UK}
 - is_food: false, якщо текст не є їжею чи напоєм (тоді числа 0).`;
 
 const SYSTEM_PROMPT_EN = `You are a nutritionist. The user describes a dish, product or drink (in any language).
@@ -59,6 +69,7 @@ Fields:
 - is_drink: true for drinks (water, tea, coffee, juice, milk, kefir, smoothies, alcohol, etc.), false for food, including soups;
 - portion_g: the amount in grams, or for drinks in millilitres, a number greater than 0;
 - kcal, protein_g, fat_g, carbs_g, fiber_g, sugar_g: numbers for exactly portion_g, rounded to 1 decimal;
+${HEALTH_RULES_EN}
 - is_food: false if the text is not a food or drink (then all numbers are 0).`;
 
 /** Dish names come back in the app's language, like the rest of the food log. */
@@ -77,6 +88,8 @@ const SCHEMA = {
     carbs_g: { type: 'number' },
     fiber_g: { type: 'number' },
     sugar_g: { type: 'number' },
+    health: { type: 'string', enum: HEALTH_RATINGS },
+    health_note: { type: 'string' },
   },
   required: [
     'is_food',
@@ -89,6 +102,8 @@ const SCHEMA = {
     'carbs_g',
     'fiber_g',
     'sugar_g',
+    'health',
+    'health_note',
   ],
   additionalProperties: false,
 };
@@ -104,9 +119,14 @@ type GroqNutrition = {
   carbs_g: number;
   fiber_g: number;
   sugar_g: number;
+  health: string;
+  health_note: string;
 };
 
 const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : 0);
+
+const healthRating = (v: unknown) => HEALTH_RATINGS.find((r) => r === v) ?? null;
+const healthNote = (v: unknown) => (typeof v === 'string' && v.trim()) || null;
 
 export type GroqRequest<T> = {
   system: string;
@@ -259,7 +279,55 @@ export async function askGroqNutrition(dish: string, apiKey?: string | null): Pr
     carbsG: num(parsed.carbs_g),
     fiberG: num(parsed.fiber_g),
     sugarG: num(parsed.sugar_g),
+    health: healthRating(parsed.health),
+    healthNote: healthNote(parsed.health_note),
   };
+}
+
+const HEALTH_SCHEMA = {
+  type: 'object',
+  properties: {
+    health: { type: 'string', enum: HEALTH_RATINGS },
+    health_note: { type: 'string' },
+  },
+  required: ['health', 'health_note'],
+  additionalProperties: false,
+};
+
+const HEALTH_PROMPT = tr(
+  `Ти нутриціолог. Користувач називає страву та її КБЖВ на 100 г. Оціни її:
+${HEALTH_RULES_UK}`,
+  `You are a nutritionist. The user names a dish and its nutrition per 100 g. Rate it:
+${HEALTH_RULES_EN}`,
+);
+
+/**
+ * Rates a dish that already has its nutrition (one entered by hand, or cached
+ * before ratings existed); throws `GroqError` with a user-facing message.
+ */
+export async function askGroqHealth(dish: {
+  name: string;
+  kcal: number;
+  proteinG: number;
+  fatG: number;
+  carbsG: number;
+  sugarG: number | null;
+}): Promise<Pick<Nutrition, 'health' | 'healthNote'>> {
+  const r = (v: number) => Math.round(v * 10) / 10;
+  const facts = [
+    `${tr('ккал', 'kcal')} ${r(dish.kcal)}`,
+    `${tr('білки', 'protein')} ${r(dish.proteinG)}`,
+    `${tr('жири', 'fat')} ${r(dish.fatG)}`,
+    `${tr('вуглеводи', 'carbs')} ${r(dish.carbsG)}`,
+    dish.sugarG !== null ? `${tr('цукор', 'sugar')} ${r(dish.sugarG)}` : null,
+  ].filter(Boolean);
+  const parsed = await groqJson<{ health: string; health_note: string }>({
+    system: HEALTH_PROMPT,
+    user: `${dish.name}: ${facts.join(', ')}`,
+    schema: HEALTH_SCHEMA,
+    schemaName: 'health',
+  });
+  return { health: healthRating(parsed.health), healthNote: healthNote(parsed.health_note) };
 }
 
 /** Cheapest call that proves the key works: lists the models it can use. */

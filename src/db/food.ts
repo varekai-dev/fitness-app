@@ -8,7 +8,7 @@ import {
   scaleNutrition,
   sumMacros,
 } from '@/lib/food';
-import { askGroqNutrition } from '@/lib/groq';
+import { askGroqHealth, askGroqNutrition } from '@/lib/groq';
 import { addDays, startOfDay } from '@/lib/water';
 import { db } from './client';
 import { foodEntries, foods, settings, type Food, type Meal } from './schema';
@@ -58,10 +58,7 @@ export async function lookupFood(text: string): Promise<{ food: Food; cached: bo
   return { food, cached: false };
 }
 
-export type ManualFood = Pick<
-  Food,
-  'name' | 'isDrink' | 'kcal' | 'proteinG' | 'fatG' | 'carbsG'
->;
+export type ManualFood = Pick<Food, 'name' | 'isDrink' | 'kcal' | 'proteinG' | 'fatG' | 'carbsG'>;
 
 /**
  * Saves a dish entered by hand, its values per 100 g (or ml), replacing a cached
@@ -75,6 +72,9 @@ export async function saveFood(food: ManualFood): Promise<Food> {
     portionG: 100,
     fiberG: null,
     sugarG: null,
+    // New numbers need a new rating: AI rates the dish once it's picked.
+    health: null,
+    healthNote: null,
   };
   const [saved] = await db
     .insert(foods)
@@ -82,6 +82,13 @@ export async function saveFood(food: ManualFood): Promise<Food> {
     .onConflictDoUpdate({ target: foods.query, set: values })
     .returning();
   return saved;
+}
+
+/** Asks AI how healthy a cached dish is (by its nutrition per 100 g) and stores the answer. */
+export async function rateFood(food: Food): Promise<Food> {
+  const rating = await askGroqHealth({ name: food.name, ...scaleNutrition(food, 100) });
+  const [rated] = await db.update(foods).set(rating).where(eq(foods.id, food.id)).returning();
+  return rated ?? { ...food, ...rating };
 }
 
 export async function deleteFood(id: number) {

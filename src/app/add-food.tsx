@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useDialog } from '@/components/dialog';
@@ -14,6 +14,7 @@ import {
   Field,
   goBack,
   Row,
+  type IconName,
   Screen,
   Text,
 } from '@/components/ui';
@@ -22,11 +23,12 @@ import {
   loadFood,
   logFood,
   lookupFood,
+  rateFood,
   saveFood,
   searchFoods,
   type ManualFood,
 } from '@/db/food';
-import type { Food } from '@/db/schema';
+import type { Food, HealthRating } from '@/db/schema';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { amountUnit, formatGrams, formatKcal, normalizeDish, scaleNutrition } from '@/lib/food';
 import { GroqError } from '@/lib/groq';
@@ -281,6 +283,7 @@ function PendingCard({
             : ''}
         </Text>
       )}
+      <HealthNote key={food.id} food={food} />
       <Row style={styles.spaceBetween}>
         <Text variant="body">{tr('Кількість', 'Amount')}</Text>
         <UnitSwitch isDrink={isDrink} onChange={setUnit} />
@@ -330,6 +333,62 @@ function PendingCard({
   );
 }
 
+const HEALTH: Record<HealthRating, { label: () => string; icon: IconName; color: string }> = {
+  healthy: { label: () => tr('Корисно', 'Healthy'), icon: 'leaf', color: colors.success },
+  moderate: {
+    label: () => tr('У міру', 'In moderation'),
+    icon: 'alert-circle',
+    color: colors.warning,
+  },
+  unhealthy: {
+    label: () => tr('Не дуже корисно', 'Not so healthy'),
+    icon: 'warning',
+    color: colors.danger,
+  },
+};
+
+/**
+ * How healthy the dish is. Dishes without a rating yet (entered by hand, or
+ * cached before ratings existed) are rated by AI here; without AI the row stays hidden.
+ */
+function HealthNote({ food }: { food: Food }) {
+  const [rated, setRated] = useState<Pick<Food, 'health' | 'healthNote'> | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    if (food.health) return;
+    let live = true;
+    rateFood(food)
+      .then((r) => live && setRated(r))
+      .catch(() => live && setFailed(true));
+    return () => {
+      live = false;
+    };
+  }, [food]);
+
+  const { health, healthNote } = food.health ? food : (rated ?? {});
+  if (!health) {
+    if (failed || rated) return null;
+    return (
+      <Row style={styles.health}>
+        <Ionicons name="sparkles" size={18} color={colors.textMuted} />
+        <Text variant="muted">{tr('Оцінюю корисність…', 'Rating how healthy it is…')}</Text>
+      </Row>
+    );
+  }
+  const { label, icon, color } = HEALTH[health];
+  return (
+    <Row style={[styles.health, { borderColor: color }]}>
+      <Ionicons name={icon} size={18} color={color} />
+      <View style={styles.flex}>
+        <Text variant="body" style={[styles.healthLabel, { color }]}>
+          {label()}
+        </Text>
+        {healthNote && <Text variant="muted">{healthNote}</Text>}
+      </View>
+    </Row>
+  );
+}
+
 /** Grams or millilitres. */
 function UnitSwitch({
   isDrink,
@@ -351,7 +410,9 @@ function UnitSwitch({
           accessibilityRole="button"
           accessibilityState={{ selected: drink === isDrink }}
           style={[styles.unitChip, drink === isDrink && styles.unitChipActive]}>
-          <Text variant="body" style={[styles.unitText, drink === isDrink && styles.unitTextActive]}>
+          <Text
+            variant="body"
+            style={[styles.unitText, drink === isDrink && styles.unitTextActive]}>
             {amountUnit({ isDrink: drink })}
           </Text>
         </Pressable>
@@ -394,7 +455,9 @@ function ManualCard({
   const valid =
     name.trim() !== '' &&
     parseDecimal(values.kcal) !== null &&
-    MACRO_FIELDS.every(({ key }) => values[key].trim() === '' || parseDecimal(values[key]) !== null);
+    MACRO_FIELDS.every(
+      ({ key }) => values[key].trim() === '' || parseDecimal(values[key]) !== null,
+    );
   const unit = amountUnit({ isDrink });
 
   const save = async () => {
@@ -539,6 +602,16 @@ const styles = StyleSheet.create({
   unitText: { color: colors.textSecondary, fontWeight: '700' },
   unitTextActive: { color: colors.accentText },
   amountRow: { gap: spacing.sm },
+  health: {
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+    backgroundColor: colors.glass,
+  },
+  healthLabel: { fontWeight: '700' },
   macroGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   macroField: { flexBasis: '45%', flexGrow: 1 },
   amountInput: { textAlign: 'center', fontSize: fontSize.xl, fontWeight: '700' },
