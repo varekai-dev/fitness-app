@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useDialog } from '@/components/dialog';
+import { ProgramAiLoader, type LoaderStage } from '@/components/program-ai-loader';
 import {
   Badge,
   Button,
@@ -22,11 +23,11 @@ import { listExercises } from '@/db/exercises';
 import { loadProfile } from '@/db/profile';
 import { saveProgramPlan } from '@/db/programs';
 import { useDbQuery } from '@/hooks/use-db-query';
-import { GroqError } from '@/lib/groq';
+import { GROQ_ATTEMPTS, GroqError } from '@/lib/groq';
 import { plural, tr } from '@/lib/i18n';
 import { formatTargets, MUSCLE_GROUP_LABELS } from '@/lib/labels';
 import { formatNumber, formatWeight } from '@/lib/metrics';
-import { ACTIVITY, ageOn, SEX_LABELS, WEIGHT_GOAL } from '@/lib/profile';
+import { ACTIVITY, ageOn, SEX_LABELS, WEIGHT_GOAL, type Profile } from '@/lib/profile';
 import {
   askProgramPlan,
   EMPTY_ANSWERS,
@@ -56,13 +57,17 @@ export default function AiProgramScreen() {
   const [answers, setAnswers] = useState<ProgramAnswers>(EMPTY_ANSWERS);
   const [wishes, setWishes] = useState('');
   const [plan, setPlan] = useState<ProgramPlan | null>(null);
+  // The answer, held while the loader finishes its checklist.
+  const [readyPlan, setReadyPlan] = useState<ProgramPlan | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [attempt, setAttempt] = useState(1);
   const dialog = useDialog();
 
   if (!profileData || !library) return <Loading />;
 
   const generate = async () => {
     if (generating) return;
+    setAttempt(1);
     setGenerating(true);
     try {
       const next = await askProgramPlan({
@@ -71,10 +76,11 @@ export default function AiProgramScreen() {
         profile: profileData.profile,
         weightKg: profileData.latestWeight?.weightKg,
         library,
+        onAttempt: setAttempt,
       });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setPlan(next);
+      setReadyPlan(next);
     } catch (e) {
+      setGenerating(false);
       const noKey = e instanceof GroqError && (e.kind === 'no-key' || e.kind === 'auth');
       dialog.show({
         title: tr('Не вдалося скласти програму', 'Couldn’t build the program'),
@@ -90,9 +96,14 @@ export default function AiProgramScreen() {
             ]
           : undefined,
       });
-    } finally {
-      setGenerating(false);
     }
+  };
+
+  const showPlan = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setPlan(readyPlan);
+    setReadyPlan(null);
+    setGenerating(false);
   };
 
   const save = () => {
@@ -117,10 +128,23 @@ export default function AiProgramScreen() {
 
   return (
     <Screen title={tr('Програма з AI', 'AI program')} mode="modal">
-      {plan ? (
+      {generating ? (
+        <ProgramAiLoader
+          stages={loaderStages(
+            answers,
+            wishes,
+            profileFacts(profileData.profile, profileData.latestWeight?.weightKg),
+            library.length,
+          )}
+          exerciseNames={library.map((e) => e.name)}
+          attempt={attempt}
+          attempts={GROQ_ATTEMPTS}
+          done={readyPlan !== null}
+          onFinish={showPlan}
+        />
+      ) : plan ? (
         <PlanPreview
           plan={plan}
-          generating={generating}
           onSave={save}
           onRegenerate={generate}
           onEdit={() => setPlan(null)}
@@ -154,7 +178,6 @@ export default function AiProgramScreen() {
                 icon="chevron-back"
                 variant="secondary"
                 onPress={() => setStep(step - 1)}
-                disabled={generating}
                 style={styles.flex}
               />
             )}
@@ -174,27 +197,76 @@ export default function AiProgramScreen() {
               )
             ) : (
               <Button
-                title={generating ? tr('Складаю…', 'Building…') : tr('Скласти', 'Build')}
+                title={tr('Скласти', 'Build')}
                 icon="sparkles"
                 onPress={generate}
-                loading={generating}
                 style={styles.flex}
               />
             )}
           </Row>
-          {generating && (
-            <Text variant="muted" style={styles.center}>
-              {tr(
-                'AI підбирає дні, вправи й підходи. Це займе кілька секунд.',
-                'AI is picking days, exercises and sets. It takes a few seconds.',
-              )}
-            </Text>
-          )}
         </>
       )}
       {dialog.element}
     </Screen>
   );
+}
+
+/** Profile in a few words: "Чоловік · 36 років · 175 см · …". */
+function profileFacts(profile: Profile, weightKg: number | undefined) {
+  return [
+    profile.sex && SEX_LABELS[profile.sex],
+    profile.birthDate &&
+      `${ageOn(profile.birthDate)} ${plural(ageOn(profile.birthDate), ['рік', 'роки', 'років'], ['year', 'years'])}`,
+    profile.heightCm && `${formatNumber(cmToDisplay(profile.heightCm), 0)} ${HEIGHT_UNIT}`,
+    weightKg && `${formatWeight(weightKg, 1)} ${WEIGHT_UNIT}`,
+    `${tr('активність', 'activity')}: ${ACTIVITY[profile.activity].label.toLowerCase()}`,
+    WEIGHT_GOAL[profile.goal].label.toLowerCase(),
+  ].filter(Boolean) as string[];
+}
+
+/** Labels of the picked answers to a question, joined. */
+function picked(answers: ProgramAnswers, key: ProgramQuestion['key']) {
+  const question = PROGRAM_QUESTIONS.find((q) => q.key === key);
+  return (question?.options ?? [])
+    .filter((o) => answers[key].includes(o.value))
+    .map((o) => o.label)
+    .join(', ');
+}
+
+/** What the loader says AI is doing, built from the user's own answers. */
+function loaderStages(
+  answers: ProgramAnswers,
+  wishes: string,
+  facts: string[],
+  libraryCount: number,
+): LoaderStage[] {
+  const days = Number(answers.days[0]) || 3;
+  return [
+    { title: tr('Аналізую профіль', 'Reading your profile'), detail: facts.join(' · ') },
+    {
+      title: tr('Враховую мету й побажання', 'Weighing your goal and wishes'),
+      detail: [picked(answers, 'goal'), wishes.trim()].filter(Boolean).join(' · '),
+    },
+    {
+      title: `${tr('Розподіляю', 'Spreading')} ${days} ${plural(days, ['тренування', 'тренування', 'тренувань'], ['workout', 'workouts'])} ${tr('на тиждень', 'over the week')}`,
+      detail: [picked(answers, 'duration'), picked(answers, 'focus')].filter(Boolean).join(' · '),
+    },
+    {
+      title: tr('Підбираю вправи', 'Picking exercises'),
+      detail: tr(
+        `${libraryCount} у бібліотеці · ${picked(answers, 'equipment')}`,
+        `${libraryCount} in the library · ${picked(answers, 'equipment')}`,
+      ),
+    },
+    {
+      title: tr('Розраховую підходи й відпочинок', 'Setting sets and rest'),
+      detail: picked(answers, 'level'),
+    },
+    {
+      title: tr('Перевіряю план', 'Checking the plan'),
+      detail: picked(answers, 'limits') || undefined,
+    },
+  ];
 }
 
 function Progress({ step }: { step: number }) {
@@ -287,22 +359,14 @@ function WishesStep({
 }: {
   wishes: string;
   onChange: (text: string) => void;
-  profile: Awaited<ReturnType<typeof loadProfile>>['profile'];
+  profile: Profile;
   weightKg: number | undefined;
 }) {
   const append = (wish: string) => {
     const text = wishes.trim();
     onChange(text ? `${text.replace(/[.,;]$/, '')}, ${wish.toLowerCase()}` : wish);
   };
-  const facts = [
-    profile.sex && SEX_LABELS[profile.sex],
-    profile.birthDate &&
-      `${ageOn(profile.birthDate)} ${plural(ageOn(profile.birthDate), ['рік', 'роки', 'років'], ['year', 'years'])}`,
-    profile.heightCm && `${formatNumber(cmToDisplay(profile.heightCm), 0)} ${HEIGHT_UNIT}`,
-    weightKg && `${formatWeight(weightKg, 1)} ${WEIGHT_UNIT}`,
-    `${tr('активність', 'activity')}: ${ACTIVITY[profile.activity].label.toLowerCase()}`,
-    WEIGHT_GOAL[profile.goal].label.toLowerCase(),
-  ].filter(Boolean);
+  const facts = profileFacts(profile, weightKg);
   const incomplete = !profile.sex || !profile.birthDate || !profile.heightCm || !weightKg;
 
   return (
@@ -352,13 +416,11 @@ function WishesStep({
 
 function PlanPreview({
   plan,
-  generating,
   onSave,
   onRegenerate,
   onEdit,
 }: {
   plan: ProgramPlan;
-  generating: boolean;
   onSave: () => void;
   onRegenerate: () => void;
   onEdit: () => void;
@@ -427,21 +489,14 @@ function PlanPreview({
         title={tr('Зберегти програму', 'Save program')}
         icon="checkmark-circle"
         onPress={onSave}
-        disabled={generating}
       />
       <Button
-        title={generating ? tr('Складаю…', 'Building…') : tr('Скласти інакше', 'Try another')}
+        title={tr('Скласти інакше', 'Try another')}
         icon="refresh"
         variant="secondary"
         onPress={onRegenerate}
-        loading={generating}
       />
-      <Button
-        title={tr('Змінити відповіді', 'Change answers')}
-        variant="ghost"
-        onPress={onEdit}
-        disabled={generating}
-      />
+      <Button title={tr('Змінити відповіді', 'Change answers')} variant="ghost" onPress={onEdit} />
     </>
   );
 }

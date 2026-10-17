@@ -311,6 +311,9 @@ type GroqPlan = {
   }[];
 };
 
+/** Fewer than this in a day means the AI didn't finish the plan. */
+const MIN_DAY_EXERCISES = 3;
+
 const nameKey = (name: string) => name.trim().toLowerCase();
 
 const clamp = (v: unknown, min: number, max: number, fallback: number) =>
@@ -372,12 +375,14 @@ export async function askProgramPlan({
   profile,
   weightKg,
   library,
+  onAttempt,
 }: {
   answers: ProgramAnswers;
   wishes: string;
   profile: Profile;
   weightKg: number | null | undefined;
   library: Pick<Exercise, 'id' | 'name' | 'muscleGroup' | 'trackingType'>[];
+  onAttempt?: (attempt: number) => void;
 }): Promise<ProgramPlan> {
   const answerLines = PROGRAM_QUESTIONS.map((q) => {
     const picked = q.options.filter((o) => answers[q.key].includes(o.value));
@@ -392,6 +397,7 @@ export async function askProgramPlan({
     ...library.map((e) => `${e.name} | ${e.muscleGroup} | ${e.trackingType}`),
   ].join('\n');
 
+  const requestedDays = Number(answers.days[0]) || null;
   const raw = await groqJson<GroqPlan>({
     system: SYSTEM_PROMPT,
     user,
@@ -402,6 +408,11 @@ export async function askProgramPlan({
     reasoningEffort: 'medium',
     // A 6-day plan with reasoning runs to several thousand tokens.
     maxTokens: 16000,
+    // Sometimes it drops a day or leaves one nearly empty; ask again then.
+    accept: (reply) =>
+      (!requestedDays || reply.days?.length === requestedDays) &&
+      (reply.days ?? []).every((d) => (d.exercises?.length ?? 0) >= MIN_DAY_EXERCISES),
+    onAttempt,
   });
 
   const byName = new Map(library.map((e) => [nameKey(e.name), e]));

@@ -108,7 +108,7 @@ type GroqNutrition = {
 
 const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : 0);
 
-export type GroqRequest = {
+export type GroqRequest<T> = {
   system: string;
   user: string;
   /** Strict JSON Schema the reply must follow. */
@@ -118,11 +118,18 @@ export type GroqRequest = {
   reasoningEffort?: 'low' | 'medium' | 'high';
   /** Room for reasoning plus the reply; a reply cut short fails the schema. */
   maxTokens?: number;
+  /**
+   * Whether the reply is good enough; a rejected one is asked for again. The
+   * last attempt's reply is returned even when rejected, for the caller to judge.
+   */
+  accept?: (reply: T) => boolean;
+  /** Called before each try, 1-based, e.g. to show that AI is trying again. */
+  onAttempt?: (attempt: number) => void;
   apiKey?: string | null;
 };
 
-// A reply that failed the schema (usually cut short) often succeeds when asked again.
-const ATTEMPTS = 2;
+// AI that failed (a reply cut short, a server error, a weak answer) usually copes when asked again.
+export const GROQ_ATTEMPTS = 3;
 
 /** One chat completion parsed as JSON; throws `GroqError` with a user-facing message. */
 export async function groqJson<T>({
@@ -133,8 +140,10 @@ export async function groqJson<T>({
   temperature = 0,
   reasoningEffort = 'low',
   maxTokens,
+  accept,
+  onAttempt,
   apiKey,
-}: GroqRequest): Promise<T> {
+}: GroqRequest<T>): Promise<T> {
   const key = apiKey ?? (await getGroqKey());
   if (!key)
     throw new GroqError(
@@ -151,6 +160,8 @@ export async function groqJson<T>({
   );
 
   for (let attempt = 1; ; attempt++) {
+    const last = attempt === GROQ_ATTEMPTS;
+    onAttempt?.(attempt);
     let res: Response;
     try {
       res = await fetch(`${API}/chat/completions`, {
@@ -189,23 +200,24 @@ export async function groqJson<T>({
     }
     if (!res.ok) {
       const body = await res.text().catch(() => '');
-      if (res.status === 400 && body.includes('json_validate_failed')) {
-        if (attempt < ATTEMPTS) continue;
-        throw badResponse;
-      }
+      const failedSchema = res.status === 400 && body.includes('json_validate_failed');
+      if ((failedSchema || res.status >= 500) && !last) continue;
+      if (failedSchema) throw badResponse;
       throw new GroqError(
         `${tr('Groq повернув помилку', 'Groq returned error')} ${res.status}. ${body.slice(0, 200)}`,
         'network',
       );
     }
 
+    let reply: T;
     try {
       const json = await res.json();
-      return JSON.parse(json.choices[0].message.content) as T;
+      reply = JSON.parse(json.choices[0].message.content) as T;
     } catch {
-      if (attempt < ATTEMPTS) continue;
+      if (!last) continue;
       throw badResponse;
     }
+    if (last || !accept || accept(reply)) return reply;
   }
 }
 
