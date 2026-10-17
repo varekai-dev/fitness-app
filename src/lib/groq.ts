@@ -7,6 +7,8 @@ const KEY_NAME = 'groq_api_key';
 const API = 'https://api.groq.com/openai/v1';
 // Supports strict JSON Schema output on Groq; low reasoning keeps it fast and cheap.
 export const GROQ_MODEL = 'openai/gpt-oss-120b';
+// Reads images and also supports strict JSON Schema output.
+const GROQ_VISION_MODEL = 'qwen/qwen3.8-27b';
 
 export const getGroqKey = () => SecureStore.getItemAsync(KEY_NAME);
 export const setGroqKey = (key: string) => SecureStore.setItemAsync(KEY_NAME, key.trim());
@@ -128,14 +130,21 @@ const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >=
 const healthRating = (v: unknown) => HEALTH_RATINGS.find((r) => r === v) ?? null;
 const healthNote = (v: unknown) => (typeof v === 'string' && v.trim()) || null;
 
+/** A user message with a photo: the text plus the image as a data URL. */
+type UserContent =
+  string | ({ type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string } })[];
+
 export type GroqRequest<T> = {
   system: string;
-  user: string;
+  user: UserContent;
+  /** Defaults to `GROQ_MODEL`. */
+  model?: string;
   /** Strict JSON Schema the reply must follow. */
   schema: object;
   schemaName: string;
   temperature?: number;
-  reasoningEffort?: 'low' | 'medium' | 'high';
+  /** `none` turns thinking off on models that think by default. */
+  reasoningEffort?: 'none' | 'low' | 'medium' | 'high';
   /** Room for reasoning plus the reply; a reply cut short fails the schema. */
   maxTokens?: number;
   /**
@@ -155,6 +164,7 @@ export const GROQ_ATTEMPTS = 3;
 export async function groqJson<T>({
   system,
   user,
+  model = GROQ_MODEL,
   schema,
   schemaName,
   temperature = 0,
@@ -188,7 +198,7 @@ export async function groqJson<T>({
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
         body: JSON.stringify({
-          model: GROQ_MODEL,
+          model,
           temperature,
           reasoning_effort: reasoningEffort,
           max_completion_tokens: maxTokens,
@@ -328,6 +338,90 @@ export async function askGroqHealth(dish: {
     schemaName: 'health',
   });
   return { health: healthRating(parsed.health), healthNote: healthNote(parsed.health_note) };
+}
+
+const PHOTO_PROMPT = tr(
+  `Ти нутриціолог. На фото їжа чи напій, найчастіше тарілка зверху або збоку.
+Назви все, що видно, і оціни кількість кожного за розміром тарілки, приборів, рук і упаковок.
+- Страву з кількох інгредієнтів (борщ, салат, піца, бутерброд) називай однією позицією.
+- Окремі страви на тарілці (гарнір, м'ясо, овочі, хліб, соус) — окремими позиціями.
+- Напиши, як приготовано, якщо це видно: смажене, варене, запечене.
+Поля:
+- is_food: false, якщо на фото немає їжі чи напою;
+- items: позиції; name — коротко українською з малої літери, без кількості; amount — число більше 0; unit — "g" для їжі, "ml" для напоїв і рідких страв у склянці.`,
+  `You are a nutritionist. The photo shows food or a drink, usually a plate from above or the side.
+Name everything you can see and estimate the amount of each by the size of the plate, cutlery, hands and packaging.
+- A dish made of several ingredients (soup, salad, pizza, sandwich) is one item.
+- Separate dishes on a plate (side, meat, vegetables, bread, sauce) are separate items.
+- Say how it is cooked if you can see it: fried, boiled, baked.
+Fields:
+- is_food: false if there is no food or drink in the photo;
+- items: the items; name: short, in English, lowercase, without the amount; amount: a number greater than 0; unit: "g" for food, "ml" for drinks and liquids in a glass.`,
+);
+
+const PHOTO_SCHEMA = {
+  type: 'object',
+  properties: {
+    is_food: { type: 'boolean' },
+    items: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          amount: { type: 'number' },
+          unit: { type: 'string', enum: ['g', 'ml'] },
+        },
+        required: ['name', 'amount', 'unit'],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ['is_food', 'items'],
+  additionalProperties: false,
+};
+
+type GroqPhoto = { is_food: boolean; items: { name: string; amount: number; unit: string }[] };
+
+/** Amounts guessed from a photo are rough, so round numbers read more honestly. */
+const roundAmount = (v: number) => Math.max(10, Math.round(v / 10) * 10);
+
+/**
+ * Recognizes the food in a photo and describes it the way the user would type
+ * it, e.g. "гречка 180 г, курячий стейк 120 г", for the usual nutrition lookup.
+ * Throws `GroqError` with a user-facing message.
+ */
+export async function describeFoodPhoto(image: { base64: string; mimeType: string }) {
+  const parsed = await groqJson<GroqPhoto>({
+    model: GROQ_VISION_MODEL,
+    system: PHOTO_PROMPT,
+    user: [
+      { type: 'text', text: tr('Що на фото?', 'What is in the photo?') },
+      { type: 'image_url', image_url: { url: `data:${image.mimeType};base64,${image.base64}` } },
+    ],
+    schema: PHOTO_SCHEMA,
+    schemaName: 'food_photo',
+    reasoningEffort: 'none',
+    accept: (r) => !r.is_food || r.items.some((i) => i.name.trim() && num(i.amount) > 0),
+  });
+  const items = parsed.is_food
+    ? parsed.items.filter((i) => i.name.trim() && num(i.amount) > 0)
+    : [];
+  if (items.length === 0) {
+    throw new GroqError(
+      tr(
+        'Не бачу на фото їжі. Спробуй інше фото або опиши страву текстом.',
+        'I can’t see any food in the photo. Try another one or describe the dish.',
+      ),
+      'not-food',
+    );
+  }
+  return items
+    .map(
+      (i) =>
+        `${i.name.trim()} ${roundAmount(i.amount)} ${i.unit === 'ml' ? tr('мл', 'ml') : tr('г', 'g')}`,
+    )
+    .join(', ');
 }
 
 /** Cheapest call that proves the key works: lists the models it can use. */

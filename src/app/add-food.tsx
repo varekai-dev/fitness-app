@@ -1,5 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
+import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -31,8 +32,9 @@ import {
 import type { Food, HealthRating } from '@/db/schema';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { amountUnit, formatGrams, formatKcal, normalizeDish, scaleNutrition } from '@/lib/food';
-import { GroqError } from '@/lib/groq';
+import { describeFoodPhoto, GroqError } from '@/lib/groq';
 import { tr } from '@/lib/i18n';
+import { captureForAi } from '@/lib/images';
 import { MEAL_LABELS, MEALS, mealAt, type Meal } from '@/lib/meals';
 import { parseDecimal } from '@/lib/metrics';
 import { addDays, startOfDay } from '@/lib/water';
@@ -77,6 +79,10 @@ export default function AddFoodScreen() {
   const [input, setInput] = useState('');
   const { data: suggestions } = useDbQuery(() => searchFoods(input), [input]);
   const [looking, setLooking] = useState(false);
+  // Preview of the photo the text was recognized from, while it's being checked.
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [recognizing, setRecognizing] = useState(false);
+  const busy = looking || recognizing;
   const [pending, setPending] = useState<Pending | null>(null);
   // Name the manual form starts with; null while it's closed.
   const [manual, setManual] = useState<string | null>(null);
@@ -90,33 +96,76 @@ export default function AddFoodScreen() {
     setPending(startPending(saved, true));
   };
 
+  const showError = (title: string, e: unknown) => {
+    const noKey = e instanceof GroqError && (e.kind === 'no-key' || e.kind === 'auth');
+    dialog.show({
+      title,
+      message: (e as Error).message,
+      icon: 'alert-circle',
+      buttons: noKey
+        ? [
+            { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
+            {
+              text: tr('Налаштування', 'Settings'),
+              onPress: () => router.push('/settings/integrations'),
+            },
+          ]
+        : undefined,
+    });
+  };
+
   const lookup = async (text: string) => {
-    if (!text.trim() || looking) return;
+    if (!text.trim() || busy) return;
     setLooking(true);
     try {
       const result = await lookupFood(text);
       setPending(startPending(result.food, result.cached));
       setInput('');
+      setPhoto(null);
     } catch (e) {
-      const noKey = e instanceof GroqError && (e.kind === 'no-key' || e.kind === 'auth');
-      dialog.show({
-        title: tr('Не вдалося порахувати', 'Couldn’t calculate'),
-        message: (e as Error).message,
-        icon: 'alert-circle',
-        buttons: noKey
-          ? [
-              { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
-              {
-                text: tr('Налаштування', 'Settings'),
-                onPress: () => router.push('/settings/integrations'),
-              },
-            ]
-          : undefined,
-      });
+      showError(tr('Не вдалося порахувати', 'Couldn’t calculate'), e);
     } finally {
       setLooking(false);
     }
   };
+
+  // The photo becomes a description in the field, to check and fix before calculating.
+  const recognize = async (source: 'camera' | 'library') => {
+    let image: Awaited<ReturnType<typeof captureForAi>>;
+    try {
+      image = await captureForAi(source);
+    } catch (e) {
+      showError(tr('Не вдалося зробити фото', 'Couldn’t take the photo'), e);
+      return;
+    }
+    if (!image) return;
+    setPhoto(image.uri);
+    setRecognizing(true);
+    try {
+      setInput(await describeFoodPhoto(image));
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (e) {
+      setPhoto(null);
+      showError(tr('Не вдалося розпізнати', 'Couldn’t recognize'), e);
+    } finally {
+      setRecognizing(false);
+    }
+  };
+
+  const choosePhotoSource = () =>
+    dialog.show({
+      title: tr('Фото страви', 'Photo of the dish'),
+      message: tr(
+        'AI розпізнає їжу й оцінить порції. Найкраще знімати тарілку згори, цілком.',
+        'AI recognizes the food and estimates the portions. Shoot the whole plate from above.',
+      ),
+      icon: 'camera-outline',
+      buttons: [
+        { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
+        { text: tr('Камера', 'Camera'), onPress: () => recognize('camera') },
+        { text: tr('Галерея', 'Gallery'), onPress: () => recognize('library') },
+      ],
+    });
 
   const pick = (food: Food) => {
     // Dishes cached before portions had a weight need a fresh estimate to scale by grams.
@@ -170,6 +219,20 @@ export default function AddFoodScreen() {
       ) : (
         <>
           <Card>
+            {photo && (
+              <Row style={styles.photoRow}>
+                <Image source={{ uri: photo }} style={styles.photo} contentFit="cover" />
+                <Text variant="muted" style={styles.flex}>
+                  {recognizing
+                    ? tr('Розпізнаю, що на фото…', 'Recognizing the photo…')
+                    : tr(
+                        'Ось що я бачу. Виправ назви чи вагу, якщо треба, і порахуй.',
+                        'Here’s what I see. Fix the names or amounts if needed, then calculate.',
+                      )}
+                </Text>
+                {!busy && <CircleButton icon="close" size={32} onPress={() => setPhoto(null)} />}
+              </Row>
+            )}
             <Field
               value={input}
               onChangeText={setInput}
@@ -179,7 +242,7 @@ export default function AddFoodScreen() {
               )}
               multiline
               autoFocus
-              editable={!looking}
+              editable={!busy}
             />
             {shownSuggestions.map((f) => (
               <Pressable
@@ -200,15 +263,27 @@ export default function AddFoodScreen() {
               icon="sparkles"
               onPress={() => lookup(input)}
               loading={looking}
-              disabled={!input.trim()}
+              disabled={!input.trim() || recognizing}
             />
-            <Button
-              title={tr('Ввести вручну', 'Enter manually')}
-              icon="create-outline"
-              variant="secondary"
-              onPress={() => setManual(input.trim())}
-              disabled={looking}
-            />
+            <Row>
+              <Button
+                title={tr('Фото', 'Photo')}
+                icon="camera-outline"
+                variant="secondary"
+                onPress={choosePhotoSource}
+                loading={recognizing}
+                disabled={looking}
+                style={styles.flex}
+              />
+              <Button
+                title={tr('Вручну', 'Manually')}
+                icon="create-outline"
+                variant="secondary"
+                onPress={() => setManual(input.trim())}
+                disabled={busy}
+                style={styles.flex}
+              />
+            </Row>
           </Card>
           {recent.length > 0 && (
             <>
@@ -616,4 +691,6 @@ const styles = StyleSheet.create({
   macroField: { flexBasis: '45%', flexGrow: 1 },
   amountInput: { textAlign: 'center', fontSize: fontSize.xl, fontWeight: '700' },
   amountUnit: { color: colors.textSecondary, minWidth: 28 },
+  photoRow: { gap: spacing.md },
+  photo: { width: 56, height: 56, borderRadius: radius.sm, backgroundColor: colors.surfaceRaised },
 });
