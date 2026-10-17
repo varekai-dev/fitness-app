@@ -102,13 +102,13 @@ export const numeric = (key: keyof Inputs, value: string) =>
 export const display = (key: keyof Inputs, n: number) =>
   key === 'duration' ? formatDuration(n) : formatNumber(n);
 
-/** What the set sheet edits: one set's values and where to send changes. */
+/** What the set sheet edits: one set's values and where to save them. */
 export type SetEdit = {
   id: number;
   title: string;
   type: TrackingType;
   inputs: Inputs;
-  onChange: (inputs: Inputs) => void;
+  onSave: (inputs: Inputs) => void;
 };
 
 /**
@@ -150,7 +150,7 @@ export function SetRow({
       title: `${tr('Підхід', 'Set')} ${index + 1}`,
       type,
       inputs,
-      onChange: (next) => {
+      onSave: (next) => {
         setInputs(next);
         onSave(toValues(next));
       },
@@ -210,8 +210,9 @@ export function SetRow({
 }
 
 /**
- * Bottom sheet with a big wheel per field of the set being edited, saved as soon
- * as a wheel settles. Render it last in the screen, over everything else. Not a
+ * Bottom sheet with a big wheel per field of the set being edited. Done saves
+ * the values; closing it any other way (a tap outside, Back, a drag down)
+ * drops them. Render it last in the screen, over everything else. Not a
  * `Modal`: edge to edge on Android, a modal cuts off whatever reaches the
  * bottom of the screen.
  */
@@ -232,7 +233,7 @@ const SPRING = { damping: 22, stiffness: 200, mass: 0.8 };
 
 function SheetBody({ edit, onClose }: { edit: SetEdit; onClose: () => void }) {
   const insets = useSafeAreaInsets();
-  // The row only reads its values when the sheet opens, so the sheet keeps its own.
+  // Edited here and handed to the row only on Done.
   const [inputs, setInputs] = useState(edit.inputs);
   const drag = useSharedValue(0);
   const height = useSharedValue(1);
@@ -294,16 +295,20 @@ function SheetBody({ edit, onClose }: { edit: SetEdit; onClose: () => void }) {
                   unit={f.label}
                   format={w.format}
                   rows={5}
-                  onChange={(v) => {
-                    const next = { ...inputs, [f.key]: display(f.key, v) };
-                    setInputs(next);
-                    edit.onChange(next);
-                  }}
+                  onChange={(v) =>
+                    setInputs((prev) => ({ ...prev, [f.key]: display(f.key, v) }))
+                  }
                 />
               );
             })}
           </View>
-          <Button title={tr('Готово', 'Done')} onPress={onClose} />
+          <Button
+            title={tr('Готово', 'Done')}
+            onPress={() => {
+              edit.onSave(inputs);
+              onClose();
+            }}
+          />
         </Animated.View>
       </Animated.View>
     </Animated.View>
