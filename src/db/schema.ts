@@ -160,6 +160,23 @@ export const bodyWeights = sqliteTable(
   (t) => [index('body_weights_measured_idx').on(t.measuredAt)],
 );
 
+/** Angles a progress photo is taken from; photos are compared only within one pose. */
+export const PHOTO_POSES = ['front', 'side', 'back'] as const;
+export type PhotoPose = (typeof PHOTO_POSES)[number];
+
+/** Body progress photos, stored as files in the app's own storage. */
+export const progressPhotos = sqliteTable(
+  'progress_photos',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    takenAt: integer('taken_at').notNull(),
+    pose: text('pose', { enum: PHOTO_POSES }).notNull(),
+    // Only the file name: the app's storage path can change between installs on iOS.
+    fileName: text('file_name').notNull(),
+  },
+  (t) => [index('progress_photos_taken_idx').on(t.takenAt)],
+);
+
 export const ACTIVITY_SOURCES = ['apple_health', 'health_connect'] as const;
 export type ActivitySource = (typeof ACTIVITY_SOURCES)[number];
 

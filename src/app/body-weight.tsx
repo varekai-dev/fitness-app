@@ -1,3 +1,6 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Image } from 'expo-image';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -16,17 +19,20 @@ import {
   Text,
 } from '@/components/ui';
 import { deleteBodyWeight, listBodyWeights, saveBodyWeight } from '@/db/body-weight';
+import { listProgressPhotos } from '@/db/progress-photos';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { tr } from '@/lib/i18n';
 import { formatDate, formatShortDate, formatWeightDelta } from '@/lib/labels';
 import { formatNumber, formatWeight, parseDecimal } from '@/lib/metrics';
+import { photoUri } from '@/lib/progress-photos';
 import { displayToKg, kgToDisplay, WEIGHT_UNIT } from '@/lib/units';
-import { spacing } from '@/theme';
+import { colors, radius, spacing } from '@/theme';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export default function BodyWeightScreen() {
   const { data } = useDbQuery(listBodyWeights);
+  const { data: photos } = useDbQuery(listProgressPhotos);
   // null until the user types, so the field shows the latest weight to adjust.
   const [input, setInput] = useState<string | null>(null);
   const dialog = useDialog();
@@ -94,6 +100,8 @@ export default function BodyWeightScreen() {
           )}
         </Text>
       </Card>
+
+      <PhotosCard photos={photos ?? []} />
 
       {data.length === 0 ? (
         <EmptyState
@@ -176,6 +184,42 @@ export default function BodyWeightScreen() {
   );
 }
 
+/** Link to the progress photos, with the latest one as a preview. */
+function PhotosCard({ photos }: { photos: { fileName: string; takenAt: number }[] }) {
+  const latest = photos.at(-1);
+  return (
+    <Card onPress={() => router.push('/progress-photos')}>
+      <Row style={styles.spaceBetween}>
+        <Row style={styles.flex}>
+          {latest ? (
+            <Image
+              source={{ uri: photoUri(latest.fileName) }}
+              style={styles.photoThumb}
+              contentFit="cover"
+            />
+          ) : (
+            <View style={[styles.photoThumb, styles.photoPlaceholder]}>
+              <Ionicons name="body-outline" size={22} color={colors.accent} />
+            </View>
+          )}
+          <View style={styles.flex}>
+            <Text variant="heading">{tr('Фото прогресу', 'Progress photos')}</Text>
+            <Text variant="muted">
+              {latest
+                ? tr(
+                    `${photos.length} фото · останнє ${formatShortDate(latest.takenAt)}`,
+                    `${photos.length} ${photos.length === 1 ? 'photo' : 'photos'} · last ${formatShortDate(latest.takenAt)}`,
+                  )
+                : tr('Порівнюй «до / після» щотижня', 'Compare before / after every week')}
+            </Text>
+          </View>
+        </Row>
+        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+      </Row>
+    </Card>
+  );
+}
+
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   entry: { gap: spacing.sm, alignItems: 'center' },
@@ -183,4 +227,15 @@ const styles = StyleSheet.create({
   spaceBetween: { justifyContent: 'space-between' },
   entryValue: { alignItems: 'flex-end' },
   chartHint: { textAlign: 'center' },
+  photoThumb: {
+    width: 44,
+    height: 58,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surfaceRaised,
+  },
+  photoPlaceholder: {
+    backgroundColor: colors.accentSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

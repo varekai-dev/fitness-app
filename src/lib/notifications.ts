@@ -1,10 +1,11 @@
 import type * as NotificationsModule from 'expo-notifications';
 import { LogBox, Platform } from 'react-native';
 
-import { getDayWindow, getWaterReminders } from '@/db/reminders';
+import { listProgressPhotos } from '@/db/progress-photos';
+import { getDayWindow, getPhotoReminders, getWaterReminders } from '@/db/reminders';
 import { loadWater } from '@/db/water';
 import { tr } from '@/lib/i18n';
-import { planWaterReminders } from '@/lib/reminders';
+import { planPhotoReminder, planWaterReminders } from '@/lib/reminders';
 
 /**
  * Loaded lazily: Expo Go on Android ships without some of the module's native
@@ -34,6 +35,9 @@ const WATER_CHANNEL = 'water';
 const WATER_PREFIX = 'water-';
 /** Where a tap on a water reminder leads: the tab with the glasses to log. */
 const WATER_URL = '/water';
+const PHOTO_CHANNEL = 'progress-photos';
+const PHOTO_PREFIX = 'photo-';
+const PHOTO_URL = '/progress-photos';
 
 Notifications?.setNotificationHandler({
   handleNotification: async () => ({
@@ -45,7 +49,7 @@ Notifications?.setNotificationHandler({
 });
 
 /**
- * Creates the water channel; resolves to whether it exists. Android 13+ only
+ * Creates the reminder channels; resolves to whether they exist. Android 13+ only
  * shows the permission prompt once a channel exists. Expo Go can't create
  * channels, so there reminders go to its default one instead.
  */
@@ -55,6 +59,10 @@ async function ensureChannels(N: typeof NotificationsModule) {
     await N.setNotificationChannelAsync(WATER_CHANNEL, {
       name: tr('Нагадування про воду', 'Water reminders'),
       importance: N.AndroidImportance.HIGH,
+    });
+    await N.setNotificationChannelAsync(PHOTO_CHANNEL, {
+      name: tr('Нагадування про фото прогресу', 'Progress photo reminders'),
+      importance: N.AndroidImportance.DEFAULT,
     });
     return true;
   } catch {
@@ -132,17 +140,55 @@ async function syncWaterRemindersNow(N: typeof NotificationsModule) {
   }
 }
 
+/** The one weekly progress photo reminder; its id carries its time, so an unchanged plan is left alone. */
+async function syncPhotoReminderNow(N: typeof NotificationsModule) {
+  const scheduled = (await N.getAllScheduledNotificationsAsync()).filter((n) =>
+    n.identifier.startsWith(PHOTO_PREFIX),
+  );
+  const [reminders, dayWindow, photos] = await Promise.all([
+    getPhotoReminders(),
+    getDayWindow(),
+    listProgressPhotos(),
+  ]);
+  const permitted = await getNotificationPermission();
+  const wanted =
+    reminders.enabled && permitted
+      ? planPhotoReminder({
+          now: Date.now(),
+          lastPhotoAt: photos.at(-1)?.takenAt ?? null,
+          window: dayWindow,
+        })
+      : null;
+  const identifier = wanted && PHOTO_PREFIX + wanted.at;
+  for (const n of scheduled) {
+    if (n.identifier !== identifier || n.content.body !== wanted?.body)
+      await N.cancelScheduledNotificationAsync(n.identifier);
+  }
+  if (!wanted || !identifier) return;
+  if (scheduled.some((n) => n.identifier === identifier && n.content.body === wanted.body)) return;
+  const channelId = (await ensureChannels(N)) ? PHOTO_CHANNEL : undefined;
+  await N.scheduleNotificationAsync({
+    identifier,
+    content: { title: wanted.title, body: wanted.body, data: { url: PHOTO_URL } },
+    trigger: { type: N.SchedulableTriggerInputTypes.DATE, date: wanted.at, channelId },
+  });
+}
+
 let queue = Promise.resolve();
 
 /**
- * Brings the scheduled water reminders in line with the settings, the goal and
- * today's intake. Calls run one after another, so overlapping triggers never
- * interleave their cancels and schedules.
+ * Brings the scheduled reminders in line with the settings, the water goal,
+ * today's intake and the latest progress photo. Calls run one after another,
+ * so overlapping triggers never interleave their cancels and schedules.
  */
-export function syncWaterReminders() {
+export function syncReminders() {
   const N = Notifications;
   if (!N) return Promise.resolve();
-  queue = queue.then(() => syncWaterRemindersNow(N)).catch(() => {});
+  queue = queue
+    .then(() => syncWaterRemindersNow(N))
+    .catch(() => {})
+    .then(() => syncPhotoReminderNow(N))
+    .catch(() => {});
   return queue;
 }
 

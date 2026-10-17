@@ -1,6 +1,7 @@
 import { locale, tr } from '@/lib/i18n';
+import { PHOTO_EVERY_DAYS } from '@/lib/progress-photos';
 import { formatVolume, VOLUME_UNIT } from '@/lib/units';
-import { addDays } from '@/lib/water';
+import { addDays, startOfDay } from '@/lib/water';
 
 /** The waking part of the day, in minutes after midnight. Reminders only fire inside it. */
 export type DayWindow = { startMin: number; endMin: number };
@@ -116,4 +117,42 @@ export function planWaterReminders({
     }
   }
   return reminders;
+}
+
+/** Photo reminders come this long after the day starts: morning, before breakfast. */
+const PHOTO_REMINDER_OFFSET_MIN = 60;
+
+/**
+ * When to remind about the next progress photo: a week after the day of the
+ * last one, in the morning. With no photo yet, or once it is overdue, the next
+ * morning still ahead. The app reschedules on every launch, so an overdue
+ * photo is nudged at most once a day, and only while the app is used.
+ */
+export function planPhotoReminder({
+  now,
+  lastPhotoAt,
+  window,
+}: {
+  now: number;
+  lastPhotoAt: number | null;
+  window: DayWindow;
+}) {
+  const min = Math.min(window.startMin + PHOTO_REMINDER_OFFSET_MIN, window.endMin);
+  let day =
+    lastPhotoAt === null ? startOfDay(now) : addDays(startOfDay(lastPhotoAt), PHOTO_EVERY_DAYS);
+  while (at(day, min) <= now) day = addDays(day, 1);
+  return {
+    at: at(day, min),
+    title: tr('Час для фото прогресу', 'Time for a progress photo'),
+    body:
+      lastPhotoAt === null
+        ? tr(
+            'Зроби перше фото, щоб потім бачити, як змінюється тіло.',
+            'Take your first photo to see how your body changes over time.',
+          )
+        : tr(
+            'Минув тиждень від останнього фото. Зроби нове в тій самій позі й при тому ж світлі.',
+            'A week has passed since the last photo. Take a new one in the same pose and light.',
+          ),
+  };
 }

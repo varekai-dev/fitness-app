@@ -3,15 +3,15 @@ import { addDatabaseChangeListener } from 'expo-sqlite';
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
 
-import { notificationsSupported, onNotificationTap, syncWaterReminders } from '@/lib/notifications';
+import { notificationsSupported, onNotificationTap, syncReminders } from '@/lib/notifications';
 
-/** Tables whose changes can move a water reminder: the log itself and the goal/reminder settings. */
-const WATCHED_TABLES = new Set(['water_intakes', 'settings']);
+/** Tables whose changes can move a reminder: the water log, progress photos and the settings. */
+const WATCHED_TABLES = new Set(['water_intakes', 'progress_photos', 'settings']);
 
 /**
  * Keeps scheduled reminders current and opens the screen a tapped notification
  * points to. Reminders are recomputed at launch, on every return to the
- * foreground (a new day may have started) and whenever water or settings change.
+ * foreground (a new day may have started) and whenever water, photos or settings change.
  */
 export function useNotifications(enabled: boolean) {
   useEffect(() => {
@@ -27,9 +27,9 @@ export function useNotifications(enabled: boolean) {
       });
     }, 0);
 
-    syncWaterReminders();
+    syncReminders();
     const appSub = AppState.addEventListener('change', (state) => {
-      if (state === 'active') syncWaterReminders();
+      if (state === 'active') syncReminders();
     });
 
     let pending = false;
@@ -39,7 +39,7 @@ export function useNotifications(enabled: boolean) {
       pending = true;
       setTimeout(() => {
         pending = false;
-        syncWaterReminders();
+        syncReminders();
       }, 300);
     });
 

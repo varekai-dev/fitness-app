@@ -15,6 +15,7 @@ const KEYS = {
   dayEnd: 'day_end_min',
   waterEnabled: 'water_reminders_enabled',
   waterInterval: 'water_reminders_interval_min',
+  photoEnabled: 'photo_reminders_enabled',
 } as const;
 
 async function read(keys: string[]) {
@@ -62,4 +63,14 @@ export async function setWaterReminders(next: Partial<WaterReminderSettings>) {
     ...(next.enabled !== undefined && { [KEYS.waterEnabled]: next.enabled ? '1' : '0' }),
     ...(next.intervalMin !== undefined && { [KEYS.waterInterval]: String(next.intervalMin) }),
   });
+}
+
+/** Whether a nudge comes once a week after the last progress photo. */
+export async function getPhotoReminders() {
+  const get = await read([KEYS.photoEnabled]);
+  return { enabled: get(KEYS.photoEnabled) === '1' };
+}
+
+export async function setPhotoReminders(enabled: boolean) {
+  await write({ [KEYS.photoEnabled]: enabled ? '1' : '0' });
 }

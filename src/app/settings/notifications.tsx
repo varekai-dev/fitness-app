@@ -4,17 +4,27 @@ import { Linking, StyleSheet, Switch, View } from 'react-native';
 
 import { useDialog } from '@/components/dialog';
 import { Button, Card, Chip, CircleButton, Loading, Row, Screen, Text } from '@/components/ui';
-import { getDayWindow, getWaterReminders, setDayWindow, setWaterReminders } from '@/db/reminders';
+import { listProgressPhotos } from '@/db/progress-photos';
+import {
+  getDayWindow,
+  getPhotoReminders,
+  getWaterReminders,
+  setDayWindow,
+  setPhotoReminders,
+  setWaterReminders,
+} from '@/db/reminders';
 import { loadWater } from '@/db/water';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { useNow } from '@/hooks/use-now';
 import { tr } from '@/lib/i18n';
+import { formatShortDate } from '@/lib/labels';
 import { getNotificationPermission, requestNotificationPermission } from '@/lib/notifications';
 import {
   DAY_WINDOW_STEP_MIN,
   formatClock,
   formatInterval,
   MIN_DAY_LENGTH_MIN,
+  planPhotoReminder,
   planWaterReminders,
   REMINDER_INTERVALS_MIN,
 } from '@/lib/reminders';
@@ -70,23 +80,37 @@ const dayLabel = (at: number, today: number) =>
       ? tr('завтра', 'tomorrow')
       : tr('пізніше', 'later');
 
+/** "сьогодні", "завтра" or the date for reminders that can be days away. */
+const photoDay = (at: number, today: number) =>
+  at < addDays(today, 2) ? dayLabel(at, today) : formatShortDate(at);
+
 const clockOf = (at: number) => {
   const d = new Date(at);
   return formatClock(d.getHours() * 60 + d.getMinutes());
 };
 
-/** Waking hours and the water reminders that pace the daily goal across them. */
+/** Waking hours, the water reminders that pace the daily goal across them, and the weekly photo nudge. */
 export default function NotificationsScreen() {
   const dialog = useDialog();
   const now = useNow();
   // Re-run with the clock too: the next check moves on and permission may change in system settings.
   const { data } = useDbQuery(
     () =>
-      Promise.all([getDayWindow(), getWaterReminders(), loadWater(), getNotificationPermission()]),
+      Promise.all([
+        getDayWindow(),
+        getWaterReminders(),
+        loadWater(),
+        getNotificationPermission(),
+        getPhotoReminders(),
+        listProgressPhotos(),
+      ]),
     [now],
   );
   if (!data) return <Loading />;
-  const [dayWindow, water, { goal, todayMl, today }, permitted] = data;
+  const [dayWindow, water, { goal, todayMl, today }, permitted, photo, photos] = data;
+  const nextPhoto = photo.enabled
+    ? planPhotoReminder({ now, lastPhotoAt: photos.at(-1)?.takenAt ?? null, window: dayWindow })
+    : undefined;
   const next = water.enabled
     ? planWaterReminders({
         now,
@@ -99,7 +123,7 @@ export default function NotificationsScreen() {
     : undefined;
   const hours = formatInterval(dayWindow.endMin - dayWindow.startMin);
 
-  const toggle = async (enabled: boolean) => {
+  const toggle = (save: (enabled: boolean) => Promise<void>) => async (enabled: boolean) => {
     if (enabled && !(await requestNotificationPermission())) {
       dialog.show({
         title: tr('Сповіщення вимкнені', 'Notifications are off'),
@@ -119,7 +143,7 @@ export default function NotificationsScreen() {
       return;
     }
     Haptics.selectionAsync();
-    setWaterReminders({ enabled });
+    save(enabled);
   };
 
   return (
@@ -161,7 +185,7 @@ export default function NotificationsScreen() {
           </Row>
           <Switch
             value={water.enabled}
-            onValueChange={toggle}
+            onValueChange={toggle((enabled) => setWaterReminders({ enabled }))}
             trackColor={{ true: colors.accent, false: colors.surfaceRaised }}
             thumbColor={colors.text}
           />
@@ -208,6 +232,46 @@ export default function NotificationsScreen() {
             ) : null}
           </>
         )}
+      </Card>
+
+      <Card>
+        <Row style={styles.spaceBetween}>
+          <Row style={styles.flex}>
+            <Ionicons name="camera-outline" size={20} color={colors.accent} />
+            <Text variant="heading">{tr('Фото прогресу', 'Progress photos')}</Text>
+          </Row>
+          <Switch
+            value={photo.enabled}
+            onValueChange={toggle(setPhotoReminders)}
+            trackColor={{ true: colors.accent, false: colors.surfaceRaised }}
+            thumbColor={colors.text}
+          />
+        </Row>
+        <Text variant="muted">
+          {tr(
+            'Нагадаємо зранку, коли мине тиждень від останнього фото.',
+            'We’ll remind you in the morning once a week has passed since the last photo.',
+          )}
+        </Text>
+        {photo.enabled &&
+          (!permitted ? (
+            <Button
+              title={tr(
+                'Сповіщення заборонені — відкрити налаштування',
+                'Notifications blocked: open settings',
+              )}
+              variant="danger"
+              small
+              onPress={() => Linking.openSettings()}
+            />
+          ) : nextPhoto ? (
+            <Text variant="secondary">
+              {tr(
+                `Наступне нагадування ${photoDay(nextPhoto.at, today)} о ${clockOf(nextPhoto.at)}.`,
+                `Next reminder ${photoDay(nextPhoto.at, today)} at ${clockOf(nextPhoto.at)}.`,
+              )}
+            </Text>
+          ) : null)}
       </Card>
       {dialog.element}
     </Screen>
