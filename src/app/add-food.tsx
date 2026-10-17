@@ -84,7 +84,12 @@ function eatenAt(day?: string) {
 export default function AddFoodScreen() {
   // `text` is a dish to calculate right away, e.g. a snack AI suggested for the day;
   // `food` is that suggestion with its numbers (SuggestedFood as JSON), to skip asking AI.
-  const params = useLocalSearchParams<{ meal?: string; day?: string; text?: string; food?: string }>();
+  const params = useLocalSearchParams<{
+    meal?: string;
+    day?: string;
+    text?: string;
+    food?: string;
+  }>();
   // Opened without a meal (e.g. a deep link): pick it by the time of day.
   const [meal] = useState<Meal>(() => MEALS.find((m) => m === params.meal) ?? mealAt(Date.now()));
   const { data } = useDbQuery(() => loadFood());

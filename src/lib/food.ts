@@ -37,7 +37,10 @@ export function splitAmount(text: string): { dish: string; grams: number } | nul
   return { dish, grams };
 }
 
-const kcalFormatter =new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
+/** The cache key of a dish whatever its amount: "Творог 200 г" and "творог" are one dish. */
+export const dishKey = (text: string) => splitAmount(text)?.dish ?? normalizeDish(text);
+
+const kcalFormatter = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
 const gramFormatter = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
 
 export const formatKcal = (kcal: number) => kcalFormatter.format(kcal);

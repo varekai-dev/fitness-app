@@ -4,6 +4,7 @@ import {
   amountUnit,
   DEFAULT_KCAL_GOAL,
   describeDishes,
+  dishKey,
   formatGrams,
   macroTargets,
   mergeDishes,
@@ -17,14 +18,16 @@ import {
   askGroqDayReview,
   askGroqHealth,
   askGroqMacroTips,
+  askGroqMealAdvice,
   askGroqNutrition,
   type DayReview,
   type MacroKey,
   type MacroTips,
+  type MealAdvice,
   type SuggestedFood,
 } from '@/lib/groq';
 import { lang, locale } from '@/lib/i18n';
-import { MEALS, mealOf } from '@/lib/meals';
+import { MAIN_MEALS, MEALS, mealOf } from '@/lib/meals';
 import { addDays, startOfDay } from '@/lib/water';
 import { db } from './client';
 import { loadProfile } from './profile';
@@ -326,6 +329,8 @@ export type ReviewState = { signature: string; basis: { key: string; kcal: numbe
 export type StoredReview = {
   signature: string;
   review: DayReview;
+  /** The newest entry when it was written; missing on older comments. */
+  lastEntryId?: number;
   /** Missing on comments written before small changes stopped rewriting them. */
   basis?: ReviewState['basis'];
 };
@@ -384,7 +389,11 @@ export async function reviewDay(day: number, now = Date.now()) {
     targets,
     entries: entries.map((e) => ({ ...e, meal: mealOf(e) })),
   });
-  const stored: StoredReview = { ...reviewState(entries, targets), review };
+  const stored: StoredReview = {
+    ...reviewState(entries, targets),
+    review,
+    lastEntryId: lastEntryId(entries),
+  };
   const value = JSON.stringify(stored);
   await db
     .insert(settings)
@@ -399,23 +408,122 @@ export async function reviewDay(day: number, now = Date.now()) {
   if (expired.length) await db.delete(settings).where(inArray(settings.key, expired));
 }
 
-const MACRO_TIPS_PREFIX = 'macro_tips_';
-
-/** AI's foods rich in a macro and the state of the day they were picked for. */
-export type StoredMacroTips = { signature: string; tips: MacroTips };
-
 const dayEntries = (day: number) =>
   db.query.foodEntries.findMany({
     where: and(gte(foodEntries.eatenAt, day), lt(foodEntries.eatenAt, addDays(day, 1))),
     orderBy: [asc(foodEntries.eatenAt)],
   });
 
+/** The newest of `entries`: suggestions made then are hidden only by dishes logged after it. */
+const lastEntryId = (entries: FoodEntry[]) => Math.max(0, ...entries.map((e) => e.id));
+
+/**
+ * Each entry with the keys of its dish, by name and by the cached dish it came
+ * from, so AI suggestions eaten since can be hidden.
+ */
+async function loggedDishes(entries: FoodEntry[]) {
+  const ids = [...new Set(entries.map((e) => e.foodId).filter((id) => id !== null))];
+  const cached = ids.length
+    ? await db
+        .select({ id: foods.id, query: foods.query })
+        .from(foods)
+        .where(inArray(foods.id, ids))
+    : [];
+  const queries = new Map(cached.map((f) => [f.id, f.query]));
+  return entries.map((e) => {
+    const query = e.foodId === null ? undefined : queries.get(e.foodId);
+    return { id: e.id, keys: [dishKey(e.name), ...(query ? [dishKey(query)] : [])] };
+  });
+}
+
+/**
+ * Leaves out the suggested foods logged after entry `sinceId` (the newest when
+ * they were suggested): a dish eaten before can still be suggested for later.
+ */
+function uneaten(logged: Awaited<ReturnType<typeof loggedDishes>>, sinceId = 0) {
+  const eaten = new Set(logged.filter((l) => l.id > sinceId).flatMap((l) => l.keys));
+  return <T extends { text: string }>(foods: T[]) =>
+    foods.filter((f) => !eaten.has(dishKey(f.text)));
+}
+
+const MEAL_ADVICE_PREFIX = 'meal_advice_';
+
+/** AI's advice on what to eat for a meal and the state of the day it was given for. */
+export type StoredMealAdvice = { signature: string; advice: MealAdvice; lastEntryId?: number };
+
+/** Today's stored advice for each meal it was asked for. */
+async function getMealAdvice(day: number) {
+  const rows = await db.query.settings.findMany({
+    where: like(settings.key, `${MEAL_ADVICE_PREFIX}${day}_%`),
+  });
+  const advice: Partial<Record<Meal, StoredMealAdvice>> = {};
+  for (const row of rows) {
+    const meal = MEALS.find((m) => row.key === `${MEAL_ADVICE_PREFIX}${day}_${m}`);
+    try {
+      const stored = JSON.parse(row.value) as StoredMealAdvice;
+      if (meal && typeof stored.signature === 'string' && stored.advice?.dishes?.length)
+        advice[meal] = stored;
+    } catch {}
+  }
+  return advice;
+}
+
+/**
+ * Asks AI what to eat for `meal` today to cover its share of what's left (split
+ * with the main meals still empty after it) and stores the answer. Advice for
+ * other days is dropped: it's only useful while the day is going.
+ */
+export async function adviseMeal(meal: Meal, now = Date.now()) {
+  const day = startOfDay(now);
+  const [kcalGoal, entries] = await Promise.all([getKcalGoal(), dayEntries(day)]);
+  const { weightGoal, targets } = await nutritionTargets(kcalGoal);
+  const logged = entries.map((e) => ({ ...e, meal: mealOf(e) }));
+  const advice = await askGroqMealAdvice({
+    now,
+    goal: weightGoal,
+    targets,
+    entries: logged,
+    meal,
+    later: MAIN_MEALS.slice(MAIN_MEALS.indexOf(meal) + 1).filter(
+      (m) => !logged.some((e) => e.meal === m),
+    ),
+  });
+  const stored: StoredMealAdvice = {
+    signature: reviewState(entries, targets).signature,
+    advice,
+    lastEntryId: lastEntryId(entries),
+  };
+  const key = `${MEAL_ADVICE_PREFIX}${day}_${meal}`;
+  const value = JSON.stringify(stored);
+  await db
+    .insert(settings)
+    .values({ key, value })
+    .onConflictDoUpdate({ target: settings.key, set: { value } });
+
+  const old = await db.query.settings.findMany({
+    where: like(settings.key, `${MEAL_ADVICE_PREFIX}%`),
+  });
+  const expired = old
+    .map((r) => r.key)
+    .filter((k) => !k.startsWith(`${MEAL_ADVICE_PREFIX}${day}_`));
+  if (expired.length) await db.delete(settings).where(inArray(settings.key, expired));
+}
+
+const MACRO_TIPS_PREFIX = 'macro_tips_';
+
+/** AI's foods rich in a macro and the state of the day they were picked for. */
+export type StoredMacroTips = { signature: string; tips: MacroTips; lastEntryId?: number };
+
 /** What the tips depend on: the day's dishes of this macro and the goal. */
 const macroSignature = (macro: MacroKey, day: number, entries: FoodEntry[], target: number) =>
   // v2: dishes of the same name merged.
-  ['v2', lang, day, Math.round(target), ...entries.map((e) => `${e.id}:${Math.round(e[macro])}`)].join(
-    '|',
-  );
+  [
+    'v2',
+    lang,
+    day,
+    Math.round(target),
+    ...entries.map((e) => `${e.id}:${Math.round(e[macro])}`),
+  ].join('|');
 
 /**
  * The dishes of `day` with some of `macro`, richest first, the day's total and
@@ -428,10 +536,14 @@ export async function loadMacro(macro: MacroKey, day: number) {
     db.query.settings.findFirst({ where: eq(settings.key, MACRO_TIPS_PREFIX + macro) }),
   ]);
   const { targets } = await nutritionTargets(kcalGoal);
+  const logged = await loggedDishes(entries);
   let tips: StoredMacroTips | null = null;
   try {
     const parsed = row ? (JSON.parse(row.value) as StoredMacroTips) : null;
-    if (typeof parsed?.signature === 'string' && parsed.tips?.foods?.length) tips = parsed;
+    if (typeof parsed?.signature === 'string' && parsed.tips?.foods?.length) {
+      const foods = uneaten(logged, parsed.lastEntryId)(parsed.tips.foods);
+      tips = { ...parsed, tips: { ...parsed.tips, foods } };
+    }
   } catch {}
   return {
     entries: mergeDishes(entries)
@@ -458,6 +570,7 @@ export async function adviseMacro(macro: MacroKey, day: number) {
   const stored: StoredMacroTips = {
     signature: macroSignature(macro, day, entries, targets[macro]),
     tips,
+    lastEntryId: lastEntryId(entries),
   };
   const value = JSON.stringify(stored);
   await db
@@ -476,7 +589,7 @@ export async function loadFood(now = Date.now(), day = startOfDay(now)) {
   const today = startOfDay(now);
   const from = addDays(today, -(FOOD_HISTORY_DAYS - 1));
   const dayEnd = addDays(day, 1);
-  const [goal, rows, recent, previous, templates, review] = await Promise.all([
+  const [goal, rows, recent, previous, templates, review, mealAdvice] = await Promise.all([
     getKcalGoal(),
     db.query.foodEntries.findMany({
       where: gte(foodEntries.eatenAt, Math.min(from, day)),
@@ -486,6 +599,7 @@ export async function loadFood(now = Date.now(), day = startOfDay(now)) {
     previousMeals(day),
     listMealTemplates(),
     getDayReview(day),
+    getMealAdvice(day),
   ]);
   const { targets } = await nutritionTargets(goal);
   const days = Array.from({ length: FOOD_HISTORY_DAYS }, (_, i) => ({
@@ -497,13 +611,31 @@ export async function loadFood(now = Date.now(), day = startOfDay(now)) {
     if (d) d.kcal += r.kcal;
   }
   const dayEntries = rows.filter((r) => r.eatenAt >= day && r.eatenAt < dayEnd);
+  // Suggestions logged since they were made disappear; advice with nothing left goes too.
+  const logged = await loggedDishes(dayEntries);
+  const shownAdvice: typeof mealAdvice = {};
+  for (const meal of MEALS) {
+    const stored = mealAdvice[meal];
+    const dishes = stored ? uneaten(logged, stored.lastEntryId)(stored.advice.dishes) : [];
+    if (stored && dishes.length)
+      shownAdvice[meal] = { ...stored, advice: { ...stored.advice, dishes } };
+  }
+  const keep = uneaten(logged, review?.lastEntryId);
   return {
     goal,
     targets,
     dayEntries,
     totals: sumMacros(dayEntries),
-    review,
+    review: review && {
+      ...review,
+      review: {
+        ...review.review,
+        snacks: keep(review.review.snacks),
+        fill: review.review.fill && keep(review.review.fill),
+      },
+    },
     reviewState: reviewState(dayEntries, targets),
+    mealAdvice: shownAdvice,
     days,
     today,
     recent,

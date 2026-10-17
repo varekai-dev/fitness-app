@@ -7,6 +7,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { CalorieSummary } from '@/components/calorie-summary';
 import { DayReviewCard } from '@/components/day-review-card';
 import { useDialog } from '@/components/dialog';
+import { MealAdvice } from '@/components/meal-advice';
 import { useTabBarSpace } from '@/components/floating-tab-bar';
 import { SwipeToDelete } from '@/components/swipe-to-delete';
 import {
@@ -32,7 +33,7 @@ import { useToday } from '@/hooks/use-today';
 import { describeDishes, formatGrams, formatKcal } from '@/lib/food';
 import { locale, tr } from '@/lib/i18n';
 import { formatLongDate, formatShortDate, WEEKDAY_SHORT, weekdayIndex } from '@/lib/labels';
-import { MEAL_ICONS, MEAL_LABELS, MEALS, mealOf } from '@/lib/meals';
+import { MAIN_MEALS, MEAL_ICONS, MEAL_LABELS, MEALS, mealOf } from '@/lib/meals';
 import { addDays } from '@/lib/water';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
@@ -49,7 +50,8 @@ export default function FoodScreen() {
   const dialog = useDialog();
 
   if (!data) return <Loading />;
-  const { goal, dayEntries, totals, days, previous, templates, review, reviewState } = data;
+  const { goal, dayEntries, totals, days, previous, templates, review, reviewState, mealAdvice } =
+    data;
 
   const repeat = async (meal: Meal, entries: FoodEntry[]) => {
     await repeatMeal(entries, meal, day);
@@ -169,6 +171,14 @@ export default function FoodScreen() {
                 }
               />
             </Row>
+            {daysAgo === 0 && MAIN_MEALS.includes(meal) && (
+              <MealAdvice
+                meal={meal}
+                day={day}
+                stored={mealAdvice[meal]}
+                signature={reviewState.signature}
+              />
+            )}
             {last && (
               <RepeatRow
                 label={sameMealLabel(last.day, day)}

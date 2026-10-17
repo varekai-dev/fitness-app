@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { Button, Card, IconButton, Row, Text } from '@/components/ui';
 import { reviewChange, reviewDay, type ReviewState, type StoredReview } from '@/db/food';
+import type { Meal } from '@/db/schema';
 import { formatGrams, formatKcal } from '@/lib/food';
 import { getGroqKey, type DayFood, type SuggestedFood } from '@/lib/groq';
 import { tr } from '@/lib/i18n';
@@ -177,15 +178,25 @@ function FoodRow({ food }: { food: DayFood }) {
   );
 }
 
-/** A food AI suggests, opened in the add-food screen as a snack on tap. */
-function AddFoodRow({ food, meta, day }: { food: SuggestedFood; meta: string; day: number }) {
+/** A food AI suggests, opened in the add-food screen into `meal` (a snack by default) on tap. */
+export function AddFoodRow({
+  food,
+  meta,
+  day,
+  meal = 'snack',
+}: {
+  food: SuggestedFood;
+  meta: string;
+  day: number;
+  meal?: Meal;
+}) {
   return (
     <Pressable
       accessibilityRole="button"
       onPress={() =>
         router.push({
           pathname: '/add-food',
-          params: { meal: 'snack', day: String(day), text: food.text, food: JSON.stringify(food) },
+          params: { meal, day: String(day), text: food.text, food: JSON.stringify(food) },
         })
       }
       style={({ pressed }) => [styles.snack, pressed && styles.pressed]}>

@@ -11,6 +11,9 @@ export const MEAL_LABELS: Record<Meal, string> = {
   snack: tr('Перекуси', 'Snacks'),
 };
 
+/** Meals of a day's plan, in order; snacks go in between. */
+export const MAIN_MEALS: Meal[] = ['breakfast', 'lunch', 'dinner'];
+
 export const MEAL_ICONS: Record<Meal, IconName> = {
   breakfast: 'sunny',
   lunch: 'partly-sunny',

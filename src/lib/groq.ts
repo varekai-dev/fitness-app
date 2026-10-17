@@ -1,7 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 
 import { HEALTH_RATINGS, type HealthRating } from '@/db/schema';
-import { mergeDishes, sumMacros, type Macros } from '@/lib/food';
+import { mergeDishes, splitAmount, sumMacros, type Macros } from '@/lib/food';
 import { locale, tr } from '@/lib/i18n';
 import { MEAL_LABELS, MEALS, type Meal } from '@/lib/meals';
 import { WEIGHT_GOAL, type WeightGoal } from '@/lib/profile';
@@ -742,4 +742,144 @@ export async function checkGroqKey(apiKey: string) {
   } catch {
     return 'error';
   }
+}
+
+export type MealAdvice = { comment: string; dishes: SuggestedFood[] };
+
+export type MealAdviceInput = Omit<DayReviewInput, 'isToday'> & {
+  meal: Meal;
+  /** Main meals after this one with nothing logged yet, sharing what's left with it. */
+  later: Meal[];
+};
+
+const MEAL_ADVICE_PROMPT = tr(
+  `Ти нутриціолог у застосунку для тренувань. Користувач хоче знати, що з'їсти на конкретний прийом їжі, щоб добрати решту денної норми. Дано: ціль, з'їдено, лишилось за день, журнал і частка залишку на цей прийом.
+- Бери числа лише з підсумку, не рахуй їх заново.
+- Не повторюй страви, які вже були сьогодні в журналі: день має бути різноманітним.
+- Запропонуй 1–3 готові страви, які зазвичай їдять саме на цей прийом (сніданок, обід чи вечеря), напр. омлет з овочами, сирники, вівсянка з ягодами, гречка з курячим філе, борщ, салат з тунцем, запечена риба з картоплею. Це справжні страви з рецептом, які легко приготувати вдома, а не окремі інгредієнти: не пропонуй олію, спеції, окремі овочі чи сирі продукти. Можна додати гарнір, салат чи напій окремою стравою, але не склеюй різні страви в одну (не «шейк з рисом і салатом»).
+- Разом страви закривають частку залишку на цей прийом: сума ккал — у межах ±10% від частки (не менше!), білок якомога ближче до частки, потім жири й вуглеводи. Підбери порції так, щоб сума сходилась. Віддавай перевагу корисним стравам з цільних продуктів, які легко купити в Україні; зважай на мету.
+- Якщо частка залишку на цей прийом невелика чи від'ємна, запропонуй легкий варіант, багатий на те, чого бракує, з мінімумом калорій.
+Поля:
+- comment: одне речення до 140 символів: чому саме такі страви, з огляду на те, чого бракує; без чисел з підсумку;
+- dishes: 1–3 страви, кожна — окремий елемент: text — рівно одна страва з малої літери і лише одна вага — всієї порції, в кінці, в грамах чи мл (не в штуках); інгредієнти — через «з» і без ваги, без ком і «+», напр. «гречка з курячим філе 350 г», а не «гречка 200 г з філе 150 г»; kcal, protein_g, fat_g, carbs_g — для цієї порції; is_drink — true для напоїв; health — наскільки продукт корисний: "healthy", "moderate" чи "unhealthy".`,
+  `You are a nutritionist in a training app. The user wants to know what to eat for a particular meal to cover the rest of the day's goal. Given: the goal, eaten, left for the day, the log and this meal's share of what is left.
+- Take the numbers from the summary only, don't recalculate them.
+- Don't repeat dishes already in today's log: the day should be varied.
+- Suggest 1–3 ready dishes usually eaten for exactly this meal (breakfast, lunch or dinner), e.g. an omelette with vegetables, oatmeal with berries, buckwheat with chicken breast, a tuna salad, baked fish with potatoes. These are real dishes with a recipe, easy to cook at home, not separate ingredients: don't suggest oil, spices, single vegetables or raw foods. A side, salad or drink may be added as its own dish, but don't glue different dishes into one (not "a shake with rice and salad").
+- Together the dishes cover this meal's share of what is left: the kcal sum within ±10% of the share (not less!), protein as close to the share as possible, then fat and carbs. Pick portions so the sum adds up. Prefer healthy dishes of whole foods that are easy to buy; mind the goal.
+- If this meal's share is small or negative, suggest a light option rich in what is missing, with minimal calories.
+Fields:
+- comment: one sentence up to 140 characters on why this meal, given what is missing; no numbers from the summary;
+- dishes: 1–3 dishes, each its own item: text is exactly one dish, lowercase, with only one weight, of the whole portion, at the end, in grams or ml (not in pieces); ingredients joined with "with" and without weights, no commas or "+", e.g. "buckwheat with chicken breast 350 g", not "buckwheat 200 g with chicken 150 g"; kcal, protein_g, fat_g, carbs_g for that portion; is_drink: true for drinks; health: how good the food is, "healthy", "moderate" or "unhealthy".`,
+);
+
+const MEAL_ADVICE_SCHEMA = {
+  type: 'object',
+  properties: {
+    comment: { type: 'string' },
+    dishes: { type: 'array', items: SUGGESTED_FOOD_SCHEMA },
+  },
+  required: ['comment', 'dishes'],
+  additionalProperties: false,
+};
+
+/** How much of what's left of the day `meal` should take: an even split with the meals still to come. */
+function mealShare({ later, targets, entries }: MealAdviceInput) {
+  const eaten = sumMacros(entries);
+  const share = 1 / (1 + later.length);
+  const part = (key: keyof Macros) => Math.round((targets[key] - eaten[key]) * share);
+  return { share, part };
+}
+
+/** The day so far, plus how much of what's left this meal should take. */
+function describeMeal(input: MealAdviceInput) {
+  const { meal, later, ...day } = input;
+  const g = tr('г', 'g');
+  const { share, part } = mealShare(input);
+  const name = (m: Meal) => MEAL_LABELS[m].toLocaleLowerCase(locale);
+  return [
+    describeDay({ ...day, isToday: true }),
+    '',
+    `${tr('Прийом їжі', 'Meal')}: ${name(meal)}.`,
+    later.length
+      ? tr(
+          `Далі ще ${later.map(name).join(', ')}, тож на цей прийом — ${Math.round(share * 100)}% залишку.`,
+          `Still to come: ${later.map(name).join(', ')}, so this meal takes ${Math.round(share * 100)}% of what is left.`,
+        )
+      : tr(
+          'Це останній прийом за день: на нього — весь залишок.',
+          'This is the last meal of the day: it takes all that is left.',
+        ),
+    part('kcal') > 0
+      ? tr(
+          `Сума ккал усіх страв має бути від ${Math.round(part('kcal') * 0.9)} до ${Math.round(part('kcal') * 1.1)} ккал.`,
+          `The kcal sum of all dishes must be ${Math.round(part('kcal') * 0.9)} to ${Math.round(part('kcal') * 1.1)} kcal.`,
+        )
+      : '',
+    `${tr('Частка на цей прийом', 'This meal’s share')}: ${part('kcal')} ${tr('ккал', 'kcal')}, ${tr('Б', 'P')} ${part('proteinG')} ${g}, ${tr('Ж', 'F')} ${part('fatG')} ${g}, ${tr('В', 'C')} ${part('carbsG')} ${g}.`,
+  ].join('\n');
+}
+
+/** What to eat for `meal` to cover its share of what's left of the day. */
+export async function askGroqMealAdvice(input: MealAdviceInput): Promise<MealAdvice> {
+  const parsed = await groqJson<{ comment: string; dishes: GroqSuggestedFood[] }>({
+    system: MEAL_ADVICE_PROMPT,
+    user: describeMeal(input),
+    schema: MEAL_ADVICE_SCHEMA,
+    schemaName: 'meal_advice',
+    temperature: 0.5,
+    // Asked again when portions can't be fitted to the share: weights per ingredient
+    // instead of one per dish, or a sum too far from it to scale.
+    accept: (r) => {
+      const dishes = (r.dishes ?? []).filter((d) => d.text?.trim());
+      const kcal = dishes.reduce((s, d) => s + num(d.kcal), 0);
+      const share = mealShare(input).part('kcal');
+      return (
+        dishes.length > 0 &&
+        dishes.every((d) => splitAmount(d.text)) &&
+        (share <= 0 || (kcal * MAX_PORTION_SCALE >= share && kcal * MIN_PORTION_SCALE <= share))
+      );
+    },
+  });
+  const dishes = (parsed.dishes ?? [])
+    .filter((d) => d.text?.trim() && num(d.kcal) > 0)
+    .slice(0, 3)
+    .map(suggestedFood);
+  if (dishes.length === 0)
+    throw new GroqError(tr('AI не підібрав страву.', 'AI suggested no meal.'), 'bad-response');
+  const comment = parsed.comment?.trim() ?? '';
+  return {
+    comment: comment.charAt(0).toLocaleUpperCase(locale) + comment.slice(1),
+    dishes: fitPortions(dishes, mealShare(input).part('kcal')),
+  };
+}
+
+// How far portions are scaled to meet the meal's kcal share: beyond that they stop looking like one meal.
+const MIN_PORTION_SCALE = 0.7;
+const MAX_PORTION_SCALE = 1.6;
+
+/**
+ * The model rarely gets the sum right, so portions are scaled together to land
+ * on `kcal` when they're more than 10% off (within sane bounds). Dishes without
+ * a weight in their text keep theirs.
+ */
+function fitPortions(dishes: SuggestedFood[], kcal: number): SuggestedFood[] {
+  const total = dishes.reduce((s, d) => s + d.kcal, 0);
+  if (kcal <= 0 || total <= 0 || Math.abs(total / kcal - 1) <= 0.1) return dishes;
+  const k = Math.min(MAX_PORTION_SCALE, Math.max(MIN_PORTION_SCALE, kcal / total));
+  return dishes.map((d) => {
+    const split = splitAmount(d.text);
+    if (!split) return d;
+    // Rounded to 10 g, and the macros follow the rounded portion.
+    const grams = Math.max(10, Math.round((split.grams * k) / 10) * 10);
+    const r = grams / split.grams;
+    return {
+      ...d,
+      text: `${split.dish} ${grams} ${d.isDrink ? tr('мл', 'ml') : tr('г', 'g')}`,
+      kcal: d.kcal * r,
+      proteinG: d.proteinG * r,
+      fatG: d.fatG === undefined ? undefined : d.fatG * r,
+      carbsG: d.carbsG === undefined ? undefined : d.carbsG * r,
+    };
+  });
 }
