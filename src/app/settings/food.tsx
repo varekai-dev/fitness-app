@@ -2,11 +2,11 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
-import { Button, Card, Loading, Row, Screen, Text } from '@/components/ui';
+import { Card, Loading, Row, Screen, Text } from '@/components/ui';
 import { getKcalGoal, setKcalGoal } from '@/db/food';
 import { loadProfile } from '@/db/profile';
 import { useDbQuery } from '@/hooks/use-db-query';
@@ -22,7 +22,6 @@ import {
   recommendCalories,
   WEIGHT_GOAL,
   weeklyWeightChange,
-  type CalorieRecommendation,
   type CalorieScale,
   type CalorieZone,
   type Profile,
@@ -39,7 +38,7 @@ const PLAIN_SCALE: CalorieScale = {
   segments: [{ from: MIN_KCAL_GOAL, to: 4000, zone: 'ok' }],
 };
 
-/** The daily kcal goal on a scale around maintenance, with the profile-based recommendation. */
+/** The daily kcal goal on a scale around maintenance from the profile. */
 export default function FoodSettingsScreen() {
   const { data } = useDbQuery(() => Promise.all([getKcalGoal(), loadProfile()]));
   // The value under the finger while the scale is dragged, saved on release. It
@@ -58,20 +57,10 @@ export default function FoodSettingsScreen() {
       <GoalCard
         goal={goal}
         tdee={rec?.tdee}
-        recommended={rec?.kcal}
         scale={scale}
+        profile={<ProfileRow profile={profile} weightKg={weightKg} age={rec?.age} />}
         onDrag={(value) => setDraft({ value, from: savedGoal })}
         onRelease={(value) => (value === savedGoal ? setDraft(null) : setKcalGoal(value))}
-      />
-      <RecommendationCard
-        rec={rec}
-        goal={goal}
-        profile={profile}
-        weightKg={weightKg}
-        onAdopt={(kcal) => {
-          Haptics.selectionAsync();
-          setKcalGoal(kcal);
-        }}
       />
     </Screen>
   );
@@ -109,15 +98,16 @@ function zoneLabel(zone: CalorieZone, diff: number, stable: boolean) {
 function GoalCard({
   goal,
   tdee,
-  recommended,
   scale,
+  profile,
   onDrag,
   onRelease,
 }: {
   goal: number;
   tdee: number | undefined;
-  recommended: number | undefined;
   scale: CalorieScale | undefined;
+  /** What the scale is computed from, leading to the profile. */
+  profile: ReactNode;
   onDrag: (kcal: number) => void;
   onRelease: (kcal: number) => void;
 }) {
@@ -155,7 +145,6 @@ function GoalCard({
         <Scale
           goal={goal}
           tdee={tdee}
-          recommended={recommended}
           scale={scale ?? PLAIN_SCALE}
           color={color}
           onDrag={onDrag}
@@ -175,14 +164,6 @@ function GoalCard({
                 {tr('Підтримка', 'Maintenance')} {formatKcal(Math.round(tdee / 10) * 10)}
               </Text>
             </Row>
-            {recommended !== undefined && (
-              <Row style={styles.legendItem}>
-                <View style={styles.legendDot} />
-                <Text variant="muted">
-                  {tr('Рекомендовано', 'Recommended')} {formatKcal(recommended)}
-                </Text>
-              </Row>
-            )}
           </Row>
 
           <Row style={styles.tiles}>
@@ -225,6 +206,7 @@ function GoalCard({
           )}
         </>
       )}
+      {profile}
     </Card>
   );
 }
@@ -240,7 +222,6 @@ const TRACK = KNOB + spacing.lg;
 function Scale({
   goal,
   tdee,
-  recommended,
   scale,
   color,
   onDrag,
@@ -248,7 +229,6 @@ function Scale({
 }: {
   goal: number;
   tdee: number | undefined;
-  recommended: number | undefined;
   scale: CalorieScale;
   color: string;
   onDrag: (kcal: number) => void;
@@ -312,9 +292,6 @@ function Scale({
         {tdee !== undefined && (
           <View pointerEvents="none" style={[styles.tick, { left: at(tdee) }]} />
         )}
-        {recommended !== undefined && (
-          <View pointerEvents="none" style={[styles.recDot, { left: at(recommended) }]} />
-        )}
         <View pointerEvents="none" style={[styles.knob, { left: at(goal), borderColor: color }]} />
       </View>
     </GestureDetector>
@@ -346,110 +323,61 @@ function PaceTile({
 }
 
 /**
- * The profile-based goal, with what it is computed from and a button to adopt
- * it. Without a full profile it says what is missing and leads there.
+ * The weight goal and the body numbers the scale is computed from, or what the
+ * profile still lacks. Either way it opens the profile to change them.
  */
-function RecommendationCard({
-  rec,
-  goal,
+function ProfileRow({
   profile,
   weightKg,
-  onAdopt,
+  age,
 }: {
-  rec: CalorieRecommendation | null;
-  goal: number;
   profile: Profile;
   weightKg: number | undefined;
-  onAdopt: (kcal: number) => void;
+  age: number | undefined;
 }) {
-  const header = (
-    <Row style={styles.recHeader}>
-      <View style={styles.recIcon}>
-        <Ionicons name="sparkles" size={20} color={colors.accent} />
-      </View>
-      <View style={styles.flex}>
-        <Text variant="overline">{tr('Рекомендовано', 'Recommended')}</Text>
-        {rec && (
-          <Text variant="title">
-            {formatKcal(rec.kcal)}
-            <Text style={styles.recUnit}>
-              {' '}
-              {KCAL}/{tr('день', 'day')}
-            </Text>
-          </Text>
-        )}
-      </View>
-      <Pressable hitSlop={8} onPress={() => router.push('/profile')} style={styles.recEdit}>
-        <Text variant="caption">{tr('Профіль', 'Profile')}</Text>
-        <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
-      </Pressable>
-    </Row>
-  );
-
-  if (!rec || !weightKg || !profile.heightCm) {
-    const missing = missingForRecommendation(profile, weightKg).join(', ');
-    return (
-      <Card>
-        {header}
-        <Text variant="secondary">
-          {tr(
-            `Вкажи в профілі ${missing}, і тут зʼявиться норма під тебе та шкала з безпечним темпом.`,
-            `Enter your ${missing} in the profile to get a goal made for you and a scale of safe pace.`,
-          )}
-        </Text>
-        <Button
-          title={tr('Заповнити профіль', 'Fill in the profile')}
-          onPress={() => router.push('/profile')}
-        />
-      </Card>
-    );
-  }
-
-  const inputs = [
-    `${formatWeight(weightKg, 1)} ${WEIGHT_UNIT}`,
-    `${formatNumber(cmToDisplay(profile.heightCm), 0)} ${HEIGHT_UNIT}`,
-    `${rec.age} ${tr('р.', 'y.o.')}`,
-    tr(
-      `${ACTIVITY[profile.activity].label.toLowerCase()} активність`,
-      `${ACTIVITY[profile.activity].label.toLowerCase()} activity`,
-    ),
-  ];
+  const missing = missingForRecommendation(profile, weightKg);
+  const facts =
+    missing.length === 0 && weightKg && profile.heightCm && age !== undefined
+      ? [
+          `${formatWeight(weightKg, 1)} ${WEIGHT_UNIT}`,
+          `${formatNumber(cmToDisplay(profile.heightCm), 0)} ${HEIGHT_UNIT}`,
+          `${age} ${tr('р.', 'y.o.')}`,
+          tr(
+            `${ACTIVITY[profile.activity].label.toLowerCase()} активність`,
+            `${ACTIVITY[profile.activity].label.toLowerCase()} activity`,
+          ),
+        ].join(' · ')
+      : null;
 
   return (
-    <Card>
-      {header}
-      <View style={styles.recFacts}>
-        <Row style={styles.recFact}>
-          <Ionicons name="flag-outline" size={16} color={colors.textSecondary} />
-          <Text variant="caption">
-            {tr('Ціль', 'Goal')}: {WEIGHT_GOAL[profile.goal].label.toLowerCase()}
-          </Text>
-        </Row>
-        <Row style={styles.recFact}>
-          <Ionicons name="body-outline" size={16} color={colors.textSecondary} />
-          <Text variant="caption" style={styles.flex}>
-            {inputs.join(' · ')}
-          </Text>
-        </Row>
+    <Pressable
+      onPress={() => router.push('/profile')}
+      style={({ pressed }) => [styles.profileRow, pressed && styles.pressed]}>
+      <View style={styles.profileIcon}>
+        <Ionicons name={facts ? 'flag' : 'person-outline'} size={18} color={colors.accent} />
       </View>
-      {rec.kcal === goal ? (
-        <Row style={styles.recDone}>
-          <Ionicons name="checkmark-circle" size={18} color={colors.success} />
-          <Text variant="caption" style={{ color: colors.success }}>
-            {tr('Це твоя поточна норма', 'This is your current goal')}
-          </Text>
-        </Row>
-      ) : (
-        <Button
-          title={tr(
-            `Застосувати ${formatKcal(rec.kcal)} ${KCAL}`,
-            `Apply ${formatKcal(rec.kcal)} ${KCAL}`,
-          )}
-          icon="checkmark"
-          onPress={() => onAdopt(rec.kcal)}
-        />
-      )}
-    </Card>
+      <View style={styles.flex}>
+        {facts ? (
+          <>
+            <Text variant="body">
+              {tr('Ціль', 'Goal')}: {WEIGHT_GOAL[profile.goal].label.toLowerCase()}
+            </Text>
+            <Text variant="muted">{facts}</Text>
+          </>
+        ) : (
+          <>
+            <Text variant="body">{tr('Заповни профіль', 'Fill in the profile')}</Text>
+            <Text variant="muted">
+              {tr(
+                `Вкажи ${missing.join(', ')}, щоб бачити темп і безпечні межі.`,
+                `Enter your ${missing.join(', ')} to see the pace and safe limits.`,
+              )}
+            </Text>
+          </>
+        )}
+      </View>
+      <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+    </Pressable>
   );
 }
 
@@ -484,15 +412,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.text,
     opacity: 0.7,
   },
-  recDot: {
-    position: 'absolute',
-    top: TRACK / 2 - BAR / 2 - 12,
-    width: 8,
-    height: 8,
-    marginLeft: -4,
-    borderRadius: 4,
-    backgroundColor: colors.accent,
-  },
   knob: {
     position: 'absolute',
     width: KNOB,
@@ -507,7 +426,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 4,
   },
-  legend: { justifyContent: 'space-between', flexWrap: 'wrap' },
+  legend: { justifyContent: 'center' },
   legendItem: { gap: 6 },
   legendTick: {
     width: 3,
@@ -516,7 +435,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.text,
     opacity: 0.7,
   },
-  legendDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.accent },
   tiles: { gap: spacing.sm },
   tile: {
     flex: 1,
@@ -531,18 +449,21 @@ const styles = StyleSheet.create({
   tileUnit: { color: colors.textSecondary, fontSize: fontSize.xs, fontWeight: '600' },
   advice: { gap: spacing.sm, alignItems: 'flex-start' },
   adviceText: { flex: 1, fontSize: fontSize.sm },
-  recHeader: { gap: spacing.md },
-  recIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  profileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.glass,
+  },
+  profileIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.accentSoft,
   },
-  recUnit: { color: colors.textSecondary, fontSize: fontSize.md, fontWeight: '600' },
-  recEdit: { flexDirection: 'row', alignItems: 'center', gap: 2, alignSelf: 'flex-start' },
-  recFacts: { gap: spacing.sm },
-  recFact: { gap: spacing.sm },
-  recDone: { gap: spacing.sm, justifyContent: 'center', paddingVertical: spacing.xs },
+  pressed: { opacity: 0.7 },
 });
