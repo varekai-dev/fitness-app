@@ -2,7 +2,7 @@ import { locale, tr } from '@/lib/i18n';
 import type { WeightGoal } from '@/lib/profile';
 
 export const DEFAULT_KCAL_GOAL = 2000;
-export const KCAL_GOAL_STEP = 50;
+export const KCAL_GOAL_STEP = 10;
 export const MIN_KCAL_GOAL = 1000;
 export const MAX_KCAL_GOAL = 6000;
 
