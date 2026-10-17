@@ -2,9 +2,11 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { useDialog } from '@/components/dialog';
+import { ExerciseThumb } from '@/components/exercise-thumb';
 import { ProgramAiLoader, type LoaderStage } from '@/components/program-ai-loader';
 import {
   Badge,
@@ -13,6 +15,7 @@ import {
   Chip,
   Field,
   goBack,
+  IconButton,
   IndexMarker,
   Loading,
   Row,
@@ -30,6 +33,7 @@ import { formatNumber, formatWeight } from '@/lib/metrics';
 import { ACTIVITY, ageOn, SEX_LABELS, WEIGHT_GOAL, type Profile } from '@/lib/profile';
 import {
   askProgramPlan,
+  askReplacement,
   EMPTY_ANSWERS,
   PROGRAM_QUESTIONS,
   WISH_SUGGESTIONS,
@@ -61,41 +65,49 @@ export default function AiProgramScreen() {
   const [readyPlan, setReadyPlan] = useState<ProgramPlan | null>(null);
   const [generating, setGenerating] = useState(false);
   const [attempt, setAttempt] = useState(1);
+  // Exercises being swapped right now, as "day-index" keys.
+  const [replacing, setReplacing] = useState<string[]>([]);
+  // Every exercise a slot has held, so asking again brings something new.
+  const [tried, setTried] = useState<Record<string, string[]>>({});
   const dialog = useDialog();
 
   if (!profileData || !library) return <Loading />;
+
+  const request = {
+    answers,
+    wishes,
+    profile: profileData.profile,
+    weightKg: profileData.latestWeight?.weightKg,
+    library,
+  };
+
+  const showError = (title: string, e: unknown) => {
+    const noKey = e instanceof GroqError && (e.kind === 'no-key' || e.kind === 'auth');
+    dialog.show({
+      title,
+      message: (e as Error).message,
+      icon: 'alert-circle',
+      buttons: noKey
+        ? [
+            { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
+            {
+              text: tr('Налаштування', 'Settings'),
+              onPress: () => router.push('/settings/integrations'),
+            },
+          ]
+        : undefined,
+    });
+  };
 
   const generate = async () => {
     if (generating) return;
     setAttempt(1);
     setGenerating(true);
     try {
-      const next = await askProgramPlan({
-        answers,
-        wishes,
-        profile: profileData.profile,
-        weightKg: profileData.latestWeight?.weightKg,
-        library,
-        onAttempt: setAttempt,
-      });
-      setReadyPlan(next);
+      setReadyPlan(await askProgramPlan({ ...request, onAttempt: setAttempt }));
     } catch (e) {
       setGenerating(false);
-      const noKey = e instanceof GroqError && (e.kind === 'no-key' || e.kind === 'auth');
-      dialog.show({
-        title: tr('Не вдалося скласти програму', 'Couldn’t build the program'),
-        message: (e as Error).message,
-        icon: 'alert-circle',
-        buttons: noKey
-          ? [
-              { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
-              {
-                text: tr('Налаштування', 'Settings'),
-                onPress: () => router.push('/settings/integrations'),
-              },
-            ]
-          : undefined,
-      });
+      showError(tr('Не вдалося скласти програму', 'Couldn’t build the program'), e);
     }
   };
 
@@ -103,7 +115,40 @@ export default function AiProgramScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setPlan(readyPlan);
     setReadyPlan(null);
+    setTried({});
     setGenerating(false);
+  };
+
+  // Swaps one exercise for a similar one AI picks.
+  const replace = async (dayIndex: number, index: number) => {
+    const day = plan?.days[dayIndex];
+    const exercise = day?.exercises[index];
+    const key = `${dayIndex}-${index}`;
+    if (!day || !exercise || replacing.includes(key)) return;
+    const avoid = [...(tried[key] ?? []), exercise.name];
+    setReplacing((r) => [...r, key]);
+    try {
+      const next = await askReplacement({ ...request, day, exercise, avoid });
+      Haptics.selectionAsync();
+      setTried((t) => ({ ...t, [key]: avoid }));
+      // Only if the slot still holds what was replaced; the plan may have changed meanwhile.
+      setPlan((p) =>
+        p?.days[dayIndex]?.exercises[index]?.name === exercise.name
+          ? {
+              ...p,
+              days: p.days.map((d, i) =>
+                i === dayIndex
+                  ? { ...d, exercises: d.exercises.map((e, j) => (j === index ? next : e)) }
+                  : d,
+              ),
+            }
+          : p,
+      );
+    } catch (e) {
+      showError(tr('Не вдалося замінити вправу', 'Couldn’t replace the exercise'), e);
+    } finally {
+      setReplacing((r) => r.filter((k) => k !== key));
+    }
   };
 
   const save = () => {
@@ -145,6 +190,8 @@ export default function AiProgramScreen() {
       ) : plan ? (
         <PlanPreview
           plan={plan}
+          replacing={replacing}
+          onReplace={replace}
           onSave={save}
           onRegenerate={generate}
           onEdit={() => setPlan(null)}
@@ -416,11 +463,15 @@ function WishesStep({
 
 function PlanPreview({
   plan,
+  replacing,
+  onReplace,
   onSave,
   onRegenerate,
   onEdit,
 }: {
   plan: ProgramPlan;
+  replacing: string[];
+  onReplace: (dayIndex: number, index: number) => void;
   onSave: () => void;
   onRegenerate: () => void;
   onEdit: () => void;
@@ -461,26 +512,41 @@ function PlanPreview({
         </Text>
       )}
 
-      {plan.days.map((day, i) => (
-        <Card key={i}>
+      {plan.days.map((day, dayIndex) => (
+        <Card key={dayIndex}>
           <Row>
-            <IndexMarker n={i + 1} />
+            <IndexMarker n={dayIndex + 1} />
             <Text variant="heading" style={styles.flex}>
               {day.name}
             </Text>
           </Row>
           {day.exercises.map((e, j) => (
-            <View key={j} style={styles.exercise}>
-              <Row>
-                <Text variant="body" style={styles.flexShrink} numberOfLines={2}>
-                  {e.name}
+            // Keyed by name, so a replacement fades in.
+            <Animated.View key={`${j}-${e.name}`} entering={FadeIn} style={styles.exercise}>
+              <ExerciseThumb uri={e.imageUri} size={44} />
+              <View style={styles.exerciseText}>
+                <Row>
+                  <Text variant="body" style={styles.flexShrink} numberOfLines={2}>
+                    {e.name}
+                  </Text>
+                  {e.exerciseId === null && <Badge label={tr('Нова', 'New')} />}
+                </Row>
+                <Text variant="muted">
+                  {MUSCLE_GROUP_LABELS[e.muscleGroup]} · {formatTargets(e.targets)}
                 </Text>
-                {e.exerciseId === null && <Badge label={tr('Нова', 'New')} />}
-              </Row>
-              <Text variant="muted">
-                {MUSCLE_GROUP_LABELS[e.muscleGroup]} · {formatTargets(e.targets)}
-              </Text>
-            </View>
+              </View>
+              <View style={styles.replace}>
+                {replacing.includes(`${dayIndex}-${j}`) ? (
+                  <ActivityIndicator color={colors.accent} />
+                ) : (
+                  <IconButton
+                    icon="swap-horizontal"
+                    color={colors.accent}
+                    onPress={() => onReplace(dayIndex, j)}
+                  />
+                )}
+              </View>
+            </Animated.View>
           ))}
         </Card>
       ))}
@@ -539,9 +605,14 @@ const styles = StyleSheet.create({
   warning: { color: colors.warning },
   badges: { flexWrap: 'wrap' },
   exercise: {
-    gap: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
     paddingTop: spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
   },
+  exerciseText: { flex: 1, gap: 2 },
+  // Same width with the spinner as with the button, so the row doesn't shift.
+  replace: { width: 36, alignItems: 'center' },
 });

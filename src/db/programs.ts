@@ -1,6 +1,5 @@
 import { and, asc, desc, eq, isNotNull, isNull, max, ne } from 'drizzle-orm';
 
-import { bundledImageUri, DEFAULT_EXERCISE_IMAGES } from '@/lib/exercise-images';
 import { defaultYoutubeUrl } from '@/lib/exercise-videos';
 import { tr } from '@/lib/i18n';
 import type { ProgramPlan } from '@/lib/program-ai';
@@ -191,10 +190,7 @@ export function saveProgramPlan(plan: ProgramPlan, intoProgramId?: number) {
             trackingType: e.trackingType,
             notes: e.notes,
             youtubeUrl: defaultYoutubeUrl(e.name),
-            imageUri:
-              e.name in DEFAULT_EXERCISE_IMAGES
-                ? bundledImageUri(DEFAULT_EXERCISE_IMAGES[e.name])
-                : null,
+            imageUri: e.imageUri,
           })
           .returning({ id: exercises.id })
           .get().id;

@@ -6,8 +6,10 @@ import {
   type Targets,
   type TrackingType,
 } from '@/db/schema';
+import { bundledImageUri, DEFAULT_EXERCISE_IMAGES } from '@/lib/exercise-images';
 import { groqJson } from '@/lib/groq';
 import { tr } from '@/lib/i18n';
+import { formatTargets } from '@/lib/labels';
 import { ACTIVITY, ageOn, WEIGHT_GOAL, type Profile } from '@/lib/profile';
 
 type Option = {
@@ -212,6 +214,8 @@ export type PlanExercise = {
   muscleGroup: MuscleGroup;
   trackingType: TrackingType;
   notes: string | null;
+  /** The library exercise's photo, or a bundled one for a new exercise when there is one. */
+  imageUri: string | null;
   targets: Targets;
 };
 
@@ -221,23 +225,64 @@ export type ProgramPlan = {
   days: { name: string; exercises: PlanExercise[] }[];
 };
 
-const SYSTEM_PROMPT = `You are an experienced strength and conditioning coach. Design a training program for the user.
-A program is a cycle of workout days that repeat in order (e.g. Push / Pull / Legs); one day is one workout.
-Rules:
-- The user's wishes come first, then the main goal; also follow the experience level, workouts per week, workout length and focus.
-- Use only the listed equipment. Never give exercises that load the listed limitations.
-- Take the profile into account (sex, age, body weight, activity, weight goal).
-- Make exactly as many days as workouts per week, each a different workout.
-- Fill every day, the last one included, with as many exercises as the workout length allows. Compound exercises first, isolation and core last.
+type Library = Pick<Exercise, 'id' | 'name' | 'muscleGroup' | 'trackingType' | 'imageUri'>[];
+
+/** What the program and a replacement have to follow alike. */
+const EXERCISE_RULES = `- Use only the listed equipment. Never give exercises that load the listed limitations.
 - Pick reps and rest for the goal: strength 3–6 reps and 120–180 s rest, muscle 6–12 reps and 60–120 s, toning 10–15 reps and 45–75 s, fat loss and endurance 12–20 reps and 30–60 s. Beginners get fewer sets.
 - Use library exercises where they suit the goal and equipment, copying their names exactly. When the equipment allows better choices the library lacks (barbell, machines, cables, kettlebell, bands…) or the focus needs them, add new exercises; give each a common English name in the library's style (e.g. "Barbell Back Squat"), never a library name.
 - muscle_group: the main muscle worked; tracking_type: weight_reps for exercises with external load, reps for bodyweight reps, weighted_reps for bodyweight exercises that can take added weight (pull-ups, dips), duration for holds and timed work, distance_duration for running, cycling, rowing and similar.
 - Targets: sets; reps_min and reps_max for rep exercises, else 0; duration_sec for timed exercises (and optionally for distance ones), else 0; distance_km for distance exercises when it makes sense, else 0; rest_sec between sets.
-- notes: for a new exercise, 1–2 sentences on technique; empty for library exercises.
+- notes: for a new exercise, 1–2 sentences on technique in ${tr('Ukrainian', 'English')}; empty for library exercises.`;
+
+const SYSTEM_PROMPT = `You are an experienced strength and conditioning coach. Design a training program for the user.
+A program is a cycle of workout days that repeat in order (e.g. Push / Pull / Legs); one day is one workout.
+Rules:
+- The user's wishes come first, then the main goal; also follow the experience level, workouts per week, workout length and focus.
+- Take the profile into account (sex, age, body weight, activity, weight goal).
+- Make exactly as many days as workouts per week, each a different workout.
+- Fill every day, the last one included, with as many exercises as the workout length allows. Compound exercises first, isolation and core last.
+${EXERCISE_RULES}
 - summary: 1–2 sentences on how the program is built and why it suits the user.
 - name: a short program name of 2–4 words, without numbers of days or minutes.
 - Day names: a few words on what the day trains (e.g. ${tr('"Груди й трицепс", "Верх тіла"', '"Chest and triceps", "Upper body"')}), without "Day 1" numbering.
 - Write the program name, day names, summary and notes in natural, grammatical ${tr('Ukrainian', 'English')}.`;
+
+const REPLACE_PROMPT = `You are an experienced strength and conditioning coach. The user wants to swap one exercise in a workout day of their program for a similar one.
+Rules:
+- Train the same main muscles in the same role: a compound lift for a compound lift, an isolation for an isolation, core for core.
+- Never suggest an exercise already in the day or in the list to avoid.
+- Keep the sets, reps and rest close to the replaced exercise unless the new one needs otherwise.
+${EXERCISE_RULES}`;
+
+const EXERCISE_SCHEMA = {
+  type: 'object',
+  properties: {
+    name: { type: 'string' },
+    muscle_group: { type: 'string', enum: [...MUSCLE_GROUPS] },
+    tracking_type: { type: 'string', enum: [...TRACKING_TYPES] },
+    notes: { type: 'string' },
+    sets: { type: 'integer' },
+    reps_min: { type: 'integer' },
+    reps_max: { type: 'integer' },
+    duration_sec: { type: 'integer' },
+    distance_km: { type: 'number' },
+    rest_sec: { type: 'integer' },
+  },
+  required: [
+    'name',
+    'muscle_group',
+    'tracking_type',
+    'notes',
+    'sets',
+    'reps_min',
+    'reps_max',
+    'duration_sec',
+    'distance_km',
+    'rest_sec',
+  ],
+  additionalProperties: false,
+};
 
 const SCHEMA = {
   type: 'object',
@@ -250,37 +295,7 @@ const SCHEMA = {
         type: 'object',
         properties: {
           name: { type: 'string' },
-          exercises: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                name: { type: 'string' },
-                muscle_group: { type: 'string', enum: [...MUSCLE_GROUPS] },
-                tracking_type: { type: 'string', enum: [...TRACKING_TYPES] },
-                notes: { type: 'string' },
-                sets: { type: 'integer' },
-                reps_min: { type: 'integer' },
-                reps_max: { type: 'integer' },
-                duration_sec: { type: 'integer' },
-                distance_km: { type: 'number' },
-                rest_sec: { type: 'integer' },
-              },
-              required: [
-                'name',
-                'muscle_group',
-                'tracking_type',
-                'notes',
-                'sets',
-                'reps_min',
-                'reps_max',
-                'duration_sec',
-                'distance_km',
-                'rest_sec',
-              ],
-              additionalProperties: false,
-            },
-          },
+          exercises: { type: 'array', items: EXERCISE_SCHEMA },
         },
         required: ['name', 'exercises'],
         additionalProperties: false,
@@ -291,24 +306,23 @@ const SCHEMA = {
   additionalProperties: false,
 };
 
+type GroqExercise = {
+  name: string;
+  muscle_group: string;
+  tracking_type: string;
+  notes: string;
+  sets: number;
+  reps_min: number;
+  reps_max: number;
+  duration_sec: number;
+  distance_km: number;
+  rest_sec: number;
+};
+
 type GroqPlan = {
   name: string;
   summary: string;
-  days: {
-    name: string;
-    exercises: {
-      name: string;
-      muscle_group: string;
-      tracking_type: string;
-      notes: string;
-      sets: number;
-      reps_min: number;
-      reps_max: number;
-      duration_sec: number;
-      distance_km: number;
-      rest_sec: number;
-    }[];
-  }[];
+  days: { name: string; exercises: GroqExercise[] }[];
 };
 
 /** Fewer than this in a day means the AI didn't finish the plan. */
@@ -325,7 +339,7 @@ const oneOf = <T extends string>(options: readonly T[], value: string, fallback:
   options.find((o) => o === value) ?? fallback;
 
 /** Keeps only the targets that the tracking type uses, within sane limits. */
-function toTargets(type: TrackingType, e: GroqPlan['days'][number]['exercises'][number]): Targets {
+function toTargets(type: TrackingType, e: GroqExercise): Targets {
   const base = {
     targetSets: clamp(e.sets, 1, 10, 3),
     targetRepsMin: null,
@@ -356,6 +370,27 @@ function toTargets(type: TrackingType, e: GroqPlan['days'][number]['exercises'][
   }
 }
 
+/** The AI's exercise matched to the library by name; unmatched ones become new exercises. */
+function toPlanExercise(e: GroqExercise, library: Library): PlanExercise {
+  const known = library.find((l) => nameKey(l.name) === nameKey(e.name));
+  // A library exercise keeps its own type, so its targets match how it is logged.
+  const trackingType = known?.trackingType ?? oneOf(TRACKING_TYPES, e.tracking_type, 'weight_reps');
+  const name = known?.name ?? e.name.trim();
+  return {
+    name,
+    exerciseId: known?.id ?? null,
+    muscleGroup: known?.muscleGroup ?? oneOf(MUSCLE_GROUPS, e.muscle_group, 'chest'),
+    trackingType,
+    notes: known ? null : e.notes?.trim() || null,
+    imageUri: known
+      ? known.imageUri
+      : name in DEFAULT_EXERCISE_IMAGES
+        ? bundledImageUri(DEFAULT_EXERCISE_IMAGES[name])
+        : null,
+    targets: toTargets(trackingType, e),
+  };
+}
+
 function profileText(profile: Profile, weightKg: number | null | undefined) {
   const parts = [
     profile.sex ?? 'sex not given',
@@ -368,27 +403,22 @@ function profileText(profile: Profile, weightKg: number | null | undefined) {
   return parts.join(', ');
 }
 
-/** Asks Groq for a program; throws `GroqError` with a user-facing message. */
-export async function askProgramPlan({
-  answers,
-  wishes,
-  profile,
-  weightKg,
-  library,
-  onAttempt,
-}: {
+export type ProgramRequest = {
   answers: ProgramAnswers;
   wishes: string;
   profile: Profile;
   weightKg: number | null | undefined;
-  library: Pick<Exercise, 'id' | 'name' | 'muscleGroup' | 'trackingType'>[];
+  library: Library;
   onAttempt?: (attempt: number) => void;
-}): Promise<ProgramPlan> {
+};
+
+/** The user's profile, answers and the library, as the prompt sees them. */
+function userContext({ answers, wishes, profile, weightKg, library }: ProgramRequest) {
   const answerLines = PROGRAM_QUESTIONS.map((q) => {
     const picked = q.options.filter((o) => answers[q.key].includes(o.value));
     return `${q.prompt}: ${picked.map((o) => o.prompt).join(', ') || 'none'}`;
   });
-  const user = [
+  return [
     `Profile: ${profileText(profile, weightKg)}`,
     ...answerLines,
     `Wishes: ${wishes.trim() || 'none'}`,
@@ -396,11 +426,14 @@ export async function askProgramPlan({
     'Exercise library (name | muscle group | tracking type):',
     ...library.map((e) => `${e.name} | ${e.muscleGroup} | ${e.trackingType}`),
   ].join('\n');
+}
 
-  const requestedDays = Number(answers.days[0]) || null;
+/** Asks Groq for a program; throws `GroqError` with a user-facing message. */
+export async function askProgramPlan(request: ProgramRequest): Promise<ProgramPlan> {
+  const requestedDays = Number(request.answers.days[0]) || null;
   const raw = await groqJson<GroqPlan>({
     system: SYSTEM_PROMPT,
-    user,
+    user: userContext(request),
     schema: SCHEMA,
     schemaName: 'program',
     // Some variety, so asking again gives a different program.
@@ -412,29 +445,15 @@ export async function askProgramPlan({
     accept: (reply) =>
       (!requestedDays || reply.days?.length === requestedDays) &&
       (reply.days ?? []).every((d) => (d.exercises?.length ?? 0) >= MIN_DAY_EXERCISES),
-    onAttempt,
+    onAttempt: request.onAttempt,
   });
 
-  const byName = new Map(library.map((e) => [nameKey(e.name), e]));
   const days = (raw.days ?? [])
     .map((d, i) => ({
       name: d.name?.trim() || `${tr('День', 'Day')} ${i + 1}`,
       exercises: (d.exercises ?? [])
         .filter((e) => e.name?.trim())
-        .map((e): PlanExercise => {
-          const known = byName.get(nameKey(e.name));
-          // A library exercise keeps its own type, so its targets match how it is logged.
-          const trackingType =
-            known?.trackingType ?? oneOf(TRACKING_TYPES, e.tracking_type, 'weight_reps');
-          return {
-            name: known?.name ?? e.name.trim(),
-            exerciseId: known?.id ?? null,
-            muscleGroup: known?.muscleGroup ?? oneOf(MUSCLE_GROUPS, e.muscle_group, 'chest'),
-            trackingType,
-            notes: known ? null : e.notes?.trim() || null,
-            targets: toTargets(trackingType, e),
-          };
-        }),
+        .map((e) => toPlanExercise(e, request.library)),
     }))
     .filter((d) => d.exercises.length > 0);
 
@@ -451,4 +470,51 @@ export async function askProgramPlan({
     summary: raw.summary?.trim() ?? '',
     days,
   };
+}
+
+const describe = (e: PlanExercise) => `${e.name} (${e.muscleGroup}, ${formatTargets(e.targets)})`;
+
+/**
+ * Asks Groq for an exercise similar to `exercise` in `day`, other than those
+ * already there and the ones in `avoid` (earlier suggestions for that slot).
+ */
+export async function askReplacement({
+  day,
+  exercise,
+  avoid,
+  ...request
+}: ProgramRequest & {
+  day: ProgramPlan['days'][number];
+  exercise: PlanExercise;
+  avoid: string[];
+}): Promise<PlanExercise> {
+  const taken = new Set([...day.exercises.map((e) => e.name), ...avoid].map(nameKey));
+  const user = [
+    userContext(request),
+    '',
+    `Workout day "${day.name}":`,
+    ...day.exercises.map((e) => `- ${describe(e)}`),
+    '',
+    `Replace: ${describe(exercise)}`,
+    `Avoid: ${avoid.join(', ') || 'none'}`,
+  ].join('\n');
+
+  const raw = await groqJson<GroqExercise>({
+    system: REPLACE_PROMPT,
+    user,
+    schema: EXERCISE_SCHEMA,
+    schemaName: 'exercise',
+    // Variety, so asking again for the same slot brings something else.
+    temperature: 0.9,
+    accept: (reply) => !!reply.name?.trim() && !taken.has(nameKey(reply.name)),
+  });
+  if (!raw.name?.trim() || taken.has(nameKey(raw.name))) {
+    throw new Error(
+      tr(
+        'AI не знайшов іншої схожої вправи. Спробуй ще раз.',
+        'AI couldn’t find another similar exercise. Try again.',
+      ),
+    );
+  }
+  return toPlanExercise(raw, request.library);
 }
