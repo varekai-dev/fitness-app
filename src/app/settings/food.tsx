@@ -1,4 +1,7 @@
+import * as Haptics from 'expo-haptics';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
 import { GoalStepper, RecommendationCard } from '@/components/settings';
 import { Loading, Screen, Text } from '@/components/ui';
@@ -25,8 +28,12 @@ import { colors, fontSize, radius, spacing } from '@/theme';
 /** The daily kcal goal with its profile-based recommendation. */
 export default function FoodSettingsScreen() {
   const { data } = useDbQuery(() => Promise.all([getKcalGoal(), loadProfile()]));
+  // The value under the finger while the scale is dragged, saved on release. It
+  // stays shown only until the saved goal moves away from the one it started at.
+  const [draft, setDraft] = useState<{ value: number; from: number } | null>(null);
   if (!data) return <Loading />;
-  const [kcalGoal, { profile, latestWeight }] = data;
+  const [savedGoal, { profile, latestWeight }] = data;
+  const kcalGoal = draft?.from === savedGoal ? draft.value : savedGoal;
   const weightKg = latestWeight?.weightKg;
   const kcal = recommendCalories(profile, weightKg);
   const scale =
@@ -48,7 +55,15 @@ export default function FoodSettingsScreen() {
         format={formatKcal}
         onChange={setKcalGoal}
         valueColor={scale && ZONE_COLOR[calorieZone(scale, kcalGoal)]}>
-        {kcal && scale && <WeightPace tdee={kcal.tdee} goal={kcalGoal} scale={scale} />}
+        {kcal && scale && (
+          <WeightPace
+            tdee={kcal.tdee}
+            goal={kcalGoal}
+            scale={scale}
+            onDrag={(value) => setDraft({ value, from: savedGoal })}
+            onRelease={(value) => (value === savedGoal ? setDraft(null) : setKcalGoal(value))}
+          />
+        )}
       </GoalStepper>
       <RecommendationCard
         value={kcal?.kcal ?? null}
@@ -73,12 +88,55 @@ const ZONE_COLOR: Record<CalorieZone, string> = {
   warning: colors.warning,
 };
 
+/** A kcal goal on the scale's step grid, within both the scale and the allowed goals. */
+const snapGoal = (kcal: number, scale: CalorieScale) =>
+  Math.min(
+    Math.max(Math.round(kcal / KCAL_GOAL_STEP) * KCAL_GOAL_STEP, MIN_KCAL_GOAL, scale.min),
+    MAX_KCAL_GOAL,
+    scale.max,
+  );
+
 /**
  * Where the goal sits between too little and too much against maintenance (the
  * profile's TDEE: weight, height, age, sex and activity), and how fast it moves
- * the weight, so both follow the stepper.
+ * the weight. Tapping or dragging the scale moves the goal.
  */
-function WeightPace({ tdee, goal, scale }: { tdee: number; goal: number; scale: CalorieScale }) {
+function WeightPace({
+  tdee,
+  goal,
+  scale,
+  onDrag,
+  onRelease,
+}: {
+  tdee: number;
+  goal: number;
+  scale: CalorieScale;
+  onDrag: (kcal: number) => void;
+  onRelease: (kcal: number) => void;
+}) {
+  const [width, setWidth] = useState(0);
+  const valueAt = (x: number) =>
+    snapGoal(scale.min + (x / (width || 1)) * (scale.max - scale.min), scale);
+  const drag = (x: number) => {
+    const kcal = valueAt(x);
+    if (kcal === goal) return;
+    Haptics.selectionAsync();
+    onDrag(kcal);
+  };
+  // Horizontal drags move the goal and vertical ones still scroll the screen.
+  const pan = Gesture.Pan()
+    .runOnJS(true)
+    .activeOffsetX([-4, 4])
+    .failOffsetY([-12, 12])
+    .onUpdate((e) => drag(e.x))
+    .onEnd((e) => onRelease(valueAt(e.x)));
+  const tap = Gesture.Tap()
+    .runOnJS(true)
+    .onEnd((e) => {
+      Haptics.selectionAsync();
+      onRelease(valueAt(e.x));
+    });
+
   const week = weeklyWeightChange(tdee, goal);
   const diff = Math.round((goal - tdee) / 10) * 10;
   const stable = formatWeightDelta(week) === '0';
@@ -106,18 +164,23 @@ function WeightPace({ tdee, goal, scale }: { tdee: number; goal: number; scale: 
 
   return (
     <View style={styles.pace}>
-      <View style={styles.track}>
-        <View style={styles.bar}>
-          {scale.segments.map((s) => (
-            <View
-              key={s.zone + s.from}
-              style={{ flex: s.to - s.from, backgroundColor: ZONE_COLOR[s.zone] }}
-            />
-          ))}
+      <GestureDetector gesture={Gesture.Exclusive(pan, tap)}>
+        <View style={styles.track} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+          <View style={styles.bar} pointerEvents="none">
+            {scale.segments.map((s) => (
+              <View
+                key={s.zone + s.from}
+                style={{ flex: s.to - s.from, backgroundColor: ZONE_COLOR[s.zone] }}
+              />
+            ))}
+          </View>
+          <View style={[styles.tick, { left: at(tdee) }]} pointerEvents="none" />
+          <View
+            style={[styles.marker, { left: at(goal), borderColor: ZONE_COLOR[zone] }]}
+            pointerEvents="none"
+          />
         </View>
-        <View style={[styles.tick, { left: at(tdee) }]} />
-        <View style={[styles.marker, { left: at(goal), borderColor: ZONE_COLOR[zone] }]} />
-      </View>
+      </GestureDetector>
       <Text variant="heading" style={{ color: ZONE_COLOR[zone] }}>
         {stable
           ? tr('Вага стабільна', 'Weight holds')
@@ -132,11 +195,12 @@ function WeightPace({ tdee, goal, scale }: { tdee: number; goal: number; scale: 
   );
 }
 
-const MARKER = 16;
+const MARKER = 24;
 
 const styles = StyleSheet.create({
   pace: { gap: spacing.xs, marginTop: spacing.md },
-  track: { height: MARKER, justifyContent: 'center', marginBottom: spacing.xs },
+  // Taller than the bar so the finger finds it.
+  track: { height: MARKER + spacing.lg, justifyContent: 'center' },
   bar: {
     flexDirection: 'row',
     height: 6,
@@ -147,7 +211,7 @@ const styles = StyleSheet.create({
   tick: {
     position: 'absolute',
     width: 2,
-    height: MARKER,
+    height: MARKER - 6,
     marginLeft: -1,
     borderRadius: 1,
     backgroundColor: colors.textSecondary,
@@ -158,7 +222,7 @@ const styles = StyleSheet.create({
     height: MARKER,
     marginLeft: -MARKER / 2,
     borderRadius: MARKER / 2,
-    borderWidth: 3,
+    borderWidth: 4,
     backgroundColor: colors.text,
   },
   advice: { fontSize: fontSize.sm },
