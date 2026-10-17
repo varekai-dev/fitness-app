@@ -427,9 +427,19 @@ export async function describeFoodPhoto(image: { base64: string; mimeType: strin
     .join(', ');
 }
 
-export type DaySnack = { text: string; kcal: number; proteinG: number };
+/**
+ * A food AI suggests, with its numbers for the amount in `text`, so tapping it
+ * opens its card without asking AI again. Ones stored before that lack some.
+ */
+export type SuggestedFood = Pick<Macros, 'kcal' | 'proteinG'> &
+  Partial<Pick<Macros, 'fatG' | 'carbsG'>> & {
+    text: string;
+    isDrink?: boolean;
+    health?: HealthRating | null;
+  };
+export type DaySnack = SuggestedFood;
 /** One food of a set that closes all of the day's gaps at once. */
-export type DayFill = Macros & { text: string };
+export type DayFill = Macros & SuggestedFood;
 /** A dish worth a word: good for the day's goal or one to cut back on. */
 export type DayFood = { name: string; good: boolean; note: string };
 export type DayReview = {
@@ -469,9 +479,9 @@ const DAY_REVIEW_PROMPT = tr(
 - headline: одне речення до 70 символів з головним числом, напр. «Мало білка — до цілі ще 40 г»; слово «сьогодні» лише якщо це сьогодні;
 - comment: 1–2 речення до 200 символів, дружньо й конкретно, без моралізування; не повторюй числа з headline і не називай поточний час; краще порадь, що змінити, згадавши страви з журналу;
 - foods: до 4 найпомітніших страв із журналу — і корисні, і ні; name — назва страви так, як у журналі; good — true, якщо страва пішла на користь меті, false, якщо варто обмежити; note — чому, до 60 символів, напр. «багато білка й мало жиру» чи «майже весь цукор за день». Спершу корисні. Порожній список, якщо журнал порожній;
-- fill: якщо лишилось щонайменше 150 ккал — набір з 2–4 простих продуктів, які разом закривають одразу все, що лишилось: ккал, білки, жири й вуглеводи якомога ближче до залишку, без перебору калорій. Для сьогодні — що з'їсти до кінця дня, для минулого дня — що можна було б з'їсти. Підбери кількості так, щоб сума сходилась. Кожен продукт — окремий елемент списку: text — рівно один продукт з кількістю, без ком і переліків, як у snacks; kcal, protein_g, fat_g, carbs_g — для цієї кількості. Інакше порожній список;
+- fill: якщо лишилось щонайменше 150 ккал — набір з 2–4 простих продуктів, які разом закривають одразу все, що лишилось: ккал, білки, жири й вуглеводи якомога ближче до залишку, без перебору калорій. Для сьогодні — що з'їсти до кінця дня, для минулого дня — що можна було б з'їсти. Підбери кількості так, щоб сума сходилась. Кожен продукт — окремий елемент списку: text — рівно один продукт з кількістю, без ком і переліків, як у snacks; kcal, protein_g, fat_g, carbs_g, is_drink і health — як у snacks. Інакше порожній список;
 - fill_title: короткий підпис над fill до 45 символів, без чисел, щоразу сформульований по-своєму й живо, під настрій дня (для минулого дня — у минулому часі), напр. «Ось чим можна було закрити день» чи «Цього не вистачило до норми»; порожній рядок, якщо fill порожній;
-- snacks: лише якщо це сьогодні, лишилось щонайменше 150 ккал і є помітний недобір — рівно 3 різні варіанти перекусу, що багаті саме на те, чого бракує (при недоборі білка — щонайменше 15 г білка на перекус), і вкладаються в залишок ккал; прості продукти, які легко купити в Україні; text — як користувач написав би сам, з малої літери і з кількістю, напр. «грецький йогурт 200 г»; kcal і protein_g — для цієї кількості. Інакше порожній список.`,
+- snacks: лише якщо це сьогодні, лишилось щонайменше 150 ккал і є помітний недобір — рівно 3 різні варіанти перекусу, що багаті саме на те, чого бракує (при недоборі білка — щонайменше 15 г білка на перекус), і вкладаються в залишок ккал; прості продукти, які легко купити в Україні; text — як користувач написав би сам, з малої літери і з кількістю в грамах чи мл (не в штуках), напр. «грецький йогурт 200 г» чи «яйця варені 120 г»; kcal, protein_g, fat_g, carbs_g — для цієї кількості; is_drink — true для напоїв; health — наскільки продукт корисний: "healthy", "moderate" чи "unhealthy". Інакше порожній список.`,
   `You are an attentive nutritionist in a training app. The user gives a summary of a day of eating: the goal, what they ate and how much is left. Write a short comment on the day.
 - Take the numbers from the summary only, don't recalculate them. A positive "left" means still to eat, a negative one is over the goal.
 - Find the main point: the biggest shortfall or excess against the goal (protein matters more than fat and carbs), or praise if everything is within 10% of the goal.
@@ -481,29 +491,52 @@ Fields:
 - headline: one sentence up to 70 characters with the key number, e.g. "Low on protein: 40 g to go"; the word "today" only if it is today;
 - comment: 1–2 sentences up to 200 characters, friendly and specific, no moralizing; don't repeat the headline's numbers or name the current time; rather suggest what to change, mentioning dishes from the log;
 - foods: up to 4 of the most notable dishes from the log, both good and bad; name: the dish as named in the log; good: true if it helped the goal, false if it is worth cutting back; note: why, up to 60 characters, e.g. "lots of protein, little fat" or "almost all of the day's sugar". Good ones first. An empty list if the log is empty;
-- fill: if at least 150 kcal are left, a set of 2–4 simple foods that together close everything left at once: kcal, protein, fat and carbs as close to what is left as possible, without going over on calories. For today, what to eat by the end of the day; for a past day, what could have been eaten. Pick amounts so the sum adds up. Each food is its own list item: text is exactly one food with its amount, no commas or lists, as in snacks; kcal, protein_g, fat_g, carbs_g for that amount. Otherwise an empty list;
+- fill: if at least 150 kcal are left, a set of 2–4 simple foods that together close everything left at once: kcal, protein, fat and carbs as close to what is left as possible, without going over on calories. For today, what to eat by the end of the day; for a past day, what could have been eaten. Pick amounts so the sum adds up. Each food is its own list item: text is exactly one food with its amount, no commas or lists, as in snacks; kcal, protein_g, fat_g, carbs_g, is_drink and health as in snacks. Otherwise an empty list;
 - fill_title: a short caption over fill, up to 45 characters, no numbers, worded freshly and in your own way each time to suit the day (past tense for a past day), e.g. "Here's what would have closed the day" or "This was missing from your goal"; an empty string if fill is empty;
-- snacks: only if it is today, at least 150 kcal are left and there is a clear shortfall: exactly 3 different snack options rich in exactly what is missing (when short on protein, at least 15 g of protein per snack) and fitting the kcal left; simple foods that are easy to buy; text: the way the user would type it, lowercase, with the amount, e.g. "greek yogurt 200 g"; kcal and protein_g for that amount. Otherwise an empty list.`,
+- snacks: only if it is today, at least 150 kcal are left and there is a clear shortfall: exactly 3 different snack options rich in exactly what is missing (when short on protein, at least 15 g of protein per snack) and fitting the kcal left; simple foods that are easy to buy; text: the way the user would type it, lowercase, with the amount in grams or ml (not in pieces), e.g. "greek yogurt 200 g" or "boiled eggs 120 g"; kcal, protein_g, fat_g, carbs_g for that amount; is_drink: true for drinks; health: how good the food is, "healthy", "moderate" or "unhealthy". Otherwise an empty list.`,
 );
+
+const SUGGESTED_FOOD_SCHEMA = {
+  type: 'object',
+  properties: {
+    text: { type: 'string' },
+    kcal: { type: 'number' },
+    protein_g: { type: 'number' },
+    fat_g: { type: 'number' },
+    carbs_g: { type: 'number' },
+    is_drink: { type: 'boolean' },
+    health: { type: 'string', enum: HEALTH_RATINGS },
+  },
+  required: ['text', 'kcal', 'protein_g', 'fat_g', 'carbs_g', 'is_drink', 'health'],
+  additionalProperties: false,
+};
+
+type GroqSuggestedFood = {
+  text: string;
+  kcal: number;
+  protein_g: number;
+  fat_g: number;
+  carbs_g: number;
+  is_drink: boolean;
+  health: string;
+};
+
+const suggestedFood = (f: GroqSuggestedFood) => ({
+  text: f.text.trim(),
+  kcal: num(f.kcal),
+  proteinG: num(f.protein_g),
+  fatG: num(f.fat_g),
+  carbsG: num(f.carbs_g),
+  isDrink: f.is_drink === true,
+  health: healthRating(f.health),
+});
 
 const DAY_REVIEW_SCHEMA = {
   type: 'object',
   properties: {
     headline: { type: 'string' },
     comment: { type: 'string' },
-    snacks: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          text: { type: 'string' },
-          kcal: { type: 'number' },
-          protein_g: { type: 'number' },
-        },
-        required: ['text', 'kcal', 'protein_g'],
-        additionalProperties: false,
-      },
-    },
+    snacks: { type: 'array', items: SUGGESTED_FOOD_SCHEMA },
     foods: {
       type: 'array',
       items: {
@@ -517,21 +550,7 @@ const DAY_REVIEW_SCHEMA = {
         additionalProperties: false,
       },
     },
-    fill: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          text: { type: 'string' },
-          kcal: { type: 'number' },
-          protein_g: { type: 'number' },
-          fat_g: { type: 'number' },
-          carbs_g: { type: 'number' },
-        },
-        required: ['text', 'kcal', 'protein_g', 'fat_g', 'carbs_g'],
-        additionalProperties: false,
-      },
-    },
+    fill: { type: 'array', items: SUGGESTED_FOOD_SCHEMA },
     fill_title: { type: 'string' },
   },
   required: ['headline', 'comment', 'snacks', 'foods', 'fill', 'fill_title'],
@@ -541,9 +560,9 @@ const DAY_REVIEW_SCHEMA = {
 type GroqDayReview = {
   headline: string;
   comment: string;
-  snacks: { text: string; kcal: number; protein_g: number }[];
+  snacks: GroqSuggestedFood[];
   foods?: { name: string; good: boolean; note: string }[];
-  fill?: { text: string; kcal: number; protein_g: number; fat_g: number; carbs_g: number }[];
+  fill?: GroqSuggestedFood[];
   fill_title?: string;
 };
 
@@ -607,8 +626,7 @@ export async function askGroqDayReview(input: DayReviewInput): Promise<DayReview
     schema: DAY_REVIEW_SCHEMA,
     schemaName: 'day_review',
     temperature: 0.4,
-    // A retry when the model packs several foods into one item of the set.
-    accept: (r) => !!r.headline?.trim() && !(r.fill ?? []).some((f) => /,\s|\s\+\s/.test(f.text)),
+    accept: (r) => !!r.headline?.trim(),
   });
   const headline = parsed.headline?.trim();
   if (!headline)
@@ -619,7 +637,7 @@ export async function askGroqDayReview(input: DayReviewInput): Promise<DayReview
     snacks: (input.isToday ? parsed.snacks : [])
       .filter((s) => s.text.trim() && num(s.kcal) > 0)
       .slice(0, 3)
-      .map((s) => ({ text: s.text.trim(), kcal: num(s.kcal), proteinG: num(s.protein_g) })),
+      .map(suggestedFood),
     foods: (parsed.foods ?? [])
       .filter((f) => f.name?.trim())
       .slice(0, 4)
@@ -627,19 +645,14 @@ export async function askGroqDayReview(input: DayReviewInput): Promise<DayReview
     fill: (parsed.fill ?? [])
       .filter((f) => f.text?.trim() && num(f.kcal) > 0)
       .slice(0, 4)
-      .map((f) => ({
-        text: f.text.trim(),
-        kcal: num(f.kcal),
-        proteinG: num(f.protein_g),
-        fatG: num(f.fat_g),
-        carbsG: num(f.carbs_g),
-      })),
+      .map(suggestedFood),
     fillTitle: parsed.fill_title?.trim() || undefined,
   };
 }
 
 export type MacroKey = 'proteinG' | 'fatG' | 'carbsG';
-export type MacroFood = { text: string; grams: number; kcal: number };
+/** `grams`: of the macro the food was picked for. */
+export type MacroFood = SuggestedFood & { grams: number };
 export type MacroTips = { comment: string; foods: MacroFood[] };
 
 export type MacroTipsInput = {
@@ -661,31 +674,19 @@ const MACRO_TIPS_PROMPT = tr(
 - Бери числа лише з підсумку, не рахуй їх заново.
 Поля:
 - comment: 1–2 речення до 180 символів, дружньо й конкретно: що з журналу дало найбільше і що з цим робити далі (добрати чи притримати); без моралізування;
-- foods: рівно 6 різних простих продуктів чи страв, у яких цього макронутрієнту найбільше на звичайну порцію і які легко купити в Україні; не повторюй страви з журналу; text — як користувач написав би сам, з малої літери і з кількістю звичайної порції, напр. «куряче філе 150 г»; grams — грамів цього макронутрієнту в цій порції; kcal — для цієї порції. Від найбагатшого до найбіднішого.`,
+- foods: рівно 6 різних простих продуктів чи страв, у яких цього макронутрієнту найбільше на звичайну порцію і які легко купити в Україні; не повторюй страви з журналу; text — як користувач написав би сам, з малої літери і з кількістю звичайної порції в грамах чи мл (не в штуках), напр. «куряче філе 150 г»; kcal, protein_g, fat_g, carbs_g — для цієї порції; is_drink — true для напоїв; health — наскільки продукт корисний: "healthy", "moderate" чи "unhealthy". Від найбагатшого до найбіднішого.`,
   `You are a nutritionist in a training app. The user is looking at where one macronutrient comes from in their day and wants to know what is rich in it. Given: the macronutrient, the goal, eaten, left and the day's dishes with their content of it.
 - Take the numbers from the summary only, don't recalculate them.
 Fields:
 - comment: 1–2 sentences up to 180 characters, friendly and specific: what in the log gave the most and what to do next (eat more or hold back); no moralizing;
-- foods: exactly 6 different simple foods or dishes with the most of this macronutrient per usual serving, easy to buy; don't repeat dishes from the log; text: the way the user would type it, lowercase, with the usual serving, e.g. "chicken breast 150 g"; grams: grams of this macronutrient in that serving; kcal for that serving. Richest first.`,
+- foods: exactly 6 different simple foods or dishes with the most of this macronutrient per usual serving, easy to buy; don't repeat dishes from the log; text: the way the user would type it, lowercase, with the usual serving in grams or ml (not in pieces), e.g. "chicken breast 150 g"; kcal, protein_g, fat_g, carbs_g for that serving; is_drink: true for drinks; health: how good the food is, "healthy", "moderate" or "unhealthy". Richest first.`,
 );
 
 const MACRO_TIPS_SCHEMA = {
   type: 'object',
   properties: {
     comment: { type: 'string' },
-    foods: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          text: { type: 'string' },
-          grams: { type: 'number' },
-          kcal: { type: 'number' },
-        },
-        required: ['text', 'grams', 'kcal'],
-        additionalProperties: false,
-      },
-    },
+    foods: { type: 'array', items: SUGGESTED_FOOD_SCHEMA },
   },
   required: ['comment', 'foods'],
   additionalProperties: false,
@@ -710,7 +711,7 @@ function describeMacroDay({ macro, target, entries }: MacroTipsInput) {
 
 /** Foods rich in one macro, with a word on where the day's amount came from. */
 export async function askGroqMacroTips(input: MacroTipsInput): Promise<MacroTips> {
-  const parsed = await groqJson<{ comment: string; foods: MacroFood[] }>({
+  const parsed = await groqJson<{ comment: string; foods: GroqSuggestedFood[] }>({
     system: MACRO_TIPS_PROMPT,
     user: describeMacroDay(input),
     schema: MACRO_TIPS_SCHEMA,
@@ -719,9 +720,12 @@ export async function askGroqMacroTips(input: MacroTipsInput): Promise<MacroTips
     accept: (r) => r.foods?.some((f) => f.text?.trim()),
   });
   const foods = (parsed.foods ?? [])
-    .filter((f) => f.text?.trim() && num(f.grams) > 0)
+    .map((f) => {
+      const food = suggestedFood(f);
+      return { ...food, grams: food[input.macro] };
+    })
+    .filter((f) => f.text && f.grams > 0)
     .slice(0, 6)
-    .map((f) => ({ text: f.text.trim(), grams: num(f.grams), kcal: num(f.kcal) }))
     .sort((a, b) => b.grams - a.grams);
   if (foods.length === 0)
     throw new GroqError(tr('AI не підібрав продуктів.', 'AI suggested no foods.'), 'bad-response');

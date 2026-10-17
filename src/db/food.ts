@@ -9,6 +9,7 @@ import {
   mergeDishes,
   normalizeDish,
   scaleNutrition,
+  splitAmount,
   sumMacros,
   type Macros,
 } from '@/lib/food';
@@ -20,8 +21,9 @@ import {
   type DayReview,
   type MacroKey,
   type MacroTips,
+  type SuggestedFood,
 } from '@/lib/groq';
-import { lang } from '@/lib/i18n';
+import { lang, locale } from '@/lib/i18n';
 import { MEALS, mealOf } from '@/lib/meals';
 import { addDays, startOfDay } from '@/lib/water';
 import { db } from './client';
@@ -75,15 +77,25 @@ export async function searchFoods(text: string, limit = 5) {
   });
 }
 
+/** A dish to open on its card; `amount` is the weight or volume the text asked for, if any. */
+export type FoundFood = { food: Food; cached: boolean; amount: number | null };
+
 /**
  * Nutrition for `text`: from the local cache when this dish was looked up
- * before, otherwise from Groq, storing the answer for next time. Dishes cached
- * before portions had a weight are asked again, since logging is by grams.
+ * before, in any amount ("куряче філе 400 г" reuses "куряче філе 200 г"),
+ * otherwise from Groq, storing the answer for next time. Dishes cached before
+ * portions had a weight are asked again, since logging is by grams.
  */
-export async function lookupFood(text: string): Promise<{ food: Food; cached: boolean }> {
-  const query = normalizeDish(text);
-  const existing = await db.query.foods.findFirst({ where: eq(foods.query, query) });
-  if (existing?.portionG) return { food: existing, cached: true };
+export async function lookupFood(text: string): Promise<FoundFood> {
+  const split = splitAmount(text);
+  const query = split?.dish ?? normalizeDish(text);
+  const amount = split?.grams ?? null;
+  // Dishes cached before amounts were split off are keyed by the whole text.
+  const keys = [...new Set([query, normalizeDish(text)])];
+  const existing = (await db.query.foods.findMany({ where: inArray(foods.query, keys) })).find(
+    (f) => f.portionG,
+  );
+  if (existing) return { food: existing, cached: true, amount };
 
   const nutrition = await askGroqNutrition(text.trim());
   const [food] = await db
@@ -91,7 +103,42 @@ export async function lookupFood(text: string): Promise<{ food: Food; cached: bo
     .values({ query, ...nutrition })
     .onConflictDoUpdate({ target: foods.query, set: nutrition })
     .returning();
-  return { food, cached: false };
+  return { food, cached: false, amount };
+}
+
+/**
+ * A food AI suggested, cached from the numbers it came with, so opening it asks
+ * AI nothing. Null when those aren't enough (no weight in the text, or a
+ * suggestion stored before it had all macros): then it's looked up as typed.
+ */
+export async function cacheSuggestion(suggestion: SuggestedFood): Promise<FoundFood | null> {
+  const split = splitAmount(suggestion.text);
+  const { kcal, proteinG, fatG, carbsG } = suggestion;
+  if (!split || !(kcal > 0) || fatG == null || carbsG == null) return null;
+  const existing = await db.query.foods.findFirst({ where: eq(foods.query, split.dish) });
+  if (existing?.portionG) return { food: existing, cached: true, amount: split.grams };
+
+  const values = {
+    name: split.dish.charAt(0).toLocaleUpperCase(locale) + split.dish.slice(1),
+    portion: null,
+    portionG: split.grams,
+    isDrink: suggestion.isDrink ?? false,
+    kcal,
+    proteinG,
+    fatG,
+    carbsG,
+    fiberG: null,
+    sugarG: null,
+    health: suggestion.health ?? null,
+    healthNote: null,
+  };
+  const [food] = await db
+    .insert(foods)
+    // Not used yet: it shouldn't top the recent dishes until it's logged.
+    .values({ query: split.dish, ...values, lastUsedAt: 0 })
+    .onConflictDoUpdate({ target: foods.query, set: values })
+    .returning();
+  return { food, cached: true, amount: split.grams };
 }
 
 export type ManualFood = Pick<Food, 'name' | 'isDrink' | 'kcal' | 'proteinG' | 'fatG' | 'carbsG'>;
@@ -267,25 +314,43 @@ const REVIEW_PREFIX = 'food_review_';
 /** Comments on days further back are dropped when a new one is saved. */
 const REVIEW_KEEP_DAYS = 30;
 
-/** An AI comment on a day and the state of the day it was written for. */
-export type StoredReview = { signature: string; review: DayReview };
-
 /**
- * What a day's comment depends on: a dish logged or removed, a new goal, or the
- * day being over (no more "still to eat") makes the stored comment stale.
+ * The state of a day a comment is written for. `signature` changes with any
+ * dish logged, edited or removed; `basis` is what a comment must be rewritten
+ * for by itself: another language or goal, or `kcal` eaten moving by a third
+ * of the day's goal.
  */
-const reviewSignature = (entries: FoodEntry[], targets: Macros, isToday: boolean) =>
-  [
-    // Bumped when the comment gains a field, so old ones are written again.
-    'v5',
-    lang,
-    isToday ? 'today' : 'past',
-    targets.kcal,
-    targets.proteinG,
-    targets.fatG,
-    targets.carbsG,
-    ...entries.map((e) => `${e.id}:${Math.round(e.kcal)}`),
-  ].join('|');
+export type ReviewState = { signature: string; basis: { key: string; kcal: number } };
+
+/** An AI comment on a day and the state of the day it was written for. */
+export type StoredReview = {
+  signature: string;
+  review: DayReview;
+  /** Missing on comments written before small changes stopped rewriting them. */
+  basis?: ReviewState['basis'];
+};
+
+/** How a stored comment relates to the day now: written for it, a little behind, or worth rewriting. */
+export type ReviewChange = 'fresh' | 'minor' | 'major';
+
+function reviewState(entries: FoodEntry[], targets: Macros): ReviewState {
+  // Bumped when the comment gains a field, so old ones are written again.
+  const key = ['v6', lang, targets.kcal, targets.proteinG, targets.fatG, targets.carbsG].join('|');
+  return {
+    signature: [key, ...entries.map((e) => `${e.id}:${Math.round(e.kcal)}`)].join('|'),
+    basis: { key, kcal: Math.round(entries.reduce((s, e) => s + e.kcal, 0)) },
+  };
+}
+
+export function reviewChange(
+  stored: StoredReview | null,
+  state: ReviewState,
+  kcalGoal: number,
+): ReviewChange {
+  if (stored?.signature === state.signature) return 'fresh';
+  if (!stored?.basis || stored.basis.key !== state.basis.key) return 'major';
+  return Math.abs(state.basis.kcal - stored.basis.kcal) >= kcalGoal / 3 ? 'major' : 'minor';
+}
 
 async function getDayReview(day: number): Promise<StoredReview | null> {
   const row = await db.query.settings.findFirst({
@@ -319,7 +384,7 @@ export async function reviewDay(day: number, now = Date.now()) {
     targets,
     entries: entries.map((e) => ({ ...e, meal: mealOf(e) })),
   });
-  const stored: StoredReview = { signature: reviewSignature(entries, targets, isToday), review };
+  const stored: StoredReview = { ...reviewState(entries, targets), review };
   const value = JSON.stringify(stored);
   await db
     .insert(settings)
@@ -438,7 +503,7 @@ export async function loadFood(now = Date.now(), day = startOfDay(now)) {
     dayEntries,
     totals: sumMacros(dayEntries),
     review,
-    reviewSignature: reviewSignature(dayEntries, targets, day === today),
+    reviewState: reviewState(dayEntries, targets),
     days,
     today,
     recent,

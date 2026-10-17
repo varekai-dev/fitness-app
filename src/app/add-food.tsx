@@ -21,6 +21,7 @@ import {
 } from '@/components/ui';
 import {
   applyMealTemplate,
+  cacheSuggestion,
   deleteFood,
   deleteMealTemplate,
   loadFood,
@@ -35,7 +36,7 @@ import {
 import type { Food, HealthRating, MealTemplate } from '@/db/schema';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { amountUnit, formatGrams, formatKcal, normalizeDish, scaleNutrition } from '@/lib/food';
-import { describeFoodPhoto, GroqError } from '@/lib/groq';
+import { describeFoodPhoto, GroqError, type SuggestedFood } from '@/lib/groq';
 import { tr } from '@/lib/i18n';
 import { captureForAi } from '@/lib/images';
 import { MEAL_LABELS, MEALS, mealAt, type Meal } from '@/lib/meals';
@@ -53,12 +54,21 @@ const MAX_AMOUNT = 5000;
  */
 type Pending = { food: Food; cached: boolean; amount: string; isDrink: boolean };
 
-const startPending = (food: Food, cached: boolean): Pending => ({
+const startPending = (food: Food, cached: boolean, amount: number | null = null): Pending => ({
   food,
   cached,
-  amount: String(Math.round(food.portionG ?? 100)),
+  amount: String(Math.round(amount ?? food.portionG ?? 100)),
   isDrink: food.isDrink,
 });
+
+function parseSuggestion(json: string | undefined): SuggestedFood | undefined {
+  try {
+    const food = json ? (JSON.parse(json) as SuggestedFood) : undefined;
+    return typeof food?.text === 'string' ? food : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 function parseAmount(text: string) {
   const a = parseDecimal(text);
@@ -72,8 +82,9 @@ function eatenAt(day?: string) {
 }
 
 export default function AddFoodScreen() {
-  // `text` is a dish to calculate right away, e.g. a snack AI suggested for the day.
-  const params = useLocalSearchParams<{ meal?: string; day?: string; text?: string }>();
+  // `text` is a dish to calculate right away, e.g. a snack AI suggested for the day;
+  // `food` is that suggestion with its numbers (SuggestedFood as JSON), to skip asking AI.
+  const params = useLocalSearchParams<{ meal?: string; day?: string; text?: string; food?: string }>();
   // Opened without a meal (e.g. a deep link): pick it by the time of day.
   const [meal] = useState<Meal>(() => MEALS.find((m) => m === params.meal) ?? mealAt(Date.now()));
   const { data } = useDbQuery(() => loadFood());
@@ -117,10 +128,11 @@ export default function AddFoodScreen() {
   };
 
   // Calculates the dish and opens its card; `looking` is already on.
-  const calculate = (text: string) =>
-    lookupFood(text)
+  const calculate = (text: string, suggested?: SuggestedFood) =>
+    (suggested ? cacheSuggestion(suggested) : Promise.resolve(null))
+      .then((found) => found ?? lookupFood(text))
       .then((result) => {
-        setPending(startPending(result.food, result.cached));
+        setPending(startPending(result.food, result.cached, result.amount));
         setInput('');
         setPhoto(null);
       })
@@ -135,7 +147,7 @@ export default function AddFoodScreen() {
 
   // A dish passed in opens straight on its card; on failure it stays in the field to fix.
   useEffect(() => {
-    if (params.text) calculate(params.text);
+    if (params.text) calculate(params.text, parseSuggestion(params.food));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

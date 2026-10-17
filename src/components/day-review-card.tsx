@@ -4,9 +4,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { Button, Card, IconButton, Row, Text } from '@/components/ui';
-import { reviewDay, type StoredReview } from '@/db/food';
+import { reviewChange, reviewDay, type ReviewState, type StoredReview } from '@/db/food';
 import { formatGrams, formatKcal } from '@/lib/food';
-import { getGroqKey, type DayFood } from '@/lib/groq';
+import { getGroqKey, type DayFood, type SuggestedFood } from '@/lib/groq';
 import { tr } from '@/lib/i18n';
 import { colors, radius, spacing } from '@/theme';
 
@@ -14,22 +14,26 @@ import { colors, radius, spacing } from '@/theme';
 const SETTLE_MS = 800;
 
 /**
- * AI's short take on the day's food, written when the Food tab shows a day
- * whose stored comment is missing or stale, and for today a few snacks that
- * close the gap; tapping one opens adding food on that dish's card.
+ * AI's short take on the day's food, and for today a few snacks that close the
+ * gap; tapping one opens adding food on that dish's card. Written by itself
+ * only for today, when there's no comment yet or the day changed a lot since
+ * (see `reviewChange`); otherwise rewritten on tap.
  */
 export function DayReviewCard({
   day,
   isToday,
   stored,
-  signature,
+  state,
+  kcalGoal,
 }: {
   day: number;
   isToday: boolean;
   stored: StoredReview | null;
-  /** The day's current state; `stored` is stale when its signature differs. */
-  signature: string;
+  /** The day's current state, compared with the one `stored` was written for. */
+  state: ReviewState;
+  kcalGoal: number;
 }) {
+  const { signature } = state;
   const [focused, setFocused] = useState(false);
   // Hidden without a Groq key; checked again on focus, after a visit to settings.
   const [hasKey, setHasKey] = useState(false);
@@ -45,7 +49,7 @@ export function DayReviewCard({
     }, []),
   );
 
-  const fresh = stored?.signature === signature;
+  const change = reviewChange(stored, state, kcalGoal);
 
   const run = useCallback(async () => {
     setLoading(true);
@@ -60,10 +64,11 @@ export function DayReviewCard({
   }, [day, signature]);
 
   useEffect(() => {
-    if (!focused || !hasKey || fresh || loading || failed?.signature === signature) return;
+    if (!focused || !hasKey || !isToday || change !== 'major' || loading) return;
+    if (failed?.signature === signature) return;
     const timer = setTimeout(run, SETTLE_MS);
     return () => clearTimeout(timer);
-  }, [focused, hasKey, fresh, loading, failed, signature, run]);
+  }, [focused, hasKey, isToday, change, loading, failed, signature, run]);
 
   if (!hasKey) return null;
   const review = stored?.review;
@@ -81,13 +86,19 @@ export function DayReviewCard({
           <ActivityIndicator size="small" color={colors.textSecondary} />
         ) : (
           review && (
-            <IconButton icon="refresh" size={18} onPress={run} color={colors.textSecondary} />
+            <IconButton
+              icon="refresh"
+              size={18}
+              onPress={run}
+              // Accent: the log changed since the comment was written.
+              color={change === 'fresh' ? colors.textSecondary : colors.accent}
+            />
           )
         )}
       </Row>
 
       {review ? (
-        <View style={[styles.body, !fresh && styles.stale]}>
+        <View style={[styles.body, loading && styles.stale]}>
           <Text variant="heading">{review.headline}</Text>
           {!!review.comment && <Text variant="secondary">{review.comment}</Text>}
           {!!review.foods?.length && (
@@ -101,7 +112,7 @@ export function DayReviewCard({
             review.snacks.map((snack) => (
               <AddFoodRow
                 key={snack.text}
-                text={snack.text}
+                food={snack}
                 day={day}
                 meta={`${formatKcal(snack.kcal)} ${tr('ккал', 'kcal')} · ${tr('Б', 'P')} ${formatGrams(Math.round(snack.proteinG))} ${tr('г', 'g')}`}
               />
@@ -117,7 +128,7 @@ export function DayReviewCard({
               {review.fill.map((food) => (
                 <AddFoodRow
                   key={food.text}
-                  text={food.text}
+                  food={food}
                   day={day}
                   meta={`${formatKcal(food.kcal)} ${tr('ккал', 'kcal')} · ${tr('Б', 'P')} ${Math.round(food.proteinG)} · ${tr('Ж', 'F')} ${Math.round(food.fatG)} · ${tr('В', 'C')} ${Math.round(food.carbsG)}`}
                 />
@@ -125,9 +136,16 @@ export function DayReviewCard({
             </View>
           )}
         </View>
+      ) : loading ? (
+        <Text variant="muted">{tr('Дивлюся, як минає день…', 'Looking at your day…')}</Text>
       ) : (
-        loading && (
-          <Text variant="muted">{tr('Дивлюся, як минає день…', 'Looking at your day…')}</Text>
+        !failed && (
+          <Button
+            title={tr('Прокоментувати день', 'Comment on the day')}
+            variant="secondary"
+            small
+            onPress={run}
+          />
         )
       )}
 
@@ -160,21 +178,21 @@ function FoodRow({ food }: { food: DayFood }) {
 }
 
 /** A food AI suggests, opened in the add-food screen as a snack on tap. */
-function AddFoodRow({ text, meta, day }: { text: string; meta: string; day: number }) {
+function AddFoodRow({ food, meta, day }: { food: SuggestedFood; meta: string; day: number }) {
   return (
     <Pressable
       accessibilityRole="button"
       onPress={() =>
         router.push({
           pathname: '/add-food',
-          params: { meal: 'snack', day: String(day), text },
+          params: { meal: 'snack', day: String(day), text: food.text, food: JSON.stringify(food) },
         })
       }
       style={({ pressed }) => [styles.snack, pressed && styles.pressed]}>
       <Ionicons name="add-circle" size={20} color={colors.accent} />
       <View style={styles.flex}>
         <Text variant="body" numberOfLines={2}>
-          {text}
+          {food.text}
         </Text>
         <Text variant="muted">{meta}</Text>
       </View>
@@ -198,7 +216,7 @@ const styles = StyleSheet.create({
   foods: { gap: spacing.xs },
   fill: { gap: spacing.sm },
   food: { gap: spacing.sm, alignItems: 'flex-start' },
-  // A comment written before the latest dishes, shown while the new one is on its way.
+  // The comment being replaced, shown while the new one is on its way.
   stale: { opacity: 0.5 },
   snack: {
     flexDirection: 'row',

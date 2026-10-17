@@ -49,7 +49,7 @@ export default function FoodScreen() {
   const dialog = useDialog();
 
   if (!data) return <Loading />;
-  const { goal, dayEntries, totals, days, previous, templates, review, reviewSignature } = data;
+  const { goal, dayEntries, totals, days, previous, templates, review, reviewState } = data;
 
   const repeat = async (meal: Meal, entries: FoodEntry[]) => {
     await repeatMeal(entries, meal, day);
@@ -128,7 +128,8 @@ export default function FoodScreen() {
           day={day}
           isToday={daysAgo === 0}
           stored={review}
-          signature={reviewSignature}
+          state={reviewState}
+          kcalGoal={goal}
         />
       )}
 

@@ -16,7 +16,28 @@ export function normalizeDish(text: string) {
     .trim();
 }
 
-const kcalFormatter = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
+// One weight or volume in a normalized dish text: "400 г", "0,5 л", "330ml".
+const AMOUNT_RE = /(^|[\s(])(\d+(?:[.,]\d+)?)\s*(кг|kg|гр|г|g|мл|ml|л|l)\.?(?=$|[\s),;])/g;
+// What a dish key must not keep: a bare count ("2 яйця") or several foods at once.
+const NOT_ONE_DISH_RE = /(^|\s)\d+(?:[.,]\d+)?(\s|$)|\+|,\s/;
+
+/**
+ * "Куряче філе 400 г" as the dish "куряче філе" (a cache key) and 400 g or ml,
+ * so the same dish in another amount is scaled instead of asked again. Null
+ * without exactly one weight or volume, or when the rest isn't a single dish.
+ */
+export function splitAmount(text: string): { dish: string; grams: number } | null {
+  const t = normalizeDish(text);
+  const matches = [...t.matchAll(AMOUNT_RE)];
+  if (matches.length !== 1) return null;
+  const [m] = matches;
+  const grams = Number(m[2].replace(',', '.')) * (/^(кг|kg|л|l)$/.test(m[3]) ? 1000 : 1);
+  const dish = normalizeDish(t.replace(m[0], `${m[1]} `).replace(/\(\s*\)/g, ''));
+  if (!dish || !(grams > 0) || NOT_ONE_DISH_RE.test(dish)) return null;
+  return { dish, grams };
+}
+
+const kcalFormatter =new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
 const gramFormatter = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
 
 export const formatKcal = (kcal: number) => kcalFormatter.format(kcal);

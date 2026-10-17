@@ -158,9 +158,6 @@ function TipsCard({
   const [hasKey, setHasKey] = useState(false);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
-  // The day's state AI was last asked about: asked once by itself, even if it failed,
-  // and not again while the answer is still on its way to the stored tips.
-  const [asked, setAsked] = useState<string | null>(null);
 
   useEffect(() => {
     getGroqKey().then((key) => setHasKey(!!key));
@@ -168,8 +165,8 @@ function TipsCard({
 
   const fresh = tips?.signature === signature;
 
+  // Asked only on tap: foods rich in a macro rarely change from day to day.
   const run = useCallback(async () => {
-    setAsked(signature);
     setLoading(true);
     setFailed(null);
     try {
@@ -179,13 +176,7 @@ function TipsCard({
     } finally {
       setLoading(false);
     }
-  }, [macroKey, day, signature]);
-
-  useEffect(() => {
-    if (!hasKey || fresh || asked === signature) return;
-    const timer = setTimeout(run, 0);
-    return () => clearTimeout(timer);
-  }, [hasKey, fresh, asked, signature, run]);
+  }, [macroKey, day]);
 
   if (!hasKey) return null;
   const shown = tips?.tips;
@@ -203,20 +194,35 @@ function TipsCard({
           <ActivityIndicator size="small" color={colors.textSecondary} />
         ) : (
           shown && (
-            <IconButton icon="refresh" size={18} onPress={run} color={colors.textSecondary} />
+            <IconButton
+              icon="refresh"
+              size={18}
+              onPress={run}
+              // Accent: picked for another day or before the latest dishes.
+              color={fresh ? colors.textSecondary : colors.accent}
+            />
           )
         )}
       </Row>
 
       {shown ? (
-        <View style={[styles.tipsBody, !fresh && styles.stale]}>
+        <View style={[styles.tipsBody, loading && styles.stale]}>
           {!!shown.comment && <Text variant="secondary">{shown.comment}</Text>}
           {shown.foods.map((food) => (
             <FoodRow key={food.text} food={food} day={day} color={color} />
           ))}
         </View>
+      ) : loading ? (
+        <Text variant="muted">{tr('Підбираю продукти…', 'Picking foods…')}</Text>
       ) : (
-        loading && <Text variant="muted">{tr('Підбираю продукти…', 'Picking foods…')}</Text>
+        !failed && (
+          <Button
+            title={tr('Підказати продукти', 'Suggest foods')}
+            variant="secondary"
+            small
+            onPress={run}
+          />
+        )
       )}
 
       {failed && !loading && (
@@ -238,7 +244,12 @@ function FoodRow({ food, day, color }: { food: MacroFood; day: number; color: st
       onPress={() =>
         router.push({
           pathname: '/add-food',
-          params: { meal: mealAt(Date.now()), day: String(day), text: food.text },
+          params: {
+            meal: mealAt(Date.now()),
+            day: String(day),
+            text: food.text,
+            food: JSON.stringify(food),
+          },
         })
       }
       style={({ pressed }) => [styles.food, pressed && styles.pressed]}>
@@ -282,7 +293,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tipsBody: { gap: spacing.sm },
-  // Tips picked before the latest dishes, shown while new ones are on their way.
+  // The tips being replaced, shown while new ones are on their way.
   stale: { opacity: 0.5 },
   food: {
     flexDirection: 'row',
