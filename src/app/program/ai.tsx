@@ -170,6 +170,8 @@ export default function AiProgramScreen() {
   };
 
   const question = PROGRAM_QUESTIONS[step];
+  // A required multi-choice question with nothing picked yet can't move on.
+  const needsAnswer = !!question?.multi && !question.optional && answers[question.key].length === 0;
 
   return (
     <Screen title={tr('Програма з AI', 'AI program')} mode="modal">
@@ -218,6 +220,11 @@ export default function AiProgramScreen() {
               weightKg={profileData.latestWeight?.weightKg}
             />
           )}
+          {needsAnswer && (
+            <Text variant="muted" style={styles.center}>
+              {tr('Обери хоча б один варіант', 'Pick at least one')}
+            </Text>
+          )}
           <Row>
             {step > 0 && (
               <Button
@@ -238,7 +245,9 @@ export default function AiProgramScreen() {
                   }
                   trailingIcon="chevron-forward"
                   onPress={() => setStep(step + 1)}
-                  disabled={!question.optional && answers[question.key].length === 0}
+                  // Grey rather than a dimmed accent, so it doesn't look tappable.
+                  variant={needsAnswer ? 'secondary' : 'primary'}
+                  disabled={needsAnswer}
                   style={styles.flex}
                 />
               )
