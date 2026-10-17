@@ -1,23 +1,19 @@
 import { StyleSheet, View } from 'react-native';
 
+import { MACROS } from '@/components/calorie-summary';
 import { Row, Text } from '@/components/ui';
 import { formatGrams, type Macros } from '@/lib/food';
 import { tr } from '@/lib/i18n';
-import { colors, radius, spacing } from '@/theme';
+import { radius, spacing } from '@/theme';
 
-const MACROS = [
-  { key: 'proteinG', label: tr('Білки', 'Protein') },
-  { key: 'fatG', label: tr('Жири', 'Fat') },
-  { key: 'carbsG', label: tr('Вуглеводи', 'Carbs') },
-] as const;
-
-/** Protein, fat and carbs as three tiles. */
+/** Protein, fat and carbs as three tiles, each in its macro's colour. */
 export function MacroRow({ macros }: { macros: Macros }) {
   return (
     <Row style={styles.macros}>
       {MACROS.map((m) => (
-        <View key={m.key} style={styles.macro}>
-          <Text variant="heading">
+        // The macro's colour at ~12% opacity, a shade quieter than the food log's pills.
+        <View key={m.key} style={[styles.macro, { backgroundColor: `${m.color}1F` }]}>
+          <Text variant="heading" style={{ color: m.color }}>
             {formatGrams(macros[m.key])} {tr('г', 'g')}
           </Text>
           <Text variant="muted">{m.label}</Text>
@@ -34,6 +30,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.sm,
     borderRadius: radius.md,
-    backgroundColor: colors.glass,
   },
 });

@@ -72,14 +72,15 @@ function eatenAt(day?: string) {
 }
 
 export default function AddFoodScreen() {
-  // `text` fills in a dish to calculate, e.g. a snack AI suggested for the day.
+  // `text` is a dish to calculate right away, e.g. a snack AI suggested for the day.
   const params = useLocalSearchParams<{ meal?: string; day?: string; text?: string }>();
   // Opened without a meal (e.g. a deep link): pick it by the time of day.
   const [meal] = useState<Meal>(() => MEALS.find((m) => m === params.meal) ?? mealAt(Date.now()));
   const { data } = useDbQuery(() => loadFood());
   const [input, setInput] = useState(params.text ?? '');
   const { data: suggestions } = useDbQuery(() => searchFoods(input), [input]);
-  const [looking, setLooking] = useState(false);
+  // On from the start when a dish was passed in, calculated on mount.
+  const [looking, setLooking] = useState(!!params.text);
   // Preview of the photo the text was recognized from, while it's being checked.
   const [photo, setPhoto] = useState<string | null>(null);
   const [recognizing, setRecognizing] = useState(false);
@@ -115,20 +116,28 @@ export default function AddFoodScreen() {
     });
   };
 
-  const lookup = async (text: string) => {
+  // Calculates the dish and opens its card; `looking` is already on.
+  const calculate = (text: string) =>
+    lookupFood(text)
+      .then((result) => {
+        setPending(startPending(result.food, result.cached));
+        setInput('');
+        setPhoto(null);
+      })
+      .catch((e) => showError(tr('Не вдалося порахувати', 'Couldn’t calculate'), e))
+      .finally(() => setLooking(false));
+
+  const lookup = (text: string) => {
     if (!text.trim() || busy) return;
     setLooking(true);
-    try {
-      const result = await lookupFood(text);
-      setPending(startPending(result.food, result.cached));
-      setInput('');
-      setPhoto(null);
-    } catch (e) {
-      showError(tr('Не вдалося порахувати', 'Couldn’t calculate'), e);
-    } finally {
-      setLooking(false);
-    }
+    return calculate(text);
   };
+
+  // A dish passed in opens straight on its card; on failure it stays in the field to fix.
+  useEffect(() => {
+    if (params.text) calculate(params.text);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // The photo becomes a description in the field, to check and fix before calculating.
   const recognize = async (source: 'camera' | 'library') => {

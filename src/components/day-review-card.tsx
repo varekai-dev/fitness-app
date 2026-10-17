@@ -16,7 +16,7 @@ const SETTLE_MS = 800;
 /**
  * AI's short take on the day's food, written when the Food tab shows a day
  * whose stored comment is missing or stale, and for today a few snacks that
- * close the gap; tapping one opens adding food with it filled in.
+ * close the gap; tapping one opens adding food on that dish's card.
  */
 export function DayReviewCard({
   day,
