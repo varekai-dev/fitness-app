@@ -124,6 +124,8 @@ function GoalCard({
   const judged = scale && tdee !== undefined;
   const zone = judged ? calorieZone(scale, goal) : null;
   const color = zone ? ZONE_COLOR[zone] : colors.accent;
+  // Text stays white while the goal is fine; only warnings take the zone colour.
+  const textColor = zone && zone !== 'ok' ? color : colors.text;
   const diff = judged ? Math.round((goal - tdee) / 10) * 10 : 0;
   const week = judged ? weeklyWeightChange(tdee, goal) : 0;
   const stable = formatWeightDelta(week) === '0';
@@ -132,7 +134,7 @@ function GoalCard({
     <Card style={styles.goalCard}>
       <View style={styles.goalValue}>
         <Text variant="overline">{tr('Денна норма', 'Daily goal')}</Text>
-        <Text variant="hero" style={{ color: zone ? color : colors.text }}>
+        <Text variant="hero" style={{ color: textColor }}>
           {formatKcal(goal)}
           <Text style={styles.goalUnit}>
             {' '}
@@ -140,9 +142,11 @@ function GoalCard({
           </Text>
         </Text>
         {zone && (
-          <View style={[styles.zonePill, { backgroundColor: `${color}22` }]}>
+          <View style={styles.zonePill}>
             <View style={[styles.zoneDot, { backgroundColor: color }]} />
-            <Text style={[styles.zoneText, { color }]}>{zoneLabel(zone, diff, stable)}</Text>
+            <Text style={[styles.zoneText, { color: textColor }]}>
+              {zoneLabel(zone, diff, stable)}
+            </Text>
           </View>
         )}
       </View>
@@ -186,13 +190,13 @@ function GoalCard({
               value={stable ? '0' : formatWeightDelta(week)}
               unit={WEIGHT_UNIT}
               label={tr('за тиждень', 'a week')}
-              color={color}
+              color={textColor}
             />
             <PaceTile
               value={stable ? '0' : formatWeightDelta((week * 30) / 7)}
               unit={WEIGHT_UNIT}
               label={tr('за місяць', 'a month')}
-              color={color}
+              color={textColor}
             />
             <PaceTile
               value={diff === 0 ? '0' : `${diff > 0 ? '+' : '−'}${formatKcal(Math.abs(diff))}`}
@@ -200,7 +204,7 @@ function GoalCard({
               label={
                 diff < 0 ? tr('дефіцит/день', 'deficit/day') : tr('профіцит/день', 'surplus/day')
               }
-              color={color}
+              color={textColor}
             />
           </Row>
 
@@ -461,6 +465,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: 6,
     borderRadius: radius.pill,
+    backgroundColor: colors.glass,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.glassBorder,
   },
   zoneDot: { width: 8, height: 8, borderRadius: 4 },
   zoneText: { fontSize: fontSize.sm, fontWeight: '700' },
