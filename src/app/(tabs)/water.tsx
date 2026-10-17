@@ -77,7 +77,7 @@ export default function WaterScreen() {
             </View>
             <Row style={styles.heroStats}>
               <View style={styles.heroStat}>
-                <Text variant="caption" style={styles.goalLabel}>
+                <Text variant="caption" style={styles.goalLabel} numberOfLines={1}>
                   {tr('ЦІЛЬ', 'GOAL')}
                 </Text>
                 <Text variant="heading">
@@ -85,7 +85,7 @@ export default function WaterScreen() {
                 </Text>
               </View>
               <View style={styles.heroStat}>
-                <Text variant="caption" style={styles.goalLabel}>
+                <Text variant="caption" style={styles.goalLabel} numberOfLines={1}>
                   {tr('ЗАЛИШИЛОСЬ', 'LEFT')}
                 </Text>
                 <Text variant="heading">
@@ -193,8 +193,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   progressFill: { height: '100%', borderRadius: radius.pill, backgroundColor: colors.accent },
-  heroStats: { marginTop: spacing.md, alignItems: 'flex-start' },
-  heroStat: { flex: 1, gap: 2 },
+  heroStats: { marginTop: spacing.md, alignItems: 'flex-start', gap: spacing.md },
+  heroStat: { flexGrow: 1, gap: 2 },
   goalLabel: { letterSpacing: 1 },
   glasses: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   glassCell: { flexGrow: 1, flexBasis: '30%' },
