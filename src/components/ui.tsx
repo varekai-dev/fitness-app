@@ -70,7 +70,7 @@ export function CircleButton({
   return (
     <Pressable
       onPress={onPress}
-      disabled={disabled}
+      disabled={!!disabled}
       hitSlop={6}
       style={({ pressed }) => (pressed || disabled) && styles.pressed}>
       <Glass
@@ -222,7 +222,9 @@ export function Button({
   return (
     <Pressable
       onPress={onPress}
-      disabled={disabled || loading}
+      // Always a boolean: with `undefined` Android keeps a view that was once disabled
+      // disabled, and only its text stays tappable.
+      disabled={!!(disabled || loading)}
       style={({ pressed }) => [
         styles.button,
         small && styles.buttonSmall,
@@ -278,7 +280,7 @@ export function IconButton({
   return (
     <Pressable
       onPress={onPress}
-      disabled={disabled}
+      disabled={!!disabled}
       hitSlop={8}
       style={({ pressed }) => [styles.iconButton, (pressed || disabled) && styles.dimmed]}>
       <Ionicons name={icon} size={size} color={color} />
