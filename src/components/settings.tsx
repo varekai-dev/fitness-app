@@ -1,7 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { router, type Href } from 'expo-router';
-import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Card, CircleButton, Row, Text, type IconName } from '@/components/ui';
@@ -40,10 +39,7 @@ export function SettingsLink({
 const snapStep = (value: number, step: number, dir: 1 | -1) =>
   dir > 0 ? Math.floor(value / step) * step + step : Math.ceil(value / step) * step - step;
 
-/**
- * A daily goal edited with −/+ on a step grid, clamped to [min, max]. `children`
- * go under the stepper, e.g. a scale of how healthy the value is.
- */
+/** A daily goal edited with −/+ on a step grid, clamped to [min, max]. */
 export function GoalStepper({
   title,
   unit,
@@ -53,8 +49,6 @@ export function GoalStepper({
   max,
   format,
   onChange,
-  valueColor,
-  children,
 }: {
   title: string;
   unit: string;
@@ -64,8 +58,6 @@ export function GoalStepper({
   max: number;
   format: (n: number) => string;
   onChange: (next: number) => void;
-  valueColor?: string;
-  children?: ReactNode;
 }) {
   const change = (dir: 1 | -1) => {
     const next = Math.min(Math.max(snapStep(value, step, dir), min), max);
@@ -89,15 +81,12 @@ export function GoalStepper({
             disabled={value <= min}
             onPress={() => change(-1)}
           />
-          <Text
-            variant="heading"
-            style={[styles.goalValue, valueColor !== undefined && { color: valueColor }]}>
+          <Text variant="heading" style={styles.goalValue}>
             {format(value)} {unit}
           </Text>
           <CircleButton icon="add" size={36} disabled={value >= max} onPress={() => change(1)} />
         </Row>
       </Row>
-      {children}
     </Card>
   );
 }
