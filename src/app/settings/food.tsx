@@ -57,6 +57,7 @@ export default function FoodSettingsScreen() {
       <GoalCard
         goal={goal}
         tdee={rec?.tdee}
+        recommended={rec?.kcal}
         scale={scale}
         profile={<ProfileRow profile={profile} weightKg={weightKg} age={rec?.age} />}
         onDrag={(value) => setDraft({ value, from: savedGoal })}
@@ -98,6 +99,7 @@ function zoneLabel(zone: CalorieZone, diff: number, stable: boolean) {
 function GoalCard({
   goal,
   tdee,
+  recommended,
   scale,
   profile,
   onDrag,
@@ -105,6 +107,7 @@ function GoalCard({
 }: {
   goal: number;
   tdee: number | undefined;
+  recommended: number | undefined;
   scale: CalorieScale | undefined;
   /** What the scale is computed from, leading to the profile. */
   profile: ReactNode;
@@ -145,6 +148,7 @@ function GoalCard({
         <Scale
           goal={goal}
           tdee={tdee}
+          recommended={recommended}
           scale={scale ?? PLAIN_SCALE}
           color={color}
           onDrag={onDrag}
@@ -157,15 +161,6 @@ function GoalCard({
 
       {judged && (
         <>
-          <Row style={styles.legend}>
-            <Row style={styles.legendItem}>
-              <View style={styles.legendTick} />
-              <Text variant="muted">
-                {tr('Підтримка', 'Maintenance')} {formatKcal(Math.round(tdee / 10) * 10)}
-              </Text>
-            </Row>
-          </Row>
-
           <Row style={styles.tiles}>
             <PaceTile
               value={stable ? '0' : formatWeightDelta(week)}
@@ -213,7 +208,7 @@ function GoalCard({
 
 const KNOB = 28;
 const BAR = 10;
-const TRACK = KNOB + spacing.lg;
+const TRACK = KNOB + spacing.xs;
 
 /**
  * The zones blended into one gradient, with the goal as a knob that follows a
@@ -222,6 +217,7 @@ const TRACK = KNOB + spacing.lg;
 function Scale({
   goal,
   tdee,
+  recommended,
   scale,
   color,
   onDrag,
@@ -229,6 +225,7 @@ function Scale({
 }: {
   goal: number;
   tdee: number | undefined;
+  recommended: number | undefined;
   scale: CalorieScale;
   color: string;
   onDrag: (kcal: number) => void;
@@ -279,22 +276,121 @@ function Scale({
     });
 
   return (
-    <GestureDetector gesture={Gesture.Exclusive(pan, tap)}>
-      <View style={styles.track} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
-        <LinearGradient
-          pointerEvents="none"
-          colors={stops.map((s) => s.color) as [string, string, ...string[]]}
-          locations={stops.map((s) => s.at) as [number, number, ...number[]]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.bar}
+    <View>
+      {recommended !== undefined && (
+        <Callout
+          side="top"
+          x={share(recommended) * width}
+          width={width}
+          label={tr('Рекомендовано', 'Recommended')}
+          value={formatKcal(recommended)}
+          color={colors.accent}
+          onPress={() => {
+            Haptics.selectionAsync();
+            onRelease(recommended);
+          }}
         />
-        {tdee !== undefined && (
-          <View pointerEvents="none" style={[styles.tick, { left: at(tdee) }]} />
-        )}
-        <View pointerEvents="none" style={[styles.knob, { left: at(goal), borderColor: color }]} />
-      </View>
-    </GestureDetector>
+      )}
+      <GestureDetector gesture={Gesture.Exclusive(pan, tap)}>
+        <View style={styles.track} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+          <LinearGradient
+            pointerEvents="none"
+            colors={stops.map((s) => s.color) as [string, string, ...string[]]}
+            locations={stops.map((s) => s.at) as [number, number, ...number[]]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.bar}
+          />
+          {tdee !== undefined && (
+            <View pointerEvents="none" style={[styles.tick, { left: at(tdee) }]} />
+          )}
+          <View
+            pointerEvents="none"
+            style={[styles.knob, { left: at(goal), borderColor: color }]}
+          />
+        </View>
+      </GestureDetector>
+      {tdee !== undefined && (
+        <Callout
+          side="bottom"
+          x={share(tdee) * width}
+          width={width}
+          label={tr('Підтримка', 'Maintenance')}
+          value={formatKcal(Math.round(tdee / 10) * 10)}
+          color={colors.textSecondary}
+        />
+      )}
+    </View>
+  );
+}
+
+const CALLOUT_W = 170;
+
+/**
+ * A label pointing at a spot on the scale with a small arrow, above or below
+ * it. The text slides in from the edges; the arrow stays on the spot.
+ */
+function Callout({
+  side,
+  x,
+  width,
+  label,
+  value,
+  color,
+  onPress,
+}: {
+  side: 'top' | 'bottom';
+  x: number;
+  width: number;
+  label: string;
+  value: string;
+  color: string;
+  onPress?: () => void;
+}) {
+  const left = Math.min(Math.max(x - CALLOUT_W / 2, 0), Math.max(width - CALLOUT_W, 0));
+  const arrow = (
+    <Ionicons
+      name={side === 'top' ? 'caret-down' : 'caret-up'}
+      size={12}
+      color={color}
+      style={[
+        styles.calloutArrow,
+        side === 'top' ? styles.atBottom : styles.atTop,
+        { left: x - 6 },
+      ]}
+    />
+  );
+  const text = (
+    <Pressable
+      disabled={!onPress}
+      hitSlop={8}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.calloutText,
+        side === 'top' ? styles.atTop : styles.atBottom,
+        { left },
+        pressed && styles.pressed,
+      ]}>
+      <Text variant="muted" style={[styles.calloutLabel, { color }]} numberOfLines={1}>
+        {label} {value}
+      </Text>
+    </Pressable>
+  );
+  if (!width) return <View style={styles.callout} />;
+  return (
+    <View style={styles.callout}>
+      {side === 'top' ? (
+        <>
+          {text}
+          {arrow}
+        </>
+      ) : (
+        <>
+          {arrow}
+          {text}
+        </>
+      )}
+    </View>
   );
 }
 
@@ -402,7 +498,7 @@ const styles = StyleSheet.create({
   // Taller than the bar so the finger finds it.
   track: { height: TRACK, justifyContent: 'center' },
   bar: { height: BAR, borderRadius: radius.pill },
-  hint: { textAlign: 'center' },
+  hint: { textAlign: 'center', marginTop: spacing.md },
   tick: {
     position: 'absolute',
     width: 3,
@@ -426,15 +522,12 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 4,
   },
-  legend: { justifyContent: 'center' },
-  legendItem: { gap: 6 },
-  legendTick: {
-    width: 3,
-    height: 12,
-    borderRadius: 1.5,
-    backgroundColor: colors.text,
-    opacity: 0.7,
-  },
+  callout: { height: 30 },
+  atTop: { top: 0 },
+  atBottom: { bottom: 0 },
+  calloutText: { position: 'absolute', width: CALLOUT_W, alignItems: 'center' },
+  calloutLabel: { fontSize: fontSize.xs, fontWeight: '600' },
+  calloutArrow: { position: 'absolute' },
   tiles: { gap: spacing.sm },
   tile: {
     flex: 1,
