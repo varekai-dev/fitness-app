@@ -1,8 +1,8 @@
 import { relations } from 'drizzle-orm';
 import { index, integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
-/** Meals the food log is grouped by, in order through the day. */
-export const MEALS = ['breakfast', 'lunch', 'dinner'] as const;
+/** Meals the food log is grouped by: the main ones in order through the day, then snacks. */
+export const MEALS = ['breakfast', 'lunch', 'dinner', 'snack'] as const;
 export type Meal = (typeof MEALS)[number];
 
 /** How good a dish is for you, as AI rates it. */

@@ -8,12 +8,14 @@ export const MEAL_LABELS: Record<Meal, string> = {
   breakfast: tr('Сніданок', 'Breakfast'),
   lunch: tr('Обід', 'Lunch'),
   dinner: tr('Вечеря', 'Dinner'),
+  snack: tr('Перекуси', 'Snacks'),
 };
 
 export const MEAL_ICONS: Record<Meal, IconName> = {
   breakfast: 'sunny',
   lunch: 'partly-sunny',
   dinner: 'moon',
+  snack: 'nutrition',
 };
 
 /** The meal a moment falls in by time of day: before 11:00, before 17:00, then evening. */

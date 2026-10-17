@@ -8,7 +8,6 @@ import { reviewDay, type StoredReview } from '@/db/food';
 import { formatGrams, formatKcal } from '@/lib/food';
 import { getGroqKey, type DaySnack } from '@/lib/groq';
 import { tr } from '@/lib/i18n';
-import { mealAt } from '@/lib/meals';
 import { colors, radius, spacing } from '@/theme';
 
 // Logging a few dishes in a row asks AI once, for the last of them.
@@ -119,7 +118,7 @@ function SnackRow({ snack, day }: { snack: DaySnack; day: number }) {
       onPress={() =>
         router.push({
           pathname: '/add-food',
-          params: { meal: mealAt(Date.now()), day: String(day), text: snack.text },
+          params: { meal: 'snack', day: String(day), text: snack.text },
         })
       }
       style={({ pressed }) => [styles.snack, pressed && styles.pressed]}>
