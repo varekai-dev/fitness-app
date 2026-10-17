@@ -11,7 +11,15 @@ import {
   sumMacros,
   type Macros,
 } from '@/lib/food';
-import { askGroqDayReview, askGroqHealth, askGroqNutrition, type DayReview } from '@/lib/groq';
+import {
+  askGroqDayReview,
+  askGroqHealth,
+  askGroqMacroTips,
+  askGroqNutrition,
+  type DayReview,
+  type MacroKey,
+  type MacroTips,
+} from '@/lib/groq';
 import { lang } from '@/lib/i18n';
 import { MEALS, mealOf } from '@/lib/meals';
 import { addDays, startOfDay } from '@/lib/water';
@@ -321,6 +329,70 @@ export async function reviewDay(day: number, now = Date.now()) {
     .map((r) => r.key)
     .filter((key) => Number(key.slice(REVIEW_PREFIX.length)) < cutoff);
   if (expired.length) await db.delete(settings).where(inArray(settings.key, expired));
+}
+
+const MACRO_TIPS_PREFIX = 'macro_tips_';
+
+/** AI's foods rich in a macro and the state of the day they were picked for. */
+export type StoredMacroTips = { signature: string; tips: MacroTips };
+
+const dayEntries = (day: number) =>
+  db.query.foodEntries.findMany({
+    where: and(gte(foodEntries.eatenAt, day), lt(foodEntries.eatenAt, addDays(day, 1))),
+    orderBy: [asc(foodEntries.eatenAt)],
+  });
+
+/** What the tips depend on: the day's dishes of this macro and the goal. */
+const macroSignature = (macro: MacroKey, day: number, entries: FoodEntry[], target: number) =>
+  [lang, day, Math.round(target), ...entries.map((e) => `${e.id}:${Math.round(e[macro])}`)].join(
+    '|',
+  );
+
+/**
+ * The dishes of `day` with some of `macro`, richest first, the day's total and
+ * goal of it, and AI's stored tips with the signature they must match.
+ */
+export async function loadMacro(macro: MacroKey, day: number) {
+  const [kcalGoal, entries, row] = await Promise.all([
+    getKcalGoal(),
+    dayEntries(day),
+    db.query.settings.findFirst({ where: eq(settings.key, MACRO_TIPS_PREFIX + macro) }),
+  ]);
+  const { targets } = await nutritionTargets(kcalGoal);
+  let tips: StoredMacroTips | null = null;
+  try {
+    const parsed = row ? (JSON.parse(row.value) as StoredMacroTips) : null;
+    if (typeof parsed?.signature === 'string' && parsed.tips?.foods?.length) tips = parsed;
+  } catch {}
+  return {
+    entries: entries.filter((e) => e[macro] > 0).sort((a, b) => b[macro] - a[macro]),
+    total: entries.reduce((s, e) => s + e[macro], 0),
+    target: targets[macro],
+    tips,
+    signature: macroSignature(macro, day, entries, targets[macro]),
+  };
+}
+
+/** Asks AI for foods rich in `macro`, given the day so far, and stores the answer. */
+export async function adviseMacro(macro: MacroKey, day: number) {
+  const [kcalGoal, entries] = await Promise.all([getKcalGoal(), dayEntries(day)]);
+  const { targets } = await nutritionTargets(kcalGoal);
+  const tips = await askGroqMacroTips({
+    macro,
+    target: targets[macro],
+    entries: entries
+      .filter((e) => e[macro] > 0)
+      .map((e) => ({ name: e.name, portion: e.portion, grams: e[macro] })),
+  });
+  const stored: StoredMacroTips = {
+    signature: macroSignature(macro, day, entries, targets[macro]),
+    tips,
+  };
+  const value = JSON.stringify(stored);
+  await db
+    .insert(settings)
+    .values({ key: MACRO_TIPS_PREFIX + macro, value })
+    .onConflictDoUpdate({ target: settings.key, set: { value } });
 }
 
 /**

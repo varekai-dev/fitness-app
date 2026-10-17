@@ -550,6 +550,96 @@ export async function askGroqDayReview(input: DayReviewInput): Promise<DayReview
   };
 }
 
+export type MacroKey = 'proteinG' | 'fatG' | 'carbsG';
+export type MacroFood = { text: string; grams: number; kcal: number };
+export type MacroTips = { comment: string; foods: MacroFood[] };
+
+export type MacroTipsInput = {
+  macro: MacroKey;
+  target: number;
+  /** The day's dishes with this macro in each. */
+  entries: { name: string; portion: string | null; grams: number }[];
+};
+
+// Genitive, as in "rich in …".
+const MACRO_NAMES: Record<MacroKey, string> = {
+  proteinG: tr('білка', 'protein'),
+  fatG: tr('жирів', 'fat'),
+  carbsG: tr('вуглеводів', 'carbs'),
+};
+
+const MACRO_TIPS_PROMPT = tr(
+  `Ти нутриціолог у застосунку для тренувань. Користувач дивиться, звідки за день у нього береться один макронутрієнт, і хоче знати, у чому його багато. Дано: макронутрієнт, ціль, з'їдено, лишилось і страви дня з його вмістом.
+- Бери числа лише з підсумку, не рахуй їх заново.
+Поля:
+- comment: 1–2 речення до 180 символів, дружньо й конкретно: що з журналу дало найбільше і що з цим робити далі (добрати чи притримати); без моралізування;
+- foods: рівно 6 різних простих продуктів чи страв, у яких цього макронутрієнту найбільше на звичайну порцію і які легко купити в Україні; не повторюй страви з журналу; text — як користувач написав би сам, з малої літери і з кількістю звичайної порції, напр. «куряче філе 150 г»; grams — грамів цього макронутрієнту в цій порції; kcal — для цієї порції. Від найбагатшого до найбіднішого.`,
+  `You are a nutritionist in a training app. The user is looking at where one macronutrient comes from in their day and wants to know what is rich in it. Given: the macronutrient, the goal, eaten, left and the day's dishes with their content of it.
+- Take the numbers from the summary only, don't recalculate them.
+Fields:
+- comment: 1–2 sentences up to 180 characters, friendly and specific: what in the log gave the most and what to do next (eat more or hold back); no moralizing;
+- foods: exactly 6 different simple foods or dishes with the most of this macronutrient per usual serving, easy to buy; don't repeat dishes from the log; text: the way the user would type it, lowercase, with the usual serving, e.g. "chicken breast 150 g"; grams: grams of this macronutrient in that serving; kcal for that serving. Richest first.`,
+);
+
+const MACRO_TIPS_SCHEMA = {
+  type: 'object',
+  properties: {
+    comment: { type: 'string' },
+    foods: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          text: { type: 'string' },
+          grams: { type: 'number' },
+          kcal: { type: 'number' },
+        },
+        required: ['text', 'grams', 'kcal'],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ['comment', 'foods'],
+  additionalProperties: false,
+};
+
+function describeMacroDay({ macro, target, entries }: MacroTipsInput) {
+  const g = tr('г', 'g');
+  const eaten = entries.reduce((s, e) => s + e.grams, 0);
+  return [
+    `${tr('Макронутрієнт', 'Macronutrient')}: ${MACRO_NAMES[macro]}.`,
+    `${tr('Ціль', 'Goal')} ${Math.round(target)} ${g}, ${tr('з’їдено', 'eaten')} ${Math.round(eaten)} ${g}, ${tr('лишилось', 'left')} ${Math.round(target - eaten)} ${g}.`,
+    '',
+    tr('Страви дня:', 'The day’s dishes:'),
+    ...(entries.length
+      ? entries.map(
+          (e) =>
+            `${e.name}${e.portion ? ` ${e.portion}` : ''}: ${Math.round(e.grams * 10) / 10} ${g}`,
+        )
+      : [tr('нічого', 'nothing')]),
+  ].join('\n');
+}
+
+/** Foods rich in one macro, with a word on where the day's amount came from. */
+export async function askGroqMacroTips(input: MacroTipsInput): Promise<MacroTips> {
+  const parsed = await groqJson<{ comment: string; foods: MacroFood[] }>({
+    system: MACRO_TIPS_PROMPT,
+    user: describeMacroDay(input),
+    schema: MACRO_TIPS_SCHEMA,
+    schemaName: 'macro_tips',
+    temperature: 0.4,
+    accept: (r) => r.foods?.some((f) => f.text?.trim()),
+  });
+  const foods = (parsed.foods ?? [])
+    .filter((f) => f.text?.trim() && num(f.grams) > 0)
+    .slice(0, 6)
+    .map((f) => ({ text: f.text.trim(), grams: num(f.grams), kcal: num(f.kcal) }))
+    .sort((a, b) => b.grams - a.grams);
+  if (foods.length === 0)
+    throw new GroqError(tr('AI не підібрав продуктів.', 'AI suggested no foods.'), 'bad-response');
+  return { comment: parsed.comment?.trim() ?? '', foods };
+}
+
 /** Cheapest call that proves the key works: lists the models it can use. */
 export async function checkGroqKey(apiKey: string) {
   try {

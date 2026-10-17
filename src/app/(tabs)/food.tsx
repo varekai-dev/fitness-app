@@ -98,7 +98,14 @@ export default function FoodScreen() {
       headerRight={
         <CircleButton icon="settings-outline" onPress={() => router.push('/settings')} />
       }>
-      <CalorieSummary totals={totals} goal={goal} onPress={() => router.push('/settings/food')} />
+      <CalorieSummary
+        totals={totals}
+        goal={goal}
+        onPress={() => router.push('/settings/food')}
+        onMacroPress={(macro) =>
+          router.push({ pathname: '/macro', params: { macro, day: String(day) } })
+        }
+      />
 
       <Row style={styles.dayNav}>
         <CircleButton icon="chevron-back" size={36} onPress={() => setDaysAgo(daysAgo + 1)} />

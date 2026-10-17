@@ -1,9 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
 import { Card, Row, Text } from '@/components/ui';
 import { formatGrams, formatKcal, type Macros } from '@/lib/food';
+import type { MacroKey } from '@/lib/groq';
 import { tr } from '@/lib/i18n';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
@@ -14,7 +15,7 @@ const LENGTH = 2 * Math.PI * R;
 // A 270° arc open at the bottom.
 const ARC = LENGTH * 0.75;
 
-const MACROS = [
+export const MACROS = [
   { key: 'proteinG', label: tr('Білки', 'Protein'), kcalPerG: 4, color: colors.protein },
   { key: 'fatG', label: tr('Жири', 'Fat'), kcalPerG: 9, color: colors.fat },
   { key: 'carbsG', label: tr('Вуглеводи', 'Carbs'), kcalPerG: 4, color: colors.carbs },
@@ -25,10 +26,12 @@ export function CalorieSummary({
   totals,
   goal,
   onPress,
+  onMacroPress,
 }: {
   totals: Macros;
   goal: number;
   onPress?: () => void;
+  onMacroPress?: (macro: MacroKey) => void;
 }) {
   const left = goal - totals.kcal;
   const over = left < 0;
@@ -83,7 +86,12 @@ export function CalorieSummary({
         {MACROS.map((m, i) => {
           const share = macroSum > 0 ? macroKcal[i] / macroSum : 0;
           return (
-            <View key={m.key} style={styles.macro}>
+            <Pressable
+              key={m.key}
+              accessibilityRole="button"
+              disabled={!onMacroPress}
+              onPress={() => onMacroPress?.(m.key)}
+              style={({ pressed }) => [styles.macro, pressed && styles.pressed]}>
               <Row style={styles.macroHead}>
                 <View style={[styles.dot, { backgroundColor: m.color }]} />
                 <Text variant="muted" numberOfLines={1} style={styles.flex}>
@@ -102,7 +110,7 @@ export function CalorieSummary({
               <Text variant="muted" style={styles.share}>
                 {Math.round(share * 100)}% {tr('ккал', 'kcal')}
               </Text>
-            </View>
+            </Pressable>
           );
         })}
       </Row>
@@ -145,4 +153,5 @@ const styles = StyleSheet.create({
   },
   fill: { height: '100%', borderRadius: radius.pill },
   share: { fontSize: fontSize.xs },
+  pressed: { opacity: 0.6 },
 });
