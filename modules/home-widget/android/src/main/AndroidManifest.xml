@@ -1,0 +1,51 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <application>
+    <receiver
+      android:name="expo.modules.homewidget.TodayWidget"
+      android:exported="false"
+      android:label="@string/widget_today_name">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/widget_today_info" />
+    </receiver>
+    <receiver
+      android:name="expo.modules.homewidget.WaterWidget"
+      android:exported="false"
+      android:label="@string/widget_water_name">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/widget_water_info" />
+    </receiver>
+    <receiver
+      android:name="expo.modules.homewidget.CaloriesWidget"
+      android:exported="false"
+      android:label="@string/widget_calories_name">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/widget_calories_info" />
+    </receiver>
+    <receiver
+      android:name="expo.modules.homewidget.WorkoutWidget"
+      android:exported="false"
+      android:label="@string/widget_workout_name">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/widget_workout_info" />
+    </receiver>
+    <receiver
+      android:name="expo.modules.homewidget.MidnightReceiver"
+      android:exported="false" />
+  </application>
+</manifest>

@@ -49,3 +49,6 @@ example
 # Generated native projects (Continuous Native Generation)
 /ios
 /android
+
+# Gradle output of local Expo modules
+/modules/*/android/build/

@@ -10,6 +10,7 @@ import { Text } from '@/components/ui';
 import { db } from '@/db/client';
 import { runContentSeeds, seedIfEmpty } from '@/db/seed';
 import { useHealthAutoSync } from '@/hooks/use-health-auto-sync';
+import { useHomeWidgetSync } from '@/hooks/use-home-widget-sync';
 import { useNotifications } from '@/hooks/use-notifications';
 import { tr } from '@/lib/i18n';
 import { colors } from '@/theme';
@@ -46,6 +47,7 @@ export default function RootLayout() {
 
   useHealthAutoSync(ready);
   useNotifications(ready);
+  useHomeWidgetSync(ready);
 
   const error = migrationError ?? seedError;
   useEffect(() => {

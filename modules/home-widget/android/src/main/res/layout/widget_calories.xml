@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@android:id/background"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:background="@drawable/widget_bg"
+  android:orientation="horizontal"
+  android:padding="@dimen/widget_padding">
+
+  <LinearLayout
+    android:id="@+id/calories_cell"
+    android:layout_width="0dp"
+    android:layout_height="match_parent"
+    android:layout_weight="1"
+    android:background="@drawable/widget_cell_bg"
+    android:orientation="vertical"
+    android:padding="@dimen/widget_cell_padding">
+
+    <TextView
+      android:id="@+id/calories_label"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:ellipsize="end"
+      android:fontFamily="sans-serif-medium"
+      android:maxLines="1"
+      android:text="@string/widget_calories"
+      android:textColor="@color/widget_accent"
+      android:textSize="12sp" />
+
+    <FrameLayout
+      android:layout_width="match_parent"
+      android:layout_height="0dp"
+      android:layout_weight="1" />
+
+    <TextView
+      android:id="@+id/calories_value"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:ellipsize="end"
+      android:fontFamily="sans-serif-black"
+      android:includeFontPadding="false"
+      android:maxLines="1"
+      android:text="@string/widget_sample_calories"
+      android:textColor="@color/widget_text"
+      android:textSize="24sp" />
+
+    <TextView
+      android:id="@+id/calories_total"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="2dp"
+      android:ellipsize="end"
+      android:maxLines="1"
+      android:text="@string/widget_sample_calories_total"
+      android:textColor="@color/widget_text_secondary"
+      android:textSize="12sp" />
+
+    <ProgressBar
+      android:id="@+id/calories_progress"
+      style="?android:attr/progressBarStyleHorizontal"
+      android:layout_width="match_parent"
+      android:layout_height="4dp"
+      android:layout_marginTop="8dp"
+      android:max="1000"
+      android:progress="610"
+      android:progressDrawable="@drawable/widget_progress" />
+  </LinearLayout>
+</LinearLayout>

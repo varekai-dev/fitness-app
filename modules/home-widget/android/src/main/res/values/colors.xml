@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- The app's dark theme (src/theme). -->
+  <color name="widget_background">#F2121212</color>
+  <color name="widget_surface">#262626</color>
+  <color name="widget_track">#333333</color>
+  <color name="widget_text">#FFFFFF</color>
+  <color name="widget_text_secondary">#A3A3A3</color>
+  <color name="widget_accent">#EAF46B</color>
+  <color name="widget_accent_end">#F5FAA8</color>
+  <color name="widget_on_accent">#141414</color>
+  <color name="widget_on_accent_muted">#A6141414</color>
+  <color name="widget_warning">#FFB020</color>
+</resources>

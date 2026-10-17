@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="widget_today_name">Fitness: today</string>
+  <string name="widget_today_description">Water, calories and the next workout</string>
+  <string name="widget_water_name">Fitness: water</string>
+  <string name="widget_water_description">Water drunk today</string>
+  <string name="widget_calories_name">Fitness: calories</string>
+  <string name="widget_calories_description">Calories eaten today</string>
+  <string name="widget_workout_name">Fitness: next workout</string>
+  <string name="widget_workout_description">The next program day, or the workout in progress</string>
+  <string name="widget_water">Water</string>
+  <string name="widget_calories">Calories</string>
+  <string name="widget_next_workout">Next workout</string>
+  <string name="widget_open_app">Open the app to show your data</string>
+  <!-- Sample data for the widget picker preview. -->
+  <string name="widget_sample_water">1,250</string>
+  <string name="widget_sample_calories">1,340</string>
+  <string name="widget_sample_water_total">/ 2,000 ml</string>
+  <string name="widget_sample_calories_total">/ 2,200 kcal</string>
+  <string name="widget_sample_workout">Upper body</string>
+  <string name="widget_sample_program">Strength · 6 exercises</string>
+</resources>

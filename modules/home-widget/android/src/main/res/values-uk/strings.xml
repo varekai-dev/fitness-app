@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="widget_today_name">Fitness: сьогодні</string>
+  <string name="widget_today_description">Вода, калорії й наступне тренування</string>
+  <string name="widget_water_name">Fitness: вода</string>
+  <string name="widget_water_description">Скільки води випито сьогодні</string>
+  <string name="widget_calories_name">Fitness: калорії</string>
+  <string name="widget_calories_description">Скільки калорій з’їдено сьогодні</string>
+  <string name="widget_workout_name">Fitness: наступне тренування</string>
+  <string name="widget_workout_description">Наступний день програми або тренування, що триває</string>
+  <string name="widget_water">Вода</string>
+  <string name="widget_calories">Калорії</string>
+  <string name="widget_next_workout">Наступне тренування</string>
+  <string name="widget_open_app">Відкрийте застосунок, щоб побачити дані</string>
+  <string name="widget_sample_water">1 250</string>
+  <string name="widget_sample_calories">1 340</string>
+  <string name="widget_sample_water_total">/ 2 000 мл</string>
+  <string name="widget_sample_calories_total">/ 2 200 ккал</string>
+  <string name="widget_sample_workout">Верх тіла</string>
+  <string name="widget_sample_program">Сила · 6 вправ</string>
+</resources>
