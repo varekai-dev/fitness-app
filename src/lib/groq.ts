@@ -1,7 +1,10 @@
 import * as SecureStore from 'expo-secure-store';
 
 import { HEALTH_RATINGS, type HealthRating } from '@/db/schema';
-import { tr } from '@/lib/i18n';
+import { sumMacros, type Macros } from '@/lib/food';
+import { locale, tr } from '@/lib/i18n';
+import { MEAL_LABELS, MEALS, type Meal } from '@/lib/meals';
+import { WEIGHT_GOAL, type WeightGoal } from '@/lib/profile';
 
 const KEY_NAME = 'groq_api_key';
 const API = 'https://api.groq.com/openai/v1';
@@ -422,6 +425,129 @@ export async function describeFoodPhoto(image: { base64: string; mimeType: strin
         `${i.name.trim()} ${roundAmount(i.amount)} ${i.unit === 'ml' ? tr('мл', 'ml') : tr('г', 'g')}`,
     )
     .join(', ');
+}
+
+export type DaySnack = { text: string; kcal: number; proteinG: number };
+export type DayReview = { headline: string; comment: string; snacks: DaySnack[] };
+
+export type DayReviewInput = {
+  /** Today: the day is still going, so `now` matters. */
+  isToday: boolean;
+  now: number;
+  goal: WeightGoal;
+  targets: Macros;
+  entries: (Macros & { meal: Meal; name: string; portion: string | null })[];
+};
+
+const DAY_REVIEW_PROMPT = tr(
+  `Ти уважний нутриціолог у застосунку для тренувань. Користувач дає підсумок харчування за день: ціль, що з'їв і скільки лишилось. Напиши короткий коментар до дня.
+- Бери числа лише з підсумку, не рахуй їх заново. «Лишилось» додатне — ще треба добрати, від'ємне — перебір.
+- Знайди головне: найбільший недобір чи перебір відносно цілі (білок важливіший за жири й вуглеводи) або похвали, якщо все в межах 10% від цілі.
+- Якщо це сьогодні, зважай на час: зранку чи вдень недобір нормальний, тож підкажи, на що звернути увагу далі, а не дорікай.
+Поля:
+- headline: одне речення до 70 символів з головним числом, напр. «Сьогодні мало білка — до цілі ще 40 г»;
+- comment: 1–2 речення до 200 символів, дружньо й конкретно, без моралізування; не повторюй числа з headline і не називай поточний час; краще порадь, що змінити, згадавши страви з журналу;
+- snacks: лише якщо це сьогодні, лишилось щонайменше 150 ккал і є помітний недобір — рівно 3 різні варіанти перекусу, що багаті саме на те, чого бракує (при недоборі білка — щонайменше 15 г білка на перекус), і вкладаються в залишок ккал; прості продукти, які легко купити в Україні; text — як користувач написав би сам, з малої літери і з кількістю, напр. «грецький йогурт 200 г»; kcal і protein_g — для цієї кількості. Інакше порожній список.`,
+  `You are an attentive nutritionist in a training app. The user gives a summary of a day of eating: the goal, what they ate and how much is left. Write a short comment on the day.
+- Take the numbers from the summary only, don't recalculate them. A positive "left" means still to eat, a negative one is over the goal.
+- Find the main point: the biggest shortfall or excess against the goal (protein matters more than fat and carbs), or praise if everything is within 10% of the goal.
+- If it is today, mind the time: a shortfall in the morning or afternoon is normal, so suggest what to focus on next rather than scold.
+Fields:
+- headline: one sentence up to 70 characters with the key number, e.g. "Low on protein today: 40 g to go";
+- comment: 1–2 sentences up to 200 characters, friendly and specific, no moralizing; don't repeat the headline's numbers or name the current time; rather suggest what to change, mentioning dishes from the log;
+- snacks: only if it is today, at least 150 kcal are left and there is a clear shortfall: exactly 3 different snack options rich in exactly what is missing (when short on protein, at least 15 g of protein per snack) and fitting the kcal left; simple foods that are easy to buy; text: the way the user would type it, lowercase, with the amount, e.g. "greek yogurt 200 g"; kcal and protein_g for that amount. Otherwise an empty list.`,
+);
+
+const DAY_REVIEW_SCHEMA = {
+  type: 'object',
+  properties: {
+    headline: { type: 'string' },
+    comment: { type: 'string' },
+    snacks: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          text: { type: 'string' },
+          kcal: { type: 'number' },
+          protein_g: { type: 'number' },
+        },
+        required: ['text', 'kcal', 'protein_g'],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ['headline', 'comment', 'snacks'],
+  additionalProperties: false,
+};
+
+type GroqDayReview = {
+  headline: string;
+  comment: string;
+  snacks: { text: string; kcal: number; protein_g: number }[];
+};
+
+/** The day's numbers as text, already subtracted, so the model doesn't do the arithmetic. */
+function describeDay({ isToday, now, goal, targets, entries }: DayReviewInput) {
+  const g = tr('г', 'g');
+  const kcal = tr('ккал', 'kcal');
+  const eaten = sumMacros(entries);
+  const macros = [
+    { label: tr('Калорії', 'Calories'), key: 'kcal', unit: kcal },
+    { label: tr('Білки', 'Protein'), key: 'proteinG', unit: g },
+    { label: tr('Жири', 'Fat'), key: 'fatG', unit: g },
+    { label: tr('Вуглеводи', 'Carbs'), key: 'carbsG', unit: g },
+  ] as const;
+  const time = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(now);
+  const lines = [
+    isToday
+      ? tr(`День: сьогодні, зараз ${time}.`, `Day: today, now ${time}.`)
+      : tr('День: минулий, вже завершений.', 'Day: a past one, already over.'),
+    `${tr('Мета', 'Goal')}: ${WEIGHT_GOAL[goal].label}.`,
+    '',
+    ...macros.map((m) => {
+      const left = Math.round(targets[m.key] - eaten[m.key]);
+      return `${m.label}: ${tr('ціль', 'goal')} ${Math.round(targets[m.key])} ${m.unit}, ${tr('з’їдено', 'eaten')} ${Math.round(eaten[m.key])} ${m.unit}, ${tr('лишилось', 'left')} ${left} ${m.unit}.`;
+    }),
+    '',
+    tr('Журнал:', 'Log:'),
+    ...MEALS.flatMap((meal) => {
+      const dishes = entries.filter((e) => e.meal === meal);
+      if (dishes.length === 0) return [];
+      return [
+        `${MEAL_LABELS[meal]}: ${dishes
+          .map(
+            (e) =>
+              `${e.name}${e.portion ? ` ${e.portion}` : ''} (${Math.round(e.kcal)} ${kcal}, ${tr('Б', 'P')} ${Math.round(e.proteinG)} ${g})`,
+          )
+          .join('; ')}`,
+      ];
+    }),
+  ];
+  return lines.join('\n');
+}
+
+/** A short AI comment on a day of eating, with snacks to close today's gap. */
+export async function askGroqDayReview(input: DayReviewInput): Promise<DayReview> {
+  const parsed = await groqJson<GroqDayReview>({
+    system: DAY_REVIEW_PROMPT,
+    user: describeDay(input),
+    schema: DAY_REVIEW_SCHEMA,
+    schemaName: 'day_review',
+    temperature: 0.4,
+    accept: (r) => !!r.headline?.trim(),
+  });
+  const headline = parsed.headline?.trim();
+  if (!headline)
+    throw new GroqError(tr('AI не написав коментар.', 'AI wrote no comment.'), 'bad-response');
+  return {
+    headline,
+    comment: parsed.comment?.trim() ?? '',
+    snacks: (input.isToday ? parsed.snacks : [])
+      .filter((s) => s.text.trim() && num(s.kcal) > 0)
+      .slice(0, 3)
+      .map((s) => ({ text: s.text.trim(), kcal: num(s.kcal), proteinG: num(s.protein_g) })),
+  };
 }
 
 /** Cheapest call that proves the key works: lists the models it can use. */

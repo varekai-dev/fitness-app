@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { CalorieSummary } from '@/components/calorie-summary';
+import { DayReviewCard } from '@/components/day-review-card';
 import { useDialog } from '@/components/dialog';
 import { useTabBarSpace } from '@/components/floating-tab-bar';
 import { SwipeToDelete } from '@/components/swipe-to-delete';
@@ -42,7 +43,7 @@ export default function FoodScreen() {
   const dialog = useDialog();
 
   if (!data) return <Loading />;
-  const { goal, dayEntries, totals, days, previous, templates } = data;
+  const { goal, dayEntries, totals, days, previous, templates, review, reviewSignature } = data;
 
   const repeat = async (meal: Meal, entries: FoodEntry[]) => {
     await repeatMeal(entries, meal, day);
@@ -102,6 +103,16 @@ export default function FoodScreen() {
           onPress={() => setDaysAgo(daysAgo - 1)}
         />
       </Row>
+
+      {dayEntries.length > 0 && (
+        <DayReviewCard
+          key={day}
+          day={day}
+          isToday={daysAgo === 0}
+          stored={review}
+          signature={reviewSignature}
+        />
+      )}
 
       {MEALS.map((meal) => {
         const entries = dayEntries.filter((e) => mealOf(e) === meal);

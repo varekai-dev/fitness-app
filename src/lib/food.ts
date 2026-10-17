@@ -1,4 +1,5 @@
 import { locale, tr } from '@/lib/i18n';
+import type { WeightGoal } from '@/lib/profile';
 
 export const DEFAULT_KCAL_GOAL = 2000;
 export const KCAL_GOAL_STEP = 50;
@@ -33,6 +34,32 @@ export const sumMacros = (rows: Macros[]): Macros =>
     }),
     { kcal: 0, proteinG: 0, fatG: 0, carbsG: 0 },
   );
+
+/** Protein per kg of body weight: more in a deficit to keep muscle, more for gaining it. */
+const PROTEIN_PER_KG: Record<WeightGoal, number> = { lose: 2, maintain: 1.6, gain: 1.8 };
+/** Without a body weight, and as a ceiling for heavy bodies on small goals. */
+const PROTEIN_SHARE = 0.25;
+const MAX_PROTEIN_SHARE = 0.35;
+const FAT_SHARE = 0.3;
+
+/**
+ * Daily protein, fat and carbs for a kcal goal: protein by body weight and the
+ * weight goal, fat at 30% of kcal, carbs the rest. Rounded to whole grams.
+ */
+export function macroTargets(kcal: number, weightKg: number | null, goal: WeightGoal): Macros {
+  const proteinG = Math.min(
+    weightKg ? weightKg * PROTEIN_PER_KG[goal] : (kcal * PROTEIN_SHARE) / 4,
+    (kcal * MAX_PROTEIN_SHARE) / 4,
+  );
+  const fatG = (kcal * FAT_SHARE) / 9;
+  const carbsG = Math.max(0, (kcal - proteinG * 4 - fatG * 9) / 4);
+  return {
+    kcal,
+    proteinG: Math.round(proteinG),
+    fatG: Math.round(fatG),
+    carbsG: Math.round(carbsG),
+  };
+}
 
 type PortionNutrition = Macros & {
   portionG: number | null;

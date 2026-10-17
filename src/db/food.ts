@@ -5,14 +5,18 @@ import {
   DEFAULT_KCAL_GOAL,
   describeDishes,
   formatGrams,
+  macroTargets,
   normalizeDish,
   scaleNutrition,
   sumMacros,
+  type Macros,
 } from '@/lib/food';
-import { askGroqHealth, askGroqNutrition } from '@/lib/groq';
+import { askGroqDayReview, askGroqHealth, askGroqNutrition, type DayReview } from '@/lib/groq';
+import { lang } from '@/lib/i18n';
 import { MEALS, mealOf } from '@/lib/meals';
 import { addDays, startOfDay } from '@/lib/water';
 import { db } from './client';
+import { loadProfile } from './profile';
 import {
   foodEntries,
   foods,
@@ -241,16 +245,95 @@ async function previousMeals(day: number) {
   return previous;
 }
 
+/** Daily protein, fat and carbs for the kcal goal, from the profile's weight goal and latest weight. */
+async function nutritionTargets(kcalGoal: number) {
+  const { profile, latestWeight } = await loadProfile();
+  return {
+    weightGoal: profile.goal,
+    targets: macroTargets(kcalGoal, latestWeight?.weightKg ?? null, profile.goal),
+  };
+}
+
+const REVIEW_PREFIX = 'food_review_';
+/** Comments on days further back are dropped when a new one is saved. */
+const REVIEW_KEEP_DAYS = 30;
+
+/** An AI comment on a day and the state of the day it was written for. */
+export type StoredReview = { signature: string; review: DayReview };
+
 /**
- * Meals of `day` (oldest first, today by default), their totals, the goal,
- * per-day kcal for the week up to today, and what can be logged again: each
- * meal's last earlier occurrence and the saved templates.
+ * What a day's comment depends on: a dish logged or removed, a new goal, or the
+ * day being over (no more "still to eat") makes the stored comment stale.
+ */
+const reviewSignature = (entries: FoodEntry[], targets: Macros, isToday: boolean) =>
+  [
+    lang,
+    isToday ? 'today' : 'past',
+    targets.kcal,
+    targets.proteinG,
+    targets.fatG,
+    targets.carbsG,
+    ...entries.map((e) => `${e.id}:${Math.round(e.kcal)}`),
+  ].join('|');
+
+async function getDayReview(day: number): Promise<StoredReview | null> {
+  const row = await db.query.settings.findFirst({
+    where: eq(settings.key, REVIEW_PREFIX + day),
+  });
+  if (!row) return null;
+  try {
+    const stored = JSON.parse(row.value) as StoredReview;
+    return typeof stored.signature === 'string' && stored.review?.headline ? stored : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Asks AI to comment on the food of `day` and stores the answer for that day. */
+export async function reviewDay(day: number, now = Date.now()) {
+  const today = startOfDay(now);
+  const [kcalGoal, entries] = await Promise.all([
+    getKcalGoal(),
+    db.query.foodEntries.findMany({
+      where: and(gte(foodEntries.eatenAt, day), lt(foodEntries.eatenAt, addDays(day, 1))),
+      orderBy: [asc(foodEntries.eatenAt)],
+    }),
+  ]);
+  const { weightGoal, targets } = await nutritionTargets(kcalGoal);
+  const isToday = day === today;
+  const review = await askGroqDayReview({
+    isToday,
+    now,
+    goal: weightGoal,
+    targets,
+    entries: entries.map((e) => ({ ...e, meal: mealOf(e) })),
+  });
+  const stored: StoredReview = { signature: reviewSignature(entries, targets, isToday), review };
+  const value = JSON.stringify(stored);
+  await db
+    .insert(settings)
+    .values({ key: REVIEW_PREFIX + day, value })
+    .onConflictDoUpdate({ target: settings.key, set: { value } });
+
+  const old = await db.query.settings.findMany({ where: like(settings.key, `${REVIEW_PREFIX}%`) });
+  const cutoff = addDays(today, -REVIEW_KEEP_DAYS);
+  const expired = old
+    .map((r) => r.key)
+    .filter((key) => Number(key.slice(REVIEW_PREFIX.length)) < cutoff);
+  if (expired.length) await db.delete(settings).where(inArray(settings.key, expired));
+}
+
+/**
+ * Meals of `day` (oldest first, today by default), their totals, the goals,
+ * per-day kcal for the week up to today, what can be logged again (each meal's
+ * last earlier occurrence and the saved templates), and the day's AI comment
+ * with the signature it must match to be current.
  */
 export async function loadFood(now = Date.now(), day = startOfDay(now)) {
   const today = startOfDay(now);
   const from = addDays(today, -(FOOD_HISTORY_DAYS - 1));
   const dayEnd = addDays(day, 1);
-  const [goal, rows, recent, previous, templates] = await Promise.all([
+  const [goal, rows, recent, previous, templates, review] = await Promise.all([
     getKcalGoal(),
     db.query.foodEntries.findMany({
       where: gte(foodEntries.eatenAt, Math.min(from, day)),
@@ -259,7 +342,9 @@ export async function loadFood(now = Date.now(), day = startOfDay(now)) {
     db.query.foods.findMany({ orderBy: [desc(foods.lastUsedAt)], limit: 12 }),
     previousMeals(day),
     listMealTemplates(),
+    getDayReview(day),
   ]);
+  const { targets } = await nutritionTargets(goal);
   const days = Array.from({ length: FOOD_HISTORY_DAYS }, (_, i) => ({
     dayStart: addDays(from, i),
     kcal: 0,
@@ -271,8 +356,11 @@ export async function loadFood(now = Date.now(), day = startOfDay(now)) {
   const dayEntries = rows.filter((r) => r.eatenAt >= day && r.eatenAt < dayEnd);
   return {
     goal,
+    targets,
     dayEntries,
     totals: sumMacros(dayEntries),
+    review,
+    reviewSignature: reviewSignature(dayEntries, targets, day === today),
     days,
     today,
     recent,
