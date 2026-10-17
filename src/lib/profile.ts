@@ -134,11 +134,51 @@ const KCAL_PER_KG = 7700;
  * Expected weight change in kg a week when eating `kcal` a day against the
  * maintenance `tdee`: negative for a deficit, positive for a surplus.
  */
-export const weeklyWeightChange = (tdee: number, kcal: number) =>
-  ((kcal - tdee) * 7) / KCAL_PER_KG;
+export const weeklyWeightChange = (tdee: number, kcal: number) => ((kcal - tdee) * 7) / KCAL_PER_KG;
 
 /** Losing more than 1% of body weight a week costs muscle as well as fat. */
 export const FAST_WEEKLY_LOSS = 0.01;
+
+/** Below this a day's food hardly covers vitamins and minerals. */
+const MIN_DAILY_KCAL: Record<Sex, number> = { male: 1500, female: 1200 };
+
+export type CalorieZone = 'danger' | 'ok' | 'warning';
+export type CalorieScale = {
+  min: number;
+  max: number;
+  segments: { from: number; to: number; zone: CalorieZone }[];
+};
+
+/**
+ * Daily kcal from too little to too much around maintenance: losing more than
+ * 1% of body weight a week (or eating under the minimum) is dangerous, up to a
+ * 0.5% weekly gain is fine, faster gain adds mostly fat and past 1% is too much.
+ */
+export function calorieScale(tdee: number, weightKg: number, sex: Sex): CalorieScale {
+  const percent = (FAST_WEEKLY_LOSS * weightKg * KCAL_PER_KG) / 7;
+  const min = tdee - percent * 1.5;
+  const max = tdee + percent * 1.5;
+  const low = Math.min(Math.max(MIN_DAILY_KCAL[sex], tdee - percent, min), tdee);
+  const edges: [number, CalorieZone][] = [
+    [low, 'danger'],
+    [tdee + percent / 2, 'ok'],
+    [tdee + percent, 'warning'],
+    [max, 'danger'],
+  ];
+  let from = min;
+  const segments = edges.map(([to, zone]) => {
+    const segment = { from, to, zone };
+    from = to;
+    return segment;
+  });
+  return { min, max, segments };
+}
+
+/** The zone `kcal` falls into, past the ends counting as the end zones. */
+export function calorieZone(scale: CalorieScale, kcal: number): CalorieZone {
+  return (scale.segments.find((s) => kcal < s.to) ?? scale.segments[scale.segments.length - 1])
+    .zone;
+}
 
 const WATER_ML_PER_KG = 30;
 
