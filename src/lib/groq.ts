@@ -1,7 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 
 import { HEALTH_RATINGS, type HealthRating } from '@/db/schema';
-import { sumMacros, type Macros } from '@/lib/food';
+import { mergeDishes, sumMacros, type Macros } from '@/lib/food';
 import { locale, tr } from '@/lib/i18n';
 import { MEAL_LABELS, MEALS, type Meal } from '@/lib/meals';
 import { WEIGHT_GOAL, type WeightGoal } from '@/lib/profile';
@@ -428,7 +428,21 @@ export async function describeFoodPhoto(image: { base64: string; mimeType: strin
 }
 
 export type DaySnack = { text: string; kcal: number; proteinG: number };
-export type DayReview = { headline: string; comment: string; snacks: DaySnack[] };
+/** One food of a set that closes all of the day's gaps at once. */
+export type DayFill = Macros & { text: string };
+/** A dish worth a word: good for the day's goal or one to cut back on. */
+export type DayFood = { name: string; good: boolean; note: string };
+export type DayReview = {
+  headline: string;
+  comment: string;
+  snacks: DaySnack[];
+  /** Missing from comments written before dishes were judged. */
+  foods?: DayFood[];
+  /** Missing from comments written before the day's set was picked. */
+  fill?: DayFill[];
+  /** AI's own caption over `fill`, worded differently each time. */
+  fillTitle?: string;
+};
 
 export type DayReviewInput = {
   /** Today: the day is still going, so `now` matters. */
@@ -436,7 +450,13 @@ export type DayReviewInput = {
   now: number;
   goal: WeightGoal;
   targets: Macros;
-  entries: (Macros & { meal: Meal; name: string; portion: string | null })[];
+  entries: (Macros & {
+    meal: Meal;
+    name: string;
+    portion: string | null;
+    fiberG: number | null;
+    sugarG: number | null;
+  })[];
 };
 
 const DAY_REVIEW_PROMPT = tr(
@@ -444,17 +464,25 @@ const DAY_REVIEW_PROMPT = tr(
 - Бери числа лише з підсумку, не рахуй їх заново. «Лишилось» додатне — ще треба добрати, від'ємне — перебір.
 - Знайди головне: найбільший недобір чи перебір відносно цілі (білок важливіший за жири й вуглеводи) або похвали, якщо все в межах 10% від цілі.
 - Якщо це сьогодні, зважай на час: зранку чи вдень недобір нормальний, тож підкажи, на що звернути увагу далі, а не дорікай.
+- Оціни якість їжі з журналу з огляду на мету: що пішло на користь (білок, клітковина, овочі, цільні продукти), а що ні (багато цукру, смажене, фастфуд, солодощі, солодкі напої, порожні калорії).
 Поля:
-- headline: одне речення до 70 символів з головним числом, напр. «Сьогодні мало білка — до цілі ще 40 г»;
+- headline: одне речення до 70 символів з головним числом, напр. «Мало білка — до цілі ще 40 г»; слово «сьогодні» лише якщо це сьогодні;
 - comment: 1–2 речення до 200 символів, дружньо й конкретно, без моралізування; не повторюй числа з headline і не називай поточний час; краще порадь, що змінити, згадавши страви з журналу;
+- foods: до 4 найпомітніших страв із журналу — і корисні, і ні; name — назва страви так, як у журналі; good — true, якщо страва пішла на користь меті, false, якщо варто обмежити; note — чому, до 60 символів, напр. «багато білка й мало жиру» чи «майже весь цукор за день». Спершу корисні. Порожній список, якщо журнал порожній;
+- fill: якщо лишилось щонайменше 150 ккал — набір з 2–4 простих продуктів, які разом закривають одразу все, що лишилось: ккал, білки, жири й вуглеводи якомога ближче до залишку, без перебору калорій. Для сьогодні — що з'їсти до кінця дня, для минулого дня — що можна було б з'їсти. Підбери кількості так, щоб сума сходилась. Кожен продукт — окремий елемент списку: text — рівно один продукт з кількістю, без ком і переліків, як у snacks; kcal, protein_g, fat_g, carbs_g — для цієї кількості. Інакше порожній список;
+- fill_title: короткий підпис над fill до 45 символів, без чисел, щоразу сформульований по-своєму й живо, під настрій дня (для минулого дня — у минулому часі), напр. «Ось чим можна було закрити день» чи «Цього не вистачило до норми»; порожній рядок, якщо fill порожній;
 - snacks: лише якщо це сьогодні, лишилось щонайменше 150 ккал і є помітний недобір — рівно 3 різні варіанти перекусу, що багаті саме на те, чого бракує (при недоборі білка — щонайменше 15 г білка на перекус), і вкладаються в залишок ккал; прості продукти, які легко купити в Україні; text — як користувач написав би сам, з малої літери і з кількістю, напр. «грецький йогурт 200 г»; kcal і protein_g — для цієї кількості. Інакше порожній список.`,
   `You are an attentive nutritionist in a training app. The user gives a summary of a day of eating: the goal, what they ate and how much is left. Write a short comment on the day.
 - Take the numbers from the summary only, don't recalculate them. A positive "left" means still to eat, a negative one is over the goal.
 - Find the main point: the biggest shortfall or excess against the goal (protein matters more than fat and carbs), or praise if everything is within 10% of the goal.
 - If it is today, mind the time: a shortfall in the morning or afternoon is normal, so suggest what to focus on next rather than scold.
+- Judge the quality of the food in the log against the goal: what helped (protein, fiber, vegetables, whole foods) and what didn't (a lot of sugar, fried food, fast food, sweets, sugary drinks, empty calories).
 Fields:
-- headline: one sentence up to 70 characters with the key number, e.g. "Low on protein today: 40 g to go";
+- headline: one sentence up to 70 characters with the key number, e.g. "Low on protein: 40 g to go"; the word "today" only if it is today;
 - comment: 1–2 sentences up to 200 characters, friendly and specific, no moralizing; don't repeat the headline's numbers or name the current time; rather suggest what to change, mentioning dishes from the log;
+- foods: up to 4 of the most notable dishes from the log, both good and bad; name: the dish as named in the log; good: true if it helped the goal, false if it is worth cutting back; note: why, up to 60 characters, e.g. "lots of protein, little fat" or "almost all of the day's sugar". Good ones first. An empty list if the log is empty;
+- fill: if at least 150 kcal are left, a set of 2–4 simple foods that together close everything left at once: kcal, protein, fat and carbs as close to what is left as possible, without going over on calories. For today, what to eat by the end of the day; for a past day, what could have been eaten. Pick amounts so the sum adds up. Each food is its own list item: text is exactly one food with its amount, no commas or lists, as in snacks; kcal, protein_g, fat_g, carbs_g for that amount. Otherwise an empty list;
+- fill_title: a short caption over fill, up to 45 characters, no numbers, worded freshly and in your own way each time to suit the day (past tense for a past day), e.g. "Here's what would have closed the day" or "This was missing from your goal"; an empty string if fill is empty;
 - snacks: only if it is today, at least 150 kcal are left and there is a clear shortfall: exactly 3 different snack options rich in exactly what is missing (when short on protein, at least 15 g of protein per snack) and fitting the kcal left; simple foods that are easy to buy; text: the way the user would type it, lowercase, with the amount, e.g. "greek yogurt 200 g"; kcal and protein_g for that amount. Otherwise an empty list.`,
 );
 
@@ -476,8 +504,37 @@ const DAY_REVIEW_SCHEMA = {
         additionalProperties: false,
       },
     },
+    foods: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          good: { type: 'boolean' },
+          note: { type: 'string' },
+        },
+        required: ['name', 'good', 'note'],
+        additionalProperties: false,
+      },
+    },
+    fill: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          text: { type: 'string' },
+          kcal: { type: 'number' },
+          protein_g: { type: 'number' },
+          fat_g: { type: 'number' },
+          carbs_g: { type: 'number' },
+        },
+        required: ['text', 'kcal', 'protein_g', 'fat_g', 'carbs_g'],
+        additionalProperties: false,
+      },
+    },
+    fill_title: { type: 'string' },
   },
-  required: ['headline', 'comment', 'snacks'],
+  required: ['headline', 'comment', 'snacks', 'foods', 'fill', 'fill_title'],
   additionalProperties: false,
 };
 
@@ -485,7 +542,25 @@ type GroqDayReview = {
   headline: string;
   comment: string;
   snacks: { text: string; kcal: number; protein_g: number }[];
+  foods?: { name: string; good: boolean; note: string }[];
+  fill?: { text: string; kcal: number; protein_g: number; fat_g: number; carbs_g: number }[];
+  fill_title?: string;
 };
+
+/** A dish's numbers: macros, plus fiber and sugar when the food has them. */
+function describeDish(e: DayReviewInput['entries'][number]) {
+  const g = tr('г', 'g');
+  return [
+    `${Math.round(e.kcal)} ${tr('ккал', 'kcal')}`,
+    `${tr('Б', 'P')} ${Math.round(e.proteinG)} ${g}`,
+    `${tr('Ж', 'F')} ${Math.round(e.fatG)} ${g}`,
+    `${tr('В', 'C')} ${Math.round(e.carbsG)} ${g}`,
+    e.fiberG != null && `${tr('клітковина', 'fiber')} ${Math.round(e.fiberG)} ${g}`,
+    e.sugarG != null && `${tr('цукор', 'sugar')} ${Math.round(e.sugarG)} ${g}`,
+  ]
+    .filter(Boolean)
+    .join(', ');
+}
 
 /** The day's numbers as text, already subtracted, so the model doesn't do the arithmetic. */
 function describeDay({ isToday, now, goal, targets, entries }: DayReviewInput) {
@@ -510,18 +585,15 @@ function describeDay({ isToday, now, goal, targets, entries }: DayReviewInput) {
       return `${m.label}: ${tr('ціль', 'goal')} ${Math.round(targets[m.key])} ${m.unit}, ${tr('з’їдено', 'eaten')} ${Math.round(eaten[m.key])} ${m.unit}, ${tr('лишилось', 'left')} ${left} ${m.unit}.`;
     }),
     '',
-    tr('Журнал:', 'Log:'),
-    ...MEALS.flatMap((meal) => {
-      const dishes = entries.filter((e) => e.meal === meal);
-      if (dishes.length === 0) return [];
-      return [
-        `${MEAL_LABELS[meal]}: ${dishes
-          .map(
-            (e) =>
-              `${e.name}${e.portion ? ` ${e.portion}` : ''} (${Math.round(e.kcal)} ${kcal}, ${tr('Б', 'P')} ${Math.round(e.proteinG)} ${g})`,
-          )
-          .join('; ')}`,
-      ];
+    tr(
+      'Журнал (однакові страви за день об’єднані, кількість і поживність підсумовані):',
+      'Log (the same dishes of the day merged, amounts and nutrition summed):',
+    ),
+    ...mergeDishes(entries).map((e) => {
+      const meals = MEALS.filter((meal) => e.parts.some((p) => p.meal === meal))
+        .map((meal) => MEAL_LABELS[meal].toLocaleLowerCase(locale))
+        .join(', ');
+      return `- ${e.name}${e.portion ? ` ${e.portion}` : ''} — ${meals} (${describeDish(e)})`;
     }),
   ];
   return lines.join('\n');
@@ -535,7 +607,8 @@ export async function askGroqDayReview(input: DayReviewInput): Promise<DayReview
     schema: DAY_REVIEW_SCHEMA,
     schemaName: 'day_review',
     temperature: 0.4,
-    accept: (r) => !!r.headline?.trim(),
+    // A retry when the model packs several foods into one item of the set.
+    accept: (r) => !!r.headline?.trim() && !(r.fill ?? []).some((f) => /,\s|\s\+\s/.test(f.text)),
   });
   const headline = parsed.headline?.trim();
   if (!headline)
@@ -547,6 +620,21 @@ export async function askGroqDayReview(input: DayReviewInput): Promise<DayReview
       .filter((s) => s.text.trim() && num(s.kcal) > 0)
       .slice(0, 3)
       .map((s) => ({ text: s.text.trim(), kcal: num(s.kcal), proteinG: num(s.protein_g) })),
+    foods: (parsed.foods ?? [])
+      .filter((f) => f.name?.trim())
+      .slice(0, 4)
+      .map((f) => ({ name: f.name.trim(), good: !!f.good, note: f.note?.trim() ?? '' })),
+    fill: (parsed.fill ?? [])
+      .filter((f) => f.text?.trim() && num(f.kcal) > 0)
+      .slice(0, 4)
+      .map((f) => ({
+        text: f.text.trim(),
+        kcal: num(f.kcal),
+        proteinG: num(f.protein_g),
+        fatG: num(f.fat_g),
+        carbsG: num(f.carbs_g),
+      })),
+    fillTitle: parsed.fill_title?.trim() || undefined,
   };
 }
 

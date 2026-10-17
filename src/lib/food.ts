@@ -35,6 +35,55 @@ export const sumMacros = (rows: Macros[]): Macros =>
     { kcal: 0, proteinG: 0, fatG: 0, carbsG: 0 },
   );
 
+type Dish = Macros & {
+  name: string;
+  portion: string | null;
+  fiberG?: number | null;
+  sugarG?: number | null;
+};
+
+/** "1 500,5 г" as 1500.5 and "г"; null for a portion that isn't a number and a unit. */
+function parseAmount(portion: string) {
+  const m = /^([\d\s]+(?:[.,]\d+)?)\s+(\S+)$/.exec(portion.trim());
+  if (!m) return null;
+  const amount = Number(m[1].replace(/\s/g, '').replace(',', '.'));
+  return Number.isFinite(amount) ? { amount, unit: m[2] } : null;
+}
+
+/** Portions of one dish summed ("100 г" + "150 г" → "250 г"), or listed when units differ. */
+function sumPortions(portions: (string | null)[]) {
+  const known = portions.filter((p): p is string => !!p);
+  if (known.length === 0) return null;
+  const parsed = known.map(parseAmount);
+  const unit = parsed[0]?.unit;
+  if (known.length === portions.length && parsed.every((p) => p && p.unit === unit))
+    return `${formatGrams(parsed.reduce((s, p) => s + p!.amount, 0))} ${unit}`;
+  return known.join(' + ');
+}
+
+const sumOptional = (values: (number | null | undefined)[]) =>
+  values.some((v) => v != null) ? values.reduce<number>((s, v) => s + (v ?? 0), 0) : null;
+
+/**
+ * The day's dishes with the same name as one, amounts and nutrition summed, in
+ * the order each was first eaten. `parts` are the merged rows.
+ */
+export function mergeDishes<T extends Dish>(rows: T[]) {
+  const groups = new Map<string, T[]>();
+  for (const row of rows) {
+    const key = normalizeDish(row.name);
+    groups.set(key, [...(groups.get(key) ?? []), row]);
+  }
+  return [...groups.values()].map((parts) => ({
+    ...parts[0],
+    ...sumMacros(parts),
+    portion: sumPortions(parts.map((p) => p.portion)),
+    fiberG: sumOptional(parts.map((p) => p.fiberG)),
+    sugarG: sumOptional(parts.map((p) => p.sugarG)),
+    parts,
+  }));
+}
+
 /** Protein per kg of body weight: more in a deficit to keep muscle, more for gaining it. */
 const PROTEIN_PER_KG: Record<WeightGoal, number> = { lose: 2, maintain: 1.6, gain: 1.8 };
 /** Without a body weight, and as a ceiling for heavy bodies on small goals. */

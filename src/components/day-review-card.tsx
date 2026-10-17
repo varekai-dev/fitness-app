@@ -6,7 +6,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { Button, Card, IconButton, Row, Text } from '@/components/ui';
 import { reviewDay, type StoredReview } from '@/db/food';
 import { formatGrams, formatKcal } from '@/lib/food';
-import { getGroqKey, type DaySnack } from '@/lib/groq';
+import { getGroqKey, type DayFood } from '@/lib/groq';
 import { tr } from '@/lib/i18n';
 import { colors, radius, spacing } from '@/theme';
 
@@ -90,8 +90,40 @@ export function DayReviewCard({
         <View style={[styles.body, !fresh && styles.stale]}>
           <Text variant="heading">{review.headline}</Text>
           {!!review.comment && <Text variant="secondary">{review.comment}</Text>}
+          {!!review.foods?.length && (
+            <View style={styles.foods}>
+              {review.foods.map((food) => (
+                <FoodRow key={food.name} food={food} />
+              ))}
+            </View>
+          )}
           {isToday &&
-            review.snacks.map((snack) => <SnackRow key={snack.text} snack={snack} day={day} />)}
+            review.snacks.map((snack) => (
+              <AddFoodRow
+                key={snack.text}
+                text={snack.text}
+                day={day}
+                meta={`${formatKcal(snack.kcal)} ${tr('ккал', 'kcal')} · ${tr('Б', 'P')} ${formatGrams(Math.round(snack.proteinG))} ${tr('г', 'g')}`}
+              />
+            ))}
+          {!!review.fill?.length && (
+            <View style={styles.fill}>
+              <Text variant="caption">
+                {review.fillTitle ||
+                  (isToday
+                    ? tr('Цього бракує до денної норми', 'Still missing for the day')
+                    : tr('Цього бракувало до денної норми', 'What the day was missing'))}
+              </Text>
+              {review.fill.map((food) => (
+                <AddFoodRow
+                  key={food.text}
+                  text={food.text}
+                  day={day}
+                  meta={`${formatKcal(food.kcal)} ${tr('ккал', 'kcal')} · ${tr('Б', 'P')} ${Math.round(food.proteinG)} · ${tr('Ж', 'F')} ${Math.round(food.fatG)} · ${tr('В', 'C')} ${Math.round(food.carbsG)}`}
+                />
+              ))}
+            </View>
+          )}
         </View>
       ) : (
         loading && (
@@ -111,25 +143,41 @@ export function DayReviewCard({
   );
 }
 
-function SnackRow({ snack, day }: { snack: DaySnack; day: number }) {
+function FoodRow({ food }: { food: DayFood }) {
+  return (
+    <Row style={styles.food}>
+      <Ionicons
+        name={food.good ? 'checkmark-circle' : 'alert-circle'}
+        size={18}
+        color={food.good ? colors.success : colors.warning}
+      />
+      <Text variant="body" style={styles.flex}>
+        {food.name}
+        {!!food.note && <Text variant="muted"> — {food.note}</Text>}
+      </Text>
+    </Row>
+  );
+}
+
+/** A food AI suggests, opened in the add-food screen as a snack on tap. */
+function AddFoodRow({ text, meta, day }: { text: string; meta: string; day: number }) {
   return (
     <Pressable
       accessibilityRole="button"
       onPress={() =>
         router.push({
           pathname: '/add-food',
-          params: { meal: 'snack', day: String(day), text: snack.text },
+          params: { meal: 'snack', day: String(day), text },
         })
       }
       style={({ pressed }) => [styles.snack, pressed && styles.pressed]}>
       <Ionicons name="add-circle" size={20} color={colors.accent} />
-      <Text variant="body" style={styles.flex} numberOfLines={2}>
-        {snack.text}
-      </Text>
-      <Text variant="muted">
-        {formatKcal(snack.kcal)} {tr('ккал', 'kcal')} · {tr('Б', 'P')}{' '}
-        {formatGrams(Math.round(snack.proteinG))} {tr('г', 'g')}
-      </Text>
+      <View style={styles.flex}>
+        <Text variant="body" numberOfLines={2}>
+          {text}
+        </Text>
+        <Text variant="muted">{meta}</Text>
+      </View>
     </Pressable>
   );
 }
@@ -147,6 +195,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   body: { gap: spacing.sm },
+  foods: { gap: spacing.xs },
+  fill: { gap: spacing.sm },
+  food: { gap: spacing.sm, alignItems: 'flex-start' },
   // A comment written before the latest dishes, shown while the new one is on its way.
   stale: { opacity: 0.5 },
   snack: {

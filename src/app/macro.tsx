@@ -101,7 +101,10 @@ export default function MacroScreen() {
                       {e.name}
                     </Text>
                     <Text variant="muted" numberOfLines={1}>
-                      {MEAL_LABELS[mealOf(e)]} · {timeFormatter.format(new Date(e.eatenAt))}
+                      {e.parts.length > 1
+                        ? [...new Set(e.parts.map((p) => MEAL_LABELS[mealOf(p)]))].join(', ') +
+                          ` · ×${e.parts.length}`
+                        : `${MEAL_LABELS[mealOf(e)]} · ${timeFormatter.format(new Date(e.eatenAt))}`}
                       {e.portion ? ` · ${e.portion}` : ''}
                     </Text>
                   </View>

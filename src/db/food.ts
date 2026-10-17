@@ -6,6 +6,7 @@ import {
   describeDishes,
   formatGrams,
   macroTargets,
+  mergeDishes,
   normalizeDish,
   scaleNutrition,
   sumMacros,
@@ -275,6 +276,8 @@ export type StoredReview = { signature: string; review: DayReview };
  */
 const reviewSignature = (entries: FoodEntry[], targets: Macros, isToday: boolean) =>
   [
+    // Bumped when the comment gains a field, so old ones are written again.
+    'v5',
     lang,
     isToday ? 'today' : 'past',
     targets.kcal,
@@ -344,7 +347,8 @@ const dayEntries = (day: number) =>
 
 /** What the tips depend on: the day's dishes of this macro and the goal. */
 const macroSignature = (macro: MacroKey, day: number, entries: FoodEntry[], target: number) =>
-  [lang, day, Math.round(target), ...entries.map((e) => `${e.id}:${Math.round(e[macro])}`)].join(
+  // v2: dishes of the same name merged.
+  ['v2', lang, day, Math.round(target), ...entries.map((e) => `${e.id}:${Math.round(e[macro])}`)].join(
     '|',
   );
 
@@ -365,7 +369,9 @@ export async function loadMacro(macro: MacroKey, day: number) {
     if (typeof parsed?.signature === 'string' && parsed.tips?.foods?.length) tips = parsed;
   } catch {}
   return {
-    entries: entries.filter((e) => e[macro] > 0).sort((a, b) => b[macro] - a[macro]),
+    entries: mergeDishes(entries)
+      .filter((e) => e[macro] > 0)
+      .sort((a, b) => b[macro] - a[macro]),
     total: entries.reduce((s, e) => s + e[macro], 0),
     target: targets[macro],
     tips,
@@ -380,7 +386,7 @@ export async function adviseMacro(macro: MacroKey, day: number) {
   const tips = await askGroqMacroTips({
     macro,
     target: targets[macro],
-    entries: entries
+    entries: mergeDishes(entries)
       .filter((e) => e[macro] > 0)
       .map((e) => ({ name: e.name, portion: e.portion, grams: e[macro] })),
   });
