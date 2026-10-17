@@ -19,6 +19,10 @@ export const colors = {
   onAccentFaint: 'rgba(20, 20, 20, 0.1)',
   danger: '#FF5A5A',
   warning: '#FFB020',
+  // Protein, fat and carbs wherever they share one chart.
+  protein: '#EAF46B',
+  fat: '#FF9F6B',
+  carbs: '#A78BFA',
 } as const;
 
 export const spacing = {

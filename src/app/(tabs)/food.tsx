@@ -3,9 +3,9 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { CalorieSummary } from '@/components/calorie-summary';
 import { useDialog } from '@/components/dialog';
 import { useTabBarSpace } from '@/components/floating-tab-bar';
-import { MacroRow } from '@/components/macro-row';
 import { SwipeToDelete } from '@/components/swipe-to-delete';
 import { Button, Card, CircleButton, Loading, Row, Screen, Text } from '@/components/ui';
 import { deleteFoodEntry, loadFood } from '@/db/food';
@@ -32,7 +32,6 @@ export default function FoodScreen() {
 
   if (!data) return <Loading />;
   const { goal, dayEntries, totals, days } = data;
-  const left = goal - totals.kcal;
 
   const remove = (id: number, label: string, close: () => void) =>
     dialog.show({
@@ -58,30 +57,7 @@ export default function FoodScreen() {
       headerRight={
         <CircleButton icon="settings-outline" onPress={() => router.push('/settings')} />
       }>
-      <Card style={styles.hero} onPress={() => router.push('/settings/food')}>
-        <Text style={styles.amount}>
-          {formatKcal(totals.kcal)}
-          <Text style={styles.unit}> {tr('ккал', 'kcal')}</Text>
-        </Text>
-        <Text variant="muted">
-          {left >= 0
-            ? tr(
-                `ще ${formatKcal(left)} з ${formatKcal(goal)}`,
-                `${formatKcal(left)} of ${formatKcal(goal)} left`,
-              )
-            : tr(`понад ціль на ${formatKcal(-left)}`, `${formatKcal(-left)} over goal`)}
-        </Text>
-        <View style={styles.track}>
-          <View
-            style={[
-              styles.fill,
-              { width: `${Math.min(totals.kcal / goal, 1) * 100}%` },
-              left < 0 && styles.fillOver,
-            ]}
-          />
-        </View>
-        <MacroRow macros={totals} />
-      </Card>
+      <CalorieSummary totals={totals} goal={goal} onPress={() => router.push('/settings/food')} />
 
       <Row style={styles.dayNav}>
         <CircleButton icon="chevron-back" size={36} onPress={() => setDaysAgo(daysAgo + 1)} />
@@ -194,19 +170,6 @@ export default function FoodScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   spaceBetween: { justifyContent: 'space-between' },
-  hero: { alignItems: 'center', paddingTop: spacing.xl },
-  amount: { color: colors.text, fontSize: fontSize.hero, fontWeight: '800', letterSpacing: -1 },
-  unit: { color: colors.textSecondary, fontSize: fontSize.xl, fontWeight: '600' },
-  track: {
-    alignSelf: 'stretch',
-    height: 10,
-    borderRadius: radius.pill,
-    backgroundColor: colors.accentSoft,
-    overflow: 'hidden',
-    marginTop: spacing.sm,
-  },
-  fill: { height: '100%', borderRadius: radius.pill, backgroundColor: colors.accent },
-  fillOver: { backgroundColor: colors.warning },
   dayNav: { gap: spacing.md, justifyContent: 'space-between' },
   dayTitle: { flex: 1, alignItems: 'center' },
   meal: { gap: 0, paddingVertical: spacing.sm },
