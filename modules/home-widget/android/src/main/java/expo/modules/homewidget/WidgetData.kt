@@ -14,6 +14,17 @@ internal data class Metric(
   val url: String,
 )
 
+/** A single number with its caption, such as the latest weight. */
+internal data class Stat(
+  val label: String,
+  val value: String,
+  val unit: String,
+  val subtitle: String,
+  val url: String,
+  /** When the number goes back to 0 (a new week), or 0 when it never does. */
+  val resetAt: Long,
+)
+
 internal data class Workout(
   val label: String,
   val title: String,
@@ -30,12 +41,18 @@ internal data class WidgetData(
   val water: Metric,
   val calories: Metric,
   val workout: Workout,
+  /** Null in data saved by app versions without these widgets. */
+  val weight: Stat?,
+  val week: Stat?,
 ) {
   /** After midnight nothing is drunk or eaten yet, even if the app hasn't been opened since. */
   fun forToday(): WidgetData {
-    if (day >= startOfToday()) return this
+    val now = System.currentTimeMillis()
+    val resetStat = { s: Stat? -> if (s != null && s.resetAt in 1..now) s.copy(value = "0") else s }
+    val fresh = copy(weight = resetStat(weight), week = resetStat(week))
+    if (day >= startOfToday()) return fresh
     val reset = { m: Metric -> m.copy(value = "0", progress = 0.0, over = false) }
-    return copy(water = reset(water), calories = reset(calories))
+    return fresh.copy(water = reset(water), calories = reset(calories))
   }
 }
 
@@ -65,6 +82,17 @@ internal object WidgetStore {
         url = it.getString("url"),
       )
     },
+    weight = json.optJSONObject("weight")?.let(::stat),
+    week = json.optJSONObject("week")?.let(::stat),
+  )
+
+  private fun stat(json: JSONObject) = Stat(
+    label = json.getString("label"),
+    value = json.getString("value"),
+    unit = json.optString("unit"),
+    subtitle = json.optString("subtitle"),
+    url = json.getString("url"),
+    resetAt = json.optLong("resetAt"),
   )
 
   private fun metric(json: JSONObject) = Metric(

@@ -1,16 +1,19 @@
-import { gte, sum } from 'drizzle-orm';
+import { gte, isNotNull, sum } from 'drizzle-orm';
 import * as Linking from 'expo-linking';
 
 import { formatKcal } from '@/lib/food';
 import { plural, tr } from '@/lib/i18n';
-import { notStarted } from '@/lib/metrics';
-import { formatVolume, VOLUME_UNIT } from '@/lib/units';
-import { startOfDay } from '@/lib/water';
+import { formatShortDate, formatWeightDelta, startOfWeek } from '@/lib/labels';
+import { formatWeight, notStarted } from '@/lib/metrics';
+import { weekStreak } from '@/lib/stats';
+import { formatVolume, VOLUME_UNIT, WEIGHT_UNIT } from '@/lib/units';
+import { addDays, startOfDay } from '@/lib/water';
 import HomeWidget from '../../modules/home-widget';
+import { listBodyWeights } from './body-weight';
 import { db } from './client';
 import { getKcalGoal } from './food';
 import { getActiveProgram, getNextDayId } from './programs';
-import { foodEntries, waterIntakes } from './schema';
+import { foodEntries, waterIntakes, workouts } from './schema';
 import { getWaterGoal } from './water';
 import { getActiveWorkout } from './workouts';
 
@@ -63,14 +66,64 @@ async function loadWorkout() {
   };
 }
 
-/** Today's water and calories and the next workout, formatted for the Android home screen widgets. */
+async function loadWeight() {
+  const weights = await listBodyWeights();
+  const latest = weights.at(-1);
+  const first = weights[0];
+  const label = tr('Вага тіла', 'Body weight');
+  const url = Linking.createURL('body-weight');
+  if (!latest) {
+    return { label, value: '—', unit: '', subtitle: tr('Додай зважування', 'Log a weigh-in'), url };
+  }
+  // Change since the first weigh-in, as on the Home tab's weight tile.
+  const delta =
+    weights.length > 1
+      ? `${formatWeightDelta(latest.weightKg - first.weightKg)} ${WEIGHT_UNIT} · `
+      : '';
+  return {
+    label,
+    value: formatWeight(latest.weightKg, 1),
+    unit: WEIGHT_UNIT,
+    subtitle: delta + formatShortDate(latest.measuredAt),
+    url,
+  };
+}
+
+async function loadWeek(now: number) {
+  const rows = await db
+    .select({ startedAt: workouts.startedAt })
+    .from(workouts)
+    .where(isNotNull(workouts.finishedAt));
+  const weekStart = startOfWeek(now);
+  const count = rows.filter((w) => w.startedAt >= weekStart).length;
+  const streak = weekStreak(
+    now,
+    rows.map((w) => w.startedAt),
+  );
+  return {
+    label: tr('Тренувань за тиждень', 'Workouts this week'),
+    value: String(count),
+    unit: '',
+    subtitle: `${tr('Тижнів поспіль', 'Weeks in a row')}: ${streak}`,
+    url: Linking.createURL('training', { queryParams: { view: 'history' } }),
+    // The widget shows 0 from next Monday on, even if the app isn't opened.
+    resetAt: addDays(weekStart, 7),
+  };
+}
+
+/**
+ * Today's water and calories, the next workout, body weight and this week's workouts,
+ * formatted for the Android home screen widgets.
+ */
 export async function loadHomeWidgetData(now = Date.now()) {
   const day = startOfDay(now);
-  const [{ waterMl, kcal }, waterGoal, kcalGoal, workout] = await Promise.all([
+  const [{ waterMl, kcal }, waterGoal, kcalGoal, workout, weight, week] = await Promise.all([
     todayTotals(day),
     getWaterGoal(),
     getKcalGoal(),
     loadWorkout(),
+    loadWeight(),
+    loadWeek(now),
   ]);
   return {
     day,
@@ -90,6 +143,8 @@ export async function loadHomeWidgetData(now = Date.now()) {
       url: Linking.createURL('food'),
     },
     workout,
+    weight,
+    week,
   };
 }
 

@@ -8,9 +8,15 @@
   <string name="widget_calories_description">Скільки калорій з’їдено сьогодні</string>
   <string name="widget_workout_name">Fitness: наступне тренування</string>
   <string name="widget_workout_description">Наступний день програми або тренування, що триває</string>
+  <string name="widget_weight_name">Fitness: вага</string>
+  <string name="widget_weight_description">Останнє зважування й зміна від першого</string>
+  <string name="widget_week_name">Fitness: цей тиждень</string>
+  <string name="widget_week_description">Тренування за тиждень і тижні поспіль</string>
   <string name="widget_water">Вода</string>
   <string name="widget_calories">Калорії</string>
   <string name="widget_next_workout">Наступне тренування</string>
+  <string name="widget_weight">Вага тіла</string>
+  <string name="widget_week">Тренувань за тиждень</string>
   <string name="widget_open_app">Відкрийте застосунок, щоб побачити дані</string>
   <string name="widget_sample_water">1 250</string>
   <string name="widget_sample_calories">1 340</string>
@@ -18,4 +24,9 @@
   <string name="widget_sample_calories_total">/ 2 200 ккал</string>
   <string name="widget_sample_workout">Верх тіла</string>
   <string name="widget_sample_program">Сила · 6 вправ</string>
+  <string name="widget_sample_weight">78,4</string>
+  <string name="widget_sample_weight_unit">кг</string>
+  <string name="widget_sample_weight_subtitle">−2,1 кг · 15 жовт.</string>
+  <string name="widget_sample_week">3</string>
+  <string name="widget_sample_week_subtitle">Тижнів поспіль: 5</string>
 </resources>

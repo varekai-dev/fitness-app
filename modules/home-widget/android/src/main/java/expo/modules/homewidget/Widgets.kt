@@ -9,6 +9,9 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.util.SizeF
 import android.widget.RemoteViews
 
 /** The view ids of one metric cell; the same ids in every layout that shows it. */
@@ -28,20 +31,39 @@ private val CALORIES = MetricViews(
   R.id.calories_progress,
 )
 
+/** Below this height (dp) the widget switches to its one-row layout. */
+private const val COMPACT_HEIGHT = 100f
+
+/** Which single-number widget a [FitnessWidget] is, if any. */
+enum class StatKind { WEIGHT, WEEK }
+
 /**
- * A home screen widget showing some of today's water, calories and next workout.
+ * A home screen widget showing some of today's water, calories and next workout,
+ * or one stat (body weight, this week's workouts).
  * The app pushes the data; the widget never reads the database itself.
+ * [compactLayout] has the same ids minus the ones a single row has no room for.
  */
 abstract class FitnessWidget(
   private val layout: Int,
+  private val compactLayout: Int,
   private val water: Boolean = false,
   private val calories: Boolean = false,
   private val workout: Boolean = false,
+  private val stat: StatKind? = null,
 ) : AppWidgetProvider() {
 
   override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
     render(context, manager, ids)
     MidnightReceiver.schedule(context)
+  }
+
+  override fun onAppWidgetOptionsChanged(
+    context: Context,
+    manager: AppWidgetManager,
+    id: Int,
+    options: Bundle,
+  ) {
+    render(context, manager, intArrayOf(id))
   }
 
   override fun onDisabled(context: Context) {
@@ -50,11 +72,54 @@ abstract class FitnessWidget(
 
   internal fun render(context: Context, manager: AppWidgetManager, ids: IntArray) {
     val data = WidgetStore.load(context)?.forToday()
+    val viewsFor = { layout: Int -> build(context, layout, data) }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+      // The launcher picks the layout for the current size itself, also mid-resize.
+      val views = RemoteViews(
+        mapOf(
+          SizeF(0f, 0f) to viewsFor(compactLayout),
+          SizeF(0f, COMPACT_HEIGHT) to viewsFor(layout),
+        ),
+      )
+      manager.updateAppWidget(ids, views)
+      return
+    }
+    for (id in ids) {
+      // Portrait phones show the widget at its max height.
+      val height = manager.getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT)
+      val compact = height in 1 until COMPACT_HEIGHT.toInt()
+      manager.updateAppWidget(id, viewsFor(if (compact) compactLayout else layout))
+    }
+  }
+
+  private fun build(context: Context, layout: Int, data: WidgetData?): RemoteViews {
     val views = RemoteViews(context.packageName, layout)
     if (water) bindMetric(context, views, WATER, data?.water, R.string.widget_water, 1)
     if (calories) bindMetric(context, views, CALORIES, data?.calories, R.string.widget_calories, 2)
     if (workout) bindWorkout(context, views, data?.workout)
-    manager.updateAppWidget(ids, views)
+    when (stat) {
+      StatKind.WEIGHT -> bindStat(context, views, data?.weight, R.string.widget_weight, 4)
+      StatKind.WEEK -> bindStat(context, views, data?.week, R.string.widget_week, 5)
+      null -> {}
+    }
+    return views
+  }
+
+  private fun bindStat(
+    context: Context,
+    views: RemoteViews,
+    stat: Stat?,
+    fallbackLabel: Int,
+    requestCode: Int,
+  ) {
+    views.setTextViewText(R.id.stat_label, stat?.label ?: context.getString(fallbackLabel))
+    views.setTextViewText(R.id.stat_value, stat?.value ?: "—")
+    views.setTextViewText(R.id.stat_unit, stat?.unit ?: "")
+    views.setTextViewText(
+      R.id.stat_subtitle,
+      stat?.subtitle ?: context.getString(R.string.widget_open_app),
+    )
+    views.setOnClickPendingIntent(R.id.stat_cell, openApp(context, stat?.url, requestCode))
   }
 
   private fun bindMetric(
@@ -109,6 +174,8 @@ abstract class FitnessWidget(
       WaterWidget::class.java,
       CaloriesWidget::class.java,
       WorkoutWidget::class.java,
+      WeightWidget::class.java,
+      WeekWidget::class.java,
     )
 
     /** Ids of every placed widget of each kind; empty when none is on the home screen. */
@@ -129,13 +196,27 @@ abstract class FitnessWidget(
   }
 }
 
-class TodayWidget : FitnessWidget(R.layout.widget_today, water = true, calories = true, workout = true)
+class TodayWidget : FitnessWidget(
+  R.layout.widget_today,
+  R.layout.widget_today_compact,
+  water = true,
+  calories = true,
+  workout = true,
+)
 
-class WaterWidget : FitnessWidget(R.layout.widget_water, water = true)
+class WaterWidget : FitnessWidget(R.layout.widget_water, R.layout.widget_water_compact, water = true)
 
-class CaloriesWidget : FitnessWidget(R.layout.widget_calories, calories = true)
+class CaloriesWidget :
+  FitnessWidget(R.layout.widget_calories, R.layout.widget_calories_compact, calories = true)
 
-class WorkoutWidget : FitnessWidget(R.layout.widget_workout, workout = true)
+class WorkoutWidget :
+  FitnessWidget(R.layout.widget_workout, R.layout.widget_workout_compact, workout = true)
+
+class WeightWidget :
+  FitnessWidget(R.layout.widget_weight, R.layout.widget_weight_compact, stat = StatKind.WEIGHT)
+
+class WeekWidget :
+  FitnessWidget(R.layout.widget_week, R.layout.widget_week_compact, stat = StatKind.WEEK)
 
 /**
  * Resets today's totals at midnight, when the app may not run for hours. The alarm

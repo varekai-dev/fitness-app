@@ -8,9 +8,15 @@
   <string name="widget_calories_description">Calories eaten today</string>
   <string name="widget_workout_name">Fitness: next workout</string>
   <string name="widget_workout_description">The next program day, or the workout in progress</string>
+  <string name="widget_weight_name">Fitness: body weight</string>
+  <string name="widget_weight_description">Your latest weigh-in and the change since the first one</string>
+  <string name="widget_week_name">Fitness: this week</string>
+  <string name="widget_week_description">Workouts this week and weeks in a row</string>
   <string name="widget_water">Water</string>
   <string name="widget_calories">Calories</string>
   <string name="widget_next_workout">Next workout</string>
+  <string name="widget_weight">Body weight</string>
+  <string name="widget_week">Workouts this week</string>
   <string name="widget_open_app">Open the app to show your data</string>
   <!-- Sample data for the widget picker preview. -->
   <string name="widget_sample_water">1,250</string>
@@ -19,4 +25,10 @@
   <string name="widget_sample_calories_total">/ 2,200 kcal</string>
   <string name="widget_sample_workout">Upper body</string>
   <string name="widget_sample_program">Strength · 6 exercises</string>
+  <string name="widget_sample_weight">78.4</string>
+  <string name="widget_sample_weight_unit">kg</string>
+  <string name="widget_sample_weight_subtitle">−2.1 kg · Oct 15</string>
+  <string name="widget_sample_week">3</string>
+  <string name="widget_sample_week_unit" translatable="false"></string>
+  <string name="widget_sample_week_subtitle">Weeks in a row: 5</string>
 </resources>
