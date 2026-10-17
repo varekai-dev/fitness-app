@@ -127,6 +127,19 @@ export function recommendCalories(
   return { age, bmr, tdee, kcal };
 }
 
+/** Energy in a kilogram of body fat. */
+const KCAL_PER_KG = 7700;
+
+/**
+ * Expected weight change in kg a week when eating `kcal` a day against the
+ * maintenance `tdee`: negative for a deficit, positive for a surplus.
+ */
+export const weeklyWeightChange = (tdee: number, kcal: number) =>
+  ((kcal - tdee) * 7) / KCAL_PER_KG;
+
+/** Losing more than 1% of body weight a week costs muscle as well as fat. */
+export const FAST_WEEKLY_LOSS = 0.01;
+
 const WATER_ML_PER_KG = 30;
 
 /**
