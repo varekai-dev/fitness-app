@@ -48,6 +48,14 @@ export default function SettingsScreen() {
         hint={tr('Мова, одиниці', 'Language, units')}
         href="/settings/app"
       />
+      {Platform.OS !== 'web' && (
+        <SettingsLink
+          icon="cloud-upload-outline"
+          title={tr('Резервна копія', 'Backup')}
+          hint={tr('Експорт, імпорт', 'Export, import')}
+          href="/settings/backup"
+        />
+      )}
       {/* Fills the rest of the screen so the version sits at the bottom. */}
       <View style={styles.spacer} />
       {Platform.OS !== 'web' && <AppUpdateCard />}

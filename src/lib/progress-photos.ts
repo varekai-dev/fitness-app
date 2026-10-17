@@ -17,7 +17,7 @@ export const PHOTO_EVERY_DAYS = 7;
 /** A weigh-in this close to a photo counts as the weight on it. */
 const WEIGHT_MATCH_MS = 3 * DAY_MS;
 
-const photosDir = () => {
+export const photosDir = () => {
   const dir = new Directory(Paths.document, 'progress-photos');
   dir.create({ idempotent: true, intermediates: true });
   return dir;
