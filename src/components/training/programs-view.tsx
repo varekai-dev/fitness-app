@@ -27,6 +27,21 @@ export function ProgramsView({ bottomSpace }: { bottomSpace: number }) {
       ref={scrollRef}
       contentContainerStyle={[styles.content, { paddingBottom: bottomSpace }]}
       keyboardShouldPersistTaps="handled">
+      <Card onPress={() => router.push('/program/ai')} style={styles.item}>
+        <View style={styles.icon}>
+          <Ionicons name="sparkles" size={24} color={colors.accent} />
+        </View>
+        <View style={styles.flex}>
+          <Text variant="body">{tr('Скласти програму з AI', 'Build a program with AI')}</Text>
+          <Text variant="muted">
+            {tr(
+              'Кілька питань — і AI підбере дні, вправи й підходи під тебе',
+              'Answer a few questions and AI picks days, exercises and sets for you',
+            )}
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+      </Card>
       <SectionHeader title={tr('Мої програми', 'My programs')} />
       {data.length === 0 ? (
         <EmptyState

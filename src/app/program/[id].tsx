@@ -85,7 +85,17 @@ export default function ProgramScreen() {
 
       <SectionHeader title={tr('Послідовність днів', 'Day order')} />
       {program.days.length === 0 && (
-        <EmptyState icon="calendar" title={tr('Додай перший день', 'Add the first day')} />
+        <>
+          <EmptyState icon="calendar" title={tr('Додай перший день', 'Add the first day')} />
+          <Button
+            title={tr('Скласти з AI', 'Build with AI')}
+            icon="sparkles"
+            variant="secondary"
+            onPress={() =>
+              router.push({ pathname: '/program/ai', params: { programId: String(id) } })
+            }
+          />
+        </>
       )}
       {program.days.map((d, i) => (
         <Card

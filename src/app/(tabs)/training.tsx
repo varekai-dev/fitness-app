@@ -9,7 +9,7 @@ import { HistoryView } from '@/components/training/history-view';
 import { OverviewView } from '@/components/training/overview-view';
 import { ProgramsView } from '@/components/training/programs-view';
 import { CircleButton, ScreenHeader } from '@/components/ui';
-import { createProgram } from '@/db/programs';
+import { createProgram, NEW_PROGRAM_NAME } from '@/db/programs';
 import { tr } from '@/lib/i18n';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
@@ -38,7 +38,7 @@ export default function TrainingScreen() {
 
   // A new program starts with a placeholder name; the editor opens with it selected to retype.
   const newProgram = async () => {
-    const id = await createProgram(tr('Нова програма', 'New program'));
+    const id = await createProgram(NEW_PROGRAM_NAME);
     router.push({ pathname: '/program/[id]', params: { id, isNew: '1' } });
   };
 

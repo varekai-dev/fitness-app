@@ -108,8 +108,33 @@ type GroqNutrition = {
 
 const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : 0);
 
-/** Asks Groq for the nutrition of `dish`; throws `GroqError` with a user-facing message. */
-export async function askGroqNutrition(dish: string, apiKey?: string | null): Promise<Nutrition> {
+export type GroqRequest = {
+  system: string;
+  user: string;
+  /** Strict JSON Schema the reply must follow. */
+  schema: object;
+  schemaName: string;
+  temperature?: number;
+  reasoningEffort?: 'low' | 'medium' | 'high';
+  /** Room for reasoning plus the reply; a reply cut short fails the schema. */
+  maxTokens?: number;
+  apiKey?: string | null;
+};
+
+// A reply that failed the schema (usually cut short) often succeeds when asked again.
+const ATTEMPTS = 2;
+
+/** One chat completion parsed as JSON; throws `GroqError` with a user-facing message. */
+export async function groqJson<T>({
+  system,
+  user,
+  schema,
+  schemaName,
+  temperature = 0,
+  reasoningEffort = 'low',
+  maxTokens,
+  apiKey,
+}: GroqRequest): Promise<T> {
   const key = apiKey ?? (await getGroqKey());
   if (!key)
     throw new GroqError(
@@ -117,59 +142,82 @@ export async function askGroqNutrition(dish: string, apiKey?: string | null): Pr
       'no-key',
     );
 
-  let res: Response;
-  try {
-    res = await fetch(`${API}/chat/completions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-      body: JSON.stringify({
-        model: GROQ_MODEL,
-        temperature: 0,
-        reasoning_effort: 'low',
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: dish },
-        ],
-        response_format: {
-          type: 'json_schema',
-          json_schema: { name: 'nutrition', schema: SCHEMA, strict: true },
-        },
-      }),
-    });
-  } catch {
-    throw new GroqError(
-      tr('Немає з’єднання з Groq. Перевір інтернет.', 'Can’t reach Groq. Check your internet.'),
-      'network',
-    );
-  }
+  const badResponse = new GroqError(
+    tr(
+      'AI повернув неповну відповідь. Спробуй ще раз.',
+      'AI returned an incomplete answer. Try again.',
+    ),
+    'bad-response',
+  );
 
-  if (res.status === 401 || res.status === 403) {
-    throw new GroqError(
-      tr(
-        'Groq відхилив ключ. Перевір його в налаштуваннях.',
-        'Groq rejected the key. Check it in settings.',
-      ),
-      'auth',
-    );
-  }
-  if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    throw new GroqError(
-      `${tr('Groq повернув помилку', 'Groq returned error')} ${res.status}. ${body.slice(0, 200)}`,
-      'network',
-    );
-  }
+  for (let attempt = 1; ; attempt++) {
+    let res: Response;
+    try {
+      res = await fetch(`${API}/chat/completions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+        body: JSON.stringify({
+          model: GROQ_MODEL,
+          temperature,
+          reasoning_effort: reasoningEffort,
+          max_completion_tokens: maxTokens,
+          messages: [
+            { role: 'system', content: system },
+            { role: 'user', content: user },
+          ],
+          response_format: {
+            type: 'json_schema',
+            json_schema: { name: schemaName, schema, strict: true },
+          },
+        }),
+      });
+    } catch {
+      throw new GroqError(
+        tr('Немає з’єднання з Groq. Перевір інтернет.', 'Can’t reach Groq. Check your internet.'),
+        'network',
+      );
+    }
 
-  let parsed: GroqNutrition;
-  try {
-    const json = await res.json();
-    parsed = JSON.parse(json.choices[0].message.content);
-  } catch {
-    throw new GroqError(
-      tr('Не вдалося прочитати відповідь Groq.', 'Couldn’t read the Groq response.'),
-      'bad-response',
-    );
+    if (res.status === 401 || res.status === 403) {
+      throw new GroqError(
+        tr(
+          'Groq відхилив ключ. Перевір його в налаштуваннях.',
+          'Groq rejected the key. Check it in settings.',
+        ),
+        'auth',
+      );
+    }
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      if (res.status === 400 && body.includes('json_validate_failed')) {
+        if (attempt < ATTEMPTS) continue;
+        throw badResponse;
+      }
+      throw new GroqError(
+        `${tr('Groq повернув помилку', 'Groq returned error')} ${res.status}. ${body.slice(0, 200)}`,
+        'network',
+      );
+    }
+
+    try {
+      const json = await res.json();
+      return JSON.parse(json.choices[0].message.content) as T;
+    } catch {
+      if (attempt < ATTEMPTS) continue;
+      throw badResponse;
+    }
   }
+}
+
+/** Asks Groq for the nutrition of `dish`; throws `GroqError` with a user-facing message. */
+export async function askGroqNutrition(dish: string, apiKey?: string | null): Promise<Nutrition> {
+  const parsed = await groqJson<GroqNutrition>({
+    system: SYSTEM_PROMPT,
+    user: dish,
+    schema: SCHEMA,
+    schemaName: 'nutrition',
+    apiKey,
+  });
   if (parsed.is_food && !(num(parsed.portion_g) > 0)) {
     throw new GroqError(
       tr(

@@ -1,5 +1,10 @@
 import { and, asc, desc, eq, isNotNull, isNull, max, ne } from 'drizzle-orm';
 
+import { bundledImageUri, DEFAULT_EXERCISE_IMAGES } from '@/lib/exercise-images';
+import { defaultYoutubeUrl } from '@/lib/exercise-videos';
+import { tr } from '@/lib/i18n';
+import type { ProgramPlan } from '@/lib/program-ai';
+
 import { db, type Tx } from './client';
 import {
   exercises,
@@ -62,6 +67,9 @@ export const getProgramDay = (id: number) =>
       },
     },
   });
+
+/** Name a new program starts with until the user retypes it. */
+export const NEW_PROGRAM_NAME = tr('Нова програма', 'New program');
 
 export async function createProgram(name: string) {
   const active = await getActiveProgram();
@@ -132,6 +140,82 @@ export async function getNextDayId(programId: number): Promise<number | null> {
   const idx = days.findIndex((d) => d.id === last?.programDayId);
   if (idx === -1) return days[0].id;
   return days[(idx + 1) % days.length].id;
+}
+
+/**
+ * Saves a program made by AI, creating the exercises it added to the library.
+ * With `intoProgramId` the days go into that program instead, which takes the
+ * plan's name while it still has the placeholder one. Returns the program id.
+ */
+export function saveProgramPlan(plan: ProgramPlan, intoProgramId?: number) {
+  return db.transaction((tx) => {
+    let programId: number;
+    let firstPosition = 0;
+    if (intoProgramId !== undefined) {
+      programId = intoProgramId;
+      tx.update(programs)
+        .set({ name: plan.name })
+        .where(and(eq(programs.id, programId), eq(programs.name, NEW_PROGRAM_NAME)))
+        .run();
+      const last = tx
+        .select({ value: max(programDays.position) })
+        .from(programDays)
+        .where(eq(programDays.programId, programId))
+        .get();
+      firstPosition = (last?.value ?? -1) + 1;
+    } else {
+      const hasActive = tx
+        .select({ id: programs.id })
+        .from(programs)
+        .where(and(eq(programs.isActive, true), isNull(programs.archivedAt)))
+        .get();
+      programId = tx
+        .insert(programs)
+        .values({ name: plan.name, isActive: !hasActive })
+        .returning({ id: programs.id })
+        .get().id;
+    }
+
+    // An exercise new to the library may appear on several days; create it once.
+    const created = new Map<string, number>();
+    const exerciseId = (e: ProgramPlan['days'][number]['exercises'][number]) => {
+      if (e.exerciseId !== null) return e.exerciseId;
+      const key = e.name.toLowerCase();
+      const id =
+        created.get(key) ??
+        tx
+          .insert(exercises)
+          .values({
+            name: e.name,
+            muscleGroup: e.muscleGroup,
+            trackingType: e.trackingType,
+            notes: e.notes,
+            youtubeUrl: defaultYoutubeUrl(e.name),
+            imageUri:
+              e.name in DEFAULT_EXERCISE_IMAGES
+                ? bundledImageUri(DEFAULT_EXERCISE_IMAGES[e.name])
+                : null,
+          })
+          .returning({ id: exercises.id })
+          .get().id;
+      created.set(key, id);
+      return id;
+    };
+
+    plan.days.forEach((day, i) => {
+      const dayId = tx
+        .insert(programDays)
+        .values({ programId, name: day.name, position: firstPosition + i })
+        .returning({ id: programDays.id })
+        .get().id;
+      day.exercises.forEach((e, position) => {
+        tx.insert(programDayExercises)
+          .values({ programDayId: dayId, exerciseId: exerciseId(e), position, ...e.targets })
+          .run();
+      });
+    });
+    return programId;
+  });
 }
 
 // --- Days ---
