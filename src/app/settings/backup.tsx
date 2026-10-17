@@ -73,6 +73,7 @@ export default function BackupSettingsScreen() {
       `${tr('записів їжі', 'food entries')}: ${s.foodEntries}`,
       `${tr('зважувань', 'weigh-ins')}: ${s.bodyWeights}`,
       `${tr('фото прогресу', 'progress photos')}: ${s.photos}`,
+      `${tr('фото вправ', 'exercise images')}: ${s.exerciseImages}`,
       '',
       tr(
         'Усі поточні дані на цьому телефоні буде замінено. Це не можна скасувати.',
@@ -100,8 +101,8 @@ export default function BackupSettingsScreen() {
         </Row>
         <Text variant="muted">
           {tr(
-            'Усі дані зберігаються лише на цьому телефоні. Збережи копію в Google Drive, Telegram чи іншому місці, щоб не втратити їх разом із телефоном. Фото прогресу теж потрапляють у копію, ключ Groq — ні.',
-            'All data is stored only on this phone. Save a backup to Google Drive, Telegram or elsewhere so you don’t lose it with the phone. Progress photos are included, the Groq key isn’t.',
+            'Усі дані зберігаються лише на цьому телефоні. Збережи копію в Google Drive, Telegram чи іншому місці, щоб не втратити їх разом із телефоном. Фото прогресу й вправ теж потрапляють у копію, ключ Groq — ні.',
+            'All data is stored only on this phone. Save a backup to Google Drive, Telegram or elsewhere so you don’t lose it with the phone. Progress photos and exercise images are included, the Groq key isn’t.',
           )}
         </Text>
         <Button

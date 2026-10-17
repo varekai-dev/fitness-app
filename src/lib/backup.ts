@@ -7,6 +7,7 @@ import { Platform } from 'react-native';
 
 import { sqlite } from '@/db/client';
 import { tr } from '@/lib/i18n';
+import { imagesDir } from '@/lib/images';
 import { photosDir } from '@/lib/progress-photos';
 import journal from '../../drizzle/meta/_journal.json';
 
@@ -16,13 +17,21 @@ import journal from '../../drizzle/meta/_journal.json';
  * keeps `__drizzle_migrations` and `user_version`: after a restore the usual
  * startup migrations and content seeds bring an older backup up to date.
  * Two extra tables travel in the file and are dropped on restore:
- * `backup_info` (marks the file as ours) and `backup_files` (progress photos).
+ * `backup_info` (marks the file as ours) and `backup_files` (progress photos
+ * under their file name, the user's exercise images under `exercise-images/`).
  * Secrets such as the Groq key live in SecureStore, not in the database.
  */
 const FORMAT = 'fitness-backup';
 const INFO_TABLE = 'backup_info';
 const FILES_TABLE = 'backup_files';
 const IMPORT_NAME = 'import.db';
+/** Prefix of exercise images in `backup_files`; progress photos have none. */
+const IMAGE_PREFIX = 'exercise-images/';
+/** Matches `exercises.image_uri` of a user's image in app storage, on any device. */
+const STORED_IMAGE = `%/${IMAGE_PREFIX}%`;
+
+/** File name of a stored exercise image, from its URI. */
+const imageName = (uri: string) => uri.slice(uri.lastIndexOf('/') + 1);
 
 /** Newest migration this build knows; a backup migrated past it came from a newer app. */
 const LATEST_MIGRATION = Math.max(...journal.entries.map((e) => e.when));
@@ -34,6 +43,7 @@ export type BackupSummary = {
   foodEntries: number;
   bodyWeights: number;
   photos: number;
+  exerciseImages: number;
 };
 
 /** A picked backup, checked and ready to restore. */
@@ -57,7 +67,7 @@ const count = async (db: SQLiteDatabase, from: string) =>
   (await db.getFirstAsync<{ n: number }>(`SELECT count(*) AS n FROM ${from}`))?.n ?? 0;
 
 /**
- * Writes all data, progress photos included, to a backup file and opens the
+ * Writes all data, progress photos and exercise images included, to a backup file and opens the
  * share sheet to save it, e.g. to Google Drive or Telegram.
  */
 export async function exportBackup() {
@@ -84,13 +94,23 @@ export async function exportBackup() {
     const photos = await copy.getAllAsync<{ file_name: string }>(
       'SELECT file_name FROM progress_photos',
     );
+    const images = await copy.getAllAsync<{ image_uri: string }>(
+      'SELECT DISTINCT image_uri FROM exercises WHERE image_uri LIKE ?',
+      STORED_IMAGE,
+    );
+    const files = [
+      ...photos.map((p) => ({ name: p.file_name, file: new File(photosDir(), p.file_name) })),
+      ...images.map((i) => {
+        const name = imageName(i.image_uri);
+        return { name: IMAGE_PREFIX + name, file: new File(imagesDir(), name) };
+      }),
+    ];
     // One file at a time, so memory holds a single photo however many there are.
-    for (const { file_name } of photos) {
-      const file = new File(photosDir(), file_name);
+    for (const { name, file } of files) {
       if (!file.exists) continue;
       await copy.runAsync(
         `INSERT OR REPLACE INTO ${FILES_TABLE} (name, data) VALUES (?, ?)`,
-        file_name,
+        name,
         await file.bytes(),
       );
     }
@@ -160,7 +180,8 @@ async function readSummary(db: SQLiteDatabase): Promise<BackupSummary> {
     workouts: await count(db, 'workouts WHERE finished_at IS NOT NULL'),
     foodEntries: await count(db, 'food_entries'),
     bodyWeights: await count(db, 'body_weights'),
-    photos: await count(db, FILES_TABLE),
+    photos: await count(db, `${FILES_TABLE} WHERE name NOT LIKE '${IMAGE_PREFIX}%'`),
+    exerciseImages: await count(db, `${FILES_TABLE} WHERE name LIKE '${IMAGE_PREFIX}%'`),
   };
 }
 
@@ -177,14 +198,19 @@ export async function restoreBackup({ db }: PendingBackup) {
         `SELECT data FROM ${FILES_TABLE} WHERE name = ?`,
         name,
       );
-      if (row) new File(photosDir(), name).write(row.data);
+      if (!row) continue;
+      const file = name.startsWith(IMAGE_PREFIX)
+        ? new File(imagesDir(), name.slice(IMAGE_PREFIX.length))
+        : new File(photosDir(), name);
+      file.write(row.data);
     }
     await db.execAsync(`DROP TABLE ${FILES_TABLE}; DROP TABLE ${INFO_TABLE}; VACUUM;`);
     await backupDatabaseAsync({ sourceDatabase: db, destDatabase: sqlite });
   } finally {
     await db.closeAsync();
-    // Also after a failure: removes photos written for a restore that didn't happen.
+    // Also after a failure: removes files written for a restore that didn't happen.
     cleanUpPhotos();
+    cleanUpExerciseImages();
     workDir();
   }
 }
@@ -202,6 +228,33 @@ function cleanUpPhotos() {
     else sqlite.runSync('DELETE FROM progress_photos WHERE id = ?', row.id);
   }
   for (const entry of photosDir().list()) {
+    if (entry instanceof File && !kept.has(entry.name)) entry.delete();
+  }
+}
+
+/**
+ * Points exercise images at this device's storage, since the backup keeps the
+ * other device's absolute URIs, clears those whose file is missing and drops
+ * files no exercise uses.
+ */
+function cleanUpExerciseImages() {
+  const rows = sqlite.getAllSync<{ id: number; image_uri: string }>(
+    'SELECT id, image_uri FROM exercises WHERE image_uri LIKE ?',
+    STORED_IMAGE,
+  );
+  const kept = new Set<string>();
+  for (const row of rows) {
+    const file = new File(imagesDir(), imageName(row.image_uri));
+    if (file.exists) {
+      kept.add(file.name);
+      if (file.uri !== row.image_uri) {
+        sqlite.runSync('UPDATE exercises SET image_uri = ? WHERE id = ?', file.uri, row.id);
+      }
+    } else {
+      sqlite.runSync('UPDATE exercises SET image_uri = NULL WHERE id = ?', row.id);
+    }
+  }
+  for (const entry of imagesDir().list()) {
     if (entry instanceof File && !kept.has(entry.name)) entry.delete();
   }
 }

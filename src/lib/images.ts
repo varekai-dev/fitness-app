@@ -3,7 +3,7 @@ import * as ImagePicker from 'expo-image-picker';
 
 import { tr } from '@/lib/i18n';
 
-const imagesDir = () => {
+export const imagesDir = () => {
   const dir = new Directory(Paths.document, 'exercise-images');
   dir.create({ idempotent: true, intermediates: true });
   return dir;
