@@ -23,7 +23,7 @@ type Option = {
 };
 
 export type ProgramQuestion = {
-  key: 'goal' | 'level' | 'days' | 'duration' | 'equipment' | 'focus' | 'limits';
+  key: 'kind' | 'goal' | 'level' | 'days' | 'duration' | 'equipment' | 'focus' | 'limits';
   title: string;
   hint?: string;
   /** Several options can be picked. */
@@ -33,13 +33,61 @@ export type ProgramQuestion = {
   /** Label of the answer in the prompt, in English. */
   prompt: string;
   options: Option[];
+  /** Asked only for these kinds of program; for every kind when unset. */
+  kinds?: ProgramKind[];
 };
 
 export type ProgramAnswers = Record<ProgramQuestion['key'], string[]>;
 
+/** A training program, or a warm-up or cool-down routine of one day. */
+export type ProgramKind = 'training' | 'warmup' | 'cooldown';
+
+export const programKind = (answers: ProgramAnswers): ProgramKind =>
+  answers.kind[0] === 'warmup' || answers.kind[0] === 'cooldown' ? answers.kind[0] : 'training';
+
+const MUSCLE_OPTIONS: Option[] = [
+  { value: 'chest', label: tr('Груди', 'Chest'), prompt: 'chest' },
+  { value: 'back', label: tr('Спина', 'Back'), prompt: 'back' },
+  { value: 'legs', label: tr('Ноги', 'Legs'), prompt: 'legs' },
+  { value: 'glutes', label: tr('Сідниці', 'Glutes'), prompt: 'glutes' },
+  { value: 'shoulders', label: tr('Плечі', 'Shoulders'), prompt: 'shoulders' },
+  { value: 'arms', label: tr('Руки', 'Arms'), prompt: 'arms (biceps and triceps)' },
+  { value: 'abs', label: tr('Прес', 'Abs'), prompt: 'abs and core' },
+];
+
+/**
+ * Some questions come in a version for training and one for warm-ups and
+ * cool-downs; only the one for the picked kind is asked.
+ */
 export const PROGRAM_QUESTIONS: ProgramQuestion[] = [
   {
+    key: 'kind',
+    title: tr('Що складаємо?', 'What are we building?'),
+    prompt: 'Program type',
+    options: [
+      {
+        value: 'training',
+        label: tr('Тренування', 'Training'),
+        hint: tr('Програма на тиждень під твою мету', 'A weekly program for your goal'),
+        prompt: 'training program',
+      },
+      {
+        value: 'warmup',
+        label: tr('Розминка', 'Warm-up'),
+        hint: tr('Розігріти тіло й суглоби перед тренуванням', 'Get the body and joints ready'),
+        prompt: 'warm-up before a workout',
+      },
+      {
+        value: 'cooldown',
+        label: tr('Заминка', 'Cool-down'),
+        hint: tr('Заспокоїти пульс і розтягнутися після', 'Bring the pulse down and stretch'),
+        prompt: 'cool-down after a workout',
+      },
+    ],
+  },
+  {
     key: 'goal',
+    kinds: ['training'],
     title: tr('Яка головна мета?', 'What is your main goal?'),
     prompt: 'Main goal',
     options: [
@@ -76,7 +124,118 @@ export const PROGRAM_QUESTIONS: ProgramQuestion[] = [
     ],
   },
   {
+    key: 'goal',
+    kinds: ['warmup'],
+    title: tr('Перед чим розминка?', 'What is the warm-up for?'),
+    prompt: 'Warm-up before',
+    options: [
+      {
+        value: 'strength',
+        label: tr('Силове тренування', 'Strength training'),
+        hint: tr('Штанга, гантелі, тренажери', 'Barbell, dumbbells, machines'),
+        prompt: 'strength training with weights',
+      },
+      {
+        value: 'cardio',
+        label: tr('Біг чи кардіо', 'Running or cardio'),
+        hint: tr('Біг, велосипед, скакалка', 'Running, cycling, jump rope'),
+        prompt: 'running or other cardio',
+      },
+      {
+        value: 'intense',
+        label: tr('Інтенсивне тренування', 'Intense workout'),
+        hint: tr('HIIT, кросфіт, ігрові види спорту', 'HIIT, CrossFit, team sports'),
+        prompt: 'intense workout: HIIT, CrossFit or team sports',
+      },
+      {
+        value: 'morning',
+        label: tr('Ранкова зарядка', 'Morning routine'),
+        hint: tr('Просто прокинутися й розім’ятися', 'Just wake up and loosen up'),
+        prompt: 'a morning routine on its own, no workout after it',
+      },
+    ],
+  },
+  {
+    key: 'goal',
+    kinds: ['cooldown'],
+    title: tr('Після чого заминка?', 'What is the cool-down after?'),
+    prompt: 'Cool-down after',
+    options: [
+      {
+        value: 'strength',
+        label: tr('Силове тренування', 'Strength training'),
+        hint: tr('Штанга, гантелі, тренажери', 'Barbell, dumbbells, machines'),
+        prompt: 'strength training with weights',
+      },
+      {
+        value: 'cardio',
+        label: tr('Біг чи кардіо', 'Running or cardio'),
+        hint: tr('Біг, велосипед, скакалка', 'Running, cycling, jump rope'),
+        prompt: 'running or other cardio',
+      },
+      {
+        value: 'intense',
+        label: tr('Інтенсивне тренування', 'Intense workout'),
+        hint: tr('HIIT, кросфіт, ігрові види спорту', 'HIIT, CrossFit, team sports'),
+        prompt: 'intense workout: HIIT, CrossFit or team sports',
+      },
+      {
+        value: 'relax',
+        label: tr('Просто розтягнутися', 'Just stretch'),
+        hint: tr('Увечері чи після дня за столом', 'In the evening or after a day at a desk'),
+        prompt: 'a relaxing stretch on its own, after a day of sitting',
+      },
+    ],
+  },
+  {
+    key: 'focus',
+    kinds: ['warmup'],
+    title: tr('Що працюватиме найбільше?', 'What will work the most?'),
+    hint: tr('Можна пропустити — тоді все тіло', 'Skip it for the whole body'),
+    multi: true,
+    optional: true,
+    prompt: 'Muscles the workout trains',
+    options: MUSCLE_OPTIONS,
+  },
+  {
+    key: 'focus',
+    kinds: ['cooldown'],
+    title: tr('Що найбільше втомилося?', 'What is the most tired?'),
+    hint: tr('Можна пропустити — тоді все тіло', 'Skip it for the whole body'),
+    multi: true,
+    optional: true,
+    prompt: 'Muscles the workout trained',
+    options: MUSCLE_OPTIONS,
+  },
+  {
     key: 'level',
+    kinds: ['warmup', 'cooldown'],
+    title: tr('Яка в тебе гнучкість?', 'How flexible are you?'),
+    prompt: 'Flexibility',
+    options: [
+      {
+        value: 'stiff',
+        label: tr('Скутий', 'Stiff'),
+        hint: tr('Важко дотягнутися до пальців ніг', 'Hard to reach your toes'),
+        prompt: 'stiff, keep the range of motion small and easy',
+      },
+      {
+        value: 'average',
+        label: tr('Середня', 'Average'),
+        hint: tr('Дотягуюся до пальців з прямими ногами', 'Reach your toes with straight legs'),
+        prompt: 'average',
+      },
+      {
+        value: 'flexible',
+        label: tr('Гнучкий', 'Flexible'),
+        hint: tr('Долоні легко лягають на підлогу', 'Palms rest on the floor easily'),
+        prompt: 'flexible, deeper positions are fine',
+      },
+    ],
+  },
+  {
+    key: 'level',
+    kinds: ['training'],
     title: tr('Який у тебе досвід?', 'How experienced are you?'),
     prompt: 'Training experience',
     options: [
@@ -102,6 +261,7 @@ export const PROGRAM_QUESTIONS: ProgramQuestion[] = [
   },
   {
     key: 'days',
+    kinds: ['training'],
     title: tr('Скільки разів на тиждень?', 'How many times a week?'),
     prompt: 'Workouts per week',
     options: [2, 3, 4, 5, 6].map((n) => ({
@@ -112,9 +272,11 @@ export const PROGRAM_QUESTIONS: ProgramQuestion[] = [
   },
   {
     key: 'duration',
+    kinds: ['training'],
     title: tr('Скільки триває тренування?', 'How long is a workout?'),
     prompt: 'Workout length',
     options: [
+      { value: '15', label: tr('15 хв', '15 min'), prompt: '15 minutes (about 3 exercises)' },
       { value: '30', label: tr('30 хв', '30 min'), prompt: '30 minutes (about 3–4 exercises)' },
       { value: '45', label: tr('45 хв', '45 min'), prompt: '45 minutes (about 4–5 exercises)' },
       { value: '60', label: tr('1 год', '1 hour'), prompt: '60 minutes (about 5–6 exercises)' },
@@ -126,7 +288,47 @@ export const PROGRAM_QUESTIONS: ProgramQuestion[] = [
     ],
   },
   {
+    key: 'duration',
+    kinds: ['warmup', 'cooldown'],
+    title: tr('Скільки часу є?', 'How much time do you have?'),
+    prompt: 'Routine length',
+    options: [5, 10, 15].map((n) => ({
+      value: String(n),
+      label: tr(`${n} хв`, `${n} min`),
+      prompt: `${n} minutes`,
+    })),
+  },
+  {
     key: 'equipment',
+    kinds: ['warmup', 'cooldown'],
+    title: tr('Що є під рукою?', 'What do you have at hand?'),
+    hint: tr('Познач усе, що маєш', 'Pick everything you have'),
+    multi: true,
+    prompt: 'Available equipment (use nothing else)',
+    options: [
+      {
+        value: 'bodyweight',
+        label: tr('Нічого, лише килимок', 'Nothing, just a mat'),
+        prompt: 'bodyweight only, a wall or a chair',
+      },
+      { value: 'bands', label: tr('Резинки', 'Resistance bands'), prompt: 'resistance bands' },
+      {
+        value: 'foam_roller',
+        label: tr('Масажний ролик', 'Foam roller'),
+        prompt: 'foam roller',
+      },
+      { value: 'dumbbells', label: tr('Легкі гантелі', 'Light dumbbells'), prompt: 'dumbbells' },
+      { value: 'kettlebell', label: tr('Гиря', 'Kettlebell'), prompt: 'kettlebell' },
+      {
+        value: 'gym',
+        label: tr('Спортзал', 'Gym'),
+        prompt: 'full gym: cardio machines, cables, balls, foam rollers, bars',
+      },
+    ],
+  },
+  {
+    key: 'equipment',
+    kinds: ['training'],
     title: tr('Що є з обладнання?', 'What equipment do you have?'),
     hint: tr('Познач усе, що маєш', 'Pick everything you have'),
     multi: true,
@@ -153,19 +355,14 @@ export const PROGRAM_QUESTIONS: ProgramQuestion[] = [
   },
   {
     key: 'focus',
+    kinds: ['training'],
     title: tr('На що зробити акцент?', 'What should it focus on?'),
     hint: tr('Можна пропустити — тоді все рівномірно', 'Skip it for an even split'),
     multi: true,
     optional: true,
     prompt: 'Extra focus',
     options: [
-      { value: 'chest', label: tr('Груди', 'Chest'), prompt: 'chest' },
-      { value: 'back', label: tr('Спина', 'Back'), prompt: 'back' },
-      { value: 'legs', label: tr('Ноги', 'Legs'), prompt: 'legs' },
-      { value: 'glutes', label: tr('Сідниці', 'Glutes'), prompt: 'glutes' },
-      { value: 'shoulders', label: tr('Плечі', 'Shoulders'), prompt: 'shoulders' },
-      { value: 'arms', label: tr('Руки', 'Arms'), prompt: 'arms (biceps and triceps)' },
-      { value: 'abs', label: tr('Прес', 'Abs'), prompt: 'abs and core' },
+      ...MUSCLE_OPTIONS,
       { value: 'cardio', label: tr('Кардіо', 'Cardio'), prompt: 'cardio' },
     ],
   },
@@ -190,7 +387,12 @@ export const PROGRAM_QUESTIONS: ProgramQuestion[] = [
   },
 ];
 
+/** The questions asked for the kind of program picked so far. */
+export const questionsFor = (answers: ProgramAnswers) =>
+  PROGRAM_QUESTIONS.filter((q) => !q.kinds || q.kinds.includes(programKind(answers)));
+
 export const EMPTY_ANSWERS: ProgramAnswers = {
+  kind: [],
   goal: [],
   level: [],
   days: [],
@@ -201,13 +403,27 @@ export const EMPTY_ANSWERS: ProgramAnswers = {
 };
 
 /** Ready-made wishes the user can tap into the text field. */
-export const WISH_SUGGESTIONS = [
-  tr('Тримати себе в тонусі', 'Stay in shape'),
-  tr('Уклон на силові', 'Lean towards strength'),
-  tr('Більше кардіо', 'More cardio'),
-  tr('Тренуюся вдома', 'I train at home'),
-  tr('Хочу більше підтягуватися', 'Want to do more pull-ups'),
-];
+export const WISH_SUGGESTIONS: Record<ProgramKind, string[]> = {
+  training: [
+    tr('Тримати себе в тонусі', 'Stay in shape'),
+    tr('Уклон на силові', 'Lean towards strength'),
+    tr('Більше кардіо', 'More cardio'),
+    tr('Тренуюся вдома', 'I train at home'),
+    tr('Хочу більше підтягуватися', 'Want to do more pull-ups'),
+  ],
+  warmup: [
+    tr('Усе стоячи, без підлоги', 'All standing, no floor work'),
+    tr('Суглоби скуті зранку', 'Stiff joints in the morning'),
+    tr('Тихо, щоб не заважати сусідам', 'Quiet, not to bother the neighbours'),
+    tr('Більше на плечі', 'More for the shoulders'),
+  ],
+  cooldown: [
+    tr('Хочу стати гнучкішим', 'Want to get more flexible'),
+    tr('Затерплі спина й шия', 'Tight back and neck'),
+    tr('Спокійно, щоб розслабитися', 'Calm, to relax'),
+    tr('Більше на ноги', 'More for the legs'),
+  ],
+};
 
 export type PlanExercise = {
   name: string;
@@ -229,33 +445,79 @@ export type ProgramPlan = {
 
 type Library = Pick<Exercise, 'id' | 'name' | 'muscleGroup' | 'trackingType' | 'imageUri'>[];
 
+/** Sets, reps and rest for each kind of program. */
+const TARGET_RULES: Record<ProgramKind, string> = {
+  training:
+    '- Pick reps and rest for the goal: strength 3–6 reps and 120–180 s rest, muscle 6–12 reps and 60–120 s, toning 10–15 reps and 45–75 s, fat loss and endurance 12–20 reps and 30–60 s. Beginners get fewer sets.',
+  warmup:
+    '- Keep it easy: mostly timed exercises of 30–90 s, or 10–15 light reps; 1 set (2 for one done on each side, a set per side); rest_sec 0–15. No heavy loads, nothing to failure.',
+  cooldown:
+    '- Keep it easy: mostly stretches held 30–60 s, timed; 1 set (2 for one done on each side, a set per side); rest_sec 0–15. No intense work.',
+};
+
 /** What the program and a replacement have to follow alike. */
-const EXERCISE_RULES = `- Use only the listed equipment. Never give exercises that load the listed limitations.
-- Pick reps and rest for the goal: strength 3–6 reps and 120–180 s rest, muscle 6–12 reps and 60–120 s, toning 10–15 reps and 45–75 s, fat loss and endurance 12–20 reps and 30–60 s. Beginners get fewer sets.
+const exerciseRules = (
+  kind: ProgramKind,
+) => `- Use only the listed equipment. Never give exercises that load the listed limitations.
+${TARGET_RULES[kind]}
 - Use only exercises from the two lists below, copying their names exactly; never invent others. Prefer the library where it suits the goal and equipment; when the equipment allows better choices the library lacks (barbell, machines, cables, kettlebell, bands…) or the focus needs them, add exercises from the list of more exercises.
 - muscle_group: the main muscle worked; tracking_type: weight_reps for exercises with external load, reps for bodyweight reps, weighted_reps for bodyweight exercises that can take added weight (pull-ups, dips), duration for holds and timed work, distance_duration for running, cycling, rowing and similar.
 - Targets: sets; reps_min and reps_max for rep exercises, else 0; duration_sec for timed exercises (and optionally for distance ones), else 0; distance_km for distance exercises when it makes sense, else 0; rest_sec between sets.
 - notes: for an exercise from the list of more exercises, 1–2 sentences on technique in ${tr('Ukrainian', 'English')}; empty for library exercises.`;
 
-const SYSTEM_PROMPT = `You are an experienced strength and conditioning coach. Design a training program for the user.
+const TRAINING_PROMPT = `You are an experienced strength and conditioning coach. Design a training program for the user.
 A program is a cycle of workout days that repeat in order (e.g. Push / Pull / Legs); one day is one workout.
 Rules:
 - The user's wishes come first, then the main goal; also follow the experience level, workouts per week, workout length and focus.
 - Take the profile into account (sex, age, body weight, activity, weight goal).
 - Make exactly as many days as workouts per week, each a different workout.
 - Fill every day, the last one included, with as many exercises as the workout length allows. Compound exercises first, isolation and core last.
-${EXERCISE_RULES}
+${exerciseRules('training')}
 - summary: 1–2 sentences on how the program is built and why it suits the user.
 - name: a short program name of 2–4 words, without numbers of days or minutes.
 - Day names: a few words on what the day trains (e.g. ${tr('"Груди й трицепс", "Верх тіла"', '"Chest and triceps", "Upper body"')}), without "Day 1" numbering.
 - Write the program name, day names, summary and notes in natural, grammatical ${tr('Ukrainian', 'English')}.`;
 
-const REPLACE_PROMPT = `You are an experienced strength and conditioning coach. The user wants to swap one exercise in a workout day of their program for a similar one.
+/** What a warm-up and a cool-down are made of, in order. */
+const ROUTINE_STEPS = {
+  warmup:
+    '- Start with 1–2 minutes of easy cardio to raise the pulse, then dynamic mobility for the joints (circles, swings, inchworms), then light activation of the focus muscles. No long static stretches.',
+  cooldown:
+    '- Start with 1–2 minutes of easy cardio or walking to bring the pulse down, then static stretches for the focus muscles; foam rolling suits too if the equipment has it.',
+};
+
+const routinePrompt = (kind: 'warmup' | 'cooldown') => {
+  const warmup = kind === 'warmup';
+  return `You are an experienced strength and conditioning coach. Design a ${warmup ? 'warm-up before' : 'cool-down after'} a workout for the user: one day of short, easy exercises done in order.
 Rules:
-- Train the same main muscles in the same role: a compound lift for a compound lift, an isolation for an isolation, core for core.
+- The user's wishes come first; also follow what the routine goes with, its length, the user's flexibility and the muscles given (the whole body when there are none).
+- Take the profile into account (sex, age, body weight, activity).
+- Make exactly one day. Fit the length: about 3–4 exercises for 5 minutes, 5–6 for 10, 6–8 for 15.
+${ROUTINE_STEPS[kind]}
+${exerciseRules(kind)}
+- summary: 1–2 sentences on what the routine does and why it suits the user.
+- name: a short name of 2–4 words (e.g. ${warmup ? tr('"Розминка для ніг"', '"Leg day warm-up"') : tr('"Заминка після верху тіла"', '"Upper body cool-down"')}), without minutes.
+- Day name: a few words on what it is for (e.g. ${warmup ? tr('"Перед тренуванням ніг"', '"Before leg day"') : tr('"Розтяжка всього тіла"', '"Full body stretch"')}).
+- Write the name, day name, summary and notes in natural, grammatical ${tr('Ukrainian', 'English')}.`;
+};
+
+const systemPrompt = (kind: ProgramKind) =>
+  kind === 'training' ? TRAINING_PROMPT : routinePrompt(kind);
+
+const WHAT_IS_REPLACED: Record<ProgramKind, string> = {
+  training: 'a workout day of their program',
+  warmup: 'their warm-up',
+  cooldown: 'their cool-down',
+};
+
+const replacePrompt = (
+  kind: ProgramKind,
+) => `You are an experienced strength and conditioning coach. The user wants to swap one exercise in ${WHAT_IS_REPLACED[kind]} for a similar one.
+Rules:
+- Train the same main muscles in the same role: a compound lift for a compound lift, an isolation for an isolation, core for core, a stretch for a stretch, a mobility drill for a mobility drill.
 - Never suggest an exercise already in the day or in the list to avoid.
-- Keep the sets, reps and rest close to the replaced exercise unless the new one needs otherwise.
-${EXERCISE_RULES}`;
+- Keep the sets, reps, duration and rest close to the replaced exercise unless the new one needs otherwise.
+${exerciseRules(kind)}`;
 
 const EXERCISE_SCHEMA = {
   type: 'object',
@@ -348,8 +610,8 @@ function toTargets(type: TrackingType, e: GroqExercise): Targets {
     targetRepsMax: null,
     targetDurationSec: null,
     targetDistanceKm: null,
-    // Rounded to the 15 s steps the editor uses.
-    restSec: Math.round(clamp(e.rest_sec, 0, 600, 90) / 15) * 15,
+    // Rounded to the 15 s steps the editor uses; no rest is fine (warm-ups).
+    restSec: e.rest_sec === 0 ? 0 : Math.round(clamp(e.rest_sec, 0, 600, 90) / 15) * 15,
   };
   switch (type) {
     case 'weight_reps':
@@ -392,15 +654,17 @@ type Choices = {
 /**
  * Only exercises with a photo: library ones that have one (or whose photo is
  * bundled or in the catalog), then new ones the equipment and limitations allow.
+ * Stretches only go into warm-ups and cool-downs.
  */
 function choicesFor({ answers, library }: Pick<ProgramRequest, 'answers' | 'library'>): Choices {
   const catalog = new Map<string, Choice>();
   const equipment = new Set(answers.equipment);
   const noJumps = answers.limits.includes('no_jumps');
-  for (const [name, photo, muscleGroup, needs, jumps] of EXERCISE_CATALOG) {
+  const routine = programKind(answers) !== 'training';
+  for (const [name, photo, muscleGroup, needs, jumps, stretch] of EXERCISE_CATALOG) {
     // Bodyweight exercises need nothing; the prompt rules out what needs a bar or bench.
     const fits = equipment.has('gym') || equipment.has(needs) || needs === 'bodyweight';
-    if (!fits || (noJumps && jumps)) continue;
+    if (!fits || (noJumps && jumps) || (stretch && !routine)) continue;
     catalog.set(nameKey(name), { name, imageUri: encodeURI(CATALOG_PHOTOS + photo), muscleGroup });
   }
   for (const [name, key] of Object.entries(DEFAULT_EXERCISE_IMAGES)) {
@@ -459,7 +723,7 @@ export type ProgramRequest = {
 
 /** The user's profile, answers and the exercises to pick from, as the prompt sees them. */
 function userContext({ answers, wishes, profile, weightKg }: ProgramRequest, choices: Choices) {
-  const answerLines = PROGRAM_QUESTIONS.map((q) => {
+  const answerLines = questionsFor(answers).map((q) => {
     const picked = q.options.filter((o) => answers[q.key].includes(o.value));
     return `${q.prompt}: ${picked.map((o) => o.prompt).join(', ') || 'none'}`;
   });
@@ -484,11 +748,12 @@ function userContext({ answers, wishes, profile, weightKg }: ProgramRequest, cho
 
 /** Asks Groq for a program; throws `GroqError` with a user-facing message. */
 export async function askProgramPlan(request: ProgramRequest): Promise<ProgramPlan> {
-  const requestedDays = Number(request.answers.days[0]) || null;
+  const kind = programKind(request.answers);
+  const requestedDays = kind === 'training' ? Number(request.answers.days[0]) || null : 1;
   const choices = choicesFor(request);
   const withPhoto = (e: GroqExercise) => choices.byName.has(nameKey(e.name ?? ''));
   const raw = await groqJson<GroqPlan>({
-    system: SYSTEM_PROMPT,
+    system: systemPrompt(kind),
     user: userContext(request, choices),
     schema: SCHEMA,
     schemaName: 'program',
@@ -561,7 +826,7 @@ export async function askReplacement({
   const pick = (reply: GroqExercise) =>
     taken.has(nameKey(reply.name ?? '')) ? null : toPlanExercise(reply, choices);
   const raw = await groqJson<GroqExercise>({
-    system: REPLACE_PROMPT,
+    system: replacePrompt(programKind(request.answers)),
     user,
     schema: EXERCISE_SCHEMA,
     schemaName: 'exercise',

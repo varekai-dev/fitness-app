@@ -36,17 +36,53 @@ import {
   askReplacement,
   downloadPlanPhotos,
   EMPTY_ANSWERS,
-  PROGRAM_QUESTIONS,
+  programKind,
+  questionsFor,
   WISH_SUGGESTIONS,
   type ProgramAnswers,
+  type ProgramKind,
   type ProgramPlan,
   type ProgramQuestion,
 } from '@/lib/program-ai';
 import { cmToDisplay, HEIGHT_UNIT, WEIGHT_UNIT } from '@/lib/units';
 import { colors, radius, spacing } from '@/theme';
 
-/** The questions, then a last step with free-text wishes. */
-const STEPS = PROGRAM_QUESTIONS.length + 1;
+/** What a finished plan is called, by kind. */
+const READY_LABEL: Record<ProgramKind, string> = {
+  training: tr('Програма готова', 'Your program'),
+  warmup: tr('Розминка готова', 'Your warm-up'),
+  cooldown: tr('Заминка готова', 'Your cool-down'),
+};
+
+const WISHES_HINT: Record<ProgramKind, string> = {
+  training: tr(
+    'Напиши своїми словами, що хочеш від тренувань. Можна пропустити.',
+    'Tell in your own words what you want from training. You can skip it.',
+  ),
+  warmup: tr(
+    'Напиши своїми словами, що хочеш від розминки. Можна пропустити.',
+    'Tell in your own words what you want from the warm-up. You can skip it.',
+  ),
+  cooldown: tr(
+    'Напиши своїми словами, що хочеш від заминки. Можна пропустити.',
+    'Tell in your own words what you want from the cool-down. You can skip it.',
+  ),
+};
+
+const WISHES_PLACEHOLDER: Record<ProgramKind, string> = {
+  training: tr(
+    'Напр. «тримати себе в тонусі» або «уклон на силові»',
+    'E.g. “stay in shape” or “lean towards strength”',
+  ),
+  warmup: tr(
+    'Напр. «усе стоячи» або «суглоби скуті зранку»',
+    'E.g. “all standing” or “stiff joints in the morning”',
+  ),
+  cooldown: tr(
+    'Напр. «стати гнучкішим» або «затерпла спина»',
+    'E.g. “get more flexible” or “tight back”',
+  ),
+};
 
 /**
  * Builds a program with AI: a few questions with ready answers, the user's own
@@ -174,7 +210,10 @@ export default function AiProgramScreen() {
     else router.replace({ pathname: '/program/[id]', params: { id } });
   };
 
-  const question = PROGRAM_QUESTIONS[step];
+  const kind = programKind(answers);
+  // The questions for the kind picked, then a last step with free-text wishes.
+  const questions = questionsFor(answers);
+  const question = questions[step];
   // A required multi-choice question with nothing picked yet can't move on.
   const needsAnswer = !!question?.multi && !question.optional && answers[question.key].length === 0;
 
@@ -197,6 +236,7 @@ export default function AiProgramScreen() {
       ) : plan ? (
         <PlanPreview
           plan={plan}
+          kind={kind}
           replacing={replacing}
           onReplace={replace}
           saving={saving}
@@ -206,20 +246,26 @@ export default function AiProgramScreen() {
         />
       ) : (
         <>
-          <Progress step={step} />
+          <Progress step={step} steps={questions.length + 1} />
           {question ? (
             <QuestionStep
               key={question.key}
               question={question}
               value={answers[question.key]}
               onChange={(value) => {
-                setAnswers({ ...answers, [question.key]: value });
+                // Training and routines ask their own questions; only limits carry over.
+                const kindChanged = question.key === 'kind' && value[0] !== answers.kind[0];
+                setAnswers({
+                  ...(kindChanged ? { ...EMPTY_ANSWERS, limits: answers.limits } : answers),
+                  [question.key]: value,
+                });
                 // One answer is all a single-choice question needs.
                 if (!question.multi) setStep(step + 1);
               }}
             />
           ) : (
             <WishesStep
+              kind={kind}
               wishes={wishes}
               onChange={setWishes}
               profile={profileData.profile}
@@ -288,7 +334,7 @@ function profileFacts(profile: Profile, weightKg: number | undefined) {
 
 /** Labels of the picked answers to a question, joined. */
 function picked(answers: ProgramAnswers, key: ProgramQuestion['key']) {
-  const question = PROGRAM_QUESTIONS.find((q) => q.key === key);
+  const question = questionsFor(answers).find((q) => q.key === key);
   return (question?.options ?? [])
     .filter((o) => answers[key].includes(o.value))
     .map((o) => o.label)
@@ -303,15 +349,22 @@ function loaderStages(
   libraryCount: number,
 ): LoaderStage[] {
   const days = Number(answers.days[0]) || 3;
+  const routine = programKind(answers) !== 'training';
   return [
     { title: tr('Аналізую профіль', 'Reading your profile'), detail: facts.join(' · ') },
     {
-      title: tr('Враховую мету й побажання', 'Weighing your goal and wishes'),
+      title: routine
+        ? tr('Враховую побажання', 'Weighing your wishes')
+        : tr('Враховую мету й побажання', 'Weighing your goal and wishes'),
       detail: [picked(answers, 'goal'), wishes.trim()].filter(Boolean).join(' · '),
     },
     {
-      title: `${tr('Розподіляю', 'Spreading')} ${days} ${plural(days, ['тренування', 'тренування', 'тренувань'], ['workout', 'workouts'])} ${tr('на тиждень', 'over the week')}`,
-      detail: [picked(answers, 'duration'), picked(answers, 'focus')].filter(Boolean).join(' · '),
+      title: routine
+        ? `${tr('Вкладаю в', 'Fitting it into')} ${picked(answers, 'duration')}`
+        : `${tr('Розподіляю', 'Spreading')} ${days} ${plural(days, ['тренування', 'тренування', 'тренувань'], ['workout', 'workouts'])} ${tr('на тиждень', 'over the week')}`,
+      detail: [routine ? '' : picked(answers, 'duration'), picked(answers, 'focus')]
+        .filter(Boolean)
+        .join(' · '),
     },
     {
       title: tr('Підбираю вправи', 'Picking exercises'),
@@ -321,7 +374,9 @@ function loaderStages(
       ),
     },
     {
-      title: tr('Розраховую підходи й відпочинок', 'Setting sets and rest'),
+      title: routine
+        ? tr('Розраховую час на вправи', 'Timing the exercises')
+        : tr('Розраховую підходи й відпочинок', 'Setting sets and rest'),
       detail: picked(answers, 'level'),
     },
     {
@@ -331,15 +386,15 @@ function loaderStages(
   ];
 }
 
-function Progress({ step }: { step: number }) {
+function Progress({ step, steps }: { step: number; steps: number }) {
   return (
     <View style={styles.progress}>
       <Text variant="overline">
         {/* "з" in capitals reads like a 3, so a slash instead. */}
-        {tr('Крок', 'Step')} {step + 1}/{STEPS}
+        {tr('Крок', 'Step')} {step + 1}/{steps}
       </Text>
       <View style={styles.progressBar}>
-        {Array.from({ length: STEPS }, (_, i) => (
+        {Array.from({ length: steps }, (_, i) => (
           <View key={i} style={[styles.progressPart, i <= step && styles.progressPartDone]} />
         ))}
       </View>
@@ -414,11 +469,13 @@ function QuestionStep({
 }
 
 function WishesStep({
+  kind,
   wishes,
   onChange,
   profile,
   weightKg,
 }: {
+  kind: ProgramKind;
   wishes: string;
   onChange: (text: string) => void;
   profile: Profile;
@@ -435,24 +492,16 @@ function WishesStep({
     <View style={styles.step}>
       <View style={styles.stepHeader}>
         <Text variant="title">{tr('Твої побажання', 'Your wishes')}</Text>
-        <Text variant="secondary">
-          {tr(
-            'Напиши своїми словами, що хочеш від тренувань. Можна пропустити.',
-            'Tell in your own words what you want from training. You can skip it.',
-          )}
-        </Text>
+        <Text variant="secondary">{WISHES_HINT[kind]}</Text>
       </View>
       <Field
         value={wishes}
         onChangeText={onChange}
-        placeholder={tr(
-          'Напр. «тримати себе в тонусі» або «уклон на силові»',
-          'E.g. “stay in shape” or “lean towards strength”',
-        )}
+        placeholder={WISHES_PLACEHOLDER[kind]}
         multiline
       />
       <View style={styles.chips}>
-        {WISH_SUGGESTIONS.map((w) => (
+        {WISH_SUGGESTIONS[kind].map((w) => (
           <Chip key={w} label={`+ ${w}`} selected={false} onPress={() => append(w)} />
         ))}
       </View>
@@ -478,6 +527,7 @@ function WishesStep({
 
 function PlanPreview({
   plan,
+  kind,
   replacing,
   onReplace,
   saving,
@@ -486,6 +536,7 @@ function PlanPreview({
   onEdit,
 }: {
   plan: ProgramPlan;
+  kind: ProgramKind;
   replacing: string[];
   onReplace: (dayIndex: number, index: number) => void;
   saving: boolean;
@@ -501,15 +552,17 @@ function PlanPreview({
   return (
     <>
       <View style={styles.stepHeader}>
-        <Text variant="overline">{tr('Програма готова', 'Your program')}</Text>
+        <Text variant="overline">{READY_LABEL[kind]}</Text>
         <Text variant="title">{plan.name}</Text>
         {plan.summary !== '' && <Text variant="secondary">{plan.summary}</Text>}
       </View>
       <Row style={styles.badges}>
-        <Badge
-          label={`${plan.days.length} ${tr('дн.', plan.days.length === 1 ? 'day' : 'days')}`}
-          tone="muted"
-        />
+        {kind === 'training' && (
+          <Badge
+            label={`${plan.days.length} ${tr('дн.', plan.days.length === 1 ? 'day' : 'days')}`}
+            tone="muted"
+          />
+        )}
         <Badge
           label={`${total} ${plural(total, ['вправа', 'вправи', 'вправ'], ['exercise', 'exercises'])}`}
           tone="muted"

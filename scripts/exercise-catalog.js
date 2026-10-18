@@ -11,8 +11,9 @@ const SOURCE =
   'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/dist/exercises.json';
 const OUT = path.resolve(__dirname, '..', 'src', 'lib', 'exercise-catalog.ts');
 
-// Stretching, strongman and olympic lifts don't belong in a regular program.
-const CATEGORIES = new Set(['strength', 'cardio', 'plyometrics', 'powerlifting']);
+// Strongman and olympic lifts don't belong in a program; stretches are kept for
+// warm-ups and cool-downs only.
+const CATEGORIES = new Set(['strength', 'cardio', 'plyometrics', 'powerlifting', 'stretching']);
 
 const GROUPS = {
   chest: 'chest',
@@ -41,8 +42,17 @@ const EQUIPMENT = {
   'e-z curl bar': 'barbell',
   kettlebells: 'kettlebell',
   bands: 'bands',
+  'foam roll': 'foam_roller',
   'body only': 'bodyweight',
 };
+
+function equipment(e) {
+  // A stretch's "other" is a wall, a chair or a towel, not gym gear.
+  if (e.category === 'stretching' && e.equipment === 'other' && !/hang/i.test(e.name)) {
+    return 'bodyweight';
+  }
+  return EQUIPMENT[e.equipment] ?? (e.equipment ? 'gym' : 'bodyweight');
+}
 
 async function main() {
   const res = await fetch(SOURCE);
@@ -54,8 +64,9 @@ async function main() {
       e.name.trim(),
       e.images[0],
       e.category === 'cardio' ? 'cardio' : (GROUPS[e.primaryMuscles[0]] ?? 'abs'),
-      EQUIPMENT[e.equipment] ?? (e.equipment ? 'gym' : 'bodyweight'),
+      equipment(e),
       e.category === 'plyometrics' ? 1 : 0,
+      e.category === 'stretching' ? 1 : 0,
     ])
     .sort((a, b) => a[0].localeCompare(b[0]));
 
@@ -69,8 +80,8 @@ async function main() {
 // Do not edit by hand.
 import type { MuscleGroup } from '@/db/schema';
 
-/** name, photo path in the repo, muscle group, equipment answer ('gym' = full gym only), jumps */
-export type CatalogRow = [string, string, MuscleGroup, string, 0 | 1];
+/** name, photo path in the repo, muscle group, equipment answer ('gym' = full gym only), jumps, stretch */
+export type CatalogRow = [string, string, MuscleGroup, string, 0 | 1, 0 | 1];
 
 export const EXERCISE_CATALOG: CatalogRow[] = [
 ${body}
