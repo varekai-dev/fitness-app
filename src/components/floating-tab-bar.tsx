@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -19,6 +19,44 @@ const SPRING = { damping: 18, stiffness: 220, mass: 0.7 };
 export function useTabBarSpace() {
   const insets = useSafeAreaInsets();
   return BAR_HEIGHT + Math.max(insets.bottom, spacing.md) + spacing.lg;
+}
+
+/** Space a screen should leave below its content for a `TabBarFab` above the bar. */
+export const TAB_BAR_FAB_SPACE = BUBBLE + spacing.md;
+
+/**
+ * Round glass "+" floating above the right end of the bar, lined up with the
+ * last of `tabCount` tabs. Render it after the screen's scroll view, inside a `flex: 1` box.
+ */
+export function TabBarFab({
+  tabCount,
+  label,
+  onPress,
+}: {
+  tabCount: number;
+  label: string;
+  onPress: () => void;
+}) {
+  const { width } = useWindowDimensions();
+  const bottom = useTabBarSpace();
+  const slot = (width - 2 * SIDE_MARGIN) / tabCount;
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      hitSlop={6}
+      style={({ pressed }) => [
+        styles.fabSpot,
+        { bottom, right: SIDE_MARGIN + (slot - BUBBLE) / 2 },
+        pressed && styles.fabPressed,
+      ]}>
+      {/* Denser than the bar: it floats over list text, which must not show through. */}
+      <Glass interactive tint="rgba(30,30,30,0.9)" style={styles.fab}>
+        <Ionicons name="add" size={28} color={colors.accent} />
+      </Glass>
+    </Pressable>
+  );
 }
 
 /**
@@ -119,4 +157,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
   },
   item: { flex: 1, height: BAR_HEIGHT, alignItems: 'center', justifyContent: 'center' },
+  fabSpot: { position: 'absolute' },
+  fab: {
+    width: BUBBLE,
+    height: BUBBLE,
+    borderRadius: BUBBLE / 2,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fabPressed: { opacity: 0.7 },
 });

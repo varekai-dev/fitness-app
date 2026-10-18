@@ -101,8 +101,10 @@ export default function AddFoodScreen() {
     text?: string;
     food?: string;
   }>();
-  // Opened without a meal (e.g. a deep link): pick it by the time of day.
-  const [meal] = useState<Meal>(() => MEALS.find((m) => m === params.meal) ?? mealAt(Date.now()));
+  // Opened without a meal (e.g. a deep link): pick it by the time of day. Switchable on screen.
+  const [meal, setMeal] = useState<Meal>(
+    () => MEALS.find((m) => m === params.meal) ?? mealAt(Date.now()),
+  );
   const { data } = useDbQuery(() => loadFood());
   const [input, setInput] = useState(params.text ?? '');
   const { data: suggestions } = useDbQuery(() => searchFoods(input), [input]);
@@ -291,7 +293,8 @@ export default function AddFoodScreen() {
   const templates = data?.templates ?? [];
 
   return (
-    <Screen title={MEAL_LABELS[meal]} mode="modal">
+    <Screen title={tr('Додати їжу', 'Add food')} mode="modal">
+      <MealPicker meal={meal} onChange={setMeal} />
       {pending.length > 0 ? (
         <PendingList
           pending={pending}
@@ -800,6 +803,33 @@ function TemplateRow({
   );
 }
 
+/** Which meal the food goes to; starts on the one the screen was opened for. */
+function MealPicker({ meal, onChange }: { meal: Meal; onChange: (meal: Meal) => void }) {
+  return (
+    <Row style={styles.units}>
+      {MEALS.map((m) => (
+        <Pressable
+          key={m}
+          onPress={() => {
+            if (m === meal) return;
+            Haptics.selectionAsync();
+            onChange(m);
+          }}
+          accessibilityRole="button"
+          accessibilityState={{ selected: m === meal }}
+          style={[styles.unitChip, styles.mealChip, m === meal && styles.unitChipActive]}>
+          <Text
+            variant="body"
+            numberOfLines={1}
+            style={[styles.unitText, m === meal && styles.unitTextActive]}>
+            {MEAL_LABELS[m]}
+          </Text>
+        </Pressable>
+      ))}
+    </Row>
+  );
+}
+
 /** A recent dish: tap the name to log it again, the cross to forget it. */
 function RecentChip({
   food,
@@ -878,6 +908,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   unitChipActive: { backgroundColor: colors.accent },
+  mealChip: { flex: 1, alignItems: 'center', paddingHorizontal: 0, paddingVertical: spacing.sm },
   unitText: { color: colors.textSecondary, fontWeight: '700' },
   unitTextActive: { color: colors.accentText },
   amountRow: { gap: spacing.sm },

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useDialog } from '@/components/dialog';
-import { useTabBarSpace } from '@/components/floating-tab-bar';
+import { TAB_BAR_FAB_SPACE, TabBarFab, useTabBarSpace } from '@/components/floating-tab-bar';
 import { SwipeToDelete } from '@/components/swipe-to-delete';
 import {
   Card,
@@ -31,6 +31,8 @@ import { colors, fontSize, radius, spacing } from '@/theme';
 
 const timeFormatter = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' });
 const CHART_HEIGHT = 120;
+/** The floating plus opens the pour modal with this glass. */
+const QUICK_ML = 300;
 
 export default function WaterScreen() {
   const tabBarSpace = useTabBarSpace();
@@ -55,116 +57,129 @@ export default function WaterScreen() {
   const chartMax = Math.max(goal, ...days.map((d) => d.totalMl));
 
   return (
-    <Screen
-      title={tr('Вода', 'Water')}
-      mode="root"
-      bottomSpace={tabBarSpace}
-      headerRight={
-        <CircleButton icon="settings-outline" onPress={() => router.push('/settings')} />
-      }>
-      <Card onPress={() => router.push('/settings/water')}>
-        <Row style={styles.hero}>
-          <WaterBottle progress={goal > 0 ? todayMl / goal : 0} height={170} />
-          <WaterSummary todayMl={todayMl} goal={goal} />
-        </Row>
-      </Card>
+    <View style={styles.root}>
+      <Screen
+        title={tr('Вода', 'Water')}
+        mode="root"
+        bottomSpace={tabBarSpace + TAB_BAR_FAB_SPACE}
+        headerRight={
+          <CircleButton icon="settings-outline" onPress={() => router.push('/settings')} />
+        }>
+        <Card onPress={() => router.push('/settings/water')}>
+          <Row style={styles.hero}>
+            <WaterBottle progress={goal > 0 ? todayMl / goal : 0} height={170} />
+            <WaterSummary todayMl={todayMl} goal={goal} />
+          </Row>
+        </Card>
 
-      <SectionHeader title={tr('Додати', 'Add')} />
-      <View style={styles.glasses}>
-        {GLASS_PRESETS.map((g) => (
-          <View key={g.ml} style={styles.glassCell}>
-            <GlassButton glass={g} onPress={() => setPouring({ glass: g })} />
-          </View>
-        ))}
-      </View>
-
-      <Card>
-        <Text variant="caption">{tr('Останні 7 днів', 'Last 7 days')}</Text>
-        <View style={styles.chart}>
-          {days.map((d) => {
-            const isToday = d.dayStart === today;
-            const reached = d.totalMl >= goal;
-            return (
-              <View key={d.dayStart} style={styles.barColumn}>
-                <Text variant="muted" style={styles.barValue} numberOfLines={1}>
-                  {d.totalMl > 0 ? formatVolumeCompact(d.totalMl) : ''}
-                </Text>
-                <View style={styles.barTrack}>
-                  <View style={[styles.goalLine, { bottom: (goal / chartMax) * CHART_HEIGHT }]} />
-                  <View
-                    style={[
-                      styles.bar,
-                      {
-                        height: Math.max((d.totalMl / chartMax) * CHART_HEIGHT, d.totalMl ? 4 : 0),
-                      },
-                      !reached && styles.barPartial,
-                    ]}
-                  />
-                </View>
-                <Text variant="caption" style={isToday && styles.today}>
-                  {WEEKDAY_SHORT[weekdayIndex(d.dayStart)]}
-                </Text>
-              </View>
-            );
-          })}
+        <SectionHeader title={tr('Додати', 'Add')} />
+        <View style={styles.glasses}>
+          {GLASS_PRESETS.map((g) => (
+            <View key={g.ml} style={styles.glassCell}>
+              <GlassButton glass={g} onPress={() => setPouring({ glass: g })} />
+            </View>
+          ))}
         </View>
-      </Card>
 
-      <SectionHeader title={tr('Сьогодні', 'Today')} />
-      {todayEntries.length === 0 ? (
-        <EmptyState
-          icon="water-outline"
-          title={tr('Ще нічого не випито', 'Nothing drunk yet')}
-          hint={tr('Обери склянку вище.', 'Pick a glass above.')}
-        />
-      ) : (
-        [...todayEntries].reverse().map((e) => {
-          const glass = glassForAmount(e.amountMl);
-          const time = timeFormatter.format(new Date(e.drankAt));
-          return (
-            <SwipeToDelete
-              key={e.id}
-              onDelete={(close) =>
-                remove(e.id, `${time} · ${formatVolume(e.amountMl)} ${VOLUME_UNIT}`, close)
-              }>
-              <Card
-                onPress={() =>
-                  setPouring({
-                    glass: glassToHold(e.amountMl),
-                    editMl: e.amountMl,
-                    editId: e.id,
-                  })
+        <Card>
+          <Text variant="caption">{tr('Останні 7 днів', 'Last 7 days')}</Text>
+          <View style={styles.chart}>
+            {days.map((d) => {
+              const isToday = d.dayStart === today;
+              const reached = d.totalMl >= goal;
+              return (
+                <View key={d.dayStart} style={styles.barColumn}>
+                  <Text variant="muted" style={styles.barValue} numberOfLines={1}>
+                    {d.totalMl > 0 ? formatVolumeCompact(d.totalMl) : ''}
+                  </Text>
+                  <View style={styles.barTrack}>
+                    <View style={[styles.goalLine, { bottom: (goal / chartMax) * CHART_HEIGHT }]} />
+                    <View
+                      style={[
+                        styles.bar,
+                        {
+                          height: Math.max(
+                            (d.totalMl / chartMax) * CHART_HEIGHT,
+                            d.totalMl ? 4 : 0,
+                          ),
+                        },
+                        !reached && styles.barPartial,
+                      ]}
+                    />
+                  </View>
+                  <Text variant="caption" style={isToday && styles.today}>
+                    {WEEKDAY_SHORT[weekdayIndex(d.dayStart)]}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        </Card>
+
+        <SectionHeader title={tr('Сьогодні', 'Today')} />
+        {todayEntries.length === 0 ? (
+          <EmptyState
+            icon="water-outline"
+            title={tr('Ще нічого не випито', 'Nothing drunk yet')}
+            hint={tr('Обери склянку вище.', 'Pick a glass above.')}
+          />
+        ) : (
+          [...todayEntries].reverse().map((e) => {
+            const glass = glassForAmount(e.amountMl);
+            const time = timeFormatter.format(new Date(e.drankAt));
+            return (
+              <SwipeToDelete
+                key={e.id}
+                onDelete={(close) =>
+                  remove(e.id, `${time} · ${formatVolume(e.amountMl)} ${VOLUME_UNIT}`, close)
                 }>
-                <Row style={styles.spaceBetween}>
-                  <Row>
-                    <View style={styles.entryIcon}>
-                      <MaterialCommunityIcons name={glass.icon} size={20} color={colors.accent} />
-                    </View>
-                    <Text variant="body">{glass.label}</Text>
+                <Card
+                  onPress={() =>
+                    setPouring({
+                      glass: glassToHold(e.amountMl),
+                      editMl: e.amountMl,
+                      editId: e.id,
+                    })
+                  }>
+                  <Row style={styles.spaceBetween}>
+                    <Row>
+                      <View style={styles.entryIcon}>
+                        <MaterialCommunityIcons name={glass.icon} size={20} color={colors.accent} />
+                      </View>
+                      <Text variant="body">{glass.label}</Text>
+                    </Row>
+                    <Row>
+                      <Text variant="heading">
+                        {formatVolume(e.amountMl)} {VOLUME_UNIT}
+                      </Text>
+                      <Text variant="muted">{time}</Text>
+                    </Row>
                   </Row>
-                  <Row>
-                    <Text variant="heading">
-                      {formatVolume(e.amountMl)} {VOLUME_UNIT}
-                    </Text>
-                    <Text variant="muted">{time}</Text>
-                  </Row>
-                </Row>
-              </Card>
-            </SwipeToDelete>
-          );
-        })
-      )}
-      <WaterPourModal
-        pour={pouring}
-        onClose={() => setPouring(null)}
-        onAdd={(ml) => {
-          setPouring(null);
-          if (pouring?.editId != null) updateWater(pouring.editId, ml);
-          else drinkWater(ml, todayMl, goal);
-        }}
+                </Card>
+              </SwipeToDelete>
+            );
+          })
+        )}
+        <WaterPourModal
+          pour={pouring}
+          onClose={() => setPouring(null)}
+          onAdd={(ml) => {
+            setPouring(null);
+            if (pouring?.editId != null) updateWater(pouring.editId, ml);
+            else drinkWater(ml, todayMl, goal);
+          }}
+        />
+        {dialog.element}
+      </Screen>
+      <TabBarFab
+        tabCount={4}
+        label={tr(
+          `Додати склянку ${formatVolume(QUICK_ML)} ${VOLUME_UNIT}`,
+          `Add a ${formatVolume(QUICK_ML)} ${VOLUME_UNIT} glass`,
+        )}
+        onPress={() => setPouring({ glass: glassToHold(QUICK_ML) })}
       />
-      {dialog.element}
-    </Screen>
+    </View>
   );
 }
 
@@ -210,6 +225,7 @@ function WaterSummary({ todayMl, goal }: { todayMl: number; goal: number }) {
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1 },
   hero: { gap: spacing.lg },
   heroInfo: { flex: 1, gap: spacing.xs },
   amount: {
