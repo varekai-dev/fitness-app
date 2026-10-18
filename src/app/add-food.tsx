@@ -8,6 +8,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useDialog } from '@/components/dialog';
 import { FoodPhotoScanner, type PhotoScan } from '@/components/food-photo-scanner';
 import { MacroRow } from '@/components/macro-row';
+import { MealPicker } from '@/components/meal-picker';
 import {
   Badge,
   Button,
@@ -51,7 +52,7 @@ import {
 import { describeFoodPhoto, GroqError, type SuggestedFood } from '@/lib/groq';
 import { tr } from '@/lib/i18n';
 import { captureForAi, readForAi } from '@/lib/images';
-import { MEAL_LABELS, MEALS, mealAt, type Meal } from '@/lib/meals';
+import { MEALS, mealAt, type Meal } from '@/lib/meals';
 import { parseDecimal } from '@/lib/metrics';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
@@ -836,33 +837,6 @@ function TemplateRow({
   );
 }
 
-/** Which meal the food goes to; starts on the one the screen was opened for. */
-function MealPicker({ meal, onChange }: { meal: Meal; onChange: (meal: Meal) => void }) {
-  return (
-    <Row style={styles.units}>
-      {MEALS.map((m) => (
-        <Pressable
-          key={m}
-          onPress={() => {
-            if (m === meal) return;
-            Haptics.selectionAsync();
-            onChange(m);
-          }}
-          accessibilityRole="button"
-          accessibilityState={{ selected: m === meal }}
-          style={[styles.unitChip, styles.mealChip, m === meal && styles.unitChipActive]}>
-          <Text
-            variant="body"
-            numberOfLines={1}
-            style={[styles.unitText, m === meal && styles.unitTextActive]}>
-            {MEAL_LABELS[m]}
-          </Text>
-        </Pressable>
-      ))}
-    </Row>
-  );
-}
-
 /** A recent dish: tap the name to log it again, the cross to forget it. */
 function RecentChip({
   food,
@@ -941,7 +915,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   unitChipActive: { backgroundColor: colors.accent },
-  mealChip: { flex: 1, alignItems: 'center', paddingHorizontal: 0, paddingVertical: spacing.sm },
   unitText: { color: colors.textSecondary, fontWeight: '700' },
   unitTextActive: { color: colors.accentText },
   amountRow: { gap: spacing.sm },

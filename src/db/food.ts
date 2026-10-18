@@ -289,6 +289,29 @@ export async function logFood(
   });
 }
 
+export async function getFoodEntry(id: number) {
+  const [entry] = await db.select().from(foodEntries).where(eq(foodEntries.id, id));
+  return entry ?? null;
+}
+
+export type FoodEntryEdit = Pick<
+  FoodEntry,
+  | 'name'
+  | 'meal'
+  | 'portion'
+  | 'grams'
+  | 'kcal'
+  | 'proteinG'
+  | 'fatG'
+  | 'carbsG'
+  | 'fiberG'
+  | 'sugarG'
+>;
+
+export async function updateFoodEntry(id: number, edit: FoodEntryEdit) {
+  await db.update(foodEntries).set(edit).where(eq(foodEntries.id, id));
+}
+
 export async function deleteFoodEntry(id: number) {
   await db.delete(foodEntries).where(eq(foodEntries.id, id));
 }

@@ -205,7 +205,12 @@ export default function FoodScreen() {
                   <SwipeToDelete
                     key={e.id}
                     onDelete={(close) => remove(e.id, `${time} · ${e.name}`, close)}>
-                    <View style={styles.entry}>
+                    <Pressable
+                      onPress={() =>
+                        router.push({ pathname: '/food-entry/[id]', params: { id: e.id } })
+                      }
+                      accessibilityRole="button"
+                      style={({ pressed }) => [styles.entry, pressed && styles.pressed]}>
                       <Row style={styles.spaceBetween}>
                         <View style={styles.flex}>
                           <Text variant="body" numberOfLines={1}>
@@ -219,13 +224,14 @@ export default function FoodScreen() {
                         <Text variant="heading">
                           {formatKcal(e.kcal)} {tr('ккал', 'kcal')}
                         </Text>
+                        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
                       </Row>
                       <Text variant="caption">
                         {tr('Б', 'P')} {formatGrams(e.proteinG)} · {tr('Ж', 'F')}{' '}
                         {formatGrams(e.fatG)} · {tr('В', 'C')} {formatGrams(e.carbsG)}{' '}
                         {tr('г', 'g')}
                       </Text>
-                    </View>
+                    </Pressable>
                   </SwipeToDelete>
                 );
               })}
