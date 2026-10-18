@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useDialog } from '@/components/dialog';
 import { PhotoCompare, type CompareSide } from '@/components/photo-compare';
+import { PoseCamera } from '@/components/pose-camera';
 import {
   Badge,
   Button,
@@ -34,11 +35,12 @@ import { tr } from '@/lib/i18n';
 import { formatDate, formatShortDate, formatWeightDelta } from '@/lib/labels';
 import { formatWeight } from '@/lib/metrics';
 import {
-  captureProgressPhoto,
   formatSpan,
   PHOTO_EVERY_DAYS,
   photoUri,
+  pickProgressPhoto,
   POSE_LABELS,
+  storeProgressPhoto,
   weightNear,
 } from '@/lib/progress-photos';
 import { WEIGHT_UNIT } from '@/lib/units';
@@ -58,6 +60,7 @@ export default function ProgressPhotosScreen() {
   const [afterId, setAfterId] = useState<number | null>(null);
   const [viewing, setViewing] = useState<ProgressPhoto | null>(null);
   const [adding, setAdding] = useState(false);
+  const [shooting, setShooting] = useState(false);
   const [gridWidth, setGridWidth] = useState(0);
   const today = useToday();
   const dialog = useDialog();
@@ -83,10 +86,10 @@ export default function ProgressPhotosScreen() {
     setAfterId(null);
   };
 
-  const add = async (source: 'camera' | 'library') => {
+  const save = async (take: () => Promise<{ fileName: string; takenAt: number } | null>) => {
     setAdding(true);
     try {
-      const photo = await captureProgressPhoto(source);
+      const photo = await take();
       if (!photo) return;
       await addProgressPhoto({ ...photo, pose });
       // Compare against the newest photo again, now that there is a newer one.
@@ -170,7 +173,7 @@ export default function ProgressPhotosScreen() {
           <Button
             title={tr('Камера', 'Camera')}
             icon="camera"
-            onPress={() => add('camera')}
+            onPress={() => setShooting(true)}
             disabled={adding}
             style={styles.flex}
           />
@@ -178,7 +181,7 @@ export default function ProgressPhotosScreen() {
             title={tr('Галерея', 'Gallery')}
             icon="images-outline"
             variant="secondary"
-            onPress={() => add('library')}
+            onPress={() => save(pickProgressPhoto)}
             disabled={adding}
             style={styles.flex}
           />
@@ -252,6 +255,15 @@ export default function ProgressPhotosScreen() {
           if (afterId === p.id) setAfterId(null);
           setViewing(null);
           deleteProgressPhoto(p);
+        }}
+      />
+      <PoseCamera
+        pose={pose}
+        visible={shooting}
+        onClose={() => setShooting(false)}
+        onTaken={(uri) => {
+          setShooting(false);
+          save(async () => ({ fileName: await storeProgressPhoto(uri), takenAt: Date.now() }));
         }}
       />
       {dialog.element}

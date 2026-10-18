@@ -32,6 +32,7 @@ export function deletePhotoFile(fileName: string) {
 
 // Android crops to a portrait frame, so photos line up in the comparison; iOS
 // only offers a square crop, so there the full photo is kept and filled to fit.
+// The camera shoots 3:4 already.
 const PICKER_OPTIONS: ImagePicker.ImagePickerOptions = {
   mediaTypes: ['images'],
   allowsEditing: Platform.OS === 'android',
@@ -50,27 +51,24 @@ function exifTime(exif: Record<string, unknown> | null | undefined) {
   return Number.isFinite(at) && at <= Date.now() ? at : null;
 }
 
+/** Copies a photo into app storage and returns its file name there. */
+export async function storeProgressPhoto(uri: string) {
+  const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+  await new File(uri).copy(new File(photosDir(), fileName));
+  return fileName;
+}
+
 /**
- * Takes or picks a photo and copies it into app storage. A photo from the
- * gallery keeps the date it was shot on, so older photos can be added too.
- * Resolves to null if cancelled.
+ * Picks a photo from the gallery and copies it into app storage. It keeps the
+ * date it was shot on, so older photos can be added too. Resolves to null if
+ * cancelled. New photos are taken with `PoseCamera` instead.
  */
-export async function captureProgressPhoto(source: 'camera' | 'library') {
-  let result: ImagePicker.ImagePickerResult;
-  if (source === 'camera') {
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
-    if (!permission.granted)
-      throw new Error(tr('Немає доступу до камери', 'No access to the camera'));
-    result = await ImagePicker.launchCameraAsync(PICKER_OPTIONS);
-  } else {
-    result = await ImagePicker.launchImageLibraryAsync({ ...PICKER_OPTIONS, exif: true });
-  }
+export async function pickProgressPhoto() {
+  const result = await ImagePicker.launchImageLibraryAsync({ ...PICKER_OPTIONS, exif: true });
   if (result.canceled || result.assets.length === 0) return null;
   const asset = result.assets[0];
-  const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
-  await new File(asset.uri).copy(new File(photosDir(), fileName));
-  const takenAt = (source === 'library' && exifTime(asset.exif)) || Date.now();
-  return { fileName, takenAt };
+  const fileName = await storeProgressPhoto(asset.uri);
+  return { fileName, takenAt: exifTime(asset.exif) || Date.now() };
 }
 
 /** The weigh-in closest to `at`, if one is within a few days of it. */
