@@ -20,10 +20,12 @@ import {
   askGroqMacroTips,
   askGroqMealAdvice,
   askGroqNutrition,
+  askGroqNutritionList,
   type DayReview,
   type MacroKey,
   type MacroTips,
   type MealAdvice,
+  type Nutrition,
   type SuggestedFood,
 } from '@/lib/groq';
 import { lang, locale } from '@/lib/i18n';
@@ -90,6 +92,42 @@ export type FoundFood = { food: Food; cached: boolean; amount: number | null };
  * portions had a weight are asked again, since logging is by grams.
  */
 export async function lookupFood(text: string): Promise<FoundFood> {
+  const { query, amount, cached } = await findCached(text);
+  if (cached) return cached;
+  return storeNutrition(query, amount, await askGroqNutrition(text.trim()));
+}
+
+/** A dish of a list that couldn't be counted, with AI's reason. */
+export type FailedFood = { text: string; error: Error };
+
+/**
+ * `lookupFood` for each dish of a list, in its order, asking AI once for all
+ * the dishes not cached yet. A dish AI couldn't count comes back as
+ * `FailedFood`; a failed request throws.
+ */
+export async function lookupFoods(texts: string[]): Promise<(FoundFood | FailedFood)[]> {
+  const found = await Promise.all(texts.map(findCached));
+  const asked = texts.filter((_, i) => !found[i].cached);
+  const answers = asked.length ? await askGroqNutritionList(asked.map((t) => t.trim())) : [];
+  const results: (FoundFood | FailedFood)[] = [];
+  let next = 0;
+  for (const [i, { query, amount, cached }] of found.entries()) {
+    if (cached) {
+      results.push(cached);
+      continue;
+    }
+    const answer = answers[next++];
+    results.push(
+      answer instanceof Error
+        ? { text: texts[i], error: answer }
+        : await storeNutrition(query, amount, answer),
+    );
+  }
+  return results;
+}
+
+/** The cache key and amount of `text`, and its cached dish if there is one with a portion weight. */
+async function findCached(text: string) {
   const split = splitAmount(text);
   const query = split?.dish ?? normalizeDish(text);
   const amount = split?.grams ?? null;
@@ -98,9 +136,16 @@ export async function lookupFood(text: string): Promise<FoundFood> {
   const existing = (await db.query.foods.findMany({ where: inArray(foods.query, keys) })).find(
     (f) => f.portionG,
   );
-  if (existing) return { food: existing, cached: true, amount };
+  const cached: FoundFood | null = existing ? { food: existing, cached: true, amount } : null;
+  return { query, amount, cached };
+}
 
-  const nutrition = await askGroqNutrition(text.trim());
+/** Stores AI's answer for a dish for next time. */
+async function storeNutrition(
+  query: string,
+  amount: number | null,
+  nutrition: Nutrition,
+): Promise<FoundFood> {
   const [food] = await db
     .insert(foods)
     .values({ query, ...nutrition })

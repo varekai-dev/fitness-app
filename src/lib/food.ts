@@ -37,6 +37,29 @@ export function splitAmount(text: string): { dish: string; grams: number } | nul
   return { dish, grams };
 }
 
+// Between the dishes of a list: a comma (not a decimal one), semicolon, plus or new line.
+const LIST_RE = /\s*(?:,(?!\d)|;|\+|\n)\s*/;
+// Joins two dishes inside one part of a list: "яйця 150 г і тост 40 г".
+const AND_RE = /\s+(?:і|й|та|and)\s+/i;
+
+const withAmounts = (parts: string[]) =>
+  parts.length > 1 && parts.every((p) => splitAmount(p)) ? parts : null;
+
+/**
+ * "Яйця 150 г, курка 100 г, салат з буряка 150 г" as its three dishes, each
+ * looked up and logged on its own. Only when every dish has its own weight or
+ * volume: otherwise a comma or "і" may be inside one dish ("салат з буряка,
+ * моркви і часнику 150 г"), and the text stays whole.
+ */
+export function splitDishes(text: string): string[] {
+  const parts = text
+    .split(LIST_RE)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .flatMap((p) => withAmounts(p.split(AND_RE)) ?? [p]);
+  return withAmounts(parts) ?? [text.trim()];
+}
+
 /** The cache key of a dish whatever its amount: "Творог 200 г" and "творог" are one dish. */
 export const dishKey = (text: string) => splitAmount(text)?.dish ?? normalizeDish(text);
 

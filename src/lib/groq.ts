@@ -263,6 +263,56 @@ export async function askGroqNutrition(dish: string, apiKey?: string | null): Pr
     schemaName: 'nutrition',
     apiKey,
   });
+  return toNutrition(parsed, dish);
+}
+
+const LIST_PROMPT = tr(
+  `${SYSTEM_PROMPT_UK}
+Користувач перелічує кілька позицій, по одній на рядок. Поверни items: по одній відповіді з полями вище на кожен рядок, у тому самому порядку.`,
+  `${SYSTEM_PROMPT_EN}
+The user lists several items, one per line. Return items: one answer with the fields above for each line, in the same order.`,
+);
+
+const LIST_SCHEMA = {
+  type: 'object',
+  properties: { items: { type: 'array', items: SCHEMA } },
+  required: ['items'],
+  additionalProperties: false,
+};
+
+/**
+ * The nutrition of several dishes in one request, in their order. A dish AI
+ * couldn't count (not food, no portion) is its `GroqError` instead; a failed
+ * request throws one.
+ */
+export async function askGroqNutritionList(dishes: string[]): Promise<(Nutrition | GroqError)[]> {
+  const parsed = await groqJson<{ items: GroqNutrition[] }>({
+    system: LIST_PROMPT,
+    user: dishes.join('\n'),
+    schema: LIST_SCHEMA,
+    schemaName: 'nutrition_list',
+    accept: (r) => r.items.length === dishes.length,
+  });
+  if (parsed.items.length !== dishes.length) {
+    throw new GroqError(
+      tr(
+        'AI повернув неповну відповідь. Спробуй ще раз.',
+        'AI returned an incomplete answer. Try again.',
+      ),
+      'bad-response',
+    );
+  }
+  return dishes.map((dish, i) => {
+    try {
+      return toNutrition(parsed.items[i], dish);
+    } catch (e) {
+      return e as GroqError;
+    }
+  });
+}
+
+/** One dish of AI's answer as `Nutrition`; throws `GroqError` when it isn't usable. */
+function toNutrition(parsed: GroqNutrition, dish: string): Nutrition {
   if (parsed.is_food && !(num(parsed.portion_g) > 0)) {
     throw new GroqError(
       tr(

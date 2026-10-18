@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useDialog } from '@/components/dialog';
@@ -27,15 +27,26 @@ import {
   loadFood,
   logFood,
   lookupFood,
+  lookupFoods,
   rateFood,
   saveFood,
   searchFoods,
   timeOnDay,
+  type FailedFood,
+  type FoundFood,
   type ManualFood,
 } from '@/db/food';
 import type { Food, HealthRating, MealTemplate } from '@/db/schema';
 import { useDbQuery } from '@/hooks/use-db-query';
-import { amountUnit, formatGrams, formatKcal, normalizeDish, scaleNutrition } from '@/lib/food';
+import {
+  amountUnit,
+  formatGrams,
+  formatKcal,
+  normalizeDish,
+  scaleNutrition,
+  splitDishes,
+  sumMacros,
+} from '@/lib/food';
 import { describeFoodPhoto, GroqError, type SuggestedFood } from '@/lib/groq';
 import { tr } from '@/lib/i18n';
 import { captureForAi } from '@/lib/images';
@@ -101,7 +112,8 @@ export default function AddFoodScreen() {
   const [photo, setPhoto] = useState<string | null>(null);
   const [recognizing, setRecognizing] = useState(false);
   const busy = looking || recognizing;
-  const [pending, setPending] = useState<Pending | null>(null);
+  // Dishes waiting to be logged: one, or each dish of a list like "яйця 150 г, курка 100 г".
+  const [pending, setPending] = useState<Pending[]>([]);
   // Name the manual form starts with; null while it's closed.
   const [manual, setManual] = useState<string | null>(null);
   const dialog = useDialog();
@@ -111,7 +123,7 @@ export default function AddFoodScreen() {
     const saved = await saveFood(food);
     setManual(null);
     setInput('');
-    setPending(startPending(saved, true));
+    setPending([startPending(saved, true)]);
   };
 
   const showError = (title: string, e: unknown) => {
@@ -132,14 +144,32 @@ export default function AddFoodScreen() {
     });
   };
 
-  // Calculates the dish and opens its card; `looking` is already on.
+  // A list with a weight for each dish becomes a card per dish.
+  const findDishes = async (text: string, suggested?: SuggestedFood) => {
+    const found = suggested ? await cacheSuggestion(suggested) : null;
+    if (found) return [found];
+    const dishes = splitDishes(text);
+    return dishes.length > 1 ? lookupFoods(dishes) : [await lookupFood(text)];
+  };
+
+  // Calculates the dishes and opens their cards; `looking` is already on. Dishes
+  // AI couldn't count stay in the field, there after cancelling to fix.
   const calculate = (text: string, suggested?: SuggestedFood) =>
-    (suggested ? cacheSuggestion(suggested) : Promise.resolve(null))
-      .then((found) => found ?? lookupFood(text))
-      .then((result) => {
-        setPending(startPending(result.food, result.cached, result.amount));
-        setInput('');
+    findDishes(text, suggested)
+      .then((results) => {
+        const found = results.filter((r): r is FoundFood => 'food' in r);
+        const failed = results.filter((r): r is FailedFood => 'error' in r);
+        if (found.length === 0) throw failed[0].error;
+        setPending(found.map((r) => startPending(r.food, r.cached, r.amount)));
+        setInput(failed.map((f) => f.text).join(', '));
         setPhoto(null);
+        if (failed.length > 0) {
+          dialog.show({
+            title: tr('Не все пораховано', 'Not everything was counted'),
+            message: failed.map((f) => `«${f.text}»: ${f.error.message}`).join('\n'),
+            icon: 'alert-circle',
+          });
+        }
       })
       .catch((e) => showError(tr('Не вдалося порахувати', 'Couldn’t calculate'), e))
       .finally(() => setLooking(false));
@@ -197,14 +227,18 @@ export default function AddFoodScreen() {
   const pick = (food: Food) => {
     // Dishes cached before portions had a weight need a fresh estimate to scale by grams.
     if (!food.portionG) return lookup(food.query);
-    setPending(startPending(food, true));
+    setPending([startPending(food, true)]);
     setInput('');
   };
 
   const add = async () => {
-    const amount = pending && parseAmount(pending.amount);
-    if (!pending || !amount) return;
-    await logFood(pending.food, amount, meal, pending.isDrink, eatenAt(params.day));
+    const ready = pending.flatMap((p) => {
+      const amount = parseAmount(p.amount);
+      return amount ? [{ ...p, amount }] : [];
+    });
+    if (ready.length === 0 || ready.length < pending.length) return;
+    const at = eatenAt(params.day);
+    for (const p of ready) await logFood(p.food, p.amount, meal, p.isDrink, at);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     goBack();
   };
@@ -258,12 +292,15 @@ export default function AddFoodScreen() {
 
   return (
     <Screen title={MEAL_LABELS[meal]} mode="modal">
-      {pending ? (
-        <PendingCard
+      {pending.length > 0 ? (
+        <PendingList
           pending={pending}
-          onChange={(patch) => setPending({ ...pending, ...patch })}
+          onChange={(i, patch) =>
+            setPending(pending.map((p, j) => (j === i ? { ...p, ...patch } : p)))
+          }
+          onRemove={(i) => setPending(pending.filter((_, j) => j !== i))}
           onAdd={add}
-          onCancel={() => setPending(null)}
+          onCancel={() => setPending([])}
         />
       ) : manual !== null ? (
         <ManualCard initialName={manual} onSave={saveManual} onCancel={() => setManual(null)} />
@@ -373,16 +410,90 @@ export default function AddFoodScreen() {
   );
 }
 
-function PendingCard({
-  pending: { food, cached, amount: amountText, isDrink },
+type PendingPatch = Partial<Pick<Pending, 'amount' | 'isDrink'>>;
+
+/**
+ * The dishes waiting to be logged. One dish has its buttons on its card; a list
+ * has a card per dish, each removable, and the total with the buttons below.
+ */
+function PendingList({
+  pending,
   onChange,
+  onRemove,
   onAdd,
   onCancel,
 }: {
-  pending: Pending;
-  onChange: (patch: Partial<Pick<Pending, 'amount' | 'isDrink'>>) => void;
+  pending: Pending[];
+  onChange: (index: number, patch: PendingPatch) => void;
+  onRemove: (index: number) => void;
   onAdd: () => void;
   onCancel: () => void;
+}) {
+  const amounts = pending.map((p) => parseAmount(p.amount));
+  const many = pending.length > 1;
+  const actions = (
+    <Row>
+      <Button
+        title={tr('Скасувати', 'Cancel')}
+        variant="secondary"
+        onPress={onCancel}
+        style={styles.flex}
+      />
+      <Button
+        title={
+          many
+            ? tr(`Додати все (${pending.length})`, `Add all (${pending.length})`)
+            : tr('Додати', 'Add')
+        }
+        icon="add"
+        onPress={onAdd}
+        disabled={amounts.some((a) => !a)}
+        style={styles.flex}
+      />
+    </Row>
+  );
+  if (!many) {
+    return (
+      <PendingCard pending={pending[0]} onChange={(patch) => onChange(0, patch)}>
+        {actions}
+      </PendingCard>
+    );
+  }
+  const total = sumMacros(pending.map((p, i) => scaleNutrition(p.food, amounts[i] ?? 0)));
+  return (
+    <>
+      {pending.map((p, i) => (
+        <PendingCard
+          key={`${i}-${p.food.id}`}
+          pending={p}
+          onChange={(patch) => onChange(i, patch)}
+          onRemove={() => onRemove(i)}
+        />
+      ))}
+      <Card>
+        <Text variant="caption">{tr('Разом', 'Total')}</Text>
+        <Text style={styles.pendingKcal}>
+          {formatKcal(total.kcal)}
+          <Text style={styles.unit}> {tr('ккал', 'kcal')}</Text>
+        </Text>
+        <MacroRow macros={total} />
+        {actions}
+      </Card>
+    </>
+  );
+}
+
+function PendingCard({
+  pending: { food, cached, amount: amountText, isDrink },
+  onChange,
+  onRemove,
+  children,
+}: {
+  pending: Pending;
+  onChange: (patch: PendingPatch) => void;
+  /** Shown as a close button on a dish of a list. */
+  onRemove?: () => void;
+  children?: ReactNode;
 }) {
   const amount = parseAmount(amountText);
   const scaled = scaleNutrition(food, amount ?? 0);
@@ -407,6 +518,7 @@ function PendingCard({
           </Text>
         </View>
         <Badge label={cached ? tr('З бази', 'Saved') : 'AI'} tone={cached ? 'muted' : 'accent'} />
+        {onRemove && <CircleButton icon="close" size={32} onPress={onRemove} />}
       </Row>
       <Text style={styles.pendingKcal}>
         {formatKcal(scaled.kcal)}
@@ -455,21 +567,7 @@ function PendingCard({
           onPress={() => step(stepSize)}
         />
       </Row>
-      <Row>
-        <Button
-          title={tr('Скасувати', 'Cancel')}
-          variant="secondary"
-          onPress={onCancel}
-          style={styles.flex}
-        />
-        <Button
-          title={tr('Додати', 'Add')}
-          icon="add"
-          onPress={onAdd}
-          disabled={!amount}
-          style={styles.flex}
-        />
-      </Row>
+      {children}
     </Card>
   );
 }
