@@ -385,7 +385,7 @@ export type ReviewChange = 'fresh' | 'minor' | 'major';
 
 function reviewState(entries: FoodEntry[], targets: Macros): ReviewState {
   // Bumped when the comment gains a field, so old ones are written again.
-  const key = ['v6', lang, targets.kcal, targets.proteinG, targets.fatG, targets.carbsG].join('|');
+  const key = ['v7', lang, targets.kcal, targets.proteinG, targets.fatG, targets.carbsG].join('|');
   return {
     signature: [key, ...entries.map((e) => `${e.id}:${Math.round(e.kcal)}`)].join('|'),
     basis: { key, kcal: Math.round(entries.reduce((s, e) => s + e.kcal, 0)) },

@@ -6,13 +6,42 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { Button, Card, IconButton, Row, Text } from '@/components/ui';
 import { reviewChange, reviewDay, type ReviewState, type StoredReview } from '@/db/food';
 import type { Meal } from '@/db/schema';
-import { formatGrams, formatKcal } from '@/lib/food';
-import { getGroqKey, type DayFood, type SuggestedFood } from '@/lib/groq';
+import { dishKey, formatGrams, formatKcal } from '@/lib/food';
+import { getGroqKey, type DayFood, type DayReview, type SuggestedFood } from '@/lib/groq';
 import { tr } from '@/lib/i18n';
 import { colors, radius, spacing } from '@/theme';
 
 // Logging a few dishes in a row asks AI once, for the last of them.
 const SETTLE_MS = 800;
+const MAX_SUGGESTIONS = 3;
+
+/**
+ * The foods to suggest: the snacks, then the set that closed the whole day from
+ * comments written before it was folded into them, without repeats.
+ */
+function suggestions({ snacks, fill = [] }: DayReview) {
+  const seen = new Set<string>();
+  return [...snacks, ...fill]
+    .filter((f) => {
+      const key = dishKey(f.text);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, MAX_SUGGESTIONS);
+}
+
+/** Kcal and the macro the day is short of; protein when that isn't known. */
+function suggestionMeta(food: SuggestedFood, lacking: DayReview['lacking']) {
+  const kcal = `${formatKcal(food.kcal)} ${tr('ккал', 'kcal')}`;
+  const g = tr('г', 'g');
+  if (lacking === 'kcal') return kcal;
+  if (lacking === 'fat' && food.fatG != null)
+    return `${kcal} · ${tr('Ж', 'F')} ${Math.round(food.fatG)} ${g}`;
+  if (lacking === 'carbs' && food.carbsG != null)
+    return `${kcal} · ${tr('В', 'C')} ${Math.round(food.carbsG)} ${g}`;
+  return `${kcal} · ${tr('Б', 'P')} ${formatGrams(Math.round(food.proteinG))} ${g}`;
+}
 
 /**
  * AI's short take on the day's food, and for today a few snacks that close the
@@ -41,6 +70,8 @@ export function DayReviewCard({
   const [loading, setLoading] = useState(false);
   // An error with the signature it happened for: not retried by itself until the day changes.
   const [failed, setFailed] = useState<{ signature: string; message: string } | null>(null);
+  // The verdict on each dish, folded away under a one-line summary.
+  const [showFoods, setShowFoods] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -73,6 +104,7 @@ export function DayReviewCard({
 
   if (!hasKey) return null;
   const review = stored?.review;
+  const suggested = review ? suggestions(review) : [];
 
   return (
     <Card style={styles.card}>
@@ -102,39 +134,30 @@ export function DayReviewCard({
         <View style={[styles.body, loading && styles.stale]}>
           <Text variant="heading">{review.headline}</Text>
           {!!review.comment && <Text variant="secondary">{review.comment}</Text>}
-          {!!review.foods?.length && (
-            <View style={styles.foods}>
-              {review.foods.map((food) => (
-                <FoodRow key={food.name} food={food} />
-              ))}
-            </View>
-          )}
-          {isToday &&
-            review.snacks.map((snack) => (
-              <AddFoodRow
-                key={snack.text}
-                food={snack}
-                day={day}
-                meta={`${formatKcal(snack.kcal)} ${tr('ккал', 'kcal')} · ${tr('Б', 'P')} ${formatGrams(Math.round(snack.proteinG))} ${tr('г', 'g')}`}
-              />
-            ))}
-          {!!review.fill?.length && (
-            <View style={styles.fill}>
+          {suggested.length > 0 && (
+            <View style={styles.suggestions}>
               <Text variant="caption">
-                {review.fillTitle ||
-                  (isToday
-                    ? tr('Цього бракує до денної норми', 'Still missing for the day')
-                    : tr('Цього бракувало до денної норми', 'What the day was missing'))}
+                {isToday
+                  ? tr('Що додати', 'What to add')
+                  : tr('Чим можна було добрати', 'What could have closed the gap')}
               </Text>
-              {review.fill.map((food) => (
+              {suggested.map((food) => (
                 <AddFoodRow
                   key={food.text}
                   food={food}
                   day={day}
-                  meta={`${formatKcal(food.kcal)} ${tr('ккал', 'kcal')} · ${tr('Б', 'P')} ${Math.round(food.proteinG)} · ${tr('Ж', 'F')} ${Math.round(food.fatG)} · ${tr('В', 'C')} ${Math.round(food.carbsG)}`}
+                  meta={suggestionMeta(food, review.lacking)}
+                  compact
                 />
               ))}
             </View>
+          )}
+          {!!review.foods?.length && (
+            <FoodVerdicts
+              foods={review.foods}
+              open={showFoods}
+              onToggle={() => setShowFoods(!showFoods)}
+            />
           )}
         </View>
       ) : loading ? (
@@ -162,6 +185,51 @@ export function DayReviewCard({
   );
 }
 
+/** How the day's dishes did, as counts of good and bad ones that open into the list. */
+function FoodVerdicts({
+  foods,
+  open,
+  onToggle,
+}: {
+  foods: DayFood[];
+  open: boolean;
+  onToggle: () => void;
+}) {
+  const good = foods.filter((f) => f.good).length;
+  const bad = foods.length - good;
+  return (
+    <View style={styles.foods}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        onPress={onToggle}
+        style={({ pressed }) => [styles.verdicts, pressed && styles.pressed]}>
+        <Text variant="caption" style={styles.flex}>
+          {tr('Оцінка страв', 'Your dishes')}
+        </Text>
+        {good > 0 && (
+          <Row style={styles.count}>
+            <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+            <Text variant="muted">{good}</Text>
+          </Row>
+        )}
+        {bad > 0 && (
+          <Row style={styles.count}>
+            <Ionicons name="alert-circle" size={16} color={colors.warning} />
+            <Text variant="muted">{bad}</Text>
+          </Row>
+        )}
+        <Ionicons
+          name={open ? 'chevron-up' : 'chevron-down'}
+          size={16}
+          color={colors.textSecondary}
+        />
+      </Pressable>
+      {open && foods.map((food) => <FoodRow key={food.name} food={food} />)}
+    </View>
+  );
+}
+
 function FoodRow({ food }: { food: DayFood }) {
   return (
     <Row style={styles.food}>
@@ -178,17 +246,22 @@ function FoodRow({ food }: { food: DayFood }) {
   );
 }
 
-/** A food AI suggests, opened in the add-food screen into `meal` (a snack by default) on tap. */
+/**
+ * A food AI suggests, opened in the add-food screen into `meal` (a snack by
+ * default) on tap. `compact` puts a short `meta` beside the name, on one line.
+ */
 export function AddFoodRow({
   food,
   meta,
   day,
   meal = 'snack',
+  compact = false,
 }: {
   food: SuggestedFood;
   meta: string;
   day: number;
   meal?: Meal;
+  compact?: boolean;
 }) {
   return (
     <Pressable
@@ -199,14 +272,27 @@ export function AddFoodRow({
           params: { meal, day: String(day), text: food.text, food: JSON.stringify(food) },
         })
       }
-      style={({ pressed }) => [styles.snack, pressed && styles.pressed]}>
+      style={({ pressed }) => [
+        styles.snack,
+        compact && styles.snackCompact,
+        pressed && styles.pressed,
+      ]}>
       <Ionicons name="add-circle" size={20} color={colors.accent} />
-      <View style={styles.flex}>
-        <Text variant="body" numberOfLines={2}>
-          {food.text}
-        </Text>
-        <Text variant="muted">{meta}</Text>
-      </View>
+      {compact ? (
+        <>
+          <Text variant="body" numberOfLines={2} style={styles.flex}>
+            {food.text}
+          </Text>
+          <Text variant="muted">{meta}</Text>
+        </>
+      ) : (
+        <View style={styles.flex}>
+          <Text variant="body" numberOfLines={2}>
+            {food.text}
+          </Text>
+          <Text variant="muted">{meta}</Text>
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -225,7 +311,14 @@ const styles = StyleSheet.create({
   },
   body: { gap: spacing.sm },
   foods: { gap: spacing.xs },
-  fill: { gap: spacing.sm },
+  suggestions: { gap: spacing.xs },
+  verdicts: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  count: { gap: 4 },
   food: { gap: spacing.sm, alignItems: 'flex-start' },
   // The comment being replaced, shown while the new one is on its way.
   stale: { opacity: 0.5 },
@@ -237,6 +330,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     backgroundColor: colors.glass,
   },
+  snackCompact: { gap: spacing.sm, paddingVertical: spacing.sm },
   pressed: { opacity: 0.6 },
   error: { gap: spacing.md },
 });
