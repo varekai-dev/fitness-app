@@ -87,7 +87,12 @@ export default function FoodScreen() {
     });
   };
 
-  const remove = (id: number, label: string, close: () => void) =>
+  const remove = (
+    id: number,
+    label: string,
+    close: () => void,
+    collapse: (then: () => void) => void,
+  ) =>
     dialog.show({
       title: tr('Видалити запис?', 'Delete entry?'),
       message: label,
@@ -96,7 +101,8 @@ export default function FoodScreen() {
         {
           text: tr('Видалити', 'Delete'),
           style: 'destructive',
-          onPress: () => deleteFoodEntry(id),
+          // The row folds away first, so the meal card shrinks along with it.
+          onPress: () => collapse(() => deleteFoodEntry(id)),
         },
       ],
     });
@@ -204,35 +210,38 @@ export default function FoodScreen() {
                 const time = timeFormatter.format(new Date(e.eatenAt));
                 return (
                   <ListRow key={e.id}>
-                    <SwipeToDelete onDelete={(close) => remove(e.id, `${time} · ${e.name}`, close)}>
-                      <Pressable
-                        onPress={() =>
-                          router.push({ pathname: '/food-entry/[id]', params: { id: e.id } })
-                        }
-                        accessibilityRole="button"
-                        style={({ pressed }) => [styles.entry, pressed && styles.pressed]}>
-                        <Row style={styles.spaceBetween}>
-                          <View style={styles.flex}>
-                            <Text variant="body" numberOfLines={1}>
-                              {e.name}
+                    {(collapse) => (
+                      <SwipeToDelete
+                        onDelete={(close) => remove(e.id, `${time} · ${e.name}`, close, collapse)}>
+                        <Pressable
+                          onPress={() =>
+                            router.push({ pathname: '/food-entry/[id]', params: { id: e.id } })
+                          }
+                          accessibilityRole="button"
+                          style={({ pressed }) => [styles.entry, pressed && styles.pressed]}>
+                          <Row style={styles.spaceBetween}>
+                            <View style={styles.flex}>
+                              <Text variant="body" numberOfLines={1}>
+                                {e.name}
+                              </Text>
+                              <Text variant="muted" numberOfLines={1}>
+                                {time}
+                                {e.portion ? ` · ${e.portion}` : ''}
+                              </Text>
+                            </View>
+                            <Text variant="heading">
+                              {formatKcal(e.kcal)} {tr('ккал', 'kcal')}
                             </Text>
-                            <Text variant="muted" numberOfLines={1}>
-                              {time}
-                              {e.portion ? ` · ${e.portion}` : ''}
-                            </Text>
-                          </View>
-                          <Text variant="heading">
-                            {formatKcal(e.kcal)} {tr('ккал', 'kcal')}
+                            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                          </Row>
+                          <Text variant="caption">
+                            {tr('Б', 'P')} {formatGrams(e.proteinG)} · {tr('Ж', 'F')}{' '}
+                            {formatGrams(e.fatG)} · {tr('В', 'C')} {formatGrams(e.carbsG)}{' '}
+                            {tr('г', 'g')}
                           </Text>
-                          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-                        </Row>
-                        <Text variant="caption">
-                          {tr('Б', 'P')} {formatGrams(e.proteinG)} · {tr('Ж', 'F')}{' '}
-                          {formatGrams(e.fatG)} · {tr('В', 'C')} {formatGrams(e.carbsG)}{' '}
-                          {tr('г', 'g')}
-                        </Text>
-                      </Pressable>
-                    </SwipeToDelete>
+                        </Pressable>
+                      </SwipeToDelete>
+                    )}
                   </ListRow>
                 );
               })}

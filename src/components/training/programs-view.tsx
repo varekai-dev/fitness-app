@@ -83,7 +83,7 @@ export function ProgramsView({ bottomSpace }: { bottomSpace: number }) {
             );
             // Only programs the user made can be swiped away; built-in ones from their screen.
             return (
-              <ListRow key={p.id}>
+              <ListRow key={p.id} glide>
                 {p.builtIn ? (
                   card
                 ) : (

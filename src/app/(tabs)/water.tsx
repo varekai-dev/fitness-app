@@ -14,6 +14,7 @@ import {
   Loading,
   Row,
   Screen,
+  SCREEN_GAP,
   SectionHeader,
   Text,
 } from '@/components/ui';
@@ -45,13 +46,22 @@ export default function WaterScreen() {
   if (!data) return <Loading />;
   const { goal, todayEntries, todayMl, days, today } = data;
 
-  const remove = (id: number, label: string, close: () => void) =>
+  const remove = (
+    id: number,
+    label: string,
+    close: () => void,
+    collapse: (then: () => void) => void,
+  ) =>
     dialog.show({
       title: tr('Видалити запис?', 'Delete entry?'),
       message: label,
       buttons: [
         { text: tr('Скасувати', 'Cancel'), style: 'cancel', onPress: close },
-        { text: tr('Видалити', 'Delete'), style: 'destructive', onPress: () => deleteWater(id) },
+        {
+          text: tr('Видалити', 'Delete'),
+          style: 'destructive',
+          onPress: () => collapse(() => deleteWater(id)),
+        },
       ],
     });
 
@@ -123,39 +133,46 @@ export default function WaterScreen() {
             const glass = glassForAmount(e.amountMl);
             const time = timeFormatter.format(new Date(e.drankAt));
             return (
-              <ListRow key={e.id}>
-                <SwipeToDelete
-                  onDelete={(close) =>
-                    remove(e.id, `${time} · ${formatVolume(e.amountMl)} ${VOLUME_UNIT}`, close)
-                  }>
-                  <Card
-                    onPress={() =>
-                      setPouring({
-                        glass: glassToHold(e.amountMl),
-                        editMl: e.amountMl,
-                        editId: e.id,
-                      })
+              <ListRow key={e.id} gap={SCREEN_GAP}>
+                {(collapse) => (
+                  <SwipeToDelete
+                    onDelete={(close) =>
+                      remove(
+                        e.id,
+                        `${time} · ${formatVolume(e.amountMl)} ${VOLUME_UNIT}`,
+                        close,
+                        collapse,
+                      )
                     }>
-                    <Row style={styles.spaceBetween}>
-                      <Row>
-                        <View style={styles.entryIcon}>
-                          <MaterialCommunityIcons
-                            name={glass.icon}
-                            size={20}
-                            color={colors.accent}
-                          />
-                        </View>
-                        <Text variant="body">{glass.label}</Text>
+                    <Card
+                      onPress={() =>
+                        setPouring({
+                          glass: glassToHold(e.amountMl),
+                          editMl: e.amountMl,
+                          editId: e.id,
+                        })
+                      }>
+                      <Row style={styles.spaceBetween}>
+                        <Row>
+                          <View style={styles.entryIcon}>
+                            <MaterialCommunityIcons
+                              name={glass.icon}
+                              size={20}
+                              color={colors.accent}
+                            />
+                          </View>
+                          <Text variant="body">{glass.label}</Text>
+                        </Row>
+                        <Row>
+                          <Text variant="heading">
+                            {formatVolume(e.amountMl)} {VOLUME_UNIT}
+                          </Text>
+                          <Text variant="muted">{time}</Text>
+                        </Row>
                       </Row>
-                      <Row>
-                        <Text variant="heading">
-                          {formatVolume(e.amountMl)} {VOLUME_UNIT}
-                        </Text>
-                        <Text variant="muted">{time}</Text>
-                      </Row>
-                    </Row>
-                  </Card>
-                </SwipeToDelete>
+                    </Card>
+                  </SwipeToDelete>
+                )}
               </ListRow>
             );
           })

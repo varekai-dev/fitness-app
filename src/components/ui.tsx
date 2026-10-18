@@ -22,6 +22,9 @@ import { PressScale } from '@/components/motion';
 import { useScrollResetOnTabLeave } from '@/hooks/use-scroll-reset-on-tab-leave';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
+/** Space between the blocks of a `Screen`. */
+export const SCREEN_GAP = spacing.lg;
+
 export type IconName = ComponentProps<typeof Ionicons>['name'];
 
 type TextVariant =
@@ -487,7 +490,7 @@ const styles = StyleSheet.create({
   screenRoot: { flex: 1, backgroundColor: colors.background },
   screen: {
     padding: spacing.lg,
-    gap: spacing.lg,
+    gap: SCREEN_GAP,
     paddingBottom: spacing.xxl * 2,
     flexGrow: 1,
   },

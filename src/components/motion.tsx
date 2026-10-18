@@ -20,6 +20,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { Circle } from 'react-native-svg';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { radius } from '@/theme';
 
@@ -173,13 +174,54 @@ export function PressScale({
  * neighbours glide into place. Rows present when the screen first renders don't
  * fade in: `Screen` wraps its content in `LayoutAnimationConfig skipEntering`.
  */
-export function ListRow({ children }: { children: ReactNode }) {
+export function ListRow({
+  children,
+  glide,
+  gap = 0,
+}: {
+  /** A function child gets `collapse`, which folds the row away and then calls `then`. */
+  children: ReactNode | ((collapse: (then: () => void) => void) => ReactNode);
+  /**
+   * For rows deleted without `collapse`: the removed row fades out on top and its
+   * neighbours glide into place. Fine for loose rows, but a box around the rows
+   * (a card) would snap to its new size at once, so prefer `collapse` there.
+   */
+  glide?: boolean;
+  /** The parent's gap after this row, folded away along with it. */
+  gap?: number;
+}) {
+  const height = useSharedValue(0);
+  // 1 = open, 0 = folded away.
+  const open = useSharedValue(1);
+  const collapse = (then: () => void) => {
+    open.set(
+      withTiming(0, { duration: 240, easing: Easing.inOut(Easing.quad) }, (finished) => {
+        if (finished) scheduleOnRN(then);
+      }),
+    );
+  };
+  // The row's real height shrinks, so a card around it and everything below follow
+  // frame by frame instead of jumping when the row is gone.
+  const style = useAnimatedStyle(() =>
+    open.get() < 1
+      ? {
+          height: height.get() * open.get(),
+          marginBottom: -gap * (1 - open.get()),
+          opacity: open.get(),
+          overflow: 'hidden',
+        }
+      : {},
+  );
   return (
     <Animated.View
       entering={FadeIn.duration(220)}
-      exiting={FadeOut.duration(160)}
-      layout={LinearTransition.duration(220)}>
-      {children}
+      exiting={glide ? FadeOut.duration(160) : undefined}
+      layout={glide ? LinearTransition.duration(220) : undefined}
+      onLayout={(e) => {
+        if (open.get() === 1) height.set(e.nativeEvent.layout.height);
+      }}
+      style={style}>
+      {typeof children === 'function' ? children(collapse) : children}
     </Animated.View>
   );
 }
