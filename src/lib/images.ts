@@ -1,4 +1,5 @@
 import { Directory, File, Paths } from 'expo-file-system';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 
 import { tr } from '@/lib/i18n';
@@ -59,17 +60,18 @@ export function deleteStoredImage(uri: string | null | undefined) {
   if (file.exists) file.delete();
 }
 
+// The longest side of a photo sent to AI; the model doesn't need fine detail.
+const AI_IMAGE_SIDE = 1280;
+
 /**
  * Takes or picks a photo to send to AI, not to keep: returns its local URI and
- * type, or null if cancelled. It comes back without base64 (`readForAi` reads
- * that), so a screen can show the photo the moment the picker closes.
+ * size, or null if cancelled. The picker hands the original over as is, since
+ * compressing there decodes the whole photo before the promise resolves and
+ * holds the screen behind for a second or two; `readForAi` shrinks it instead,
+ * so a screen can show the photo the moment the picker closes.
  */
 export async function captureForAi(source: 'camera' | 'library') {
-  const options: ImagePicker.ImagePickerOptions = {
-    mediaTypes: ['images'],
-    // A smaller upload is faster; the model doesn't need fine detail.
-    quality: 0.5,
-  };
+  const options: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], quality: 1 };
   let result: ImagePicker.ImagePickerResult;
   if (source === 'camera') {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
@@ -81,10 +83,21 @@ export async function captureForAi(source: 'camera' | 'library') {
   }
   const asset = result.canceled ? null : result.assets[0];
   if (!asset) return null;
-  return { uri: asset.uri, mimeType: asset.mimeType ?? 'image/jpeg' };
+  return { uri: asset.uri, width: asset.width, height: asset.height };
 }
 
-/** The photo from `captureForAi` as base64, ready to send. */
-export async function readForAi(image: { uri: string; mimeType: string }) {
-  return { base64: await new File(image.uri).base64(), mimeType: image.mimeType };
+/** The photo from `captureForAi` shrunk to a smaller, faster upload, as base64 JPEG. */
+export async function readForAi(image: { uri: string; width: number; height: number }) {
+  const context = ImageManipulator.manipulate(image.uri);
+  if (Math.max(image.width, image.height) > AI_IMAGE_SIDE) {
+    context.resize(
+      image.width >= image.height
+        ? { width: AI_IMAGE_SIDE, height: null }
+        : { width: null, height: AI_IMAGE_SIDE },
+    );
+  }
+  const rendered = await context.renderAsync();
+  const saved = await rendered.saveAsync({ format: SaveFormat.JPEG, compress: 0.7, base64: true });
+  new File(saved.uri).delete();
+  return { base64: saved.base64!, mimeType: 'image/jpeg' };
 }
