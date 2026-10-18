@@ -2,10 +2,11 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useDialog } from '@/components/dialog';
+import { FoodPhotoScanner, type PhotoScan } from '@/components/food-photo-scanner';
 import { MacroRow } from '@/components/macro-row';
 import {
   Badge,
@@ -113,6 +114,10 @@ export default function AddFoodScreen() {
   // Preview of the photo the text was recognized from, while it's being checked.
   const [photo, setPhoto] = useState<string | null>(null);
   const [recognizing, setRecognizing] = useState(false);
+  // The full-screen scan of the photo being recognized; null while it's closed.
+  const [scan, setScan] = useState<PhotoScan | null>(null);
+  // Bumped when a scan is closed, so its late answer is ignored.
+  const scanRun = useRef(0);
   const busy = looking || recognizing;
   // Dishes waiting to be logged: one, or each dish of a list like "яйця 150 г, курка 100 г".
   const [pending, setPending] = useState<Pending[]>([]);
@@ -198,17 +203,36 @@ export default function AddFoodScreen() {
       return;
     }
     if (!image) return;
-    setPhoto(image.uri);
+    const run = ++scanRun.current;
+    const uri = image.uri;
+    setPhoto(null);
+    setScan({ uri });
     setRecognizing(true);
     try {
-      setInput(await describeFoodPhoto(image));
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      const result = await describeFoodPhoto(image);
+      if (run === scanRun.current) setScan({ uri, result });
     } catch (e) {
-      setPhoto(null);
-      showError(tr('Не вдалося розпізнати', 'Couldn’t recognize'), e);
+      const noKey = e instanceof GroqError && (e.kind === 'no-key' || e.kind === 'auth');
+      if (run === scanRun.current) {
+        setScan({ uri, error: { message: (e as Error).message, settings: noKey } });
+      }
     } finally {
-      setRecognizing(false);
+      if (run === scanRun.current) setRecognizing(false);
     }
+  };
+
+  // The found dishes land in the field, under the photo they came from.
+  const finishScan = () => {
+    if (!scan?.result) return;
+    setInput(scan.result);
+    setPhoto(scan.uri);
+    setScan(null);
+  };
+
+  const closeScan = () => {
+    scanRun.current++;
+    setRecognizing(false);
+    setScan(null);
   };
 
   const choosePhotoSource = () =>
@@ -294,6 +318,15 @@ export default function AddFoodScreen() {
 
   return (
     <Screen title={tr('Додати їжу', 'Add food')} mode="modal">
+      <FoodPhotoScanner
+        scan={scan}
+        onFinish={finishScan}
+        onClose={closeScan}
+        onSettings={() => {
+          closeScan();
+          router.push('/settings/integrations');
+        }}
+      />
       <MealPicker meal={meal} onChange={setMeal} />
       {pending.length > 0 ? (
         <PendingList
