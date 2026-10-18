@@ -128,8 +128,17 @@ function ShortcutRow({
   value: boolean;
   onChange: (on: boolean) => void;
 }) {
+  const toggle = (on: boolean) => {
+    Haptics.selectionAsync();
+    onChange(on);
+  };
+  // The whole row flips the switch, not just the switch itself.
   return (
-    <Row style={styles.shortcut}>
+    <Pressable
+      onPress={() => toggle(!value)}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value }}
+      style={({ pressed }) => [styles.shortcut, pressed && styles.pressed]}>
       <Ionicons name={icon} size={20} color={colors.accent} />
       <View style={styles.flex}>
         <Text variant="heading">{title}</Text>
@@ -137,14 +146,11 @@ function ShortcutRow({
       </View>
       <Switch
         value={value}
-        onValueChange={(on) => {
-          Haptics.selectionAsync();
-          onChange(on);
-        }}
+        onValueChange={toggle}
         trackColor={{ true: colors.accent, false: colors.surfaceRaised }}
         thumbColor={colors.text}
       />
-    </Row>
+    </Pressable>
   );
 }
 
@@ -566,7 +572,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   goalCard: { gap: spacing.lg },
   shortcuts: { gap: spacing.lg },
-  shortcut: { gap: spacing.md },
+  shortcut: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   goalValue: { alignItems: 'center', gap: spacing.xs },
   goalUnit: { color: colors.textSecondary, fontSize: fontSize.md, fontWeight: '600' },
   zonePill: {
