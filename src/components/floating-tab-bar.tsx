@@ -1,11 +1,15 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
+import { useFocusEffect } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
+  Extrapolation,
+  interpolate,
   useAnimatedStyle,
   useSharedValue,
+  withDelay,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
@@ -19,6 +23,12 @@ const BAR_HEIGHT = 72;
 const BUBBLE = 56;
 const SIDE_MARGIN = spacing.lg;
 const SPRING = { damping: 18, stiffness: 220, mass: 0.7 };
+/** Underdamped, so the "+" overshoots upward and settles back. */
+const FAB_SPRING = { damping: 9, stiffness: 260, mass: 0.8 };
+/** How far below its spot the "+" hides. */
+const FAB_DROP = 48;
+/** Wait for the tab's shift transition (150 ms) before popping up. */
+const FAB_ENTER_DELAY = 150;
 
 /** Vertical space screens should leave at the bottom so content clears the floating bar. */
 export function useTabBarSpace() {
@@ -45,22 +55,38 @@ export function TabBarFab({
   const { width } = useWindowDimensions();
   const bottom = useTabBarSpace();
   const slot = (width - 2 * SIDE_MARGIN) / tabCount;
+  // 0 = in place, 1 = tucked down out of sight.
+  const hidden = useSharedValue(1);
+
+  // Instead of sliding sideways with the tab switch, the button drops out when the tab
+  // loses focus and, once the new tab has shifted in, pops up past its spot and settles.
+  useFocusEffect(
+    useCallback(() => {
+      hidden.set(withDelay(FAB_ENTER_DELAY, withSpring(0, FAB_SPRING)));
+      return () => hidden.set(withTiming(1, { duration: 120 }));
+    }, [hidden]),
+  );
+
+  const style = useAnimatedStyle(() => ({
+    opacity: interpolate(hidden.get(), [0, 0.6], [1, 0], Extrapolation.CLAMP),
+    transform: [{ translateY: hidden.get() * FAB_DROP }],
+  }));
+
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      hitSlop={6}
-      style={({ pressed }) => [
-        styles.fabSpot,
-        { bottom, right: SIDE_MARGIN + (slot - BUBBLE) / 2 },
-        pressed && styles.fabPressed,
-      ]}>
-      {/* Denser than the bar: it floats over list text, which must not show through. */}
-      <Glass interactive tint="rgba(30,30,30,0.9)" style={styles.fab}>
-        <Ionicons name="add" size={28} color={colors.accent} />
-      </Glass>
-    </Pressable>
+    <Animated.View
+      style={[styles.fabSpot, { bottom, right: SIDE_MARGIN + (slot - BUBBLE) / 2 }, style]}>
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        hitSlop={6}
+        style={({ pressed }) => pressed && styles.fabPressed}>
+        {/* Denser than the bar: it floats over list text, which must not show through. */}
+        <Glass interactive tint="rgba(30,30,30,0.9)" style={styles.fab}>
+          <Ionicons name="add" size={28} color={colors.accent} />
+        </Glass>
+      </Pressable>
+    </Animated.View>
   );
 }
 
