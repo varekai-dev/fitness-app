@@ -632,11 +632,8 @@ function FoodMealsWidget({ size, data }: WidgetProps) {
 
 // ---------- water ----------
 
-// The glass, mug and bottle; the large tile adds the cup.
+// The glass.
 const QUICK_ML = GLASS_PRESETS[1].ml;
-const MEDIUM_GLASSES = GLASS_PRESETS.slice(1, 4);
-// Two rows of two tiles fit beside the bottle.
-const LARGE_GLASSES = GLASS_PRESETS.slice(0, 4);
 
 function WaterTodayWidget({ size, data }: WidgetProps) {
   const { todayMl, goal } = data.water;
@@ -702,7 +699,7 @@ function WaterTodayWidget({ size, data }: WidgetProps) {
           </View>
         </View>
         <View style={styles.quickRow}>
-          {MEDIUM_GLASSES.map((g) => (
+          {GLASS_PRESETS.map((g) => (
             <QuickButton key={g.ml} label={formatVolume(g.ml)} onPress={() => drink(g.ml)} grow />
           ))}
         </View>
@@ -726,7 +723,7 @@ function WaterTodayWidget({ size, data }: WidgetProps) {
             </Text>
           </View>
           <View style={styles.glassGrid}>
-            {LARGE_GLASSES.map((g) => (
+            {GLASS_PRESETS.map((g) => (
               <View key={g.ml} style={styles.glassCell}>
                 <GlassButton glass={g} onPress={() => drink(g.ml)} />
               </View>

@@ -10,16 +10,14 @@ export type GlassPreset = { ml: number; label: string; icon: GlassIconName };
 
 const imperial = unitSystem === 'imperial';
 
-/** Sizes of the cup, glass, mug, bottle and sports bottle: round millilitres or round ounces. */
-const PRESET_ML = imperial ? [6, 8, 12, 16, 24].map(flOz) : [150, 250, 350, 500, 750];
+/** Sizes of the cup, glass and bottle: round millilitres or round ounces. */
+const PRESET_ML = imperial ? [6, 8, 16].map(flOz) : [150, 250, 500];
 
 /** Containers offered for logging water, smallest first. */
 export const GLASS_PRESETS: GlassPreset[] = [
   { ml: PRESET_ML[0], label: tr('Чашка', 'Cup'), icon: 'cup-outline' },
   { ml: PRESET_ML[1], label: tr('Склянка', 'Glass'), icon: 'cup-water' },
-  { ml: PRESET_ML[2], label: tr('Кухоль', 'Mug'), icon: 'glass-mug-variant' },
-  { ml: PRESET_ML[3], label: tr('Пляшка', 'Bottle'), icon: 'bottle-soda-classic-outline' },
-  { ml: PRESET_ML[4], label: tr('Спортпляшка', 'Sports bottle'), icon: 'bottle-tonic-outline' },
+  { ml: PRESET_ML[2], label: tr('Пляшка', 'Bottle'), icon: 'bottle-soda-classic-outline' },
 ];
 
 export const DEFAULT_WATER_GOAL_ML = 2500;

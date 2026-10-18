@@ -1,5 +1,6 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useDialog } from '@/components/dialog';
@@ -17,13 +18,14 @@ import {
 } from '@/components/ui';
 import { WaterBottle } from '@/components/water-bottle';
 import { drinkWater, GlassButton } from '@/components/water-card';
+import { WaterPourModal } from '@/components/water-pour-modal';
 import { deleteWater, loadWater } from '@/db/water';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { useToday } from '@/hooks/use-today';
 import { locale, tr } from '@/lib/i18n';
 import { WEEKDAY_SHORT, weekdayIndex } from '@/lib/labels';
 import { formatVolume, formatVolumeCompact, VOLUME_UNIT } from '@/lib/units';
-import { GLASS_PRESETS, glassForAmount } from '@/lib/water';
+import { GLASS_PRESETS, glassForAmount, type GlassPreset } from '@/lib/water';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 const timeFormatter = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' });
@@ -34,6 +36,7 @@ export default function WaterScreen() {
   const day = useToday();
   const { data } = useDbQuery(() => loadWater(), [day]);
   const dialog = useDialog();
+  const [pouring, setPouring] = useState<GlassPreset | null>(null);
 
   if (!data) return <Loading />;
   const { goal, todayEntries, todayMl, days, today } = data;
@@ -101,7 +104,7 @@ export default function WaterScreen() {
       <View style={styles.glasses}>
         {GLASS_PRESETS.map((g) => (
           <View key={g.ml} style={styles.glassCell}>
-            <GlassButton glass={g} onPress={() => drinkWater(g.ml, todayMl, goal)} />
+            <GlassButton glass={g} onPress={() => setPouring(g)} />
           </View>
         ))}
       </View>
@@ -175,6 +178,14 @@ export default function WaterScreen() {
           );
         })
       )}
+      <WaterPourModal
+        glass={pouring}
+        onClose={() => setPouring(null)}
+        onAdd={(ml) => {
+          setPouring(null);
+          drinkWater(ml, todayMl, goal);
+        }}
+      />
       {dialog.element}
     </Screen>
   );
