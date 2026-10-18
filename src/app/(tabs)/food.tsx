@@ -134,7 +134,7 @@ export default function FoodScreen() {
         />
       </Row>
 
-      {dayEntries.length > 0 && (
+      {dayEntries.length > 0 && shortcuts.dayReview && (
         <DayReviewCard
           key={day}
           day={day}
@@ -181,7 +181,7 @@ export default function FoodScreen() {
                 }
               />
             </Row>
-            {daysAgo === 0 && MAIN_MEALS.includes(meal) && (
+            {daysAgo === 0 && shortcuts.mealAdvice && MAIN_MEALS.includes(meal) && (
               <MealAdvice
                 meal={meal}
                 day={day}

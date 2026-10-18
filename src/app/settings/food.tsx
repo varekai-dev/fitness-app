@@ -89,6 +89,26 @@ export default function FoodSettingsScreen() {
           value={shortcuts.repeats}
           onChange={(on) => setFoodShortcut('repeats', on)}
         />
+        <ShortcutRow
+          icon="chatbubble-ellipses-outline"
+          title={tr('AI коментар дня', 'AI day comment')}
+          hint={tr(
+            'Оцінка з’їденого за день і що варто додати.',
+            'A take on the day’s food and what is worth adding.',
+          )}
+          value={shortcuts.dayReview}
+          onChange={(on) => setFoodShortcut('dayReview', on)}
+        />
+        <ShortcutRow
+          icon="sparkles-outline"
+          title={tr('Що поїсти', 'What to eat')}
+          hint={tr(
+            'Порада AI для сніданку, обіду й вечері під залишок дня.',
+            'AI advice for breakfast, lunch and dinner to fit what’s left of the day.',
+          )}
+          value={shortcuts.mealAdvice}
+          onChange={(on) => setFoodShortcut('mealAdvice', on)}
+        />
       </Card>
     </Screen>
   );

@@ -72,20 +72,34 @@ export async function setKcalGoal(kcal: number) {
     .onConflictDoUpdate({ target: settings.key, set: { value: String(kcal) } });
 }
 
-const SHOW_TEMPLATES_KEY = 'food_show_templates';
-const SHOW_REPEATS_KEY = 'food_show_repeats';
+const SHORTCUT_KEYS = {
+  templates: 'food_show_templates',
+  repeats: 'food_show_repeats',
+  dayReview: 'food_show_day_review',
+  mealAdvice: 'food_show_meal_advice',
+} as const;
+export type FoodShortcut = keyof typeof SHORTCUT_KEYS;
 
-/** Whether the food screens offer saved templates and "same as last time" meals; both on by default. */
+/**
+ * What the food screens offer besides the log: saved templates, "same as last
+ * time" meals, the AI comment on the day and AI advice on what to eat. All on by default.
+ */
 export async function getFoodShortcuts() {
   const rows = await db.query.settings.findMany({
-    where: inArray(settings.key, [SHOW_TEMPLATES_KEY, SHOW_REPEATS_KEY]),
+    where: inArray(settings.key, Object.values(SHORTCUT_KEYS)),
   });
-  const on = (key: string) => rows.find((r) => r.key === key)?.value !== '0';
-  return { templates: on(SHOW_TEMPLATES_KEY), repeats: on(SHOW_REPEATS_KEY) };
+  const on = (shortcut: FoodShortcut) =>
+    rows.find((r) => r.key === SHORTCUT_KEYS[shortcut])?.value !== '0';
+  return {
+    templates: on('templates'),
+    repeats: on('repeats'),
+    dayReview: on('dayReview'),
+    mealAdvice: on('mealAdvice'),
+  };
 }
 
-export async function setFoodShortcut(shortcut: 'templates' | 'repeats', on: boolean) {
-  const key = shortcut === 'templates' ? SHOW_TEMPLATES_KEY : SHOW_REPEATS_KEY;
+export async function setFoodShortcut(shortcut: FoodShortcut, on: boolean) {
+  const key = SHORTCUT_KEYS[shortcut];
   const value = on ? '1' : '0';
   await db
     .insert(settings)
