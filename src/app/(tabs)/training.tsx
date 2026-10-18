@@ -2,7 +2,7 @@ import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { useTabBarSpace } from '@/components/floating-tab-bar';
+import { TAB_BAR_FAB_SPACE, TabBarFab, useTabBarSpace } from '@/components/floating-tab-bar';
 import { Backdrop } from '@/components/glass';
 import { ExercisesView } from '@/components/training/exercises-view';
 import { HistoryView } from '@/components/training/history-view';
@@ -35,6 +35,9 @@ export default function TrainingScreen() {
   const { view } = useLocalSearchParams<{ view?: string }>();
   // The URL is the single source of truth, so links and the switcher stay in sync.
   const section: TrainingSection = isSection(view) ? view : 'today';
+  const canAdd = section === 'exercises' || section === 'programs';
+  // Lists with the plus below get room to scroll clear of it.
+  const listSpace = tabBarSpace + TAB_BAR_FAB_SPACE;
 
   // A new program starts with a placeholder name; the editor opens with it selected to retype.
   const newProgram = async () => {
@@ -54,16 +57,7 @@ export default function TrainingScreen() {
       <ScreenHeader
         title={tr('Тренування', 'Training')}
         mode="root"
-        right={
-          (section === 'exercises' || section === 'programs') && (
-            <CircleButton
-              icon="add"
-              background={colors.accent}
-              color={colors.accentText}
-              onPress={section === 'exercises' ? () => router.push('/exercise/edit') : newProgram}
-            />
-          )
-        }
+        right={<CircleButton icon="settings-outline" onPress={() => router.push('/settings')} />}
       />
       <View style={styles.segments}>
         {SECTIONS.map((s) => (
@@ -81,10 +75,21 @@ export default function TrainingScreen() {
       </View>
       <View style={styles.body}>
         {section === 'today' && <OverviewView bottomSpace={tabBarSpace} onSection={select} />}
-        {section === 'programs' && <ProgramsView bottomSpace={tabBarSpace} />}
-        {section === 'exercises' && <ExercisesView bottomSpace={tabBarSpace} />}
+        {section === 'programs' && <ProgramsView bottomSpace={listSpace} />}
+        {section === 'exercises' && <ExercisesView bottomSpace={listSpace} />}
         {section === 'history' && <HistoryView bottomSpace={tabBarSpace} />}
       </View>
+      {canAdd && (
+        <TabBarFab
+          tabCount={4}
+          label={
+            section === 'exercises'
+              ? tr('Нова вправа', 'New exercise')
+              : tr('Нова програма', 'New program')
+          }
+          onPress={section === 'exercises' ? () => router.push('/exercise/edit') : newProgram}
+        />
+      )}
     </View>
   );
 }
