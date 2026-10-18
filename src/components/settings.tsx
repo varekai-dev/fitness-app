@@ -26,8 +26,11 @@ export function SettingsLink({
           <Ionicons name={icon} size={20} color={colors.accent} />
           <Text variant="heading">{title}</Text>
         </Row>
-        <Row>
-          <Text variant="muted">{hint}</Text>
+        {/* The hint gives way first: it shrinks and ends in an ellipsis. */}
+        <Row style={styles.hint}>
+          <Text variant="muted" numberOfLines={1} style={styles.hintText}>
+            {hint}
+          </Text>
           <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
         </Row>
       </Row>
@@ -160,4 +163,6 @@ const styles = StyleSheet.create({
   goalValue: { minWidth: 96, textAlign: 'center' },
   recUnit: { color: colors.textSecondary, fontSize: fontSize.md, fontWeight: '600' },
   spaceBetween: { justifyContent: 'space-between' },
+  hint: { flexShrink: 1, justifyContent: 'flex-end' },
+  hintText: { flexShrink: 1 },
 });
