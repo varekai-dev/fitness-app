@@ -3,7 +3,12 @@ import * as Haptics from 'expo-haptics';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Glass } from '@/components/glass';
@@ -104,15 +109,13 @@ export function FloatingTabBar({
               }
             };
             return (
-              <Pressable
+              <TabItem
                 key={route.key}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: focused }}
-                accessibilityLabel={options.title ?? route.name}
+                label={options.title ?? route.name}
+                icon={icon}
+                focused={focused}
                 onPress={onPress}
-                style={styles.item}>
-                <TabIcon name={icon} focused={focused} />
-              </Pressable>
+              />
             );
           })}
         </Glass>
@@ -121,20 +124,48 @@ export function FloatingTabBar({
   );
 }
 
-function TabIcon({ name, focused }: { name: IconName; focused: boolean }) {
+/** A tab button: while held, the icon shrinks and a soft highlight circle grows behind it. */
+function TabItem({
+  label,
+  icon,
+  focused,
+  onPress,
+}: {
+  label: string;
+  icon: IconName;
+  focused: boolean;
+  onPress: () => void;
+}) {
   const scale = useSharedValue(focused ? 1.1 : 1);
+  const press = useSharedValue(0);
   useEffect(() => {
     scale.set(withSpring(focused ? 1.1 : 1, SPRING));
   }, [focused, scale]);
-  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.get() }] }));
+  const iconStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.get() * (1 - 0.15 * press.get()) }],
+  }));
+  const highlightStyle = useAnimatedStyle(() => ({
+    opacity: press.get(),
+    transform: [{ scale: 0.5 + 0.5 * press.get() }],
+  }));
   return (
-    <Animated.View style={style}>
-      <Ionicons
-        name={focused ? name : (`${name}-outline` as IconName)}
-        size={24}
-        color={focused ? colors.accentText : 'rgba(255,255,255,0.85)'}
-      />
-    </Animated.View>
+    <Pressable
+      accessibilityRole="tab"
+      accessibilityState={{ selected: focused }}
+      accessibilityLabel={label}
+      onPress={onPress}
+      onPressIn={() => press.set(withTiming(1, { duration: 120 }))}
+      onPressOut={() => press.set(withSpring(0, SPRING))}
+      style={styles.item}>
+      <Animated.View style={[styles.highlight, highlightStyle]} pointerEvents="none" />
+      <Animated.View style={iconStyle}>
+        <Ionicons
+          name={focused ? icon : (`${icon}-outline` as IconName)}
+          size={24}
+          color={focused ? colors.accentText : 'rgba(255,255,255,0.85)'}
+        />
+      </Animated.View>
+    </Pressable>
   );
 }
 
@@ -157,6 +188,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
   },
   item: { flex: 1, height: BAR_HEIGHT, alignItems: 'center', justifyContent: 'center' },
+  highlight: {
+    position: 'absolute',
+    width: BUBBLE,
+    height: BUBBLE,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+  },
   fabSpot: { position: 'absolute' },
   fab: {
     width: BUBBLE,
