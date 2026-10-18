@@ -60,15 +60,15 @@ export function deleteStoredImage(uri: string | null | undefined) {
 }
 
 /**
- * Takes or picks a photo to send to AI, not to keep: returns it as base64 with
- * its type, plus a local preview URI. Resolves to null if cancelled.
+ * Takes or picks a photo to send to AI, not to keep: returns its local URI and
+ * type, or null if cancelled. It comes back without base64 (`readForAi` reads
+ * that), so a screen can show the photo the moment the picker closes.
  */
 export async function captureForAi(source: 'camera' | 'library') {
   const options: ImagePicker.ImagePickerOptions = {
     mediaTypes: ['images'],
     // A smaller upload is faster; the model doesn't need fine detail.
     quality: 0.5,
-    base64: true,
   };
   let result: ImagePicker.ImagePickerResult;
   if (source === 'camera') {
@@ -80,6 +80,11 @@ export async function captureForAi(source: 'camera' | 'library') {
     result = await ImagePicker.launchImageLibraryAsync(options);
   }
   const asset = result.canceled ? null : result.assets[0];
-  if (!asset?.base64) return null;
-  return { uri: asset.uri, base64: asset.base64, mimeType: asset.mimeType ?? 'image/jpeg' };
+  if (!asset) return null;
+  return { uri: asset.uri, mimeType: asset.mimeType ?? 'image/jpeg' };
+}
+
+/** The photo from `captureForAi` as base64, ready to send. */
+export async function readForAi(image: { uri: string; mimeType: string }) {
+  return { base64: await new File(image.uri).base64(), mimeType: image.mimeType };
 }

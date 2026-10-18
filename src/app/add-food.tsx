@@ -50,7 +50,7 @@ import {
 } from '@/lib/food';
 import { describeFoodPhoto, GroqError, type SuggestedFood } from '@/lib/groq';
 import { tr } from '@/lib/i18n';
-import { captureForAi } from '@/lib/images';
+import { captureForAi, readForAi } from '@/lib/images';
 import { MEAL_LABELS, MEALS, mealAt, type Meal } from '@/lib/meals';
 import { parseDecimal } from '@/lib/metrics';
 import { colors, fontSize, radius, spacing } from '@/theme';
@@ -209,7 +209,7 @@ export default function AddFoodScreen() {
     setScan({ uri });
     setRecognizing(true);
     try {
-      const result = await describeFoodPhoto(image);
+      const result = await describeFoodPhoto(await readForAi(image));
       if (run === scanRun.current) setScan({ uri, result });
     } catch (e) {
       const noKey = e instanceof GroqError && (e.kind === 'no-key' || e.kind === 'auth');

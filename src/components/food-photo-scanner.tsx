@@ -92,7 +92,8 @@ export function FoodPhotoScanner({
   return (
     <Modal
       visible={!!scan}
-      animationType="fade"
+      // Up at once over the picker as it closes, so the screen behind never shows.
+      animationType="none"
       statusBarTranslucent
       navigationBarTranslucent
       onRequestClose={onClose}>
