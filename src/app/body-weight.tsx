@@ -10,7 +10,6 @@ import {
   Button,
   Card,
   EmptyState,
-  Field,
   Loading,
   Row,
   Screen,
@@ -18,36 +17,34 @@ import {
   StatTile,
   Text,
 } from '@/components/ui';
+import { WeightRulerModal } from '@/components/weight-ruler';
 import { deleteBodyWeight, listBodyWeights, saveBodyWeight } from '@/db/body-weight';
 import { listProgressPhotos } from '@/db/progress-photos';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { tr } from '@/lib/i18n';
 import { formatDate, formatShortDate, formatWeightDelta } from '@/lib/labels';
-import { formatNumber, formatWeight, parseDecimal } from '@/lib/metrics';
+import { formatNumber, formatWeight } from '@/lib/metrics';
 import { photoUri } from '@/lib/progress-photos';
-import { displayToKg, kgToDisplay, WEIGHT_UNIT } from '@/lib/units';
-import { colors, radius, spacing } from '@/theme';
+import { displayToKg, kgToDisplay, unitSystem, WEIGHT_UNIT } from '@/lib/units';
+import { colors, fontSize, radius, spacing } from '@/theme';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+// Where the ruler opens before the first weigh-in, in the display unit.
+const START_WEIGHT = unitSystem === 'imperial' ? 160 : 70;
 
 export default function BodyWeightScreen() {
   const { data } = useDbQuery(listBodyWeights);
   const { data: photos } = useDbQuery(listProgressPhotos);
-  // null until the user types, so the field shows the latest weight to adjust.
-  const [input, setInput] = useState<string | null>(null);
+  // The weight the ruler opens on, in the display unit; null keeps it closed.
+  const [editing, setEditing] = useState<number | null>(null);
   const dialog = useDialog();
 
   if (!data) return <Loading />;
   const latest = data.at(-1);
-  const value = input ?? (latest ? formatWeight(latest.weightKg, 1) : '');
-  const parsed = parseDecimal(value);
-  const kg = parsed === null ? null : displayToKg(parsed);
-  const valid = kg !== null && kg > 0 && kg < 500;
 
-  const save = () => {
-    if (!valid) return;
-    saveBodyWeight(kg);
-    setInput(null);
+  const save = (value: number) => {
+    saveBodyWeight(displayToKg(value));
+    setEditing(null);
   };
 
   const remove = (id: number, label: string) =>
@@ -73,24 +70,18 @@ export default function BodyWeightScreen() {
     <Screen title={tr('Вага тіла', 'Body weight')}>
       <Card>
         <Text variant="caption">
-          {tr('Сьогоднішня вага', 'Today’s weight')}, {WEIGHT_UNIT}
+          {tr('Поточна вага', 'Current weight')}, {WEIGHT_UNIT}
         </Text>
         <Row style={styles.entry}>
-          <Field
-            value={value}
-            onChangeText={setInput}
-            keyboardType="decimal-pad"
-            placeholder="0.0"
-            selectTextOnFocus
-            returnKeyType="done"
-            onSubmitEditing={save}
-            containerStyle={styles.flex}
-          />
+          <Text style={[styles.current, !latest && styles.currentEmpty]}>
+            {latest ? formatWeight(latest.weightKg, 1) : '—'}
+          </Text>
           <Button
-            title={tr('Зберегти', 'Save')}
-            icon="checkmark"
-            disabled={!valid}
-            onPress={save}
+            title={tr('Ввести вагу', 'Enter weight')}
+            icon="scale-outline"
+            onPress={() =>
+              setEditing(latest ? Number(formatWeight(latest.weightKg, 1)) : START_WEIGHT)
+            }
           />
         </Row>
         <Text variant="muted">
@@ -179,6 +170,7 @@ export default function BodyWeightScreen() {
           })}
         </>
       )}
+      <WeightRulerModal value={editing} onClose={() => setEditing(null)} onSave={save} />
       {dialog.element}
     </Screen>
   );
@@ -222,7 +214,9 @@ function PhotosCard({ photos }: { photos: { fileName: string; takenAt: number }[
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  entry: { gap: spacing.sm, alignItems: 'center' },
+  entry: { gap: spacing.sm, alignItems: 'center', justifyContent: 'space-between' },
+  current: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '800' },
+  currentEmpty: { color: colors.textMuted },
   stats: { gap: spacing.sm, alignItems: 'stretch' },
   spaceBetween: { justifyContent: 'space-between' },
   entryValue: { alignItems: 'flex-end' },

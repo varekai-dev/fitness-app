@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   FadeInDown,
@@ -13,6 +13,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { Spinner } from '@/components/spinner';
 import { Text } from '@/components/ui';
 import { tr } from '@/lib/i18n';
 import { colors, fontSize, radius, spacing } from '@/theme';
@@ -136,7 +137,7 @@ function Step({ stage, state }: { stage: LoaderStage; state: 'done' | 'active' |
     <View style={styles.step}>
       <View style={styles.stepIcon}>
         {state === 'active' ? (
-          <ActivityIndicator size="small" color={colors.accent} />
+          <Spinner color={colors.accent} size={28} />
         ) : (
           <Ionicons
             name={state === 'done' ? 'checkmark-circle' : 'ellipse-outline'}

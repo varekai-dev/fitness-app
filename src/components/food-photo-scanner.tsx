@@ -3,7 +3,7 @@ import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Modal, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
   Easing,
   FadeIn,
@@ -20,6 +20,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Spinner } from '@/components/spinner';
 import { Button, CircleButton, Text } from '@/components/ui';
 import { tr } from '@/lib/i18n';
 import { colors, fontSize, radius, spacing } from '@/theme';
@@ -286,7 +287,7 @@ function Step({ title, state }: { title: string; state: 'done' | 'active' | 'tod
     <View style={styles.row}>
       <View style={styles.stepIcon}>
         {state === 'active' ? (
-          <ActivityIndicator size="small" color={colors.accent} />
+          <Spinner color={colors.accent} size={28} />
         ) : (
           <Ionicons
             name={state === 'done' ? 'checkmark-circle' : 'ellipse-outline'}

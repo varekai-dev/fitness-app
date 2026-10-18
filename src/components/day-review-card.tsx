@@ -1,8 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
+import { Spinner } from '@/components/spinner';
 import { Button, Card, IconButton, Row, Text } from '@/components/ui';
 import { reviewChange, reviewDay, type ReviewState, type StoredReview } from '@/db/food';
 import type { Meal } from '@/db/schema';
@@ -116,7 +117,7 @@ export function DayReviewCard({
           {tr('AI-коментар до дня', 'AI on your day')}
         </Text>
         {loading ? (
-          <ActivityIndicator size="small" color={colors.textSecondary} />
+          <Spinner color={colors.textSecondary} />
         ) : (
           review && (
             <IconButton

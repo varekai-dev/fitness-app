@@ -2,13 +2,14 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { useDialog } from '@/components/dialog';
 import { ExerciseThumb } from '@/components/exercise-thumb';
 import { PlanExerciseSheet } from '@/components/plan-exercise-sheet';
 import { ProgramAiLoader, type LoaderStage } from '@/components/program-ai-loader';
+import { Spinner } from '@/components/spinner';
 import {
   Badge,
   Button,
@@ -635,7 +636,7 @@ function PlanPreview({
                 hitSlop={{ top: spacing.sm, bottom: spacing.sm, right: spacing.md }}
                 style={({ pressed }) => [styles.replace, pressed && styles.replacePressed]}>
                 {replacing.includes(`${dayIndex}-${j}`) ? (
-                  <ActivityIndicator color={colors.accent} />
+                  <Spinner color={colors.accent} />
                 ) : (
                   <Ionicons name="swap-horizontal" size={24} color={colors.accent} />
                 )}

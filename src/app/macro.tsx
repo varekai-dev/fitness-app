@@ -1,9 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { MACROS } from '@/components/calorie-summary';
+import { Spinner } from '@/components/spinner';
 import {
   Button,
   Card,
@@ -191,7 +192,7 @@ function TipsCard({
           {RICH_IN[macroKey]}
         </Text>
         {loading ? (
-          <ActivityIndicator size="small" color={colors.textSecondary} />
+          <Spinner color={colors.textSecondary} />
         ) : (
           shown && (
             <IconButton

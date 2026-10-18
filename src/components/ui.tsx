@@ -2,7 +2,6 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useRef, type ComponentProps, type ReactNode } from 'react';
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -19,6 +18,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Backdrop, Glass } from '@/components/glass';
 import { PressScale } from '@/components/motion';
+import { Spinner } from '@/components/spinner';
 import { useScrollResetOnTabLeave } from '@/hooks/use-scroll-reset-on-tab-leave';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
@@ -231,7 +231,7 @@ export function Button({
         style,
       ]}>
       {loading ? (
-        <ActivityIndicator color={fg} />
+        <Spinner color={fg} size={36} />
       ) : (
         <>
           {icon && <Ionicons name={icon} size={small ? 15 : 18} color={fg} />}
@@ -452,7 +452,7 @@ export function EmptyState({
 export function Loading() {
   return (
     <View style={styles.loading}>
-      <ActivityIndicator color={colors.accent} />
+      <Spinner color={colors.accent} size={96} />
     </View>
   );
 }

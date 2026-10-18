@@ -1,9 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AddFoodRow } from '@/components/day-review-card';
+import { Spinner } from '@/components/spinner';
 import { Button, IconButton, Row, Text } from '@/components/ui';
 import { adviseMeal, type StoredMealAdvice } from '@/db/food';
 import type { Meal } from '@/db/schema';
@@ -74,7 +75,7 @@ export function MealAdvice({
           <Text variant="body" style={[styles.flex, styles.askLabel]}>
             {loading ? tr('Підбираю страву…', 'Picking a meal…') : ASK[meal]}
           </Text>
-          {loading && <ActivityIndicator size="small" color={colors.textSecondary} />}
+          {loading && <Spinner color={colors.textSecondary} />}
         </Pressable>
         {failed && !loading && <Error message={failed} onRetry={run} />}
       </View>
@@ -90,7 +91,7 @@ export function MealAdvice({
           {tr('Порада AI', 'AI suggests')} · {formatKcal(kcal)} {tr('ккал', 'kcal')}
         </Text>
         {loading ? (
-          <ActivityIndicator size="small" color={colors.textSecondary} />
+          <Spinner color={colors.textSecondary} />
         ) : (
           <IconButton
             icon="refresh"
