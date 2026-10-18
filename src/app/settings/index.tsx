@@ -19,7 +19,7 @@ export default function SettingsScreen() {
       <SettingsLink
         icon="restaurant-outline"
         title={tr('Харчування', 'Food')}
-        hint={tr('Норма калорій', 'Calorie goal')}
+        hint={tr('Норма калорій, шаблони й підказки', 'Calorie goal, templates and suggestions')}
         href="/settings/food"
       />
       <SettingsLink

@@ -72,6 +72,27 @@ export async function setKcalGoal(kcal: number) {
     .onConflictDoUpdate({ target: settings.key, set: { value: String(kcal) } });
 }
 
+const SHOW_TEMPLATES_KEY = 'food_show_templates';
+const SHOW_REPEATS_KEY = 'food_show_repeats';
+
+/** Whether the food screens offer saved templates and "same as last time" meals; both on by default. */
+export async function getFoodShortcuts() {
+  const rows = await db.query.settings.findMany({
+    where: inArray(settings.key, [SHOW_TEMPLATES_KEY, SHOW_REPEATS_KEY]),
+  });
+  const on = (key: string) => rows.find((r) => r.key === key)?.value !== '0';
+  return { templates: on(SHOW_TEMPLATES_KEY), repeats: on(SHOW_REPEATS_KEY) };
+}
+
+export async function setFoodShortcut(shortcut: 'templates' | 'repeats', on: boolean) {
+  const key = shortcut === 'templates' ? SHOW_TEMPLATES_KEY : SHOW_REPEATS_KEY;
+  const value = on ? '1' : '0';
+  await db
+    .insert(settings)
+    .values({ key, value })
+    .onConflictDoUpdate({ target: settings.key, set: { value } });
+}
+
 /** Cached dishes whose text contains `text`, most recently used first. */
 export async function searchFoods(text: string, limit = 5) {
   const q = normalizeDish(text);
@@ -634,18 +655,20 @@ export async function loadFood(now = Date.now(), day = startOfDay(now)) {
   const today = startOfDay(now);
   const from = addDays(today, -(FOOD_HISTORY_DAYS - 1));
   const dayEnd = addDays(day, 1);
-  const [goal, rows, recent, previous, templates, review, mealAdvice] = await Promise.all([
-    getKcalGoal(),
-    db.query.foodEntries.findMany({
-      where: gte(foodEntries.eatenAt, Math.min(from, day)),
-      orderBy: [asc(foodEntries.eatenAt)],
-    }),
-    db.query.foods.findMany({ orderBy: [desc(foods.lastUsedAt)], limit: 12 }),
-    previousMeals(day),
-    listMealTemplates(),
-    getDayReview(day),
-    getMealAdvice(day),
-  ]);
+  const [goal, rows, recent, previous, templates, review, mealAdvice, shortcuts] =
+    await Promise.all([
+      getKcalGoal(),
+      db.query.foodEntries.findMany({
+        where: gte(foodEntries.eatenAt, Math.min(from, day)),
+        orderBy: [asc(foodEntries.eatenAt)],
+      }),
+      db.query.foods.findMany({ orderBy: [desc(foods.lastUsedAt)], limit: 12 }),
+      previousMeals(day),
+      listMealTemplates(),
+      getDayReview(day),
+      getMealAdvice(day),
+      getFoodShortcuts(),
+    ]);
   const { targets } = await nutritionTargets(goal);
   const days = Array.from({ length: FOOD_HISTORY_DAYS }, (_, i) => ({
     dayStart: addDays(from, i),
@@ -684,7 +707,8 @@ export async function loadFood(now = Date.now(), day = startOfDay(now)) {
     days,
     today,
     recent,
-    previous,
-    templates,
+    previous: shortcuts.repeats ? previous : ({} as Partial<typeof previous>),
+    templates: shortcuts.templates ? templates : [],
+    shortcuts,
   };
 }

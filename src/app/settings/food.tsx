@@ -3,11 +3,11 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
 import { Card, Loading, Row, Screen, Text } from '@/components/ui';
-import { getKcalGoal, setKcalGoal } from '@/db/food';
+import { getFoodShortcuts, getKcalGoal, setFoodShortcut, setKcalGoal } from '@/db/food';
 import { loadProfile } from '@/db/profile';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { formatKcal, KCAL_GOAL_STEP, MAX_KCAL_GOAL, MIN_KCAL_GOAL } from '@/lib/food';
@@ -38,14 +38,19 @@ const PLAIN_SCALE: CalorieScale = {
   segments: [{ from: MIN_KCAL_GOAL, to: 4000, zone: 'ok' }],
 };
 
-/** The daily kcal goal on a scale around maintenance from the profile. */
+/**
+ * The daily kcal goal on a scale around maintenance from the profile, and
+ * whether the meals offer templates and "same as last time".
+ */
 export default function FoodSettingsScreen() {
-  const { data } = useDbQuery(() => Promise.all([getKcalGoal(), loadProfile()]));
+  const { data } = useDbQuery(() =>
+    Promise.all([getKcalGoal(), loadProfile(), getFoodShortcuts()]),
+  );
   // The value under the finger while the scale is dragged, saved on release. It
   // stays shown only until the saved goal moves away from the one it started at.
   const [draft, setDraft] = useState<{ value: number; from: number } | null>(null);
   if (!data) return <Loading />;
-  const [savedGoal, { profile, latestWeight }] = data;
+  const [savedGoal, { profile, latestWeight }, shortcuts] = data;
   const goal = draft?.from === savedGoal ? draft.value : savedGoal;
   const weightKg = latestWeight?.weightKg;
   const rec = recommendCalories(profile, weightKg);
@@ -63,7 +68,63 @@ export default function FoodSettingsScreen() {
         onDrag={(value) => setDraft({ value, from: savedGoal })}
         onRelease={(value) => (value === savedGoal ? setDraft(null) : setKcalGoal(value))}
       />
+      <Card style={styles.shortcuts}>
+        <ShortcutRow
+          icon="bookmark-outline"
+          title={tr('Шаблони', 'Templates')}
+          hint={tr(
+            'Зберігати прийом їжі закладкою й додавати його в один тап.',
+            'Save a meal with the bookmark and add it again in one tap.',
+          )}
+          value={shortcuts.templates}
+          onChange={(on) => setFoodShortcut('templates', on)}
+        />
+        <ShortcutRow
+          icon="repeat"
+          title={tr('Підказки', 'Suggestions')}
+          hint={tr(
+            'Пропонувати повторити прийом їжі, як минулого разу.',
+            'Offer to repeat a meal the way it was last time.',
+          )}
+          value={shortcuts.repeats}
+          onChange={(on) => setFoodShortcut('repeats', on)}
+        />
+      </Card>
     </Screen>
+  );
+}
+
+/** A switch for one of the shortcuts shown on the meal cards. */
+function ShortcutRow({
+  icon,
+  title,
+  hint,
+  value,
+  onChange,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  hint: string;
+  value: boolean;
+  onChange: (on: boolean) => void;
+}) {
+  return (
+    <Row style={styles.shortcut}>
+      <Ionicons name={icon} size={20} color={colors.accent} />
+      <View style={styles.flex}>
+        <Text variant="heading">{title}</Text>
+        <Text variant="muted">{hint}</Text>
+      </View>
+      <Switch
+        value={value}
+        onValueChange={(on) => {
+          Haptics.selectionAsync();
+          onChange(on);
+        }}
+        trackColor={{ true: colors.accent, false: colors.surfaceRaised }}
+        thumbColor={colors.text}
+      />
+    </Row>
   );
 }
 
@@ -484,6 +545,8 @@ function ProfileRow({
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   goalCard: { gap: spacing.lg },
+  shortcuts: { gap: spacing.lg },
+  shortcut: { gap: spacing.md },
   goalValue: { alignItems: 'center', gap: spacing.xs },
   goalUnit: { color: colors.textSecondary, fontSize: fontSize.md, fontWeight: '600' },
   zonePill: {

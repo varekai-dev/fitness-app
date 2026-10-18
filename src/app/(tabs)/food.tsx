@@ -50,8 +50,18 @@ export default function FoodScreen() {
   const dialog = useDialog();
 
   if (!data) return <Loading />;
-  const { goal, dayEntries, totals, days, previous, templates, review, reviewState, mealAdvice } =
-    data;
+  const {
+    goal,
+    dayEntries,
+    totals,
+    days,
+    previous,
+    templates,
+    shortcuts,
+    review,
+    reviewState,
+    mealAdvice,
+  } = data;
 
   const repeat = async (meal: Meal, entries: FoodEntry[]) => {
     await repeatMeal(entries, meal, day);
@@ -154,7 +164,7 @@ export default function FoodScreen() {
                     : tr('Ще нічого', 'Nothing yet')}
                 </Text>
               </View>
-              {entries.length > 0 && (
+              {entries.length > 0 && shortcuts.templates && (
                 <IconButton
                   icon={saved ? 'bookmark' : 'bookmark-outline'}
                   color={saved ? colors.accent : colors.textSecondary}
