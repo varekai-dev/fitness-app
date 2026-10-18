@@ -7,6 +7,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { useDialog } from '@/components/dialog';
 import { ExerciseThumb } from '@/components/exercise-thumb';
+import { PlanExerciseSheet } from '@/components/plan-exercise-sheet';
 import { ProgramAiLoader, type LoaderStage } from '@/components/program-ai-loader';
 import {
   Badge,
@@ -15,7 +16,6 @@ import {
   Chip,
   Field,
   goBack,
-  IconButton,
   IndexMarker,
   Loading,
   Row,
@@ -25,6 +25,7 @@ import {
 import { listExercises } from '@/db/exercises';
 import { loadProfile } from '@/db/profile';
 import { saveProgramPlan } from '@/db/programs';
+import type { Exercise } from '@/db/schema';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { GROQ_ATTEMPTS, GroqError } from '@/lib/groq';
 import { plural, tr } from '@/lib/i18n';
@@ -237,6 +238,7 @@ export default function AiProgramScreen() {
         <PlanPreview
           plan={plan}
           kind={kind}
+          library={library}
           replacing={replacing}
           onReplace={replace}
           saving={saving}
@@ -528,6 +530,7 @@ function WishesStep({
 function PlanPreview({
   plan,
   kind,
+  library,
   replacing,
   onReplace,
   saving,
@@ -537,6 +540,7 @@ function PlanPreview({
 }: {
   plan: ProgramPlan;
   kind: ProgramKind;
+  library: Exercise[];
   replacing: string[];
   onReplace: (dayIndex: number, index: number) => void;
   saving: boolean;
@@ -548,9 +552,24 @@ function PlanPreview({
   const newCount = new Set(
     plan.days.flatMap((d) => d.exercises.filter((e) => e.exerciseId === null).map((e) => e.name)),
   ).size;
+  // The exercise shown on the whole screen.
+  const [open, setOpen] = useState<{ dayIndex: number; index: number } | null>(null);
+  const opened = open ? (plan.days[open.dayIndex]?.exercises[open.index] ?? null) : null;
+  const known = opened?.exerciseId != null ? library.find((l) => l.id === opened.exerciseId) : null;
 
   return (
     <>
+      <PlanExerciseSheet
+        exercise={opened}
+        notes={known ? known.notes : (opened?.notes ?? null)}
+        youtubeUrl={known?.youtubeUrl ?? null}
+        onReplace={() => {
+          if (!open) return;
+          setOpen(null);
+          onReplace(open.dayIndex, open.index);
+        }}
+        onClose={() => setOpen(null)}
+      />
       <View style={styles.stepHeader}>
         <Text variant="overline">{READY_LABEL[kind]}</Text>
         <Text variant="title">{plan.name}</Text>
@@ -593,29 +612,34 @@ function PlanPreview({
           {day.exercises.map((e, j) => (
             // Keyed by name, so a replacement fades in.
             <Animated.View key={`${j}-${e.name}`} entering={FadeIn} style={styles.exercise}>
-              <ExerciseThumb uri={e.imageUri} size={44} />
-              <View style={styles.exerciseText}>
-                <Row>
-                  <Text variant="body" style={styles.flexShrink} numberOfLines={2}>
-                    {e.name}
+              <Pressable
+                onPress={() => setOpen({ dayIndex, index: j })}
+                style={({ pressed }) => [styles.exerciseRow, pressed && styles.pressed]}>
+                <ExerciseThumb uri={e.imageUri} size={44} />
+                <View style={styles.exerciseText}>
+                  <Row>
+                    <Text variant="body" style={styles.flexShrink} numberOfLines={2}>
+                      {e.name}
+                    </Text>
+                    {e.exerciseId === null && <Badge label={tr('Нова', 'New')} />}
+                  </Row>
+                  <Text variant="muted">
+                    {MUSCLE_GROUP_LABELS[e.muscleGroup]} · {formatTargets(e.targets)}
                   </Text>
-                  {e.exerciseId === null && <Badge label={tr('Нова', 'New')} />}
-                </Row>
-                <Text variant="muted">
-                  {MUSCLE_GROUP_LABELS[e.muscleGroup]} · {formatTargets(e.targets)}
-                </Text>
-              </View>
-              <View style={styles.replace}>
+                </View>
+              </Pressable>
+              {/* The whole height of the row, so the swap is easy to hit. */}
+              <Pressable
+                onPress={() => onReplace(dayIndex, j)}
+                disabled={replacing.includes(`${dayIndex}-${j}`)}
+                hitSlop={{ top: spacing.sm, bottom: spacing.sm, right: spacing.md }}
+                style={({ pressed }) => [styles.replace, pressed && styles.replacePressed]}>
                 {replacing.includes(`${dayIndex}-${j}`) ? (
                   <ActivityIndicator color={colors.accent} />
                 ) : (
-                  <IconButton
-                    icon="swap-horizontal"
-                    color={colors.accent}
-                    onPress={() => onReplace(dayIndex, j)}
-                  />
+                  <Ionicons name="swap-horizontal" size={24} color={colors.accent} />
                 )}
-              </View>
+              </Pressable>
             </Animated.View>
           ))}
         </Card>
@@ -683,7 +707,16 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
   },
+  exerciseRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   exerciseText: { flex: 1, gap: 2 },
-  // Same width with the spinner as with the button, so the row doesn't shift.
-  replace: { width: 36, alignItems: 'center' },
+  // Same size with the spinner as with the icon, so the row doesn't shift.
+  replace: {
+    width: 52,
+    alignSelf: 'stretch',
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+  },
+  replacePressed: { backgroundColor: colors.surface },
 });
