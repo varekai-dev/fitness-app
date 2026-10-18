@@ -4,7 +4,7 @@ import { tr } from '@/lib/i18n';
 import { db } from './client';
 import { getProgramDay } from './programs';
 import { workoutExercises, workouts, workoutSets, type Targets } from './schema';
-import type { SetValues } from '@/lib/metrics';
+import { notStarted, type SetValues } from '@/lib/metrics';
 
 export const getActiveWorkout = () =>
   db.query.workouts.findFirst({
@@ -280,13 +280,23 @@ export async function pauseWorkout(id: number) {
 export function resumeWorkout(id: number) {
   db.transaction((tx) => {
     const w = tx
-      .select({ pausedAt: workouts.pausedAt, pausedMs: workouts.pausedMs })
+      .select({
+        startedAt: workouts.startedAt,
+        pausedAt: workouts.pausedAt,
+        pausedMs: workouts.pausedMs,
+      })
       .from(workouts)
       .where(eq(workouts.id, id))
       .get();
     if (!w?.pausedAt) return;
+    const now = Date.now();
+    // The first play is the real start: a workout opened yesterday and begun today is today's.
+    if (notStarted(w)) {
+      tx.update(workouts).set({ startedAt: now, pausedAt: null }).where(eq(workouts.id, id)).run();
+      return;
+    }
     tx.update(workouts)
-      .set({ pausedAt: null, pausedMs: w.pausedMs + (Date.now() - w.pausedAt) })
+      .set({ pausedAt: null, pausedMs: w.pausedMs + (now - w.pausedAt) })
       .where(eq(workouts.id, id))
       .run();
   });
