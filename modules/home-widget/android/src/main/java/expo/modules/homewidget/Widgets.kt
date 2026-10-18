@@ -21,18 +21,23 @@ private class MetricViews(
   val value: Int,
   val total: Int,
   val progress: Int,
+  val note: Int,
 )
 
 private val WATER = MetricViews(
   R.id.water_cell, R.id.water_label, R.id.water_value, R.id.water_total, R.id.water_progress,
+  R.id.water_note,
 )
 private val CALORIES = MetricViews(
   R.id.calories_cell, R.id.calories_label, R.id.calories_value, R.id.calories_total,
-  R.id.calories_progress,
+  R.id.calories_progress, R.id.calories_note,
 )
 
-/** Below this height (dp) the widget switches to its one-row layout. */
-private const val COMPACT_HEIGHT = 100f
+/** From this height (dp) the widget has room for [FitnessWidget]'s medium layout: about one cell. */
+private const val MEDIUM_HEIGHT = 72f
+
+/** From this height (dp) the widget shows its full layout: about two cells. */
+private const val FULL_HEIGHT = 140f
 
 /** Which single-number widget a [FitnessWidget] is, if any. */
 enum class StatKind { WEIGHT, WEEK }
@@ -41,11 +46,13 @@ enum class StatKind { WEIGHT, WEEK }
  * A home screen widget showing some of today's water, calories and next workout,
  * or one stat (body weight, this week's workouts).
  * The app pushes the data; the widget never reads the database itself.
- * [compactLayout] has the same ids minus the ones a single row has no room for.
+ * [compactLayout] has the same ids minus the ones a single row has no room for;
+ * [mediumLayout], if any, fits more of them into one row of home screen cells.
  */
 abstract class FitnessWidget(
   private val layout: Int,
   private val compactLayout: Int,
+  private val mediumLayout: Int? = null,
   private val water: Boolean = false,
   private val calories: Boolean = false,
   private val workout: Boolean = false,
@@ -75,20 +82,23 @@ abstract class FitnessWidget(
     val viewsFor = { layout: Int -> build(context, layout, data) }
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
       // The launcher picks the layout for the current size itself, also mid-resize.
-      val views = RemoteViews(
-        mapOf(
-          SizeF(0f, 0f) to viewsFor(compactLayout),
-          SizeF(0f, COMPACT_HEIGHT) to viewsFor(layout),
-        ),
-      )
-      manager.updateAppWidget(ids, views)
+      val sizes = buildMap {
+        put(SizeF(0f, 0f), viewsFor(compactLayout))
+        if (mediumLayout != null) put(SizeF(0f, MEDIUM_HEIGHT), viewsFor(mediumLayout))
+        put(SizeF(0f, FULL_HEIGHT), viewsFor(layout))
+      }
+      manager.updateAppWidget(ids, RemoteViews(sizes))
       return
     }
     for (id in ids) {
       // Portrait phones show the widget at its max height.
       val height = manager.getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT)
-      val compact = height in 1 until COMPACT_HEIGHT.toInt()
-      manager.updateAppWidget(id, viewsFor(if (compact) compactLayout else layout))
+      val chosen = when {
+        height <= 0 || height >= FULL_HEIGHT -> layout
+        height >= MEDIUM_HEIGHT && mediumLayout != null -> mediumLayout
+        else -> compactLayout
+      }
+      manager.updateAppWidget(id, viewsFor(chosen))
     }
   }
 
@@ -133,6 +143,7 @@ abstract class FitnessWidget(
     views.setTextViewText(ids.label, metric?.label ?: context.getString(fallbackLabel))
     views.setTextViewText(ids.value, metric?.value ?: "—")
     views.setTextViewText(ids.total, metric?.total ?: context.getString(R.string.widget_open_app))
+    views.setTextViewText(ids.note, metric?.note ?: "")
     val color = if (metric?.over == true) R.color.widget_warning else R.color.widget_text
     views.setTextColor(ids.value, context.getColor(color))
     val progress = ((metric?.progress ?: 0.0).coerceIn(0.0, 1.0) * 1000).toInt()
@@ -199,6 +210,7 @@ abstract class FitnessWidget(
 class TodayWidget : FitnessWidget(
   R.layout.widget_today,
   R.layout.widget_today_compact,
+  R.layout.widget_today_medium,
   water = true,
   calories = true,
   workout = true,

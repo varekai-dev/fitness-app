@@ -11,6 +11,10 @@ internal data class Metric(
   val total: String,
   val progress: Double,
   val over: Boolean,
+  /** What is left (or over), for layouts with room for it. */
+  val note: String,
+  /** [note] for a new day with nothing logged yet. */
+  val startNote: String,
   val url: String,
 )
 
@@ -51,7 +55,7 @@ internal data class WidgetData(
     val resetStat = { s: Stat? -> if (s != null && s.resetAt in 1..now) s.copy(value = "0") else s }
     val fresh = copy(weight = resetStat(weight), week = resetStat(week))
     if (day >= startOfToday()) return fresh
-    val reset = { m: Metric -> m.copy(value = "0", progress = 0.0, over = false) }
+    val reset = { m: Metric -> m.copy(value = "0", progress = 0.0, over = false, note = m.startNote) }
     return fresh.copy(water = reset(water), calories = reset(calories))
   }
 }
@@ -101,6 +105,8 @@ internal object WidgetStore {
     total = json.getString("total"),
     progress = json.getDouble("progress"),
     over = json.optBoolean("over"),
+    note = json.optString("note"),
+    startNote = json.optString("startNote"),
     url = json.getString("url"),
   )
 }

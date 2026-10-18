@@ -23,6 +23,8 @@
   <string name="widget_sample_calories">1,340</string>
   <string name="widget_sample_water_total">/ 2,000 ml</string>
   <string name="widget_sample_calories_total">/ 2,200 kcal</string>
+  <string name="widget_sample_water_note">750 ml to go</string>
+  <string name="widget_sample_calories_note">860 kcal to go</string>
   <string name="widget_sample_workout">Upper body</string>
   <string name="widget_sample_program">Strength · 6 exercises</string>
   <string name="widget_sample_weight">78.4</string>

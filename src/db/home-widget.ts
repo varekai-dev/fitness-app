@@ -111,6 +111,24 @@ async function loadWeek(now: number) {
   };
 }
 
+/** What is left to drink today, for the widget's spare room under the total. */
+function waterNote(leftMl: number) {
+  if (leftMl <= 0) return tr('Норму виконано', 'Goal reached');
+  const amount = `${formatVolume(leftMl)} ${VOLUME_UNIT}`;
+  return tr(`Ще ${amount}`, `${amount} to go`);
+}
+
+/** What is left to eat today, or how far past the goal. */
+function kcalNote(leftKcal: number) {
+  const unit = tr('ккал', 'kcal');
+  if (leftKcal < 0) {
+    const over = `${formatKcal(-leftKcal)} ${unit}`;
+    return tr(`На ${over} більше`, `${over} over`);
+  }
+  const amount = `${formatKcal(leftKcal)} ${unit}`;
+  return tr(`Ще ${amount}`, `${amount} to go`);
+}
+
 /**
  * Today's water and calories, the next workout, body weight and this week's workouts,
  * formatted for the Android home screen widgets.
@@ -132,6 +150,8 @@ export async function loadHomeWidgetData(now = Date.now()) {
       value: formatVolume(waterMl),
       total: `/ ${formatVolume(waterGoal)} ${VOLUME_UNIT}`,
       progress: waterMl / waterGoal,
+      note: waterNote(waterGoal - waterMl),
+      startNote: waterNote(waterGoal),
       url: Linking.createURL('water'),
     },
     calories: {
@@ -140,6 +160,8 @@ export async function loadHomeWidgetData(now = Date.now()) {
       total: `/ ${formatKcal(kcalGoal)} ${tr('ккал', 'kcal')}`,
       progress: kcal / kcalGoal,
       over: kcal > kcalGoal,
+      note: kcalNote(kcalGoal - kcal),
+      startNote: kcalNote(kcalGoal),
       url: Linking.createURL('food'),
     },
     workout,

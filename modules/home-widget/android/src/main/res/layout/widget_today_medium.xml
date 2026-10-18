@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One row of home screen cells: the full layout's numbers without the room around them. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@android:id/background"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:background="@drawable/widget_bg"
+  android:orientation="horizontal"
+  android:padding="@dimen/widget_compact_padding">
+
+  <LinearLayout
+    android:id="@+id/water_cell"
+    android:layout_width="0dp"
+    android:layout_height="match_parent"
+    android:layout_weight="1"
+    android:background="@drawable/widget_cell_bg"
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    android:paddingStart="@dimen/widget_cell_padding"
+    android:paddingTop="@dimen/widget_medium_cell_padding"
+    android:paddingEnd="@dimen/widget_cell_padding"
+    android:paddingBottom="@dimen/widget_medium_cell_padding">
+
+    <TextView
+      android:id="@+id/water_label"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:ellipsize="end"
+      android:fontFamily="sans-serif-medium"
+      android:maxLines="1"
+      android:text="@string/widget_water"
+      android:textColor="@color/widget_accent"
+      android:textSize="11sp" />
+
+    <TextView
+      android:id="@+id/water_value"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="2dp"
+      android:ellipsize="end"
+      android:fontFamily="sans-serif-black"
+      android:includeFontPadding="false"
+      android:maxLines="1"
+      android:text="@string/widget_sample_water"
+      android:textColor="@color/widget_text"
+      android:textSize="18sp" />
+
+    <TextView
+      android:id="@+id/water_total"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:ellipsize="end"
+      android:maxLines="1"
+      android:text="@string/widget_sample_water_total"
+      android:textColor="@color/widget_text_secondary"
+      android:textSize="11sp" />
+
+    <ProgressBar
+      android:id="@+id/water_progress"
+      style="?android:attr/progressBarStyleHorizontal"
+      android:layout_width="match_parent"
+      android:layout_height="3dp"
+      android:layout_marginTop="4dp"
+      android:max="1000"
+      android:progress="620"
+      android:progressDrawable="@drawable/widget_progress" />
+  </LinearLayout>
+
+  <LinearLayout
+    android:id="@+id/calories_cell"
+    android:layout_width="0dp"
+    android:layout_height="match_parent"
+    android:layout_weight="1"
+    android:background="@drawable/widget_cell_bg"
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    android:paddingStart="@dimen/widget_cell_padding"
+    android:paddingTop="@dimen/widget_medium_cell_padding"
+    android:paddingEnd="@dimen/widget_cell_padding"
+    android:paddingBottom="@dimen/widget_medium_cell_padding"
+    android:layout_marginStart="@dimen/widget_gap">
+
+    <TextView
+      android:id="@+id/calories_label"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:ellipsize="end"
+      android:fontFamily="sans-serif-medium"
+      android:maxLines="1"
+      android:text="@string/widget_calories"
+      android:textColor="@color/widget_accent"
+      android:textSize="11sp" />
+
+    <TextView
+      android:id="@+id/calories_value"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="2dp"
+      android:ellipsize="end"
+      android:fontFamily="sans-serif-black"
+      android:includeFontPadding="false"
+      android:maxLines="1"
+      android:text="@string/widget_sample_calories"
+      android:textColor="@color/widget_text"
+      android:textSize="18sp" />
+
+    <TextView
+      android:id="@+id/calories_total"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:ellipsize="end"
+      android:maxLines="1"
+      android:text="@string/widget_sample_calories_total"
+      android:textColor="@color/widget_text_secondary"
+      android:textSize="11sp" />
+
+    <ProgressBar
+      android:id="@+id/calories_progress"
+      style="?android:attr/progressBarStyleHorizontal"
+      android:layout_width="match_parent"
+      android:layout_height="3dp"
+      android:layout_marginTop="4dp"
+      android:max="1000"
+      android:progress="610"
+      android:progressDrawable="@drawable/widget_progress" />
+  </LinearLayout>
+
+  <LinearLayout
+    android:id="@+id/workout_cell"
+    android:layout_width="0dp"
+    android:layout_height="match_parent"
+    android:layout_weight="1.3"
+    android:background="@drawable/widget_accent_bg"
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    android:paddingStart="@dimen/widget_cell_padding"
+    android:paddingTop="@dimen/widget_medium_cell_padding"
+    android:paddingEnd="@dimen/widget_cell_padding"
+    android:paddingBottom="@dimen/widget_medium_cell_padding"
+    android:layout_marginStart="@dimen/widget_gap">
+
+    <TextView
+      android:id="@+id/workout_label"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:ellipsize="end"
+      android:fontFamily="sans-serif-medium"
+      android:maxLines="1"
+      android:text="@string/widget_next_workout"
+      android:textColor="@color/widget_on_accent_muted"
+      android:textSize="11sp" />
+
+    <TextView
+      android:id="@+id/workout_title"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="2dp"
+      android:ellipsize="end"
+      android:fontFamily="sans-serif-black"
+      android:includeFontPadding="false"
+      android:maxLines="1"
+      android:text="@string/widget_sample_workout"
+      android:textColor="@color/widget_on_accent"
+      android:textSize="16sp" />
+
+    <TextView
+      android:id="@+id/workout_subtitle"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="2dp"
+      android:ellipsize="end"
+      android:maxLines="1"
+      android:text="@string/widget_sample_program"
+      android:textColor="@color/widget_on_accent_muted"
+      android:textSize="11sp" />
+  </LinearLayout>
+</LinearLayout>

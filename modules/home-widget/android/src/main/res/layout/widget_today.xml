@@ -27,22 +27,18 @@
       android:textColor="@color/widget_accent"
       android:textSize="12sp" />
 
-    <FrameLayout
-      android:layout_width="match_parent"
-      android:layout_height="0dp"
-      android:layout_weight="1" />
-
     <TextView
       android:id="@+id/water_value"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
+      android:layout_marginTop="6dp"
       android:ellipsize="end"
       android:fontFamily="sans-serif-black"
       android:includeFontPadding="false"
       android:maxLines="1"
       android:text="@string/widget_sample_water"
       android:textColor="@color/widget_text"
-      android:textSize="24sp" />
+      android:textSize="32sp" />
 
     <TextView
       android:id="@+id/water_total"
@@ -55,12 +51,28 @@
       android:textColor="@color/widget_text_secondary"
       android:textSize="12sp" />
 
+    <FrameLayout
+      android:layout_width="match_parent"
+      android:layout_height="0dp"
+      android:layout_weight="1" />
+
+    <TextView
+      android:id="@+id/water_note"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:ellipsize="end"
+      android:fontFamily="sans-serif-medium"
+      android:maxLines="1"
+      android:text="@string/widget_sample_water_note"
+      android:textColor="@color/widget_text"
+      android:textSize="12sp" />
+
     <ProgressBar
       android:id="@+id/water_progress"
       style="?android:attr/progressBarStyleHorizontal"
       android:layout_width="match_parent"
-      android:layout_height="4dp"
-      android:layout_marginTop="8dp"
+      android:layout_height="6dp"
+      android:layout_marginTop="6dp"
       android:max="1000"
       android:progress="620"
       android:progressDrawable="@drawable/widget_progress" />
@@ -87,22 +99,18 @@
       android:textColor="@color/widget_accent"
       android:textSize="12sp" />
 
-    <FrameLayout
-      android:layout_width="match_parent"
-      android:layout_height="0dp"
-      android:layout_weight="1" />
-
     <TextView
       android:id="@+id/calories_value"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
+      android:layout_marginTop="6dp"
       android:ellipsize="end"
       android:fontFamily="sans-serif-black"
       android:includeFontPadding="false"
       android:maxLines="1"
       android:text="@string/widget_sample_calories"
       android:textColor="@color/widget_text"
-      android:textSize="24sp" />
+      android:textSize="32sp" />
 
     <TextView
       android:id="@+id/calories_total"
@@ -115,12 +123,28 @@
       android:textColor="@color/widget_text_secondary"
       android:textSize="12sp" />
 
+    <FrameLayout
+      android:layout_width="match_parent"
+      android:layout_height="0dp"
+      android:layout_weight="1" />
+
+    <TextView
+      android:id="@+id/calories_note"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:ellipsize="end"
+      android:fontFamily="sans-serif-medium"
+      android:maxLines="1"
+      android:text="@string/widget_sample_calories_note"
+      android:textColor="@color/widget_text"
+      android:textSize="12sp" />
+
     <ProgressBar
       android:id="@+id/calories_progress"
       style="?android:attr/progressBarStyleHorizontal"
       android:layout_width="match_parent"
-      android:layout_height="4dp"
-      android:layout_marginTop="8dp"
+      android:layout_height="6dp"
+      android:layout_marginTop="6dp"
       android:max="1000"
       android:progress="610"
       android:progressDrawable="@drawable/widget_progress" />
@@ -147,30 +171,30 @@
       android:textColor="@color/widget_on_accent_muted"
       android:textSize="12sp" />
 
-    <FrameLayout
-      android:layout_width="match_parent"
-      android:layout_height="0dp"
-      android:layout_weight="1" />
-
     <TextView
       android:id="@+id/workout_title"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
+      android:layout_marginTop="6dp"
       android:ellipsize="end"
       android:fontFamily="sans-serif-black"
       android:includeFontPadding="false"
       android:maxLines="2"
       android:text="@string/widget_sample_workout"
       android:textColor="@color/widget_on_accent"
-      android:textSize="18sp" />
+      android:textSize="22sp" />
+
+    <FrameLayout
+      android:layout_width="match_parent"
+      android:layout_height="0dp"
+      android:layout_weight="1" />
 
     <TextView
       android:id="@+id/workout_subtitle"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_marginTop="4dp"
       android:ellipsize="end"
-      android:maxLines="1"
+      android:maxLines="2"
       android:text="@string/widget_sample_program"
       android:textColor="@color/widget_on_accent_muted"
       android:textSize="12sp" />
