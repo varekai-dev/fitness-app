@@ -2,7 +2,9 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
+import { GrowArc, GrowBar } from '@/components/motion';
 import { Card, Row, Text } from '@/components/ui';
+import { useAnimatedNumber } from '@/hooks/use-animated-number';
 import { formatGrams, formatKcal, type Macros } from '@/lib/food';
 import type { MacroKey } from '@/lib/groq';
 import { tr } from '@/lib/i18n';
@@ -33,9 +35,10 @@ export function CalorieSummary({
   onPress?: () => void;
   onMacroPress?: (macro: MacroKey) => void;
 }) {
-  const left = goal - totals.kcal;
+  // Counts up or down when food is added or removed.
+  const kcal = Math.round(useAnimatedNumber(totals.kcal));
+  const left = goal - kcal;
   const over = left < 0;
-  const filled = Math.min(totals.kcal / goal, 1) * ARC;
   const macroKcal = MACROS.map((m) => totals[m.key] * m.kcalPerG);
   const macroSum = macroKcal.reduce((s, k) => s + k, 0);
 
@@ -53,18 +56,13 @@ export function CalorieSummary({
             strokeDasharray={[ARC, LENGTH]}
             fill="none"
           />
-          {filled > 0 && (
-            <Circle
-              cx={SIZE / 2}
-              cy={SIZE / 2}
-              r={R}
-              stroke={over ? colors.warning : colors.accent}
-              strokeWidth={STROKE}
-              strokeLinecap="round"
-              strokeDasharray={[filled, LENGTH]}
-              fill="none"
-            />
-          )}
+          <GrowArc
+            size={SIZE}
+            stroke={STROKE}
+            color={over ? colors.warning : colors.accent}
+            progress={goal > 0 ? totals.kcal / goal : 0}
+            sweep={0.75}
+          />
         </Svg>
         <Ionicons
           name={over ? 'warning' : 'flame'}
@@ -77,7 +75,7 @@ export function CalorieSummary({
         </Text>
         <View style={styles.eaten}>
           <Text variant="muted">
-            {formatKcal(totals.kcal)} / {formatKcal(goal)}
+            {formatKcal(kcal)} / {formatKcal(goal)}
           </Text>
         </View>
       </View>
@@ -102,11 +100,7 @@ export function CalorieSummary({
                 {formatGrams(totals[m.key])}
                 <Text variant="muted"> {tr('г', 'g')}</Text>
               </Text>
-              <View style={styles.track}>
-                <View
-                  style={[styles.fill, { width: `${share * 100}%`, backgroundColor: m.color }]}
-                />
-              </View>
+              <GrowBar progress={share} color={m.color} style={styles.track} />
               <Text variant="muted" style={styles.share}>
                 {Math.round(share * 100)}% {tr('ккал', 'kcal')}
               </Text>
@@ -129,6 +123,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.hero,
     fontWeight: '800',
     letterSpacing: -1,
+    fontVariant: ['tabular-nums'],
     marginTop: spacing.xs,
   },
   over: { color: colors.warning },
@@ -151,7 +146,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginTop: spacing.xs,
   },
-  fill: { height: '100%', borderRadius: radius.pill },
   share: { fontSize: fontSize.xs },
   pressed: { opacity: 0.6 },
 });

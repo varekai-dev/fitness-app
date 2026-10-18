@@ -1,6 +1,8 @@
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 import { TAB_BAR_FAB_SPACE, TabBarFab, useTabBarSpace } from '@/components/floating-tab-bar';
 import { Backdrop } from '@/components/glass';
@@ -22,6 +24,8 @@ const LABELS: Record<TrainingSection, string> = {
   exercises: tr('Вправи', 'Exercises'),
   history: tr('Історія', 'History'),
 };
+
+const SEGMENT_SPRING = { damping: 18, stiffness: 220, mass: 0.7 };
 
 const isSection = (v: unknown): v is TrainingSection => SECTIONS.includes(v as TrainingSection);
 
@@ -45,6 +49,20 @@ export default function TrainingScreen() {
     router.push({ pathname: '/program/[id]', params: { id, isNew: '1' } });
   };
 
+  // The highlight slides between sections instead of jumping.
+  const [segmentsWidth, setSegmentsWidth] = useState(0);
+  const segment = (segmentsWidth - spacing.xs * 2) / SECTIONS.length;
+  const indicatorX = useSharedValue(-1);
+  useEffect(() => {
+    if (segment <= 0) return;
+    const x = segment * SECTIONS.indexOf(section);
+    // Placed at once on the first layout, animated from then on.
+    indicatorX.set(indicatorX.get() < 0 ? x : withSpring(x, SEGMENT_SPRING));
+  }, [segment, section, indicatorX]);
+  const indicatorStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: Math.max(indicatorX.get(), 0) }],
+  }));
+
   const select = (next: TrainingSection) => {
     if (next === section) return;
     Haptics.selectionAsync();
@@ -59,14 +77,17 @@ export default function TrainingScreen() {
         mode="root"
         right={<CircleButton icon="settings-outline" onPress={() => router.push('/settings')} />}
       />
-      <View style={styles.segments}>
+      <View style={styles.segments} onLayout={(e) => setSegmentsWidth(e.nativeEvent.layout.width)}>
+        {segment > 0 && (
+          <Animated.View style={[styles.indicator, { width: segment }, indicatorStyle]} />
+        )}
         {SECTIONS.map((s) => (
           <Pressable
             key={s}
             accessibilityRole="tab"
             accessibilityState={{ selected: s === section }}
             onPress={() => select(s)}
-            style={[styles.segment, s === section && styles.segmentActive]}>
+            style={styles.segment}>
             <Text style={[styles.segmentText, s === section && styles.segmentTextActive]}>
               {LABELS[s]}
             </Text>
@@ -110,7 +131,14 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderRadius: radius.pill,
   },
-  segmentActive: { backgroundColor: colors.accent },
+  indicator: {
+    position: 'absolute',
+    top: spacing.xs,
+    bottom: spacing.xs,
+    left: spacing.xs,
+    borderRadius: radius.pill,
+    backgroundColor: colors.accent,
+  },
   segmentText: { color: colors.textSecondary, fontSize: fontSize.sm, fontWeight: '700' },
   segmentTextActive: { color: colors.accentText },
   body: { flex: 1 },

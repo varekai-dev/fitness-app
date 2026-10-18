@@ -1,9 +1,11 @@
 import { useRef } from 'react';
 import { FlatList, StyleSheet } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { ActivityCalendar } from '@/components/activity-calendar';
 import { ActivityCard } from '@/components/activity-card';
 import { useDialog } from '@/components/dialog';
+import { ROW_LAYOUT } from '@/components/motion';
 import { SwipeToDelete } from '@/components/swipe-to-delete';
 import { WorkoutSummaryCard } from '@/components/workout-summary-card';
 import { EmptyState, Loading } from '@/components/ui';
@@ -81,8 +83,10 @@ export function HistoryView({ bottomSpace }: { bottomSpace: number }) {
 
   return (
     <>
-      <FlatList
+      <Animated.FlatList
         ref={listRef}
+        // Workouts below a deleted one slide up instead of jumping.
+        itemLayoutAnimation={ROW_LAYOUT}
         contentContainerStyle={[styles.content, { paddingBottom: bottomSpace }]}
         data={data.items}
         ListHeaderComponent={

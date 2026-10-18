@@ -6,9 +6,11 @@ import Svg, { Circle } from 'react-native-svg';
 
 import { Elapsed } from '@/components/elapsed';
 import { Sparkline } from '@/components/line-chart';
+import { GoalPulse, GrowArc, GrowBar, GrowColumn, PressScale } from '@/components/motion';
 import { Text, type IconName } from '@/components/ui';
 import { drinkWater, GlassButton } from '@/components/water-card';
 import { WaterBottle } from '@/components/water-bottle';
+import { useAnimatedNumber } from '@/hooks/use-animated-number';
 import type { DashboardData } from '@/db/dashboard';
 import { startWorkout } from '@/db/workouts';
 import { estimateKcal } from '@/lib/calories';
@@ -130,15 +132,12 @@ function Tile({
   accent?: boolean;
 }) {
   return (
-    <Pressable
+    <PressScale
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.tile,
-        accent && styles.tileAccent,
-        pressed && styles.pressed,
-      ]}>
+      disabled={!onPress}
+      style={[styles.tile, accent && styles.tileAccent]}>
       {children}
-    </Pressable>
+    </PressScale>
   );
 }
 
@@ -173,11 +172,13 @@ function ProgressRing({
   overIsBad?: boolean;
 }) {
   const r = (size - RING_STROKE) / 2;
-  const length = 2 * Math.PI * r;
   const over = overIsBad && progress > 1;
   const color = over ? colors.warning : colors.accent;
   return (
-    <View style={[styles.ring, { width: size, height: size }]}>
+    // A ring where more is better bounces when it closes.
+    <GoalPulse
+      reached={!overIsBad && progress >= 1}
+      style={[styles.ring, { width: size, height: size }]}>
       <Svg width={size} height={size} style={styles.ringSvg}>
         <Circle
           cx={size / 2}
@@ -187,26 +188,14 @@ function ProgressRing({
           strokeWidth={RING_STROKE}
           fill="none"
         />
-        {progress > 0 && (
-          <Circle
-            cx={size / 2}
-            cy={size / 2}
-            r={r}
-            stroke={color}
-            strokeWidth={RING_STROKE}
-            strokeLinecap="round"
-            strokeDasharray={length}
-            strokeDashoffset={length * (1 - Math.min(progress, 1))}
-            fill="none"
-          />
-        )}
+        <GrowArc size={size} stroke={RING_STROKE} color={color} progress={progress} />
       </Svg>
       {label !== undefined ? (
         <Text style={[styles.ringLabel, { color }]}>{label}</Text>
       ) : (
         icon && <Ionicons name={icon} size={size * 0.36} color={color} />
       )}
-    </View>
+    </GoalPulse>
   );
 }
 
@@ -469,6 +458,7 @@ function FoodCaloriesWidget({ size, data }: WidgetProps) {
   const { totals, goal } = data.food;
   const progress = goal > 0 ? totals.kcal / goal : 0;
   const left = goal - totals.kcal;
+  const kcal = Math.round(useAnimatedNumber(totals.kcal));
   const open = () => router.navigate('/food');
 
   if (size === 'small') {
@@ -498,14 +488,11 @@ function FoodCaloriesWidget({ size, data }: WidgetProps) {
               <Text variant="caption" style={styles.macroBarLabel}>
                 {m.label}
               </Text>
-              <View style={styles.macroBarTrack}>
-                <View
-                  style={[
-                    styles.macroBarFill,
-                    { width: `${macroTotal > 0 ? (m.kcal / macroTotal) * 100 : 0}%` },
-                  ]}
-                />
-              </View>
+              <GrowBar
+                progress={macroTotal > 0 ? m.kcal / macroTotal : 0}
+                color={colors.accent}
+                style={styles.macroBarTrack}
+              />
               <Text variant="caption" style={styles.macroBarValue}>
                 {formatGrams(m.grams)} {G}
               </Text>
@@ -513,7 +500,7 @@ function FoodCaloriesWidget({ size, data }: WidgetProps) {
           ))}
         </View>
         <Big small>
-          {formatKcal(totals.kcal)}
+          {formatKcal(kcal)}
           <Unit>
             {' '}
             / {formatKcal(goal)} {KCAL}
@@ -540,7 +527,7 @@ function FoodCaloriesWidget({ size, data }: WidgetProps) {
         />
         <View style={styles.flex}>
           <Big>
-            {formatKcal(totals.kcal)}
+            {formatKcal(kcal)}
             <Unit> / {formatKcal(goal)}</Unit>
           </Big>
           <Text variant="muted">
@@ -638,6 +625,7 @@ const QUICK_ML = GLASS_PRESETS[1].ml;
 function WaterTodayWidget({ size, data }: WidgetProps) {
   const { todayMl, goal } = data.water;
   const progress = goal > 0 ? todayMl / goal : 0;
+  const ml = Math.round(useAnimatedNumber(todayMl));
   const open = () => router.navigate('/water');
   const drink = (ml: number) => drinkWater(ml, todayMl, goal);
 
@@ -646,7 +634,9 @@ function WaterTodayWidget({ size, data }: WidgetProps) {
       <Tile onPress={open}>
         <TileTitle title={tr('Вода', 'Water')} icon="water" />
         <View style={styles.bottleRow}>
-          <WaterBottle progress={progress} height={64} />
+          <GoalPulse reached={progress >= 1}>
+            <WaterBottle progress={progress} height={64} />
+          </GoalPulse>
           <View>
             <Big small>
               {Math.round(progress * 100)}
@@ -657,7 +647,7 @@ function WaterTodayWidget({ size, data }: WidgetProps) {
         </View>
         <View style={styles.valueWithAction}>
           <Big small>
-            {formatVolume(todayMl)}
+            {formatVolume(ml)}
             <Unit>
               {' '}
               / {formatVolume(goal)} {ML}
@@ -687,7 +677,7 @@ function WaterTodayWidget({ size, data }: WidgetProps) {
           <ProgressRing progress={progress} icon="water" size={56} />
           <View style={styles.flex}>
             <Big>
-              {formatVolume(todayMl)}
+              {formatVolume(ml)}
               <Unit>
                 {' '}
                 / {formatVolume(goal)} {ML}
@@ -711,11 +701,13 @@ function WaterTodayWidget({ size, data }: WidgetProps) {
     <Tile onPress={open}>
       <TileTitle title={tr('Вода сьогодні', 'Water today')} icon="water" />
       <View style={styles.waterLarge}>
-        <WaterBottle progress={progress} height={230} />
+        <GoalPulse reached={progress >= 1}>
+          <WaterBottle progress={progress} height={230} />
+        </GoalPulse>
         <View style={styles.waterSide}>
           <View>
             <Big>
-              {formatVolume(todayMl)}
+              {formatVolume(ml)}
               <Unit> {ML}</Unit>
             </Big>
             <Text variant="muted">
@@ -774,12 +766,9 @@ function WaterWeekWidget({ size, data }: WidgetProps) {
             )}
             <View style={[styles.barTrack, { height: chartHeight }]}>
               <View style={[styles.goalLine, { bottom: (goal / max) * chartHeight }]} />
-              <View
-                style={[
-                  styles.bar,
-                  { height: Math.max((d.totalMl / max) * chartHeight, d.totalMl ? 3 : 0) },
-                  d.totalMl < goal && styles.barPartial,
-                ]}
+              <GrowColumn
+                height={Math.max((d.totalMl / max) * chartHeight, d.totalMl ? 3 : 0)}
+                style={[styles.bar, d.totalMl < goal && styles.barPartial]}
               />
             </View>
             <Text variant="caption" style={[styles.barLabel, d.dayStart === today && styles.today]}>
@@ -1137,7 +1126,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: -0.3,
   },
-  pressed: { opacity: 0.85 },
   flex: { flex: 1 },
   fill: { flex: 1, justifyContent: 'flex-end' },
   fillEnd: { flex: 1, justifyContent: 'flex-end', gap: spacing.xs },

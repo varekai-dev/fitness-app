@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useDialog } from '@/components/dialog';
+import { GoalPulse, GrowBar, GrowColumn, ListRow } from '@/components/motion';
 import { TAB_BAR_FAB_SPACE, TabBarFab, useTabBarSpace } from '@/components/floating-tab-bar';
 import { SwipeToDelete } from '@/components/swipe-to-delete';
 import {
@@ -67,7 +68,9 @@ export default function WaterScreen() {
         }>
         <Card onPress={() => router.push('/settings/water')}>
           <Row style={styles.hero}>
-            <WaterBottle progress={goal > 0 ? todayMl / goal : 0} height={170} />
+            <GoalPulse reached={goal > 0 && todayMl >= goal}>
+              <WaterBottle progress={goal > 0 ? todayMl / goal : 0} height={170} />
+            </GoalPulse>
             <WaterSummary todayMl={todayMl} goal={goal} />
           </Row>
         </Card>
@@ -94,17 +97,9 @@ export default function WaterScreen() {
                   </Text>
                   <View style={styles.barTrack}>
                     <View style={[styles.goalLine, { bottom: (goal / chartMax) * CHART_HEIGHT }]} />
-                    <View
-                      style={[
-                        styles.bar,
-                        {
-                          height: Math.max(
-                            (d.totalMl / chartMax) * CHART_HEIGHT,
-                            d.totalMl ? 4 : 0,
-                          ),
-                        },
-                        !reached && styles.barPartial,
-                      ]}
+                    <GrowColumn
+                      height={Math.max((d.totalMl / chartMax) * CHART_HEIGHT, d.totalMl ? 4 : 0)}
+                      style={[styles.bar, !reached && styles.barPartial]}
                     />
                   </View>
                   <Text variant="caption" style={isToday && styles.today}>
@@ -128,35 +123,40 @@ export default function WaterScreen() {
             const glass = glassForAmount(e.amountMl);
             const time = timeFormatter.format(new Date(e.drankAt));
             return (
-              <SwipeToDelete
-                key={e.id}
-                onDelete={(close) =>
-                  remove(e.id, `${time} · ${formatVolume(e.amountMl)} ${VOLUME_UNIT}`, close)
-                }>
-                <Card
-                  onPress={() =>
-                    setPouring({
-                      glass: glassToHold(e.amountMl),
-                      editMl: e.amountMl,
-                      editId: e.id,
-                    })
+              <ListRow key={e.id}>
+                <SwipeToDelete
+                  onDelete={(close) =>
+                    remove(e.id, `${time} · ${formatVolume(e.amountMl)} ${VOLUME_UNIT}`, close)
                   }>
-                  <Row style={styles.spaceBetween}>
-                    <Row>
-                      <View style={styles.entryIcon}>
-                        <MaterialCommunityIcons name={glass.icon} size={20} color={colors.accent} />
-                      </View>
-                      <Text variant="body">{glass.label}</Text>
+                  <Card
+                    onPress={() =>
+                      setPouring({
+                        glass: glassToHold(e.amountMl),
+                        editMl: e.amountMl,
+                        editId: e.id,
+                      })
+                    }>
+                    <Row style={styles.spaceBetween}>
+                      <Row>
+                        <View style={styles.entryIcon}>
+                          <MaterialCommunityIcons
+                            name={glass.icon}
+                            size={20}
+                            color={colors.accent}
+                          />
+                        </View>
+                        <Text variant="body">{glass.label}</Text>
+                      </Row>
+                      <Row>
+                        <Text variant="heading">
+                          {formatVolume(e.amountMl)} {VOLUME_UNIT}
+                        </Text>
+                        <Text variant="muted">{time}</Text>
+                      </Row>
                     </Row>
-                    <Row>
-                      <Text variant="heading">
-                        {formatVolume(e.amountMl)} {VOLUME_UNIT}
-                      </Text>
-                      <Text variant="muted">{time}</Text>
-                    </Row>
-                  </Row>
-                </Card>
-              </SwipeToDelete>
+                  </Card>
+                </SwipeToDelete>
+              </ListRow>
             );
           })
         )}
@@ -199,9 +199,11 @@ function WaterSummary({ todayMl, goal }: { todayMl: number; goal: number }) {
           ? tr('Ціль на сьогодні виконано!', 'Today’s goal reached!')
           : tr(`${percent}% денної норми`, `${percent}% of daily goal`)}
       </Text>
-      <View style={styles.progressTrack}>
-        <View style={[styles.progressFill, { width: `${Math.min(percent, 100)}%` }]} />
-      </View>
+      <GrowBar
+        progress={goal > 0 ? todayMl / goal : 0}
+        color={colors.accent}
+        style={styles.progressTrack}
+      />
       <Row style={styles.heroStats}>
         <View style={styles.heroStat}>
           <Text variant="caption" style={styles.goalLabel} numberOfLines={1}>
@@ -244,7 +246,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceRaised,
     overflow: 'hidden',
   },
-  progressFill: { height: '100%', borderRadius: radius.pill, backgroundColor: colors.accent },
   heroStats: { marginTop: spacing.md, alignItems: 'flex-start', gap: spacing.md },
   heroStat: { flexGrow: 1, gap: 2 },
   goalLabel: { letterSpacing: 1 },

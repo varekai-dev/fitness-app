@@ -14,23 +14,18 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { LayoutAnimationConfig } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Backdrop, Glass } from '@/components/glass';
+import { PressScale } from '@/components/motion';
 import { useScrollResetOnTabLeave } from '@/hooks/use-scroll-reset-on-tab-leave';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 export type IconName = ComponentProps<typeof Ionicons>['name'];
 
 type TextVariant =
-  | 'hero'
-  | 'title'
-  | 'heading'
-  | 'body'
-  | 'secondary'
-  | 'muted'
-  | 'caption'
-  | 'overline';
+  'hero' | 'title' | 'heading' | 'body' | 'secondary' | 'muted' | 'caption' | 'overline';
 
 export function Text({
   variant = 'body',
@@ -170,7 +165,8 @@ export function Screen({
           bottomSpace !== undefined && { paddingBottom: bottomSpace },
         ]}
         keyboardShouldPersistTaps="handled">
-        {children}
+        {/* Rows animate in when added later, not all at once when the screen opens. */}
+        <LayoutAnimationConfig skipEntering>{children}</LayoutAnimationConfig>
       </ScrollView>
     </View>
   );
@@ -187,11 +183,9 @@ export function Card({
 }) {
   if (!onPress) return <View style={[styles.card, style]}>{children}</View>;
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed, style]}>
+    <PressScale onPress={onPress} style={[styles.card, style]}>
       {children}
-    </Pressable>
+    </PressScale>
   );
 }
 
@@ -220,16 +214,17 @@ export function Button({
 }) {
   const fg = BUTTON_FG[variant];
   return (
-    <Pressable
+    <PressScale
       onPress={onPress}
       // Always a boolean: with `undefined` Android keeps a view that was once disabled
       // disabled, and only its text stays tappable.
       disabled={!!(disabled || loading)}
-      style={({ pressed }) => [
+      scaleTo={0.95}
+      style={[
         styles.button,
         small && styles.buttonSmall,
         { backgroundColor: BUTTON_BG[variant] },
-        (pressed || disabled) && styles.pressed,
+        disabled && styles.pressed,
         style,
       ]}>
       {loading ? (
@@ -243,7 +238,7 @@ export function Button({
           {trailingIcon && <Ionicons name={trailingIcon} size={small ? 15 : 18} color={fg} />}
         </>
       )}
-    </Pressable>
+    </PressScale>
   );
 }
 

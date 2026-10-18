@@ -3,7 +3,7 @@ import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
-import Animated, { useAnimatedRef } from 'react-native-reanimated';
+import Animated, { FadeInDown, useAnimatedRef } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Sortable from 'react-native-sortables';
 
@@ -106,14 +106,17 @@ export default function HomeScreen() {
             activeItemScale={1.03}
             inactiveItemOpacity={0.6}
             onDragEnd={({ order }) => saveDashboard(order(widgets))}>
-            {widgets.map((w) => (
+            {widgets.map((w, i) => (
               <View key={w.id}>
-                <WidgetView
-                  widget={w}
-                  data={data}
-                  width={tileWidth(w, rowWidth)}
-                  interactive={!editing}
-                />
+                {/* Tiles rise in one after another when the app opens (and when one is added). */}
+                <Animated.View entering={FadeInDown.delay(i * 60).duration(380)}>
+                  <WidgetView
+                    widget={w}
+                    data={data}
+                    width={tileWidth(w, rowWidth)}
+                    interactive={!editing}
+                  />
+                </Animated.View>
                 {editing && (
                   <EditOverlay
                     widget={w}

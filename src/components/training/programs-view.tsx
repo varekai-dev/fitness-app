@@ -2,9 +2,11 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { LayoutAnimationConfig } from 'react-native-reanimated';
 
 import { Badge, Card, EmptyState, Loading, SectionHeader, Text } from '@/components/ui';
 import { useDialog } from '@/components/dialog';
+import { ListRow } from '@/components/motion';
 import { confirmRemoveProgram } from '@/components/remove-dialogs';
 import { SwipeToDelete } from '@/components/swipe-to-delete';
 import { listPrograms } from '@/db/programs';
@@ -43,53 +45,60 @@ export function ProgramsView({ bottomSpace }: { bottomSpace: number }) {
         <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
       </Card>
       <SectionHeader title={tr('Мої програми', 'My programs')} />
-      {data.length === 0 ? (
-        <EmptyState
-          icon="calendar"
-          title={tr('Програм ще немає', 'No programs yet')}
-          hint={tr(
-            'Програма — це набір днів (наприклад, Push / Pull / Legs), які йдуть по колу.',
-            'A program is a set of days (for example, Push / Pull / Legs) that repeat in a cycle.',
-          )}
-        />
-      ) : (
-        data.map((p) => {
-          const card = (
-            <Card
-              key={p.id}
-              onPress={() => router.push({ pathname: '/program/[id]', params: { id: p.id } })}
-              style={styles.item}>
-              <View style={[styles.icon, p.isActive && styles.iconActive]}>
-                <Ionicons
-                  name="calendar"
-                  size={24}
-                  color={p.isActive ? colors.accentText : colors.accent}
-                />
-              </View>
-              <View style={styles.flex}>
-                <Text variant="body" numberOfLines={1}>
-                  {p.name}
-                </Text>
-                <Text variant="muted">
-                  {tr(`${p.days.length} дн. по колу`, `${p.days.length}-day cycle`)}
-                </Text>
-                {p.isActive && <Badge label={tr('Активна', 'Active')} />}
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-            </Card>
-          );
-          // Only programs the user made can be swiped away; built-in ones from their screen.
-          return p.builtIn ? (
-            card
-          ) : (
-            <SwipeToDelete
-              key={p.id}
-              onDelete={(close) => confirmRemoveProgram(dialog.show, p.id, { onKept: close })}>
-              {card}
-            </SwipeToDelete>
-          );
-        })
-      )}
+      {/* A new program fades in; the ones there when the section opens just show. */}
+      <LayoutAnimationConfig skipEntering>
+        {data.length === 0 ? (
+          <EmptyState
+            icon="calendar"
+            title={tr('Програм ще немає', 'No programs yet')}
+            hint={tr(
+              'Програма — це набір днів (наприклад, Push / Pull / Legs), які йдуть по колу.',
+              'A program is a set of days (for example, Push / Pull / Legs) that repeat in a cycle.',
+            )}
+          />
+        ) : (
+          data.map((p) => {
+            const card = (
+              <Card
+                onPress={() => router.push({ pathname: '/program/[id]', params: { id: p.id } })}
+                style={styles.item}>
+                <View style={[styles.icon, p.isActive && styles.iconActive]}>
+                  <Ionicons
+                    name="calendar"
+                    size={24}
+                    color={p.isActive ? colors.accentText : colors.accent}
+                  />
+                </View>
+                <View style={styles.flex}>
+                  <Text variant="body" numberOfLines={1}>
+                    {p.name}
+                  </Text>
+                  <Text variant="muted">
+                    {tr(`${p.days.length} дн. по колу`, `${p.days.length}-day cycle`)}
+                  </Text>
+                  {p.isActive && <Badge label={tr('Активна', 'Active')} />}
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              </Card>
+            );
+            // Only programs the user made can be swiped away; built-in ones from their screen.
+            return (
+              <ListRow key={p.id}>
+                {p.builtIn ? (
+                  card
+                ) : (
+                  <SwipeToDelete
+                    onDelete={(close) =>
+                      confirmRemoveProgram(dialog.show, p.id, { onKept: close })
+                    }>
+                    {card}
+                  </SwipeToDelete>
+                )}
+              </ListRow>
+            );
+          })
+        )}
+      </LayoutAnimationConfig>
       {dialog.element}
     </ScrollView>
   );

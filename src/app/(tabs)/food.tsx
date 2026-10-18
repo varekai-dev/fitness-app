@@ -8,6 +8,7 @@ import { CalorieSummary } from '@/components/calorie-summary';
 import { DayReviewCard } from '@/components/day-review-card';
 import { useDialog } from '@/components/dialog';
 import { MealAdvice } from '@/components/meal-advice';
+import { GrowColumn, ListRow } from '@/components/motion';
 import { TAB_BAR_FAB_SPACE, TabBarFab, useTabBarSpace } from '@/components/floating-tab-bar';
 import { SwipeToDelete } from '@/components/swipe-to-delete';
 import {
@@ -202,37 +203,37 @@ export default function FoodScreen() {
               {entries.map((e) => {
                 const time = timeFormatter.format(new Date(e.eatenAt));
                 return (
-                  <SwipeToDelete
-                    key={e.id}
-                    onDelete={(close) => remove(e.id, `${time} · ${e.name}`, close)}>
-                    <Pressable
-                      onPress={() =>
-                        router.push({ pathname: '/food-entry/[id]', params: { id: e.id } })
-                      }
-                      accessibilityRole="button"
-                      style={({ pressed }) => [styles.entry, pressed && styles.pressed]}>
-                      <Row style={styles.spaceBetween}>
-                        <View style={styles.flex}>
-                          <Text variant="body" numberOfLines={1}>
-                            {e.name}
+                  <ListRow key={e.id}>
+                    <SwipeToDelete onDelete={(close) => remove(e.id, `${time} · ${e.name}`, close)}>
+                      <Pressable
+                        onPress={() =>
+                          router.push({ pathname: '/food-entry/[id]', params: { id: e.id } })
+                        }
+                        accessibilityRole="button"
+                        style={({ pressed }) => [styles.entry, pressed && styles.pressed]}>
+                        <Row style={styles.spaceBetween}>
+                          <View style={styles.flex}>
+                            <Text variant="body" numberOfLines={1}>
+                              {e.name}
+                            </Text>
+                            <Text variant="muted" numberOfLines={1}>
+                              {time}
+                              {e.portion ? ` · ${e.portion}` : ''}
+                            </Text>
+                          </View>
+                          <Text variant="heading">
+                            {formatKcal(e.kcal)} {tr('ккал', 'kcal')}
                           </Text>
-                          <Text variant="muted" numberOfLines={1}>
-                            {time}
-                            {e.portion ? ` · ${e.portion}` : ''}
-                          </Text>
-                        </View>
-                        <Text variant="heading">
-                          {formatKcal(e.kcal)} {tr('ккал', 'kcal')}
+                          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                        </Row>
+                        <Text variant="caption">
+                          {tr('Б', 'P')} {formatGrams(e.proteinG)} · {tr('Ж', 'F')}{' '}
+                          {formatGrams(e.fatG)} · {tr('В', 'C')} {formatGrams(e.carbsG)}{' '}
+                          {tr('г', 'g')}
                         </Text>
-                        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-                      </Row>
-                      <Text variant="caption">
-                        {tr('Б', 'P')} {formatGrams(e.proteinG)} · {tr('Ж', 'F')}{' '}
-                        {formatGrams(e.fatG)} · {tr('В', 'C')} {formatGrams(e.carbsG)}{' '}
-                        {tr('г', 'g')}
-                      </Text>
-                    </Pressable>
-                  </SwipeToDelete>
+                      </Pressable>
+                    </SwipeToDelete>
+                  </ListRow>
                 );
               })}
             </Card>
@@ -252,12 +253,9 @@ export default function FoodScreen() {
                 </Text>
                 <View style={styles.barTrack}>
                   <View style={[styles.goalLine, { bottom: (goal / chartMax) * CHART_HEIGHT }]} />
-                  <View
-                    style={[
-                      styles.bar,
-                      { height: Math.max((d.kcal / chartMax) * CHART_HEIGHT, d.kcal ? 4 : 0) },
-                      d.kcal > goal && styles.barOver,
-                    ]}
+                  <GrowColumn
+                    height={Math.max((d.kcal / chartMax) * CHART_HEIGHT, d.kcal ? 4 : 0)}
+                    style={[styles.bar, d.kcal > goal && styles.barOver]}
                   />
                 </View>
                 <Text variant="caption" style={d.dayStart === day && styles.today}>
