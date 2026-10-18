@@ -11,7 +11,7 @@ export type GlassPreset = { ml: number; label: string; icon: GlassIconName };
 const imperial = unitSystem === 'imperial';
 
 /** Sizes of the cup, glass and bottle: round millilitres or round ounces. */
-const PRESET_ML = imperial ? [6, 8, 16].map(flOz) : [150, 250, 500];
+const PRESET_ML = imperial ? [7, 10, 16].map(flOz) : [200, 300, 500];
 
 /** Containers offered for logging water, smallest first. */
 export const GLASS_PRESETS: GlassPreset[] = [
@@ -33,6 +33,10 @@ export const glassForAmount = (ml: number) =>
     label: tr('Вода', 'Water'),
     icon: 'water-outline' as const,
   };
+
+/** The smallest container that holds `ml` (the biggest one if none does). */
+export const glassToHold = (ml: number) =>
+  GLASS_PRESETS.find((g) => g.ml >= ml) ?? GLASS_PRESETS[GLASS_PRESETS.length - 1];
 
 /** Local midnight of the day containing `ms`. */
 export function startOfDay(ms: number) {

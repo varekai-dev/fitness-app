@@ -81,36 +81,46 @@ function wavePath(y: number, amplitude: number, phase: number) {
   return `${d}L${VIEW_W + 10} ${VIEW_H + 10} L-10 ${VIEW_H + 10} Z`;
 }
 
+/** What the pour modal opens with: a container, and the amount of a logged drink being edited. */
+export type PourRequest = { glass: GlassPreset; editMl?: number };
+
 /**
  * Full-screen picker for one drink: the chosen container, poured to its
- * nominal size with room for a bit more, whose water line follows a finger
- * dragged up or down it. The chips switch to another container; the button
- * logs the amount poured.
+ * nominal size (or to the edited drink's amount) with room for a bit more,
+ * whose water line follows a finger dragged up or down it. The chips switch
+ * to another container; the button logs or saves the amount poured.
  */
 export function WaterPourModal({
-  glass,
+  pour,
   onClose,
   onAdd,
 }: {
-  /** The container to open with; `null` keeps the modal closed. */
-  glass: GlassPreset | null;
+  /** `null` keeps the modal closed. */
+  pour: PourRequest | null;
   onClose: () => void;
   onAdd: (ml: number) => void;
 }) {
   // Kept while the modal slides away, so it doesn't go blank mid-animation.
-  const [shown, setShown] = useState(glass);
-  if (glass && glass !== shown) setShown(glass);
+  const [shown, setShown] = useState(pour);
+  if (pour && pour !== shown) setShown(pour);
 
   return (
     <Modal
-      visible={!!glass}
+      visible={!!pour}
       animationType="slide"
       statusBarTranslucent
       navigationBarTranslucent
       onRequestClose={onClose}>
       {/* Gestures inside an Android modal need their own root view. */}
       <GestureHandlerRootView style={styles.flex}>
-        {shown && <PourContent initial={shown} onClose={onClose} onAdd={onAdd} />}
+        {shown && (
+          <PourContent
+            initial={shown.glass}
+            editMl={shown.editMl}
+            onClose={onClose}
+            onAdd={onAdd}
+          />
+        )}
       </GestureHandlerRootView>
     </Modal>
   );
@@ -118,10 +128,12 @@ export function WaterPourModal({
 
 function PourContent({
   initial,
+  editMl,
   onClose,
   onAdd,
 }: {
   initial: GlassPreset;
+  editMl?: number;
   onClose: () => void;
   onAdd: (ml: number) => void;
 }) {
@@ -129,7 +141,7 @@ function PourContent({
   const insets = useSafeAreaInsets();
   const { height: screenH } = useWindowDimensions();
   const [glass, setGlass] = useState(initial);
-  const [amount, setAmount] = useState(initial.ml);
+  const [amount, setAmount] = useState(editMl ?? initial.ml);
   const shapeIndex = Math.max(GLASS_PRESETS.indexOf(glass), 0);
   const shape = SHAPES[shapeIndex];
 
@@ -138,12 +150,15 @@ function PourContent({
   const scale = drawH / VIEW_H;
   const drawW = VIEW_W * scale;
 
-  // The brim holds the nominal size plus some headroom; it opens poured to the nominal size.
-  const capacity = glass.ml + HEADROOM_ML;
+  // The brim holds the nominal size plus some headroom (or the edited drink, if
+  // bigger); it opens poured to the nominal size, or to the edited drink's amount.
+  const startMl = glass === initial && editMl != null ? editMl : glass.ml;
+  const capacity = Math.max(glass.ml + HEADROOM_ML, startMl);
   const nominal = glass.ml / capacity;
+  const start = startMl / capacity;
 
   // 0 empty → 1 brim-full, as a share of the container's height.
-  const level = useSharedValue(nominal);
+  const level = useSharedValue(start);
   const phase = useSharedValue(0);
   const splash = useSharedValue(0);
   const dragging = useSharedValue(false);
@@ -151,9 +166,9 @@ function PourContent({
   // Switching containers pours its nominal size again.
   useEffect(() => {
     level.set(0);
-    level.set(withTiming(nominal, { duration: 450 }));
+    level.set(withTiming(start, { duration: 450 }));
     splash.set(6);
-  }, [nominal, level, splash]);
+  }, [start, level, splash]);
 
   useFrameCallback(({ timeSincePreviousFrame }) => {
     const dt = Math.min((timeSincePreviousFrame ?? 16) / 1000, 0.05);
@@ -322,11 +337,18 @@ function PourContent({
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>
         <Button
-          title={tr(
-            `Додати ${formatVolume(ml)} ${VOLUME_UNIT}`,
-            `Add ${formatVolume(ml)} ${VOLUME_UNIT}`,
-          )}
-          icon="water"
+          title={
+            editMl != null
+              ? tr(
+                  `Зберегти ${formatVolume(ml)} ${VOLUME_UNIT}`,
+                  `Save ${formatVolume(ml)} ${VOLUME_UNIT}`,
+                )
+              : tr(
+                  `Додати ${formatVolume(ml)} ${VOLUME_UNIT}`,
+                  `Add ${formatVolume(ml)} ${VOLUME_UNIT}`,
+                )
+          }
+          icon={editMl != null ? 'checkmark' : 'water'}
           disabled={ml <= 0}
           onPress={() => onAdd(ml)}
         />

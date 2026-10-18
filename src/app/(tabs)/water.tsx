@@ -18,14 +18,15 @@ import {
 } from '@/components/ui';
 import { WaterBottle } from '@/components/water-bottle';
 import { drinkWater, GlassButton } from '@/components/water-card';
-import { WaterPourModal } from '@/components/water-pour-modal';
-import { deleteWater, loadWater } from '@/db/water';
+import { type PourRequest, WaterPourModal } from '@/components/water-pour-modal';
+import { deleteWater, loadWater, updateWater } from '@/db/water';
+import { useAnimatedNumber } from '@/hooks/use-animated-number';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { useToday } from '@/hooks/use-today';
 import { locale, tr } from '@/lib/i18n';
 import { WEEKDAY_SHORT, weekdayIndex } from '@/lib/labels';
 import { formatVolume, formatVolumeCompact, VOLUME_UNIT } from '@/lib/units';
-import { GLASS_PRESETS, glassForAmount, type GlassPreset } from '@/lib/water';
+import { GLASS_PRESETS, glassForAmount, glassToHold } from '@/lib/water';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 const timeFormatter = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' });
@@ -36,11 +37,10 @@ export default function WaterScreen() {
   const day = useToday();
   const { data } = useDbQuery(() => loadWater(), [day]);
   const dialog = useDialog();
-  const [pouring, setPouring] = useState<GlassPreset | null>(null);
+  const [pouring, setPouring] = useState<(PourRequest & { editId?: number }) | null>(null);
 
   if (!data) return <Loading />;
   const { goal, todayEntries, todayMl, days, today } = data;
-  const percent = goal > 0 ? Math.round((todayMl / goal) * 100) : 0;
 
   const remove = (id: number, label: string, close: () => void) =>
     dialog.show({
@@ -65,38 +65,7 @@ export default function WaterScreen() {
       <Card onPress={() => router.push('/settings/water')}>
         <Row style={styles.hero}>
           <WaterBottle progress={goal > 0 ? todayMl / goal : 0} height={170} />
-          <View style={styles.heroInfo}>
-            <Text style={styles.amount}>
-              {formatVolume(todayMl)}
-              <Text style={styles.unit}> {VOLUME_UNIT}</Text>
-            </Text>
-            <Text variant="muted">
-              {todayMl >= goal
-                ? tr('Ціль на сьогодні виконано!', 'Today’s goal reached!')
-                : tr(`${percent}% денної норми`, `${percent}% of daily goal`)}
-            </Text>
-            <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${Math.min(percent, 100)}%` }]} />
-            </View>
-            <Row style={styles.heroStats}>
-              <View style={styles.heroStat}>
-                <Text variant="caption" style={styles.goalLabel} numberOfLines={1}>
-                  {tr('ЦІЛЬ', 'GOAL')}
-                </Text>
-                <Text variant="heading">
-                  {formatVolume(goal)} {VOLUME_UNIT}
-                </Text>
-              </View>
-              <View style={styles.heroStat}>
-                <Text variant="caption" style={styles.goalLabel} numberOfLines={1}>
-                  {tr('ЗАЛИШИЛОСЬ', 'LEFT')}
-                </Text>
-                <Text variant="heading">
-                  {formatVolume(Math.max(goal - todayMl, 0))} {VOLUME_UNIT}
-                </Text>
-              </View>
-            </Row>
-          </View>
+          <WaterSummary todayMl={todayMl} goal={goal} />
         </Row>
       </Card>
 
@@ -104,7 +73,7 @@ export default function WaterScreen() {
       <View style={styles.glasses}>
         {GLASS_PRESETS.map((g) => (
           <View key={g.ml} style={styles.glassCell}>
-            <GlassButton glass={g} onPress={() => setPouring(g)} />
+            <GlassButton glass={g} onPress={() => setPouring({ glass: g })} />
           </View>
         ))}
       </View>
@@ -158,7 +127,14 @@ export default function WaterScreen() {
               onDelete={(close) =>
                 remove(e.id, `${time} · ${formatVolume(e.amountMl)} ${VOLUME_UNIT}`, close)
               }>
-              <Card>
+              <Card
+                onPress={() =>
+                  setPouring({
+                    glass: glassToHold(e.amountMl),
+                    editMl: e.amountMl,
+                    editId: e.id,
+                  })
+                }>
                 <Row style={styles.spaceBetween}>
                   <Row>
                     <View style={styles.entryIcon}>
@@ -179,11 +155,12 @@ export default function WaterScreen() {
         })
       )}
       <WaterPourModal
-        glass={pouring}
+        pour={pouring}
         onClose={() => setPouring(null)}
         onAdd={(ml) => {
           setPouring(null);
-          drinkWater(ml, todayMl, goal);
+          if (pouring?.editId != null) updateWater(pouring.editId, ml);
+          else drinkWater(ml, todayMl, goal);
         }}
       />
       {dialog.element}
@@ -191,10 +168,58 @@ export default function WaterScreen() {
   );
 }
 
+/** Today's total, percent and what's left, counting up when a drink is added. */
+function WaterSummary({ todayMl, goal }: { todayMl: number; goal: number }) {
+  const ml = Math.round(useAnimatedNumber(todayMl));
+  const percent = goal > 0 ? Math.round((ml / goal) * 100) : 0;
+
+  return (
+    <View style={styles.heroInfo}>
+      <Text style={styles.amount}>
+        {formatVolume(ml)}
+        <Text style={styles.unit}> {VOLUME_UNIT}</Text>
+      </Text>
+      <Text variant="muted">
+        {todayMl >= goal && ml >= goal
+          ? tr('Ціль на сьогодні виконано!', 'Today’s goal reached!')
+          : tr(`${percent}% денної норми`, `${percent}% of daily goal`)}
+      </Text>
+      <View style={styles.progressTrack}>
+        <View style={[styles.progressFill, { width: `${Math.min(percent, 100)}%` }]} />
+      </View>
+      <Row style={styles.heroStats}>
+        <View style={styles.heroStat}>
+          <Text variant="caption" style={styles.goalLabel} numberOfLines={1}>
+            {tr('ЦІЛЬ', 'GOAL')}
+          </Text>
+          <Text variant="heading">
+            {formatVolume(goal)} {VOLUME_UNIT}
+          </Text>
+        </View>
+        <View style={styles.heroStat}>
+          <Text variant="caption" style={styles.goalLabel} numberOfLines={1}>
+            {tr('ЗАЛИШИЛОСЬ', 'LEFT')}
+          </Text>
+          <Text variant="heading" style={styles.tabular}>
+            {formatVolume(Math.max(goal - ml, 0))} {VOLUME_UNIT}
+          </Text>
+        </View>
+      </Row>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   hero: { gap: spacing.lg },
   heroInfo: { flex: 1, gap: spacing.xs },
-  amount: { color: colors.text, fontSize: fontSize.hero, fontWeight: '800', letterSpacing: -1 },
+  amount: {
+    color: colors.text,
+    fontSize: fontSize.hero,
+    fontWeight: '800',
+    letterSpacing: -1,
+    fontVariant: ['tabular-nums'],
+  },
+  tabular: { fontVariant: ['tabular-nums'] },
   unit: { color: colors.textSecondary, fontSize: fontSize.xl, fontWeight: '600' },
   progressTrack: {
     height: 6,

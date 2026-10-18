@@ -24,6 +24,10 @@ export async function addWater(amountMl: number, at = Date.now()) {
   await db.insert(waterIntakes).values({ drankAt: at, amountMl });
 }
 
+export async function updateWater(id: number, amountMl: number) {
+  await db.update(waterIntakes).set({ amountMl }).where(eq(waterIntakes.id, id));
+}
+
 export async function deleteWater(id: number) {
   await db.delete(waterIntakes).where(eq(waterIntakes.id, id));
 }
