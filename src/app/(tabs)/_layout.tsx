@@ -18,6 +18,8 @@ export default function TabsLayout() {
       tabBar={(props) => <FloatingTabBar {...props} icons={ICONS} />}
       screenOptions={{
         headerShown: false,
+        // Screens slide toward the tapped tab, the same way the bar's bubble moves.
+        animation: 'shift',
         sceneStyle: { backgroundColor: colors.background },
       }}>
       <Tabs.Screen name="index" options={{ title: tr('Головна', 'Home') }} />
