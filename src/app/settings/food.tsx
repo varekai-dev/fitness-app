@@ -32,8 +32,12 @@ import { formatWeightDelta } from '@/lib/labels';
 import { formatNumber, formatWeight } from '@/lib/metrics';
 import {
   ACTIVITY,
+  bmi,
+  BMI_CLASSES,
+  bmiClass,
   calorieScale,
   calorieZone,
+  healthyWeight,
   missingForRecommendation,
   recommendCalories,
   WEIGHT_GOAL,
@@ -84,6 +88,9 @@ export default function FoodSettingsScreen() {
         onDrag={(value) => setDraft({ value, from: savedGoal })}
         onRelease={(value) => (value === savedGoal ? setDraft(null) : setKcalGoal(value))}
       />
+      {weightKg && profile.heightCm ? (
+        <BmiCard weightKg={weightKg} heightCm={profile.heightCm} />
+      ) : null}
       <MacroGoalsCard
         goal={goal}
         targets={macroTargets(goal, weightKg ?? null, profile.goal, macroGoals)}
@@ -132,6 +139,69 @@ export default function FoodSettingsScreen() {
         />
       </Card>
     </Screen>
+  );
+}
+
+const BMI_MIN = 15;
+const BMI_MAX = 45;
+
+/**
+ * Body mass index from the latest weight and the height, on a bar of the WHO
+ * classes, with the weights that would be normal at this height.
+ */
+function BmiCard({ weightKg, heightCm }: { weightKg: number; heightCm: number }) {
+  const value = bmi(weightKg, heightCm);
+  const cls = bmiClass(value);
+  const color = ZONE_COLOR[cls.zone];
+  const { minKg, maxKg } = healthyWeight(heightCm);
+  const share = (v: number) => (Math.min(Math.max(v, BMI_MIN), BMI_MAX) - BMI_MIN) / (BMI_MAX - BMI_MIN);
+  const toNormal = weightKg > maxKg ? maxKg - weightKg : weightKg < minKg ? minKg - weightKg : 0;
+
+  return (
+    <Card style={styles.bmiCard}>
+      <Row style={styles.bmiHead}>
+        <View style={styles.flex}>
+          <Text variant="overline">{tr('Індекс маси тіла', 'Body mass index')}</Text>
+          <Text style={[styles.bmiValue, cls.zone !== 'ok' && { color }]}>
+            {formatNumber(value, 1)}
+          </Text>
+        </View>
+        <View style={styles.zonePill}>
+          <View style={[styles.zoneDot, { backgroundColor: color }]} />
+          <Text style={[styles.zoneText, { color }]}>{cls.label}</Text>
+        </View>
+      </Row>
+      <View>
+        <Row style={styles.bmiBar}>
+          {BMI_CLASSES.map((c, i) => {
+            const from = share(c.from);
+            const to = share(BMI_CLASSES[i + 1]?.from ?? BMI_MAX);
+            return to > from ? (
+              <View
+                key={c.from}
+                style={[styles.bmiSegment, { flex: to - from, backgroundColor: ZONE_COLOR[c.zone] }]}
+              />
+            ) : null;
+          })}
+        </Row>
+        <View
+          pointerEvents="none"
+          style={[styles.bmiKnob, { left: `${share(value) * 100}%`, borderColor: color }]}
+        />
+      </View>
+      <Text variant="muted">
+        {tr(
+          `Норма для ${formatNumber(cmToDisplay(heightCm), 0)} ${HEIGHT_UNIT}: `,
+          `Normal at ${formatNumber(cmToDisplay(heightCm), 0)} ${HEIGHT_UNIT}: `,
+        )}
+        {formatWeight(minKg, 0)}–{formatWeight(maxKg, 0)} {WEIGHT_UNIT}
+        {toNormal !== 0 &&
+          tr(
+            ` · до норми ${formatWeightDelta(toNormal)} ${WEIGHT_UNIT}`,
+            ` · ${formatWeightDelta(toNormal)} ${WEIGHT_UNIT} to normal`,
+          )}
+      </Text>
+    </Card>
   );
 }
 
@@ -715,6 +785,21 @@ const styles = StyleSheet.create({
   goalCard: { gap: spacing.lg },
   shortcuts: { gap: spacing.lg },
   macroCard: { gap: spacing.lg },
+  bmiCard: { gap: spacing.md },
+  bmiHead: { gap: spacing.md },
+  bmiValue: { color: colors.text, fontSize: fontSize.hero, fontWeight: '800', letterSpacing: -1 },
+  bmiBar: { height: BAR, gap: 3, marginVertical: (KNOB - BAR) / 4 },
+  bmiSegment: { height: BAR, borderRadius: radius.pill },
+  bmiKnob: {
+    position: 'absolute',
+    top: (BAR - KNOB / 1.5) / 2 + (KNOB - BAR) / 4,
+    width: KNOB / 1.5,
+    height: KNOB / 1.5,
+    marginLeft: -KNOB / 3,
+    borderRadius: KNOB / 3,
+    borderWidth: 4,
+    backgroundColor: colors.text,
+  },
   macroRow: { gap: spacing.sm },
   macroDot: { width: 10, height: 10, borderRadius: 5, marginRight: spacing.xs },
   macroInput: {

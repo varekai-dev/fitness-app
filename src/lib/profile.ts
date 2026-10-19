@@ -180,6 +180,26 @@ export function calorieZone(scale: CalorieScale, kcal: number): CalorieZone {
     .zone;
 }
 
+export const bmi = (weightKg: number, heightCm: number) => weightKg / (heightCm / 100) ** 2;
+
+/** The WHO classes of BMI, each up to the next one's start. */
+export const BMI_CLASSES: { from: number; label: string; zone: CalorieZone }[] = [
+  { from: 0, label: tr('Недостатня вага', 'Underweight'), zone: 'warning' },
+  { from: 18.5, label: tr('Норма', 'Normal'), zone: 'ok' },
+  { from: 25, label: tr('Надлишкова вага', 'Overweight'), zone: 'warning' },
+  { from: 30, label: tr('Ожиріння I ст.', 'Obesity I'), zone: 'danger' },
+  { from: 35, label: tr('Ожиріння II ст.', 'Obesity II'), zone: 'danger' },
+  { from: 40, label: tr('Ожиріння III ст.', 'Obesity III'), zone: 'danger' },
+];
+
+export const bmiClass = (value: number) => BMI_CLASSES.findLast((c) => value >= c.from)!;
+
+/** The weights with a normal BMI (18.5 up to 25) at `heightCm`. */
+export const healthyWeight = (heightCm: number) => {
+  const m2 = (heightCm / 100) ** 2;
+  return { minKg: 18.5 * m2, maxKg: 25 * m2 };
+};
+
 const WATER_ML_PER_KG = 30;
 
 /**
