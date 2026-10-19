@@ -1,4 +1,3 @@
-import * as Haptics from 'expo-haptics';
 import { Pressable, StyleSheet } from 'react-native';
 
 import { Row, Text } from '@/components/ui';
@@ -14,7 +13,6 @@ export function MealPicker({ meal, onChange }: { meal: Meal; onChange: (meal: Me
           key={m}
           onPress={() => {
             if (m === meal) return;
-            Haptics.selectionAsync();
             onChange(m);
           }}
           accessibilityRole="button"

@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
 
 import { useDialog } from '@/components/dialog';
@@ -43,7 +42,6 @@ export default function BackupSettingsScreen() {
     setBusy('import');
     try {
       await restoreBackup(pending);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       await reloadApp('Backup restored');
     } catch (e) {
       setBusy(null);

@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Haptics from 'expo-haptics';
 import { Linking, StyleSheet, Switch, View } from 'react-native';
 
 import { useDialog } from '@/components/dialog';
@@ -53,7 +52,6 @@ function TimeStepper({
   const change = (dir: 1 | -1) => {
     const next = Math.min(Math.max(value + dir * DAY_WINDOW_STEP_MIN, min), max);
     if (next === value) return;
-    Haptics.selectionAsync();
     onChange(next);
   };
   return (
@@ -142,7 +140,6 @@ export default function NotificationsScreen() {
       });
       return;
     }
-    Haptics.selectionAsync();
     save(enabled);
   };
 
@@ -206,7 +203,6 @@ export default function NotificationsScreen() {
                   label={formatInterval(m)}
                   selected={m === water.intervalMin}
                   onPress={() => {
-                    Haptics.selectionAsync();
                     setWaterReminders({ intervalMin: m });
                   }}
                 />

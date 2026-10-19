@@ -1,4 +1,3 @@
-import * as Haptics from 'expo-haptics';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -11,13 +10,10 @@ import Animated, {
   withSpring,
   type SharedValue,
 } from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
 
 import { colors, radius, spacing } from '@/theme';
 
 const SPRING = { damping: 22, stiffness: 200, mass: 0.8 };
-
-const tick = () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
 /**
  * Draggable sheet for the workout player. Collapsed, only `header` (the player
@@ -65,7 +61,6 @@ export function PlayerSheet({
 
   const snap = (open: boolean) => {
     'worklet';
-    if (open !== expanded.get()) scheduleOnRN(tick);
     expanded.set(open);
     y.set(withSpring(open ? 0 : collapsedY, SPRING));
   };

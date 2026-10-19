@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
@@ -40,15 +39,12 @@ export default function HomeScreen() {
   if (!widgets || !data) return <Loading />;
 
   const remove = (id: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     saveDashboard(widgets.filter((w) => w.id !== id));
   };
   const resize = (id: string) => {
-    Haptics.selectionAsync();
     saveDashboard(widgets.map((w) => (w.id === id ? { ...w, size: nextSize(w.size) } : w)));
   };
   const toggleEditing = () => {
-    Haptics.selectionAsync();
     setEditing((e) => !e);
   };
 
@@ -101,7 +97,6 @@ export default function HomeScreen() {
             gap={TILE_GAP}
             sortEnabled={editing}
             scrollableRef={scrollRef}
-            hapticsEnabled
             dragActivationDelay={150}
             activeItemScale={1.03}
             inactiveItemOpacity={0.6}

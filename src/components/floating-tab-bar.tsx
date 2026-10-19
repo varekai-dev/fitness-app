@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Haptics from 'expo-haptics';
 import { useFocusEffect } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { useCallback, useEffect, useState } from 'react';
@@ -130,7 +129,6 @@ export function FloatingTabBar({
                 canPreventDefault: true,
               });
               if (!focused && !event.defaultPrevented) {
-                Haptics.selectionAsync();
                 navigation.navigate(route.name, route.params);
               }
             };

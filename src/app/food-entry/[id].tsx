@@ -1,4 +1,3 @@
-import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -109,7 +108,6 @@ function EntryEditor({ entry }: { entry: FoodEntry }) {
         fiberG: entry.fiberG === null ? null : entry.fiberG * k,
         sugarG: entry.sugarG === null ? null : entry.sugarG * k,
       });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       goBack();
     } finally {
       setSaving(false);

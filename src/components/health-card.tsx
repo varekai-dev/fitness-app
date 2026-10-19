@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -96,8 +95,6 @@ export function HealthCard() {
     setSyncing(true);
     try {
       const result = await syncHealth({ prompt: true });
-      if (result.status === 'ok')
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       dialog.show(resultMessage(result));
     } catch (e) {
       dialog.show({

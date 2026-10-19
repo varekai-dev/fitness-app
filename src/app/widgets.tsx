@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
@@ -37,7 +36,6 @@ export default function WidgetsScreen() {
 
   const add = async (type: WidgetType, size: WidgetSize) => {
     await addWidget(type, size);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     goBack();
   };
 

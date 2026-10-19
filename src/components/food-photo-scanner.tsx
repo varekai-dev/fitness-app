@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
@@ -134,7 +133,6 @@ function ScanContent({
   useEffect(() => {
     if (failed) return;
     if (finished) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       const timer = setTimeout(onFinish, RESULT_HOLD_MS);
       return () => clearTimeout(timer);
     }
@@ -142,17 +140,12 @@ function ScanContent({
     if (stage === last && !done) return;
     const timer = setTimeout(
       () => {
-        Haptics.selectionAsync();
         setStage(stage + 1);
       },
       done ? FINISH_STAGE_MS : STAGE_MS,
     );
     return () => clearTimeout(timer);
   }, [stage, last, done, failed, finished, onFinish]);
-
-  useEffect(() => {
-    if (failed) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-  }, [failed]);
 
   const scanning = !finished && !failed;
   const dishes = scan.result?.split(', ') ?? [];

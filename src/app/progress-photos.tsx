@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
@@ -80,7 +79,6 @@ export default function ProgressPhotosScreen() {
 
   const changePose = (next: PhotoPose) => {
     if (next === pose) return;
-    Haptics.selectionAsync();
     setChosenPose(next);
     setBeforeId(null);
     setAfterId(null);
@@ -94,7 +92,6 @@ export default function ProgressPhotosScreen() {
       await addProgressPhoto({ ...photo, pose });
       // Compare against the newest photo again, now that there is a newer one.
       setAfterId(null);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (e) {
       dialog.show({
         title: tr('Не вдалося додати фото', 'Couldn’t add the photo'),

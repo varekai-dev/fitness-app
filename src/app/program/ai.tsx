@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -152,7 +151,6 @@ export default function AiProgramScreen() {
   };
 
   const showPlan = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setPlan(readyPlan);
     setReadyPlan(null);
     setTried({});
@@ -169,7 +167,6 @@ export default function AiProgramScreen() {
     setReplacing((r) => [...r, key]);
     try {
       const next = await askReplacement({ ...request, day, exercise, avoid });
-      Haptics.selectionAsync();
       setTried((t) => ({ ...t, [key]: avoid }));
       // Only if the slot still holds what was replaced; the plan may have changed meanwhile.
       setPlan((p) =>
@@ -207,7 +204,6 @@ export default function AiProgramScreen() {
     } finally {
       setSaving(false);
     }
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     if (intoProgramId !== undefined) goBack();
     else router.replace({ pathname: '/program/[id]', params: { id } });
   };
@@ -415,7 +411,6 @@ function QuestionStep({
   onChange: (value: string[]) => void;
 }) {
   const toggle = (option: string) => {
-    Haptics.selectionAsync();
     if (!question.multi) return onChange([option]);
     onChange(value.includes(option) ? value.filter((v) => v !== option) : [...value, option]);
   };

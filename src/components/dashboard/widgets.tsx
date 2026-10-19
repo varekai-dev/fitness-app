@@ -627,7 +627,7 @@ function WaterTodayWidget({ size, data }: WidgetProps) {
   const progress = goal > 0 ? todayMl / goal : 0;
   const ml = Math.round(useAnimatedNumber(todayMl));
   const open = () => router.navigate('/water');
-  const drink = (ml: number) => drinkWater(ml, todayMl, goal);
+  const drink = (ml: number) => drinkWater(ml);
 
   if (size === 'small') {
     return (

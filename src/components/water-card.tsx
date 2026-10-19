@@ -1,5 +1,4 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import * as Haptics from 'expo-haptics';
 import { Pressable, StyleSheet } from 'react-native';
 
 import { Text } from '@/components/ui';
@@ -9,14 +8,9 @@ import { formatVolume, VOLUME_UNIT } from '@/lib/units';
 import type { GlassPreset } from '@/lib/water';
 import { colors, radius, spacing } from '@/theme';
 
-/** Logs a glass with haptic feedback; a stronger buzz when it reaches the goal. */
-export async function drinkWater(ml: number, todayMl: number, goal: number) {
+/** Logs a glass of water. */
+export async function drinkWater(ml: number) {
   await addWater(ml);
-  if (todayMl < goal && todayMl + ml >= goal) {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  } else {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }
 }
 
 /** Icon tile for one container size; `compact` drops the name for tight rows. */

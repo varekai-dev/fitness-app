@@ -1,11 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
 
 import { Text } from '@/components/ui';
 import { colors, radius, spacing } from '@/theme';
@@ -13,8 +11,6 @@ import { colors, radius, spacing } from '@/theme';
 export type CompareSide = { uri: string; label: string; detail?: string };
 
 const KNOB = 40;
-
-const tick = () => Haptics.selectionAsync();
 
 /**
  * Two photos on top of each other: "before" shows left of the divider and
@@ -25,16 +21,11 @@ export function PhotoCompare({ before, after }: { before: CompareSide; after: Co
   const height = (width * 4) / 3;
   // Where the divider is, 0 (all "after") to 1 (all "before").
   const split = useSharedValue(0.5);
-  const atEdge = useSharedValue(false);
 
   const moveTo = (x: number) => {
     'worklet';
     if (width === 0) return;
-    const next = Math.min(Math.max(x / width, 0), 1);
-    const edge = next === 0 || next === 1;
-    if (edge && !atEdge.get()) scheduleOnRN(tick);
-    atEdge.set(edge);
-    split.set(next);
+    split.set(Math.min(Math.max(x / width, 0), 1));
   };
 
   const pan = Gesture.Pan()

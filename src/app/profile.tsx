@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -76,7 +75,6 @@ export default function ProfileScreen() {
 
   const pick = <K extends 'sex' | 'activity' | 'goal'>(key: K, value: (typeof profile)[K]) => {
     if (profile[key] === value) return;
-    Haptics.selectionAsync();
     setProfileField(key, value);
   };
 

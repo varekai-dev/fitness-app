@@ -1,12 +1,11 @@
 import { useAudioPlayer } from 'expo-audio';
-import * as Haptics from 'expo-haptics';
 import { useEffect, useState } from 'react';
 
 const restEndSound = require('@/assets/sounds/rest-end.wav');
 
 /**
  * Countdown between sets. The end time is absolute, so the countdown stays correct
- * after the app was backgrounded. A chime and a haptic mark the end of the rest.
+ * after the app was backgrounded. A chime marks the end of the rest.
  */
 export function useRestTimer() {
   const chime = useAudioPlayer(restEndSound);
@@ -24,7 +23,6 @@ export function useRestTimer() {
       setNow(t);
       if (t >= endAt) {
         setEndAt(null);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         chime.seekTo(0);
         chime.play();
       }

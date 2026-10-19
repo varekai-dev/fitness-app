@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -66,17 +65,14 @@ export default function FoodScreen() {
 
   const repeat = async (meal: Meal, entries: FoodEntry[]) => {
     await repeatMeal(entries, meal, day);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   };
 
   const unsaveTemplate = async (id: number) => {
     await deleteMealTemplate(id);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   const saveTemplate = async (entries: FoodEntry[]) => {
     const name = await saveMealTemplate(entries);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     dialog.show({
       title: tr('Збережено як шаблон', 'Saved as a template'),
       message: tr(

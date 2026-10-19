@@ -1,4 +1,3 @@
-import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -65,7 +64,6 @@ export default function TrainingScreen() {
 
   const select = (next: TrainingSection) => {
     if (next === section) return;
-    Haptics.selectionAsync();
     router.setParams({ view: next });
   };
 

@@ -1,6 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import * as Haptics from 'expo-haptics';
 import { useEffect, useId, useState } from 'react';
 import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -62,9 +61,8 @@ const SHAPES: Shape[] = [
   },
 ];
 
-// Amounts snap to 10 ml or 1 fl oz; a haptic tick marks every 50 ml or 2 fl oz.
+// Amounts snap to 10 ml or 1 fl oz.
 const STEP = unitSystem === 'imperial' ? 1 : 10;
-const TICK_ML = unitSystem === 'imperial' ? flOz(2) : 50;
 // Room above the container's nominal size, so a fuller pour still fits.
 const HEADROOM_ML = unitSystem === 'imperial' ? flOz(3) : 100;
 
@@ -161,7 +159,6 @@ function PourContent({
   const level = useSharedValue(start);
   const phase = useSharedValue(0);
   const splash = useSharedValue(0);
-  const dragging = useSharedValue(false);
 
   // Switching containers pours its nominal size again.
   useEffect(() => {
@@ -178,22 +175,12 @@ function PourContent({
 
   const top = shape.top;
   const bottom = shape.bottom;
-  const tick = () => Haptics.selectionAsync();
 
   useAnimatedReaction(
     () => Math.round(level.get() * capacity),
     (ml, previous) => {
       if (ml === previous) return;
       scheduleOnRN(setAmount, ml);
-    },
-    [capacity],
-  );
-
-  // Haptic ticks as the finger moves the water past round amounts.
-  useAnimatedReaction(
-    () => Math.floor((level.get() * capacity) / TICK_ML),
-    (step, previous) => {
-      if (dragging.get() && previous !== null && step !== previous) scheduleOnRN(tick);
     },
     [capacity],
   );
@@ -207,16 +194,12 @@ function PourContent({
   const pan = Gesture.Pan()
     .minDistance(0)
     .onBegin((e) => {
-      dragging.set(true);
       pour(e.y);
       splash.set(Math.max(splash.get(), 3));
     })
     .onUpdate((e) => {
       pour(e.y);
       splash.set(Math.min(splash.get() + Math.abs(e.velocityY) * 0.0004, 7));
-    })
-    .onFinalize(() => {
-      dragging.set(false);
     });
 
   const surfaceY = () => {

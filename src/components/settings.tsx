@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Haptics from 'expo-haptics';
 import { router, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
@@ -65,7 +64,6 @@ export function GoalStepper({
   const change = (dir: 1 | -1) => {
     const next = Math.min(Math.max(snapStep(value, step, dir), min), max);
     if (next === value) return;
-    Haptics.selectionAsync();
     onChange(next);
   };
   return (
@@ -140,7 +138,6 @@ export function RecommendationCard({
               variant="secondary"
               small
               onPress={() => {
-                Haptics.selectionAsync();
                 onAdopt(value);
               }}
             />

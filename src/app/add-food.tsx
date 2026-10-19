@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
@@ -266,13 +265,11 @@ export default function AddFoodScreen() {
     if (ready.length === 0 || ready.length < pending.length) return;
     const at = eatenAt(params.day);
     for (const p of ready) await logFood(p.food, p.amount, meal, p.isDrink, at);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     goBack();
   };
 
   const pickTemplate = async (template: MealTemplate) => {
     await applyMealTemplate(template, meal, eatenAt(params.day));
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     goBack();
   };
 
@@ -539,7 +536,6 @@ function PendingCard({
   const stepSize = amountStep(isDrink);
   const step = (delta: number) => {
     const next = Math.min(Math.max((amount ?? 0) + delta, stepSize), MAX_AMOUNT);
-    Haptics.selectionAsync();
     onChange({ amount: String(Math.round(next)) });
   };
   const setUnit = (drink: boolean) => onChange({ isDrink: drink });
@@ -680,7 +676,6 @@ function UnitSwitch({
           key={String(drink)}
           onPress={() => {
             if (drink === isDrink) return;
-            Haptics.selectionAsync();
             onChange(drink);
           }}
           accessibilityRole="button"

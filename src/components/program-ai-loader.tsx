@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Haptics from 'expo-haptics';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -70,7 +69,6 @@ export function ProgramAiLoader({
     if (stage === last && !done) return;
     const timer = setTimeout(
       () => {
-        Haptics.selectionAsync();
         setStage(stage + 1);
       },
       done ? FINISH_STAGE_MS : STAGE_MS,

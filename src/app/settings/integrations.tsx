@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Haptics from 'expo-haptics';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet } from 'react-native';
@@ -53,7 +52,6 @@ export default function IntegrationsScreen() {
       await setGroqKey(key);
       setSavedKey(key);
       setInput('');
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       if (check === 'error') {
         dialog.show({
           title: tr('Ключ збережено', 'Key saved'),

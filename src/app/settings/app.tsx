@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Haptics from 'expo-haptics';
 
 import { Card, ChipGroup, Row, Screen, Text } from '@/components/ui';
 import { languagePreference, setLanguage, tr, type LanguagePreference } from '@/lib/i18n';
@@ -37,7 +36,6 @@ export default function AppSettingsScreen() {
           options={LANGUAGE_OPTIONS}
           value={languagePreference}
           onChange={(value) => {
-            Haptics.selectionAsync();
             setLanguage(value);
           }}
           labels={LANGUAGE_LABELS}
@@ -52,7 +50,6 @@ export default function AppSettingsScreen() {
           options={UNIT_SYSTEMS}
           value={unitSystem}
           onChange={(value) => {
-            Haptics.selectionAsync();
             setUnitSystem(value);
           }}
           labels={UNIT_LABELS}

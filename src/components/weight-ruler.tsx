@@ -1,4 +1,3 @@
-import * as Haptics from 'expo-haptics';
 import { memo, useCallback, useRef, useState } from 'react';
 import { type FlatList, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
@@ -27,7 +26,6 @@ const MAX = unitSystem === 'imperial' ? 700 : 300;
 const STEPS = (MAX - MIN) * SUB;
 const UNITS = Array.from({ length: MAX - MIN + 1 }, (_, i) => MIN + i);
 
-const tick = () => Haptics.selectionAsync();
 const toValue = (step: number) => Math.round((MIN + step / SUB) * 10) / 10;
 const toStep = (v: number) => Math.min(STEPS, Math.max(0, Math.round((v - MIN) * SUB)));
 
@@ -59,7 +57,6 @@ export function WeightRuler({
   });
 
   const select = (s: number) => {
-    tick();
     setCurrent(s);
     onChange(toValue(s));
   };

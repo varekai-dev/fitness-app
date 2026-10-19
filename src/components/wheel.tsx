@@ -1,4 +1,3 @@
-import * as Haptics from 'expo-haptics';
 import { memo, useMemo, useState } from 'react';
 import { LogBox, StyleSheet, View } from 'react-native';
 import Animated, {
@@ -15,8 +14,6 @@ import { Text } from '@/components/ui';
 import { colors, fontSize, radius } from '@/theme';
 
 const ITEM = 40;
-
-const tick = () => Haptics.selectionAsync();
 
 // A wheel may sit inside a scrolling screen. It has a fixed height and scrolls on
 // its own, so the nesting warning doesn't apply to it.
@@ -56,7 +53,6 @@ export function Wheel({
     [count, format, min, step],
   );
   const y = useSharedValue(initialIndex * ITEM);
-  const lastIndex = useSharedValue(initialIndex);
 
   // Rounded so float steps (0.1, 0.5) don't drift.
   const commit = (i: number) => onChange(Math.round((min + i * step) * 100) / 100);
@@ -64,11 +60,6 @@ export function Wheel({
   const onScroll = useAnimatedScrollHandler({
     onScroll: (e) => {
       y.set(e.contentOffset.y);
-      const i = Math.min(count - 1, Math.max(0, Math.round(e.contentOffset.y / ITEM)));
-      if (i !== lastIndex.get()) {
-        lastIndex.set(i);
-        scheduleOnRN(tick);
-      }
     },
     onEndDrag: (e) => {
       scheduleOnRN(commit, Math.min(count - 1, Math.max(0, Math.round(e.contentOffset.y / ITEM))));

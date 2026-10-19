@@ -183,7 +183,7 @@ export default function WaterScreen() {
           onAdd={(ml) => {
             setPouring(null);
             if (pouring?.editId != null) updateWater(pouring.editId, ml);
-            else drinkWater(ml, todayMl, goal);
+            else drinkWater(ml);
           }}
         />
         {dialog.element}

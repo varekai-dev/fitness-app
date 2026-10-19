@@ -1,6 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Constants from 'expo-constants';
-import * as Haptics from 'expo-haptics';
 import * as Linking from 'expo-linking';
 import * as Updates from 'expo-updates';
 import { useCallback, useEffect, useState } from 'react';
@@ -93,7 +92,6 @@ export function AppUpdateCard() {
   const hasApkUpdate = latestApk !== null && isNewer(latestApk.version, currentVersion);
 
   const installOta = async () => {
-    Haptics.selectionAsync();
     try {
       if (!isUpdatePending) await Updates.fetchUpdateAsync();
       await Updates.reloadAsync();
@@ -103,7 +101,6 @@ export function AppUpdateCard() {
   };
 
   const downloadApk = () => {
-    Haptics.selectionAsync();
     if (latestApk) Linking.openURL(latestApk.apkUrl);
   };
 

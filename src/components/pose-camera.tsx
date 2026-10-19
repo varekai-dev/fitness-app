@@ -1,4 +1,3 @@
-import * as Haptics from 'expo-haptics';
 import { CameraView, useCameraPermissions, type CameraType } from 'expo-camera';
 import { useEffect, useRef, useState } from 'react';
 import { Linking, Modal, Pressable, StyleSheet, View } from 'react-native';
@@ -136,7 +135,6 @@ function CameraContent({
 
   useEffect(() => {
     if (countdown === null) return;
-    Haptics.selectionAsync();
     const t = setTimeout(() => {
       if (countdown > 1) {
         setCountdown(countdown - 1);
@@ -155,7 +153,6 @@ function CameraContent({
     try {
       const photo = await camera.current?.takePictureAsync({ quality: 0.8 });
       if (photo) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         onTaken(photo.uri);
       }
     } finally {
@@ -168,7 +165,6 @@ function CameraContent({
       setCountdown(null);
       return;
     }
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (timer > 0) setCountdown(timer);
     else shoot();
   };
@@ -232,7 +228,6 @@ function CameraContent({
             icon={guide.visible ? 'body' : 'body-outline'}
             color={guide.visible ? colors.accent : colors.text}
             onPress={() => {
-              Haptics.selectionAsync();
               updateGuide({ ...guide, visible: !guide.visible });
             }}
             background="rgba(0, 0, 0, 0.45)"
@@ -258,7 +253,6 @@ function CameraContent({
         <View style={styles.controls}>
           <Pressable
             onPress={() => {
-              Haptics.selectionAsync();
               setTimer(TIMERS[(TIMERS.indexOf(timer) + 1) % TIMERS.length]);
             }}
             disabled={countdown !== null}

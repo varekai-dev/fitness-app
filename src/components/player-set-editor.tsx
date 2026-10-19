@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Haptics from 'expo-haptics';
 import { useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
@@ -106,7 +105,6 @@ function HoldButton({ icon, holdIcon, label, onPress, onHold, disabled }: MainBu
     fired.current = true;
     setHolding(false);
     progress.set(withTiming(0, { duration: 200 }));
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     onHold?.();
   };
 
@@ -115,7 +113,6 @@ function HoldButton({ icon, holdIcon, label, onPress, onHold, disabled }: MainBu
     if (!onHold) return;
     iconTimer.current = setTimeout(() => {
       setHolding(true);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }, HOLD_DELAY_MS);
     progress.set(
       withDelay(

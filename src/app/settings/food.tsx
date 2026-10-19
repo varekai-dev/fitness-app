@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
@@ -129,7 +128,6 @@ function ShortcutRow({
   onChange: (on: boolean) => void;
 }) {
   const toggle = (on: boolean) => {
-    Haptics.selectionAsync();
     onChange(on);
   };
   // The whole row flips the switch, not just the switch itself.
@@ -296,7 +294,6 @@ function GoalCard({
 const KNOB = 28;
 const BAR = 10;
 const TRACK = KNOB + spacing.xs;
-const HAPTIC_KCAL = 50;
 
 /**
  * The zones blended into one gradient, with the goal as a knob that follows a
@@ -352,17 +349,12 @@ function Scale({
     .onUpdate((e) => {
       const kcal = valueAt(e.x);
       if (kcal === goal) return;
-      // A tick on every 10 kcal would buzz nonstop, so only each 50 is felt.
-      if (Math.floor(kcal / HAPTIC_KCAL) !== Math.floor(goal / HAPTIC_KCAL)) {
-        Haptics.selectionAsync();
-      }
       onDrag(kcal);
     })
     .onEnd((e) => onRelease(valueAt(e.x)));
   const tap = Gesture.Tap()
     .runOnJS(true)
     .onEnd((e) => {
-      Haptics.selectionAsync();
       onRelease(valueAt(e.x));
     });
 
@@ -377,7 +369,6 @@ function Scale({
           value={formatKcal(recommended)}
           color={colors.accent}
           onPress={() => {
-            Haptics.selectionAsync();
             onRelease(recommended);
           }}
         />
