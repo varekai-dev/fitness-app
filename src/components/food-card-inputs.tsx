@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, TextInput, type TextInputProps } from 'react-nat
 
 import { MACROS } from '@/components/calorie-summary';
 import { Row, Text } from '@/components/ui';
+import { useDeferredFocus } from '@/hooks/use-deferred-focus';
 import { tr } from '@/lib/i18n';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
@@ -18,11 +19,13 @@ export type MacroInputValues = Record<MacroInputKey, string>;
 export const digits = (t: string) => t.replace(/[^\d.,]/g, '');
 
 /** The dish name as the card's heading, with a pencil to show it can be changed. */
-export function NameInput(props: TextInputProps) {
+export function NameInput({ autoFocus, ...props }: TextInputProps) {
   const [focused, setFocused] = useState(false);
+  const input = useDeferredFocus(autoFocus);
   return (
     <Row style={[styles.name, focused && styles.focusedLine]}>
       <TextInput
+        ref={input}
         placeholderTextColor={colors.textMuted}
         maxLength={80}
         style={styles.nameInput}
@@ -52,7 +55,7 @@ export function KcalInput({
   autoFocus?: boolean;
 }) {
   const [focused, setFocused] = useState(false);
-  const input = useRef<TextInput>(null);
+  const input = useDeferredFocus(autoFocus);
   // The whole row focuses the field, not just its digits.
   return (
     <Pressable
@@ -69,7 +72,6 @@ export function KcalInput({
         placeholderTextColor={colors.textMuted}
         selectTextOnFocus
         maxLength={6}
-        autoFocus={autoFocus}
         style={styles.kcalInput}
       />
       <Text style={styles.kcalUnit}>{tr('ккал', 'kcal')}</Text>

@@ -19,6 +19,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Backdrop, Glass } from '@/components/glass';
 import { PressScale } from '@/components/motion';
 import { Spinner } from '@/components/spinner';
+import { useDeferredFocus } from '@/hooks/use-deferred-focus';
 import { useScrollResetOnTabLeave } from '@/hooks/use-scroll-reset-on-tab-leave';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
@@ -290,6 +291,7 @@ export function Field({
   label,
   style,
   containerStyle,
+  autoFocus,
   ...props
 }: TextInputProps & {
   label?: string;
@@ -297,10 +299,12 @@ export function Field({
   containerStyle?: StyleProp<ViewStyle>;
 }) {
   const [focused, setFocused] = useState(false);
+  const input = useDeferredFocus(autoFocus);
   return (
     <View style={[styles.field, containerStyle]}>
       {label && <Text variant="caption">{label}</Text>}
       <TextInput
+        ref={input}
         placeholderTextColor={colors.textMuted}
         style={[
           styles.input,
