@@ -5,6 +5,7 @@ import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
+import { BottomSheet } from '@/components/bottom-sheet';
 import { MACROS } from '@/components/calorie-summary';
 import { Card, IconButton, Loading, Row, Screen, Text } from '@/components/ui';
 import {
@@ -156,9 +157,13 @@ function BmiCard({ weightKg, heightCm }: { weightKg: number; heightCm: number })
   const { minKg, maxKg } = healthyWeight(heightCm);
   const share = (v: number) => (Math.min(Math.max(v, BMI_MIN), BMI_MAX) - BMI_MIN) / (BMI_MAX - BMI_MIN);
   const toNormal = weightKg > maxKg ? maxKg - weightKg : weightKg < minKg ? minKg - weightKg : 0;
+  const [open, setOpen] = useState(false);
 
   return (
-    <Card style={styles.bmiCard}>
+    <Card style={styles.bmiCard} onPress={() => setOpen(true)}>
+      <BottomSheet visible={open} onClose={() => setOpen(false)}>
+        <BmiClasses weightKg={weightKg} heightCm={heightCm} />
+      </BottomSheet>
       <Row style={styles.bmiHead}>
         <View style={styles.flex}>
           <Text variant="overline">{tr('Індекс маси тіла', 'Body mass index')}</Text>
@@ -170,6 +175,7 @@ function BmiCard({ weightKg, heightCm }: { weightKg: number; heightCm: number })
           <View style={[styles.zoneDot, { backgroundColor: color }]} />
           <Text style={[styles.zoneText, { color }]}>{cls.label}</Text>
         </View>
+        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
       </Row>
       <View>
         <Row style={styles.bmiBar}>
@@ -202,6 +208,61 @@ function BmiCard({ weightKg, heightCm }: { weightKg: number; heightCm: number })
           )}
       </Text>
     </Card>
+  );
+}
+
+/**
+ * Each BMI class with the weights it spans at this height and how far the
+ * current weight is from it.
+ */
+function BmiClasses({ weightKg, heightCm }: { weightKg: number; heightCm: number }) {
+  const m2 = (heightCm / 100) ** 2;
+  const current = bmiClass(bmi(weightKg, heightCm));
+  const kg = (v: number) => `${formatWeight(v, 0)} ${WEIGHT_UNIT}`;
+  return (
+    <View style={styles.bmiSheet}>
+      <View style={styles.bmiSheetHead}>
+        <Text variant="title">{tr('Індекс маси тіла', 'Body mass index')}</Text>
+        <Text variant="muted">
+          {formatNumber(cmToDisplay(heightCm), 0)} {HEIGHT_UNIT} · {tr('зараз', 'now')}{' '}
+          {formatWeight(weightKg, 1)} {WEIGHT_UNIT}
+        </Text>
+      </View>
+      {BMI_CLASSES.map((c, i) => {
+        const next = BMI_CLASSES[i + 1]?.from;
+        const fromKg = c.from * m2;
+        const toKg = next === undefined ? undefined : next * m2;
+        const here = c === current;
+        // Down to just under the class's top, or up to its start.
+        const delta = here ? 0 : toKg !== undefined && weightKg >= toKg ? toKg - 0.1 - weightKg : fromKg - weightKg;
+        return (
+          <Row key={c.from} style={[styles.bmiClass, here && styles.bmiClassHere]}>
+            <View style={[styles.macroDot, { backgroundColor: ZONE_COLOR[c.zone] }]} />
+            <View style={styles.flex}>
+              <Text variant="body">{c.label}</Text>
+              <Text variant="muted">
+                {c.from === 0
+                  ? tr(`ІМТ до ${next}`, `BMI under ${next}`)
+                  : next === undefined
+                    ? tr(`ІМТ від ${c.from}`, `BMI ${c.from}+`)
+                    : `${tr('ІМТ', 'BMI')} ${c.from}–${next}`}
+                {' · '}
+                {c.from === 0
+                  ? tr(`до ${kg(toKg!)}`, `under ${kg(toKg!)}`)
+                  : toKg === undefined
+                    ? tr(`від ${kg(fromKg)}`, `${kg(fromKg)}+`)
+                    : `${formatWeight(fromKg, 0)}–${kg(toKg)}`}
+              </Text>
+            </View>
+            <Text
+              variant="heading"
+              style={{ color: here ? ZONE_COLOR[c.zone] : colors.textSecondary }}>
+              {here ? tr('ти тут', 'you') : `${formatWeightDelta(delta)} ${WEIGHT_UNIT}`}
+            </Text>
+          </Row>
+        );
+      })}
+    </View>
   );
 }
 
@@ -786,6 +847,16 @@ const styles = StyleSheet.create({
   shortcuts: { gap: spacing.lg },
   macroCard: { gap: spacing.lg },
   bmiCard: { gap: spacing.md },
+  bmiSheet: { gap: spacing.sm },
+  bmiSheetHead: { alignItems: 'center', gap: spacing.xs, marginBottom: spacing.sm },
+  bmiClass: {
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  bmiClassHere: { backgroundColor: colors.glass, borderColor: colors.glassBorder },
   bmiHead: { gap: spacing.md },
   bmiValue: { color: colors.text, fontSize: fontSize.hero, fontWeight: '800', letterSpacing: -1 },
   bmiBar: { height: BAR, gap: 3, marginVertical: (KNOB - BAR) / 4 },
