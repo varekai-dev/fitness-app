@@ -2,6 +2,7 @@ import { asc, eq, gte } from 'drizzle-orm';
 
 import { addDays, DEFAULT_WATER_GOAL_ML, startOfDay } from '@/lib/water';
 import { db } from './client';
+import { getDayWindow } from './reminders';
 import { settings, waterIntakes } from './schema';
 
 const GOAL_KEY = 'water_goal_ml';
@@ -33,14 +34,15 @@ export async function deleteWater(id: number) {
 }
 
 /**
- * Today's glasses (oldest first), the goal, and per-day totals for the last
- * `HISTORY_DAYS` days ending today.
+ * Today's glasses (oldest first), the goal, the waking hours it is spread
+ * over, and per-day totals for the last `HISTORY_DAYS` days ending today.
  */
 export async function loadWater(now = Date.now()) {
   const today = startOfDay(now);
   const from = addDays(today, -(HISTORY_DAYS - 1));
-  const [goal, rows] = await Promise.all([
+  const [goal, dayWindow, rows] = await Promise.all([
     getWaterGoal(),
+    getDayWindow(),
     db.query.waterIntakes.findMany({
       where: gte(waterIntakes.drankAt, from),
       orderBy: [asc(waterIntakes.drankAt)],
@@ -61,5 +63,6 @@ export async function loadWater(now = Date.now()) {
     todayMl: todayEntries.reduce((sum, r) => sum + r.amountMl, 0),
     days,
     today,
+    dayWindow,
   };
 }

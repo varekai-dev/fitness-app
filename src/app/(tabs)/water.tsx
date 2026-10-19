@@ -24,9 +24,11 @@ import { type PourRequest, WaterPourModal } from '@/components/water-pour-modal'
 import { deleteWater, loadWater, updateWater } from '@/db/water';
 import { useAnimatedNumber } from '@/hooks/use-animated-number';
 import { useDbQuery } from '@/hooks/use-db-query';
+import { useNow } from '@/hooks/use-now';
 import { useToday } from '@/hooks/use-today';
 import { locale, tr } from '@/lib/i18n';
 import { WEEKDAY_SHORT, weekdayIndex } from '@/lib/labels';
+import { paceShare } from '@/lib/reminders';
 import { formatVolume, formatVolumeCompact, VOLUME_UNIT } from '@/lib/units';
 import { GLASS_PRESETS, glassForAmount, glassToHold } from '@/lib/water';
 import { colors, fontSize, radius, spacing } from '@/theme';
@@ -39,12 +41,13 @@ const QUICK_ML = 300;
 export default function WaterScreen() {
   const tabBarSpace = useTabBarSpace();
   const day = useToday();
+  const now = useNow();
   const { data } = useDbQuery(() => loadWater(), [day]);
   const dialog = useDialog();
   const [pouring, setPouring] = useState<(PourRequest & { editId?: number }) | null>(null);
 
   if (!data) return <Loading />;
-  const { goal, todayEntries, todayMl, days, today } = data;
+  const { goal, todayEntries, todayMl, days, today, dayWindow } = data;
 
   const remove = (
     id: number,
@@ -79,7 +82,11 @@ export default function WaterScreen() {
         <Card onPress={() => router.push('/settings/water')}>
           <Row style={styles.hero}>
             <GoalPulse reached={goal > 0 && todayMl >= goal}>
-              <WaterBottle progress={goal > 0 ? todayMl / goal : 0} height={170} />
+              <WaterBottle
+                progress={goal > 0 ? todayMl / goal : 0}
+                pace={paceShare(dayWindow, now)}
+                height={170}
+              />
             </GoalPulse>
             <WaterSummary todayMl={todayMl} goal={goal} />
           </Row>

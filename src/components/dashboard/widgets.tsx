@@ -12,6 +12,7 @@ import { drinkWater, GlassButton } from '@/components/water-card';
 import { WaterBottle } from '@/components/water-bottle';
 import { type PourRequest, WaterPourModal } from '@/components/water-pour-modal';
 import { useAnimatedNumber } from '@/hooks/use-animated-number';
+import { useNow } from '@/hooks/use-now';
 import type { DashboardData } from '@/db/dashboard';
 import { startWorkout } from '@/db/workouts';
 import { estimateKcal } from '@/lib/calories';
@@ -35,6 +36,7 @@ import {
 } from '@/lib/labels';
 import { formatNumber, formatWeight, notStarted, workoutDurationMs } from '@/lib/metrics';
 import { dailyPhrase } from '@/lib/motivation';
+import { paceShare } from '@/lib/reminders';
 import { averageOfLogged, daysBetween, dayStreak, weekStreak } from '@/lib/stats';
 import { formatVolume, kgToDisplay, unitSystem, VOLUME_UNIT, WEIGHT_UNIT } from '@/lib/units';
 import { GLASS_PRESETS, type GlassPreset } from '@/lib/water';
@@ -648,8 +650,9 @@ export function WaterPourProvider({ children }: { children: ReactNode }) {
 }
 
 function WaterTodayWidget({ size, data }: WidgetProps) {
-  const { todayMl, goal } = data.water;
+  const { todayMl, goal, dayWindow } = data.water;
   const progress = goal > 0 ? todayMl / goal : 0;
+  const pace = paceShare(dayWindow, useNow());
   const ml = Math.round(useAnimatedNumber(todayMl));
   const open = () => router.navigate('/water');
   const pour = useContext(WaterPourContext);
@@ -660,7 +663,7 @@ function WaterTodayWidget({ size, data }: WidgetProps) {
         <TileTitle title={tr('Вода', 'Water')} icon="water" />
         <View style={styles.bottleRow}>
           <GoalPulse reached={progress >= 1}>
-            <WaterBottle progress={progress} height={64} />
+            <WaterBottle progress={progress} pace={pace} height={64} />
           </GoalPulse>
           <View>
             <Big small>
@@ -727,7 +730,7 @@ function WaterTodayWidget({ size, data }: WidgetProps) {
       <TileTitle title={tr('Вода сьогодні', 'Water today')} icon="water" />
       <View style={styles.waterLarge}>
         <GoalPulse reached={progress >= 1}>
-          <WaterBottle progress={progress} height={230} />
+          <WaterBottle progress={progress} pace={pace} height={230} />
         </GoalPulse>
         <View style={styles.waterSide}>
           <View>

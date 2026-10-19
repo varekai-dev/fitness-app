@@ -59,7 +59,13 @@ export function expectedByMinute(window: DayWindow, goal: number, min: number) {
   return goal * share;
 }
 
-const roundUp = (ml: number) => Math.ceil(ml / DEFICIT_STEP_ML) * DEFICIT_STEP_ML;
+/** Share of the day's goal (0–1) that should be drunk by `now` at an even pace. */
+export function paceShare(window: DayWindow, now: number) {
+  const d = new Date(now);
+  return expectedByMinute(window, 1, d.getHours() * 60 + d.getMinutes());
+}
+
+const roundUp =(ml: number) => Math.ceil(ml / DEFICIT_STEP_ML) * DEFICIT_STEP_ML;
 
 export type WaterReminder = { at: number; title: string; body: string };
 

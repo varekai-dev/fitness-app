@@ -8,7 +8,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import Svg, { ClipPath, Defs, G, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
+import Svg, { ClipPath, Defs, G, Line, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 
 import { colors } from '@/theme';
 
@@ -186,13 +186,30 @@ function wavePath(levelY: number, angle: number, amplitude: number, phase: numbe
   return `${d}Z`;
 }
 
+/** The upright water line for a fill of `share` (0–1). Empty sits just below the bottom so the wave crests stay hidden. */
+const levelToY = (share: number) => {
+  'worklet';
+  return BOTTOM + 8 - share * (BOTTOM + 8 - TOP);
+};
+
 /**
  * A bottle filled to `progress` (0–1, clamped) with a living water surface:
  * it waves gently, splashes when `progress` grows and sloshes as the phone tilts.
+ * `pace` (0–1) marks on the ruler and across the bottle where the level should be by now.
  */
-export function WaterBottle({ progress, height }: { progress: number; height: number }) {
+export function WaterBottle({
+  progress,
+  height,
+  pace,
+}: {
+  progress: number;
+  height: number;
+  pace?: number;
+}) {
   const id = useId().replace(/[^a-zA-Z0-9]/g, '');
   const target = Math.min(Math.max(progress, 0), 1);
+  const paceY = pace != null && pace > 0 ? levelToY(Math.min(pace, 1)) : null;
+  const ahead = paceY != null && target >= Math.min(pace ?? 0, 1);
   const level = useSharedValue(target);
   const phase = useSharedValue(0);
   // Direction of "down" on screen, in radians from straight down.
@@ -248,8 +265,7 @@ export function WaterBottle({ progress, height }: { progress: number; height: nu
 
   const waterY = () => {
     'worklet';
-    // Empty sits just below the bottom so the wave crests stay hidden.
-    return BOTTOM + 8 - level.get() * (BOTTOM + 8 - TOP);
+    return levelToY(level.get());
   };
 
   const frontProps = useAnimatedProps(() => ({
@@ -304,9 +320,28 @@ export function WaterBottle({ progress, height }: { progress: number; height: nu
           <AnimatedPath animatedProps={backProps} fill={colors.accentGradientEnd} opacity={0.45} />
           <AnimatedPath animatedProps={frontProps} fill={`url(#water${id})`} />
           <Rect x={20} y={76} width={7} height={140} rx={3.5} fill="rgba(255,255,255,0.14)" />
+          {paceY != null && (
+            <Line
+              x1={0}
+              y1={paceY}
+              x2={BOTTLE_W}
+              y2={paceY}
+              stroke={ahead ? 'rgba(20,20,20,0.45)' : 'rgba(255,255,255,0.6)'}
+              strokeWidth={2.5}
+              strokeDasharray="7 6"
+            />
+          )}
         </G>
         <Path d={BODY} fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth={2.5} />
       </G>
+
+      {paceY != null && (
+        // Points from the ruler at the level that should be drunk by now.
+        <Path
+          d={`M${BOTTLE_X - 2} ${paceY} L${BOTTLE_X - 16} ${paceY - 8} V${paceY + 8} Z`}
+          fill={colors.text}
+        />
+      )}
     </Svg>
   );
 }
