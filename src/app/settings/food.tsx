@@ -223,23 +223,14 @@ function MacroGoalRow({
       <View style={[styles.macroDot, { backgroundColor: color }]} />
       <View style={styles.flex}>
         <Text variant="body">{label}</Text>
-        <Row style={styles.macroMeta}>
-          <Text variant="muted">
-            {formatKcal(grams * kcalPerG)} {KCAL} ·{' '}
-          </Text>
-          {custom ? (
-            <Pressable hitSlop={8} onPress={() => onChange(null)}>
-              {({ pressed }) => (
-                <Text variant="muted" style={[styles.macroReset, pressed && styles.pressed]}>
-                  {tr('повернути авто', 'back to auto')}
-                </Text>
-              )}
-            </Pressable>
-          ) : (
-            <Text variant="muted">{tr('авто', 'auto')}</Text>
-          )}
-        </Row>
+        <Text variant="muted">
+          {formatKcal(grams * kcalPerG)} {KCAL}
+          {!custom && ` · ${tr('авто', 'auto')}`}
+        </Text>
       </View>
+      {custom && (
+        <IconButton icon="refresh" size={18} color={colors.accent} onPress={() => onChange(null)} />
+      )}
       <IconButton icon="remove" size={20} disabled={grams <= 0} onPress={() => step(-1)} />
       <View style={[styles.macroInput, custom && { borderColor: color }]}>
         <TextInput
@@ -719,8 +710,6 @@ const styles = StyleSheet.create({
   macroCard: { gap: spacing.lg },
   macroRow: { gap: spacing.sm },
   macroDot: { width: 10, height: 10, borderRadius: 5, marginRight: spacing.xs },
-  macroMeta: { flexWrap: 'wrap' },
-  macroReset: { color: colors.accent },
   macroInput: {
     flexDirection: 'row',
     alignItems: 'baseline',
