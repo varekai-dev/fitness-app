@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 import { Pressable, Text as RNText, StyleSheet, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
@@ -623,117 +623,18 @@ function FoodMealsWidget({ size, data }: WidgetProps) {
 // The glass.
 const QUICK_GLASS = GLASS_PRESETS[1];
 
-function WaterTodayWidget({ size, data }: WidgetProps) {
-  const { todayMl, goal } = data.water;
-  const progress = goal > 0 ? todayMl / goal : 0;
-  const ml = Math.round(useAnimatedNumber(todayMl));
-  const open = () => router.navigate('/water');
-  // Like on the water tab: a glass opens the pour modal rather than logging it at once.
+/** Opens the pour modal; a no-op in widget picker previews. */
+const WaterPourContext = createContext<(glass: GlassPreset) => void>(() => {});
+
+/**
+ * Lets the water widget open the pour modal, like a glass on the water tab does.
+ * The modal lives here, outside the sortable grid: a Modal inside it never shows.
+ */
+export function WaterPourProvider({ children }: { children: ReactNode }) {
   const [pouring, setPouring] = useState<PourRequest | null>(null);
-  const pour = (glass: GlassPreset) => setPouring({ glass });
-
-  const tile = (() => {
-    if (size === 'small') {
-      return (
-        <Tile onPress={open}>
-          <TileTitle title={tr('Вода', 'Water')} icon="water" />
-          <View style={styles.bottleRow}>
-            <GoalPulse reached={progress >= 1}>
-              <WaterBottle progress={progress} height={64} />
-            </GoalPulse>
-            <View>
-              <Big small>
-                {Math.round(progress * 100)}
-                <Unit> %</Unit>
-              </Big>
-              <Text variant="muted">{tr('норми', 'of goal')}</Text>
-            </View>
-          </View>
-          <View style={styles.valueWithAction}>
-            <Big small>
-              {formatVolume(ml)}
-              <Unit>
-                {' '}
-                / {formatVolume(goal)} {ML}
-              </Unit>
-            </Big>
-            <Pressable
-              onPress={() => pour(QUICK_GLASS)}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel={tr(
-                `Додати ${formatVolume(QUICK_GLASS.ml)} ${ML}`,
-                `Add ${formatVolume(QUICK_GLASS.ml)} ${ML}`,
-              )}
-              style={({ pressed }) => [styles.addRound, pressed && styles.quickPressed]}>
-              <Ionicons name="add" size={20} color={colors.accentText} />
-            </Pressable>
-          </View>
-        </Tile>
-      );
-    }
-
-    if (size === 'medium') {
-      return (
-        <Tile onPress={open}>
-          <TileTitle title={tr('Вода сьогодні', 'Water today')} icon="water" />
-          <View style={styles.rowCenter}>
-            <ProgressRing progress={progress} icon="water" size={56} />
-            <View style={styles.flex}>
-              <Big>
-                {formatVolume(ml)}
-                <Unit>
-                  {' '}
-                  / {formatVolume(goal)} {ML}
-                </Unit>
-              </Big>
-              <Text variant="muted">
-                {Math.round(progress * 100)}% {tr('денної норми', 'of daily goal')}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.quickRow}>
-            {GLASS_PRESETS.map((g) => (
-              <QuickButton key={g.ml} label={formatVolume(g.ml)} onPress={() => pour(g)} grow />
-            ))}
-          </View>
-        </Tile>
-      );
-    }
-
-    return (
-      <Tile onPress={open}>
-        <TileTitle title={tr('Вода сьогодні', 'Water today')} icon="water" />
-        <View style={styles.waterLarge}>
-          <GoalPulse reached={progress >= 1}>
-            <WaterBottle progress={progress} height={230} />
-          </GoalPulse>
-          <View style={styles.waterSide}>
-            <View>
-              <Big>
-                {formatVolume(ml)}
-                <Unit> {ML}</Unit>
-              </Big>
-              <Text variant="muted">
-                {tr('з', 'of')} {formatVolume(goal)} {ML} · {Math.round(progress * 100)}%
-              </Text>
-            </View>
-            <View style={styles.glassGrid}>
-              {GLASS_PRESETS.map((g) => (
-                <View key={g.ml} style={styles.glassCell}>
-                  <GlassButton glass={g} onPress={() => pour(g)} />
-                </View>
-              ))}
-            </View>
-          </View>
-        </View>
-      </Tile>
-    );
-  })();
-
   return (
-    <>
-      {tile}
+    <WaterPourContext.Provider value={(glass) => setPouring({ glass })}>
+      {children}
       <WaterPourModal
         pour={pouring}
         onClose={() => setPouring(null)}
@@ -742,7 +643,112 @@ function WaterTodayWidget({ size, data }: WidgetProps) {
           drinkWater(ml);
         }}
       />
-    </>
+    </WaterPourContext.Provider>
+  );
+}
+
+function WaterTodayWidget({ size, data }: WidgetProps) {
+  const { todayMl, goal } = data.water;
+  const progress = goal > 0 ? todayMl / goal : 0;
+  const ml = Math.round(useAnimatedNumber(todayMl));
+  const open = () => router.navigate('/water');
+  const pour = useContext(WaterPourContext);
+
+  if (size === 'small') {
+    return (
+      <Tile onPress={open}>
+        <TileTitle title={tr('Вода', 'Water')} icon="water" />
+        <View style={styles.bottleRow}>
+          <GoalPulse reached={progress >= 1}>
+            <WaterBottle progress={progress} height={64} />
+          </GoalPulse>
+          <View>
+            <Big small>
+              {Math.round(progress * 100)}
+              <Unit> %</Unit>
+            </Big>
+            <Text variant="muted">{tr('норми', 'of goal')}</Text>
+          </View>
+        </View>
+        <View style={styles.valueWithAction}>
+          <Big small>
+            {formatVolume(ml)}
+            <Unit>
+              {' '}
+              / {formatVolume(goal)} {ML}
+            </Unit>
+          </Big>
+          <Pressable
+            onPress={() => pour(QUICK_GLASS)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={tr(
+              `Додати ${formatVolume(QUICK_GLASS.ml)} ${ML}`,
+              `Add ${formatVolume(QUICK_GLASS.ml)} ${ML}`,
+            )}
+            style={({ pressed }) => [styles.addRound, pressed && styles.quickPressed]}>
+            <Ionicons name="add" size={20} color={colors.accentText} />
+          </Pressable>
+        </View>
+      </Tile>
+    );
+  }
+
+  if (size === 'medium') {
+    return (
+      <Tile onPress={open}>
+        <TileTitle title={tr('Вода сьогодні', 'Water today')} icon="water" />
+        <View style={styles.rowCenter}>
+          <ProgressRing progress={progress} icon="water" size={56} />
+          <View style={styles.flex}>
+            <Big>
+              {formatVolume(ml)}
+              <Unit>
+                {' '}
+                / {formatVolume(goal)} {ML}
+              </Unit>
+            </Big>
+            <Text variant="muted">
+              {Math.round(progress * 100)}% {tr('денної норми', 'of daily goal')}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.quickRow}>
+          {GLASS_PRESETS.map((g) => (
+            <QuickButton key={g.ml} label={formatVolume(g.ml)} onPress={() => pour(g)} grow />
+          ))}
+        </View>
+      </Tile>
+    );
+  }
+
+  return (
+    <Tile onPress={open}>
+      <TileTitle title={tr('Вода сьогодні', 'Water today')} icon="water" />
+      <View style={styles.waterLarge}>
+        <GoalPulse reached={progress >= 1}>
+          <WaterBottle progress={progress} height={230} />
+        </GoalPulse>
+        <View style={styles.waterSide}>
+          <View>
+            <Big>
+              {formatVolume(ml)}
+              <Unit> {ML}</Unit>
+            </Big>
+            <Text variant="muted">
+              {tr('з', 'of')} {formatVolume(goal)} {ML} · {Math.round(progress * 100)}%
+            </Text>
+          </View>
+          <View style={styles.glassGrid}>
+            {GLASS_PRESETS.map((g) => (
+              <View key={g.ml} style={styles.glassCell}>
+                <GlassButton glass={g} onPress={() => pour(g)} />
+              </View>
+            ))}
+          </View>
+        </View>
+      </View>
+    </Tile>
   );
 }
 

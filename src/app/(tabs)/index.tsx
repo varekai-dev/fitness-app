@@ -6,7 +6,7 @@ import Animated, { FadeInDown, useAnimatedRef } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Sortable from 'react-native-sortables';
 
-import { TILE_GAP, tileWidth, WidgetView } from '@/components/dashboard/widgets';
+import { TILE_GAP, tileWidth, WaterPourProvider, WidgetView } from '@/components/dashboard/widgets';
 import { useTabBarSpace } from '@/components/floating-tab-bar';
 import { Backdrop } from '@/components/glass';
 import { Button, CircleButton, EmptyState, Loading, Row, Text } from '@/components/ui';
@@ -49,91 +49,93 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={styles.root}>
-      <Backdrop />
-      <Animated.ScrollView
-        ref={scrollRef}
-        contentContainerStyle={[
-          styles.content,
-          { paddingTop: insets.top + spacing.sm, paddingBottom: tabBarSpace },
-        ]}>
-        <View style={styles.greeting}>
-          <Row style={styles.spaceBetween}>
-            <Text variant="secondary">{formatLongDate(data.loadedAt)}</Text>
-            <Row>
-              <Button
-                title={editing ? tr('Готово', 'Done') : tr('Змінити', 'Edit')}
-                icon={editing ? 'checkmark' : 'grid-outline'}
-                variant={editing ? 'primary' : 'secondary'}
-                onPress={toggleEditing}
-                style={styles.editButton}
-              />
-              {!editing && (
-                <CircleButton icon="settings-outline" onPress={() => router.push('/settings')} />
-              )}
-            </Row>
-          </Row>
-          {editing && (
-            <Text variant="muted">
-              {tr(
-                'Утримуй і тягни плитку, щоб перемістити. Розмір змінює кнопка внизу плитки.',
-                'Hold and drag a tile to move it. The button at the bottom of a tile changes its size.',
-              )}
-            </Text>
-          )}
-        </View>
-
-        {widgets.length === 0 ? (
-          <EmptyState
-            icon="grid-outline"
-            title={tr('На головній ще немає віджетів', 'No widgets on the home screen yet')}
-            hint={tr(
-              'Додай плитки з тренуваннями, харчуванням, водою чи вагою.',
-              'Add tiles with workouts, food, water or weight.',
-            )}
-          />
-        ) : (
-          <Sortable.Flex
-            gap={TILE_GAP}
-            sortEnabled={editing}
-            scrollableRef={scrollRef}
-            dragActivationDelay={150}
-            activeItemScale={1.03}
-            inactiveItemOpacity={0.6}
-            onDragEnd={({ order }) => saveDashboard(order(widgets))}>
-            {widgets.map((w, i) => (
-              <View key={w.id}>
-                {/* Tiles rise in one after another when the app opens (and when one is added). */}
-                <Animated.View entering={FadeInDown.delay(i * 60).duration(380)}>
-                  <WidgetView
-                    widget={w}
-                    data={data}
-                    width={tileWidth(w, rowWidth)}
-                    interactive={!editing}
-                  />
-                </Animated.View>
-                {editing && (
-                  <EditOverlay
-                    widget={w}
-                    onRemove={() => remove(w.id)}
-                    onResize={() => resize(w.id)}
-                  />
+    <WaterPourProvider>
+      <View style={styles.root}>
+        <Backdrop />
+        <Animated.ScrollView
+          ref={scrollRef}
+          contentContainerStyle={[
+            styles.content,
+            { paddingTop: insets.top + spacing.sm, paddingBottom: tabBarSpace },
+          ]}>
+          <View style={styles.greeting}>
+            <Row style={styles.spaceBetween}>
+              <Text variant="secondary">{formatLongDate(data.loadedAt)}</Text>
+              <Row>
+                <Button
+                  title={editing ? tr('Готово', 'Done') : tr('Змінити', 'Edit')}
+                  icon={editing ? 'checkmark' : 'grid-outline'}
+                  variant={editing ? 'primary' : 'secondary'}
+                  onPress={toggleEditing}
+                  style={styles.editButton}
+                />
+                {!editing && (
+                  <CircleButton icon="settings-outline" onPress={() => router.push('/settings')} />
                 )}
-              </View>
-            ))}
-          </Sortable.Flex>
-        )}
+              </Row>
+            </Row>
+            {editing && (
+              <Text variant="muted">
+                {tr(
+                  'Утримуй і тягни плитку, щоб перемістити. Розмір змінює кнопка внизу плитки.',
+                  'Hold and drag a tile to move it. The button at the bottom of a tile changes its size.',
+                )}
+              </Text>
+            )}
+          </View>
 
-        {(editing || widgets.length === 0) && (
-          <Button
-            title={tr('Додати віджет', 'Add widget')}
-            icon="add"
-            variant={widgets.length === 0 ? 'primary' : 'secondary'}
-            onPress={() => router.push('/widgets')}
-          />
-        )}
-      </Animated.ScrollView>
-    </View>
+          {widgets.length === 0 ? (
+            <EmptyState
+              icon="grid-outline"
+              title={tr('На головній ще немає віджетів', 'No widgets on the home screen yet')}
+              hint={tr(
+                'Додай плитки з тренуваннями, харчуванням, водою чи вагою.',
+                'Add tiles with workouts, food, water or weight.',
+              )}
+            />
+          ) : (
+            <Sortable.Flex
+              gap={TILE_GAP}
+              sortEnabled={editing}
+              scrollableRef={scrollRef}
+              dragActivationDelay={150}
+              activeItemScale={1.03}
+              inactiveItemOpacity={0.6}
+              onDragEnd={({ order }) => saveDashboard(order(widgets))}>
+              {widgets.map((w, i) => (
+                <View key={w.id}>
+                  {/* Tiles rise in one after another when the app opens (and when one is added). */}
+                  <Animated.View entering={FadeInDown.delay(i * 60).duration(380)}>
+                    <WidgetView
+                      widget={w}
+                      data={data}
+                      width={tileWidth(w, rowWidth)}
+                      interactive={!editing}
+                    />
+                  </Animated.View>
+                  {editing && (
+                    <EditOverlay
+                      widget={w}
+                      onRemove={() => remove(w.id)}
+                      onResize={() => resize(w.id)}
+                    />
+                  )}
+                </View>
+              ))}
+            </Sortable.Flex>
+          )}
+
+          {(editing || widgets.length === 0) && (
+            <Button
+              title={tr('Додати віджет', 'Add widget')}
+              icon="add"
+              variant={widgets.length === 0 ? 'primary' : 'secondary'}
+              onPress={() => router.push('/widgets')}
+            />
+          )}
+        </Animated.ScrollView>
+      </View>
+    </WaterPourProvider>
   );
 }
 
