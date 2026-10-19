@@ -27,7 +27,7 @@ import {
   type MacroGoals,
   type Macros,
 } from '@/lib/food';
-import { tr } from '@/lib/i18n';
+import { locale, tr } from '@/lib/i18n';
 import { formatWeightDelta } from '@/lib/labels';
 import { formatNumber, formatWeight } from '@/lib/metrics';
 import {
@@ -176,13 +176,20 @@ function MacroGoalsCard({
               `Разом ${formatKcal(total)} ${KCAL}, а норма ${formatKcal(goal)} ${KCAL}`,
               `${formatKcal(total)} ${KCAL} in all, the goal is ${formatKcal(goal)} ${KCAL}`,
             )
-          : tr(
-              'Не змінене рахується з норми калорій.',
-              'What you leave alone follows the kcal goal.',
-            )}
+          : autoHint(MACROS.filter((m) => custom[m.key] === undefined).map((m) => m.label), total)}
       </Text>
     </Card>
   );
+}
+
+/** Which macros still follow the kcal goal, by name, or the kcal of all three set by hand. */
+function autoHint(auto: string[], total: number) {
+  if (auto.length === 0) return tr(`Разом ${formatKcal(total)} ${KCAL}`, `${formatKcal(total)} ${KCAL} in all`);
+  if (auto.length === MACROS.length)
+    return tr('Усе рахується з норми калорій.', 'All follow the kcal goal.');
+  const [first, ...rest] = auto;
+  const names = [first, ...rest.map((n) => n.toLocaleLowerCase(locale))].join(tr(' і ', ' and '));
+  return tr(`${names} рахуються з норми калорій.`, `${names} follow the kcal goal.`);
 }
 
 /** One macro's daily grams: typed in or stepped by 5 g; cleared, it goes back to auto. */
