@@ -140,13 +140,9 @@ function ModuleCard({ module, on, locked }: { module: AppModule; on: boolean; lo
     transform: [{ scale: 0.9 + 0.1 * progress.get() }],
   }));
 
-  const toggle = (next: boolean) => {
-    if (!locked) setModuleEnabled(module, next);
-  };
-
   return (
     <PressScale
-      onPress={() => toggle(!on)}
+      onPress={() => setModuleEnabled(module, !on)}
       disabled={locked}
       accessibilityRole="switch"
       accessibilityLabel={info.title}
@@ -163,13 +159,15 @@ function ModuleCard({ module, on, locked }: { module: AppModule; on: boolean; lo
               : info.description}
           </Text>
         </View>
-        <Switch
-          value={on}
-          disabled={locked}
-          onValueChange={toggle}
-          trackColor={{ true: colors.accent, false: colors.surfaceRaised }}
-          thumbColor={colors.text}
-        />
+        {/* Only shows the state: a tap on it would also reach the card and flip the section back. */}
+        <View pointerEvents="none">
+          <Switch
+            value={on}
+            disabled={locked}
+            trackColor={{ true: colors.accent, false: colors.surfaceRaised }}
+            thumbColor={colors.text}
+          />
+        </View>
         <Sortable.Handle>
           <View
             style={styles.handle}

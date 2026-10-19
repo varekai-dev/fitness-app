@@ -479,13 +479,10 @@ function ShortcutRow({
   value: boolean;
   onChange: (on: boolean) => void;
 }) {
-  const toggle = (on: boolean) => {
-    onChange(on);
-  };
   // The whole row flips the switch, not just the switch itself.
   return (
     <Pressable
-      onPress={() => toggle(!value)}
+      onPress={() => onChange(!value)}
       accessibilityRole="switch"
       accessibilityState={{ checked: value }}
       style={({ pressed }) => [styles.shortcut, pressed && styles.pressed]}>
@@ -494,12 +491,14 @@ function ShortcutRow({
         <Text variant="heading">{title}</Text>
         <Text variant="muted">{hint}</Text>
       </View>
-      <Switch
-        value={value}
-        onValueChange={toggle}
-        trackColor={{ true: colors.accent, false: colors.surfaceRaised }}
-        thumbColor={colors.text}
-      />
+      {/* Only shows the state: a tap on it would also reach the row and flip it back. */}
+      <View pointerEvents="none">
+        <Switch
+          value={value}
+          trackColor={{ true: colors.accent, false: colors.surfaceRaised }}
+          thumbColor={colors.text}
+        />
+      </View>
     </Pressable>
   );
 }
