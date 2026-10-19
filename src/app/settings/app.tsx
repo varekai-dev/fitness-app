@@ -1,5 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 
+import { ModuleSettings } from '@/components/module-settings';
 import { Card, ChipGroup, Row, Screen, Text } from '@/components/ui';
 import { languagePreference, setLanguage, tr, type LanguagePreference } from '@/lib/i18n';
 import { setUnitSystem, UNIT_SYSTEMS, unitSystem, type UnitSystem } from '@/lib/units';
@@ -23,7 +24,7 @@ const UNIT_HINTS: Record<UnitSystem, string> = {
   imperial: tr('фунти, милі, унції, дюйми', 'lb, mi, fl oz, in'),
 };
 
-/** App-wide preferences: language and units. */
+/** App-wide preferences: language, units and which sections the app has. */
 export default function AppSettingsScreen() {
   return (
     <Screen title={tr('Застосунок', 'App')}>
@@ -62,6 +63,7 @@ export default function AppSettingsScreen() {
           )}
         </Text>
       </Card>
+      <ModuleSettings />
     </Screen>
   );
 }

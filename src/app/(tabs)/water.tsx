@@ -199,7 +199,6 @@ export default function WaterScreen() {
         {dialog.element}
       </Screen>
       <TabBarFab
-        tabCount={4}
         label={tr(
           `Додати склянку ${formatVolume(QUICK_ML)} ${VOLUME_UNIT}`,
           `Add a ${formatVolume(QUICK_ML)} ${VOLUME_UNIT} glass`,

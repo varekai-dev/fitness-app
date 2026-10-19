@@ -100,7 +100,6 @@ export default function TrainingScreen() {
       </View>
       {canAdd && (
         <TabBarFab
-          tabCount={4}
           label={
             section === 'exercises'
               ? tr('Нова вправа', 'New exercise')

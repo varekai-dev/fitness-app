@@ -5,6 +5,7 @@ import { listProgressPhotos } from '@/db/progress-photos';
 import { getDayWindow, getPhotoReminders, getWaterReminders } from '@/db/reminders';
 import { loadWater } from '@/db/water';
 import { tr } from '@/lib/i18n';
+import { isModuleEnabled } from '@/lib/modules';
 import { planPhotoReminder, planWaterReminders } from '@/lib/reminders';
 
 /**
@@ -106,7 +107,7 @@ async function syncWaterRemindersNow(N: typeof NotificationsModule) {
   ]);
   const permitted = await getNotificationPermission();
   const wanted =
-    reminders.enabled && permitted
+    reminders.enabled && permitted && isModuleEnabled('water')
       ? planWaterReminders({
           now: Date.now(),
           today: water.today,

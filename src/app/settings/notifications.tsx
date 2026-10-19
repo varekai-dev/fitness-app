@@ -16,6 +16,7 @@ import { loadWater } from '@/db/water';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { useNow } from '@/hooks/use-now';
 import { tr } from '@/lib/i18n';
+import { isModuleEnabled } from '@/lib/modules';
 import { formatShortDate } from '@/lib/labels';
 import { getNotificationPermission, requestNotificationPermission } from '@/lib/notifications';
 import {
@@ -109,16 +110,18 @@ export default function NotificationsScreen() {
   const nextPhoto = photo.enabled
     ? planPhotoReminder({ now, lastPhotoAt: photos.at(-1)?.takenAt ?? null, window: dayWindow })
     : undefined;
-  const next = water.enabled
-    ? planWaterReminders({
-        now,
-        today,
-        todayMl,
-        goal,
-        window: dayWindow,
-        intervalMin: water.intervalMin,
-      })[0]
-    : undefined;
+  const waterOn = isModuleEnabled('water');
+  const next =
+    water.enabled && waterOn
+      ? planWaterReminders({
+          now,
+          today,
+          todayMl,
+          goal,
+          window: dayWindow,
+          intervalMin: water.intervalMin,
+        })[0]
+      : undefined;
   const hours = formatInterval(dayWindow.endMin - dayWindow.startMin);
 
   const toggle = (save: (enabled: boolean) => Promise<void>) => async (enabled: boolean) => {
@@ -174,61 +177,63 @@ export default function NotificationsScreen() {
         />
       </Card>
 
-      <Card>
-        <Row style={styles.spaceBetween}>
-          <Row style={styles.flex}>
-            <Ionicons name="water-outline" size={20} color={colors.accent} />
-            <Text variant="heading">{tr('Нагадування пити воду', 'Water reminders')}</Text>
+      {waterOn && (
+        <Card>
+          <Row style={styles.spaceBetween}>
+            <Row style={styles.flex}>
+              <Ionicons name="water-outline" size={20} color={colors.accent} />
+              <Text variant="heading">{tr('Нагадування пити воду', 'Water reminders')}</Text>
+            </Row>
+            <Switch
+              value={water.enabled}
+              onValueChange={toggle((enabled) => setWaterReminders({ enabled }))}
+              trackColor={{ true: colors.accent, false: colors.surfaceRaised }}
+              thumbColor={colors.text}
+            />
           </Row>
-          <Switch
-            value={water.enabled}
-            onValueChange={toggle((enabled) => setWaterReminders({ enabled }))}
-            trackColor={{ true: colors.accent, false: colors.surfaceRaised }}
-            thumbColor={colors.text}
-          />
-        </Row>
-        <Text variant="muted">
-          {tr(
-            `Перевіряємо, чи випито стільки, скільки треба на цю годину, щоб дійти до ${formatVolume(goal)} ${VOLUME_UNIT}. Якщо ні — нагадаємо.`,
-            `We check whether you’ve drunk enough by this hour to reach ${formatVolume(goal)} ${VOLUME_UNIT}. If not, we’ll remind you.`,
-          )}
-        </Text>
-        {water.enabled && (
-          <>
-            <Text variant="caption">{tr('Перевіряти кожні', 'Check every')}</Text>
-            <View style={styles.chips}>
-              {REMINDER_INTERVALS_MIN.map((m) => (
-                <Chip
-                  key={m}
-                  label={formatInterval(m)}
-                  selected={m === water.intervalMin}
-                  onPress={() => {
-                    setWaterReminders({ intervalMin: m });
-                  }}
+          <Text variant="muted">
+            {tr(
+              `Перевіряємо, чи випито стільки, скільки треба на цю годину, щоб дійти до ${formatVolume(goal)} ${VOLUME_UNIT}. Якщо ні — нагадаємо.`,
+              `We check whether you’ve drunk enough by this hour to reach ${formatVolume(goal)} ${VOLUME_UNIT}. If not, we’ll remind you.`,
+            )}
+          </Text>
+          {water.enabled && (
+            <>
+              <Text variant="caption">{tr('Перевіряти кожні', 'Check every')}</Text>
+              <View style={styles.chips}>
+                {REMINDER_INTERVALS_MIN.map((m) => (
+                  <Chip
+                    key={m}
+                    label={formatInterval(m)}
+                    selected={m === water.intervalMin}
+                    onPress={() => {
+                      setWaterReminders({ intervalMin: m });
+                    }}
+                  />
+                ))}
+              </View>
+              {!permitted ? (
+                <Button
+                  title={tr(
+                    'Сповіщення заборонені — відкрити налаштування',
+                    'Notifications blocked: open settings',
+                  )}
+                  variant="danger"
+                  small
+                  onPress={() => Linking.openSettings()}
                 />
-              ))}
-            </View>
-            {!permitted ? (
-              <Button
-                title={tr(
-                  'Сповіщення заборонені — відкрити налаштування',
-                  'Notifications blocked: open settings',
-                )}
-                variant="danger"
-                small
-                onPress={() => Linking.openSettings()}
-              />
-            ) : next ? (
-              <Text variant="secondary">
-                {tr(
-                  `Наступне нагадування ${dayLabel(next.at, today)} о ${clockOf(next.at)}, якщо не доп’єш.`,
-                  `Next reminder ${dayLabel(next.at, today)} at ${clockOf(next.at)} if you’re behind.`,
-                )}
-              </Text>
-            ) : null}
-          </>
-        )}
-      </Card>
+              ) : next ? (
+                <Text variant="secondary">
+                  {tr(
+                    `Наступне нагадування ${dayLabel(next.at, today)} о ${clockOf(next.at)}, якщо не доп’єш.`,
+                    `Next reminder ${dayLabel(next.at, today)} at ${clockOf(next.at)} if you’re behind.`,
+                  )}
+                </Text>
+              ) : null}
+            </>
+          )}
+        </Card>
+      )}
 
       <Card>
         <Row style={styles.spaceBetween}>

@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Glass } from '@/components/glass';
 import type { IconName } from '@/components/ui';
+import { useEnabledModules } from '@/lib/modules';
 import { colors, radius, spacing } from '@/theme';
 
 const BAR_HEIGHT = 72;
@@ -32,7 +33,8 @@ const FAB_ENTER_DELAY = 150;
 /** Vertical space screens should leave at the bottom so content clears the floating bar. */
 export function useTabBarSpace() {
   const insets = useSafeAreaInsets();
-  return BAR_HEIGHT + Math.max(insets.bottom, spacing.md) + spacing.lg;
+  const hasBar = useEnabledModules().length > 1;
+  return (hasBar ? BAR_HEIGHT : 0) + Math.max(insets.bottom, spacing.md) + spacing.lg;
 }
 
 /** Space a screen should leave below its content for a `TabBarFab` above the bar. */
@@ -40,20 +42,15 @@ export const TAB_BAR_FAB_SPACE = BUBBLE + spacing.md;
 
 /**
  * Round glass "+" floating above the right end of the bar, lined up with the
- * last of `tabCount` tabs. Render it after the screen's scroll view, inside a `flex: 1` box.
+ * last tab. Render it after the screen's scroll view, inside a `flex: 1` box.
  */
-export function TabBarFab({
-  tabCount,
-  label,
-  onPress,
-}: {
-  tabCount: number;
-  label: string;
-  onPress: () => void;
-}) {
+export function TabBarFab({ label, onPress }: { label: string; onPress: () => void }) {
   const { width } = useWindowDimensions();
   const bottom = useTabBarSpace();
+  const tabCount = useEnabledModules().length;
   const slot = (width - 2 * SIDE_MARGIN) / tabCount;
+  // Without a bar (one section left) the button sits in the corner instead.
+  const right = SIDE_MARGIN + (tabCount > 1 ? (slot - BUBBLE) / 2 : 0);
   // 0 = in place, 1 = tucked down out of sight.
   const hidden = useSharedValue(1);
 
@@ -72,8 +69,7 @@ export function TabBarFab({
   }));
 
   return (
-    <Animated.View
-      style={[styles.fabSpot, { bottom, right: SIDE_MARGIN + (slot - BUBBLE) / 2 }, style]}>
+    <Animated.View style={[styles.fabSpot, { bottom, right }, style]}>
       <Pressable
         onPress={onPress}
         accessibilityRole="button"
@@ -90,9 +86,10 @@ export function TabBarFab({
 }
 
 /**
- * Floating pill tab bar: glass background, outline icons, and an
- * accent bubble that springs to the active tab. `icons` maps route names to the
- * base Ionicons name; the outline variant is used for inactive tabs.
+ * Floating pill tab bar, shown while there are at least two tabs: glass
+ * background, outline icons, and an accent bubble that springs to the active tab.
+ * `icons` maps route names to the base Ionicons name; the outline variant is used
+ * for inactive tabs.
  */
 export function FloatingTabBar({
   state,
@@ -110,6 +107,9 @@ export function FloatingTabBar({
   }, [slot, state.index, x]);
 
   const bubbleStyle = useAnimatedStyle(() => ({ transform: [{ translateX: x.get() }] }));
+
+  // A lone section needs no tab bar.
+  if (state.routes.length < 2) return null;
 
   return (
     <View

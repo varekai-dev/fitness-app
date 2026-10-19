@@ -273,7 +273,6 @@ export default function FoodScreen() {
         {dialog.element}
       </Screen>
       <TabBarFab
-        tabCount={4}
         label={tr('Додати їжу', 'Add food')}
         // Breakfast, lunch or dinner by the hour, on the day shown.
         onPress={() =>

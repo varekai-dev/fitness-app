@@ -5,9 +5,11 @@ import { SettingsLink } from '@/components/settings';
 import { Screen } from '@/components/ui';
 import { healthName } from '@/lib/health';
 import { tr } from '@/lib/i18n';
+import { useEnabledModules } from '@/lib/modules';
 import { notificationsSupported } from '@/lib/notifications';
 
 export default function SettingsScreen() {
+  const enabled = useEnabledModules();
   return (
     <Screen title={tr('Налаштування', 'Settings')}>
       <SettingsLink
@@ -16,26 +18,34 @@ export default function SettingsScreen() {
         hint={tr('Вага, зріст, вік', 'Weight, height, age')}
         href="/profile"
       />
-      <SettingsLink
-        icon="restaurant-outline"
-        title={tr('Харчування', 'Food')}
-        hint={tr(
-          'Норма калорій, шаблони, підказки й AI',
-          'Calorie goal, templates, suggestions and AI',
-        )}
-        href="/settings/food"
-      />
-      <SettingsLink
-        icon="water-outline"
-        title={tr('Вода', 'Water')}
-        hint={tr('Денна ціль', 'Daily goal')}
-        href="/settings/water"
-      />
+      {enabled.includes('food') && (
+        <SettingsLink
+          icon="restaurant-outline"
+          title={tr('Харчування', 'Food')}
+          hint={tr(
+            'Норма калорій, шаблони, підказки й AI',
+            'Calorie goal, templates, suggestions and AI',
+          )}
+          href="/settings/food"
+        />
+      )}
+      {enabled.includes('water') && (
+        <SettingsLink
+          icon="water-outline"
+          title={tr('Вода', 'Water')}
+          hint={tr('Денна ціль', 'Daily goal')}
+          href="/settings/water"
+        />
+      )}
       {notificationsSupported && (
         <SettingsLink
           icon="notifications-outline"
           title={tr('Сповіщення', 'Notifications')}
-          hint={tr('Вода, мій день', 'Water, my day')}
+          hint={
+            enabled.includes('water')
+              ? tr('Вода, мій день', 'Water, my day')
+              : tr('Мій день, фото', 'My day, photos')
+          }
           href="/settings/notifications"
         />
       )}
@@ -48,7 +58,7 @@ export default function SettingsScreen() {
       <SettingsLink
         icon="options-outline"
         title={tr('Застосунок', 'App')}
-        hint={tr('Мова, одиниці', 'Language, units')}
+        hint={tr('Мова, одиниці, розділи', 'Language, units, sections')}
         href="/settings/app"
       />
       {Platform.OS !== 'web' && (

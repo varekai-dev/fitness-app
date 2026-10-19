@@ -18,6 +18,7 @@ import {
   type WidgetType,
 } from '@/lib/dashboard';
 import { tr } from '@/lib/i18n';
+import { isWidgetAvailable, useEnabledModules } from '@/lib/modules';
 import { colors, radius, spacing } from '@/theme';
 
 /** Card padding plus the preview well's padding, on both sides. */
@@ -31,6 +32,13 @@ export default function WidgetsScreen() {
   const { data } = useDbQuery(loadDashboardData, [today]);
   const { data: widgets } = useDbQuery(getDashboard);
   const [sizes, setSizes] = useState<Partial<Record<WidgetType, WidgetSize>>>({});
+  useEnabledModules();
+  // Widgets from switched-off sections aren't offered.
+  const groups = WIDGET_GROUPS.map((g) => ({
+    ...g,
+    types: g.types.filter(isWidgetAvailable),
+    stats: g.stats.filter(isWidgetAvailable),
+  })).filter((g) => g.types.length + g.stats.length > 0);
 
   if (!data || !widgets) return <Loading />;
 
@@ -41,7 +49,7 @@ export default function WidgetsScreen() {
 
   return (
     <Screen title={tr('Додати віджет', 'Add widget')} mode="modal">
-      {WIDGET_GROUPS.map((group) => (
+      {groups.map((group) => (
         <View key={group.title} style={styles.group}>
           <Text variant="overline">{group.title}</Text>
           {group.types.map((type) => {

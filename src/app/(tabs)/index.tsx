@@ -17,6 +17,7 @@ import { useToday } from '@/hooks/use-today';
 import { isFixedSize, nextSize, WIDGET_SIZE_LABELS, type Widget } from '@/lib/dashboard';
 import { tr } from '@/lib/i18n';
 import { formatLongDate } from '@/lib/labels';
+import { useEnabledModules, widgetModule } from '@/lib/modules';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 /**
@@ -35,8 +36,16 @@ export default function HomeScreen() {
   const today = useToday();
   const { data } = useDbQuery(loadDashboardData, [today]);
   const [editing, setEditing] = useState(false);
+  const enabled = useEnabledModules();
 
   if (!widgets || !data) return <Loading />;
+
+  // Widgets of a switched-off section stay in the saved layout, hidden, and return with it.
+  const isShown = (w: Widget) => {
+    const module = widgetModule(w.type);
+    return module === null || enabled.includes(module);
+  };
+  const shown = widgets.filter(isShown);
 
   const remove = (id: string) => {
     saveDashboard(widgets.filter((w) => w.id !== id));
@@ -84,7 +93,7 @@ export default function HomeScreen() {
             )}
           </View>
 
-          {widgets.length === 0 ? (
+          {shown.length === 0 ? (
             <EmptyState
               icon="grid-outline"
               title={tr('На головній ще немає віджетів', 'No widgets on the home screen yet')}
@@ -101,8 +110,10 @@ export default function HomeScreen() {
               dragActivationDelay={150}
               activeItemScale={1.03}
               inactiveItemOpacity={0.6}
-              onDragEnd={({ order }) => saveDashboard(order(widgets))}>
-              {widgets.map((w, i) => (
+              onDragEnd={({ order }) =>
+                saveDashboard([...order(shown), ...widgets.filter((w) => !isShown(w))])
+              }>
+              {shown.map((w, i) => (
                 <View key={w.id}>
                   {/* Tiles rise in one after another when the app opens (and when one is added). */}
                   <Animated.View entering={FadeInDown.delay(i * 60).duration(380)}>
@@ -125,11 +136,11 @@ export default function HomeScreen() {
             </Sortable.Flex>
           )}
 
-          {(editing || widgets.length === 0) && (
+          {(editing || shown.length === 0) && (
             <Button
               title={tr('Додати віджет', 'Add widget')}
               icon="add"
-              variant={widgets.length === 0 ? 'primary' : 'secondary'}
+              variant={shown.length === 0 ? 'primary' : 'secondary'}
               onPress={() => router.push('/widgets')}
             />
           )}
