@@ -1,6 +1,11 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
-import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import {
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView,
+  type GestureType,
+} from 'react-native-gesture-handler';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -16,6 +21,21 @@ import { tr } from '@/lib/i18n';
 import { colors, radius, spacing } from '@/theme';
 
 const SPRING = { damping: 22, stiffness: 200, mass: 0.8 };
+
+/** The swipe that closes the sheet, for vertical scrollers inside it to block. */
+const SheetPan = createContext<GestureType | null>(null);
+
+/**
+ * Wraps a vertical scroll view (a wheel, a list) inside a bottom sheet, so
+ * dragging it scrolls rather than pulls the sheet down. Outside a sheet it
+ * changes nothing.
+ */
+export function SheetScrollable({ children }: { children: ReactNode }) {
+  const pan = useContext(SheetPan);
+  const native = useMemo(() => (pan ? Gesture.Native().blocksExternalGesture(pan) : null), [pan]);
+  if (!native) return children;
+  return <GestureDetector gesture={native}>{children}</GestureDetector>;
+}
 
 /**
  * Modal sheet that slides up from the bottom edge, with rounded top corners and
@@ -83,17 +103,22 @@ function Sheet({
       );
   }, [visible, screenH, y, onHidden]);
 
-  const pan = Gesture.Pan()
-    .activeOffsetY([-10, 10])
-    .failOffsetX([-12, 12])
-    .onUpdate((e) => {
-      // Rubber-bands a little when pulled up past the open position.
-      y.set(e.translationY > 0 ? e.translationY : e.translationY * 0.2);
-    })
-    .onEnd((e) => {
-      if (e.velocityY > 800 || y.get() > sheetH.get() * 0.3) scheduleOnRN(onClose);
-      else y.set(withSpring(0, SPRING));
-    });
+  // Kept stable, so scrollers inside block the same gesture across renders.
+  const pan = useMemo(
+    () =>
+      Gesture.Pan()
+        .activeOffsetY([-10, 10])
+        .failOffsetX([-12, 12])
+        .onUpdate((e) => {
+          // Rubber-bands a little when pulled up past the open position.
+          y.set(e.translationY > 0 ? e.translationY : e.translationY * 0.2);
+        })
+        .onEnd((e) => {
+          if (e.velocityY > 800 || y.get() > sheetH.get() * 0.3) scheduleOnRN(onClose);
+          else y.set(withSpring(0, SPRING));
+        }),
+    [onClose, sheetH, y],
+  );
 
   const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: y.get() }] }));
   const backdropStyle = useAnimatedStyle(() => ({
@@ -115,7 +140,7 @@ function Sheet({
           onLayout={(e) => sheetH.set(e.nativeEvent.layout.height)}
           style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }, sheetStyle]}>
           <View style={styles.handle} />
-          {children}
+          <SheetPan.Provider value={pan}>{children}</SheetPan.Provider>
         </Animated.View>
       </GestureDetector>
     </View>

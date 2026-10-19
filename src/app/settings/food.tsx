@@ -2,12 +2,13 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
 import { BottomSheet } from '@/components/bottom-sheet';
 import { MACROS } from '@/components/calorie-summary';
-import { Card, IconButton, Loading, Row, Screen, Text } from '@/components/ui';
+import { Button, Card, Loading, Row, Screen, Text } from '@/components/ui';
+import { Wheel } from '@/components/wheel';
 import {
   getFoodShortcuts,
   getKcalGoal,
@@ -155,7 +156,8 @@ function BmiCard({ weightKg, heightCm }: { weightKg: number; heightCm: number })
   const cls = bmiClass(value);
   const color = ZONE_COLOR[cls.zone];
   const { minKg, maxKg } = healthyWeight(heightCm);
-  const share = (v: number) => (Math.min(Math.max(v, BMI_MIN), BMI_MAX) - BMI_MIN) / (BMI_MAX - BMI_MIN);
+  const share = (v: number) =>
+    (Math.min(Math.max(v, BMI_MIN), BMI_MAX) - BMI_MIN) / (BMI_MAX - BMI_MIN);
   const toNormal = weightKg > maxKg ? maxKg - weightKg : weightKg < minKg ? minKg - weightKg : 0;
   const [open, setOpen] = useState(false);
 
@@ -185,7 +187,10 @@ function BmiCard({ weightKg, heightCm }: { weightKg: number; heightCm: number })
             return to > from ? (
               <View
                 key={c.from}
-                style={[styles.bmiSegment, { flex: to - from, backgroundColor: ZONE_COLOR[c.zone] }]}
+                style={[
+                  styles.bmiSegment,
+                  { flex: to - from, backgroundColor: ZONE_COLOR[c.zone] },
+                ]}
               />
             ) : null;
           })}
@@ -234,7 +239,11 @@ function BmiClasses({ weightKg, heightCm }: { weightKg: number; heightCm: number
         const toKg = next === undefined ? undefined : next * m2;
         const here = c === current;
         // Down to just under the class's top, or up to its start.
-        const delta = here ? 0 : toKg !== undefined && weightKg >= toKg ? toKg - 0.1 - weightKg : fromKg - weightKg;
+        const delta = here
+          ? 0
+          : toKg !== undefined && weightKg >= toKg
+            ? toKg - 0.1 - weightKg
+            : fromKg - weightKg;
         return (
           <Row key={c.from} style={[styles.bmiClass, here && styles.bmiClassHere]}>
             <View style={[styles.macroDot, { backgroundColor: ZONE_COLOR[c.zone] }]} />
@@ -266,14 +275,15 @@ function BmiClasses({ weightKg, heightCm }: { weightKg: number; heightCm: number
   );
 }
 
-const MACRO_STEP = 5;
 const G = tr('г', 'g');
+const formatGrams = (g: number) => String(g);
 
-const clampMacro = (grams: number) => Math.min(Math.max(Math.round(grams), 0), MAX_MACRO_GOAL);
+type MacroKey = (typeof MACROS)[number]['key'];
 
 /**
  * Daily protein, fat and carbs. Each follows the kcal goal until set by hand;
- * auto carbs fill what protein and fat leave of it.
+ * auto carbs fill what protein and fat leave of it. A row opens a sheet with
+ * a wheel to pick the grams.
  */
 function MacroGoalsCard({
   goal,
@@ -284,11 +294,33 @@ function MacroGoalsCard({
   targets: Macros;
   custom: MacroGoals;
 }) {
+  const [editing, setEditing] = useState<MacroKey | null>(null);
+  // Kept while the sheet slides away, so it doesn't go blank mid-animation.
+  const [shown, setShown] = useState(editing);
+  if (editing !== null && editing !== shown) setShown(editing);
+  const macro = MACROS.find((m) => m.key === shown);
+
   const total = MACROS.reduce((s, m) => s + targets[m.key] * m.kcalPerG, 0);
   // Rounding to whole grams alone moves the sum by a few kcal.
   const off = Math.abs(total - goal) > 25;
   return (
     <Card style={styles.macroCard}>
+      <BottomSheet visible={editing !== null} onClose={() => setEditing(null)}>
+        {macro && (
+          <MacroSheet
+            key={macro.key}
+            label={macro.label}
+            color={macro.color}
+            kcalPerG={macro.kcalPerG}
+            grams={targets[macro.key]}
+            custom={custom[macro.key] !== undefined}
+            onSave={(grams) => {
+              setEditing(null);
+              if (grams !== targets[macro.key] || grams === null) setMacroGoal(macro.key, grams);
+            }}
+          />
+        )}
+      </BottomSheet>
       <Text variant="overline">{tr('БЖВ на день', 'Daily macros')}</Text>
       {MACROS.map((m) => (
         <MacroGoalRow
@@ -298,7 +330,7 @@ function MacroGoalsCard({
           kcalPerG={m.kcalPerG}
           grams={targets[m.key]}
           custom={custom[m.key] !== undefined}
-          onChange={(grams) => setMacroGoal(m.key, grams)}
+          onPress={() => setEditing(m.key)}
         />
       ))}
       <Text variant="muted" style={[styles.macroTotal, off && { color: colors.warning }]}>
@@ -307,7 +339,10 @@ function MacroGoalsCard({
               `Разом ${formatKcal(total)} ${KCAL}, а норма ${formatKcal(goal)} ${KCAL}`,
               `${formatKcal(total)} ${KCAL} in all, the goal is ${formatKcal(goal)} ${KCAL}`,
             )
-          : autoHint(MACROS.filter((m) => custom[m.key] === undefined).map((m) => m.label), total)}
+          : autoHint(
+              MACROS.filter((m) => custom[m.key] === undefined).map((m) => m.label),
+              total,
+            )}
       </Text>
     </Card>
   );
@@ -315,7 +350,8 @@ function MacroGoalsCard({
 
 /** Which macros still follow the kcal goal, by name, or the kcal of all three set by hand. */
 function autoHint(auto: string[], total: number) {
-  if (auto.length === 0) return tr(`Разом ${formatKcal(total)} ${KCAL}`, `${formatKcal(total)} ${KCAL} in all`);
+  if (auto.length === 0)
+    return tr(`Разом ${formatKcal(total)} ${KCAL}`, `${formatKcal(total)} ${KCAL} in all`);
   if (auto.length === MACROS.length)
     return tr('Усе рахується з норми калорій.', 'All follow the kcal goal.');
   const [first, ...rest] = auto;
@@ -323,41 +359,28 @@ function autoHint(auto: string[], total: number) {
   return tr(`${names} рахуються з норми калорій.`, `${names} follow the kcal goal.`);
 }
 
-/** One macro's daily grams: typed in or stepped by 5 g; cleared, it goes back to auto. */
+/** One macro's daily grams; tapped, it opens the wheel. */
 function MacroGoalRow({
   label,
   color,
   kcalPerG,
   grams,
   custom,
-  onChange,
+  onPress,
 }: {
   label: string;
   color: string;
   kcalPerG: number;
   grams: number;
   custom: boolean;
-  onChange: (grams: number | null) => void;
+  onPress: () => void;
 }) {
-  // The text being typed; the saved value shows otherwise.
-  const [text, setText] = useState<string | null>(null);
-  const commit = () => {
-    if (text === null) return;
-    setText(null);
-    const value = Number(text.replace(',', '.'));
-    if (!text.trim()) onChange(null);
-    else if (Number.isFinite(value) && clampMacro(value) !== grams) onChange(clampMacro(value));
-  };
-  const step = (dir: 1 | -1) =>
-    onChange(
-      clampMacro(
-        (dir > 0 ? Math.floor(grams / MACRO_STEP) + 1 : Math.ceil(grams / MACRO_STEP) - 1) *
-          MACRO_STEP,
-      ),
-    );
-
   return (
-    <Row style={styles.macroRow}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${label}: ${grams} ${G}`}
+      style={({ pressed }) => [styles.macroRow, pressed && styles.pressed]}>
       <View style={[styles.macroDot, { backgroundColor: color }]} />
       <View style={styles.flex}>
         <Text variant="body">{label}</Text>
@@ -366,32 +389,79 @@ function MacroGoalRow({
           {!custom && ` · ${tr('авто', 'auto')}`}
         </Text>
       </View>
-      {custom && (
-        <IconButton icon="refresh" size={18} color={colors.accent} onPress={() => onChange(null)} />
-      )}
-      <IconButton icon="remove" size={20} disabled={grams <= 0} onPress={() => step(-1)} />
       <View style={[styles.macroInput, custom && { borderColor: color }]}>
-        <TextInput
-          value={text ?? String(grams)}
-          onChangeText={setText}
-          onFocus={() => setText(String(grams))}
-          onBlur={commit}
-          onSubmitEditing={commit}
-          keyboardType="number-pad"
-          returnKeyType="done"
-          selectTextOnFocus
-          maxLength={3}
-          style={styles.macroValue}
-        />
+        <Text style={styles.macroValue}>{grams}</Text>
         <Text variant="muted">{G}</Text>
       </View>
-      <IconButton
-        icon="add"
-        size={20}
-        disabled={grams >= MAX_MACRO_GOAL}
-        onPress={() => step(1)}
-      />
-    </Row>
+      <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+    </Pressable>
+  );
+}
+
+/**
+ * The grams of one macro on a wheel, saved with the button. "Auto" hands the
+ * macro back to the kcal goal.
+ */
+function MacroSheet({
+  label,
+  color,
+  kcalPerG,
+  grams,
+  custom,
+  onSave,
+}: {
+  label: string;
+  color: string;
+  kcalPerG: number;
+  grams: number;
+  custom: boolean;
+  /** `null` goes back to auto. */
+  onSave: (grams: number | null) => void;
+}) {
+  const [value, setValue] = useState(grams);
+  return (
+    <View style={styles.macroSheet}>
+      <View style={styles.macroSheetHead}>
+        <Row style={styles.macroSheetTitle}>
+          <View style={[styles.macroDot, { backgroundColor: color }]} />
+          <Text variant="title">{label}</Text>
+        </Row>
+        <Text variant="muted">
+          {formatKcal(value * kcalPerG)} {KCAL}
+          {!custom && value === grams && ` · ${tr('авто', 'auto')}`}
+        </Text>
+      </View>
+      <View style={styles.macroWheel}>
+        <Wheel
+          value={grams}
+          min={0}
+          max={MAX_MACRO_GOAL}
+          step={1}
+          unit={G}
+          format={formatGrams}
+          rows={5}
+          ticks
+          onChange={setValue}
+        />
+      </View>
+      <Row style={styles.macroSheetButtons}>
+        {custom && (
+          <Button
+            title={tr('Авто', 'Auto')}
+            icon="refresh"
+            variant="secondary"
+            style={styles.flex}
+            onPress={() => onSave(null)}
+          />
+        )}
+        <Button
+          title={tr('Зберегти', 'Save')}
+          icon="checkmark"
+          style={styles.flex}
+          onPress={() => onSave(value)}
+        />
+      </Row>
+    </View>
   );
 }
 
@@ -871,7 +941,7 @@ const styles = StyleSheet.create({
     borderWidth: 4,
     backgroundColor: colors.text,
   },
-  macroRow: { gap: spacing.sm },
+  macroRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   macroDot: { width: 10, height: 10, borderRadius: 5, marginRight: spacing.xs },
   macroInput: {
     flexDirection: 'row',
@@ -891,9 +961,12 @@ const styles = StyleSheet.create({
     fontSize: fontSize.lg,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
-    textAlign: 'right',
-    padding: 0,
   },
+  macroSheet: { gap: spacing.lg, paddingHorizontal: spacing.lg },
+  macroSheetHead: { alignItems: 'center', gap: spacing.xs },
+  macroSheetTitle: { gap: spacing.xs },
+  macroWheel: { height: 200 },
+  macroSheetButtons: { gap: spacing.sm },
   macroTotal: { textAlign: 'center' },
   shortcut: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   goalValue: { alignItems: 'center', gap: spacing.xs },

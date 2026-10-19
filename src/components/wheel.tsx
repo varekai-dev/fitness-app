@@ -10,8 +10,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
+import { SheetScrollable } from '@/components/bottom-sheet';
 import { Text } from '@/components/ui';
-import { colors, fontSize, radius } from '@/theme';
+import { colors, fontSize, radius, spacing } from '@/theme';
 
 const ITEM = 40;
 
@@ -32,6 +33,7 @@ export function Wheel({
   unit,
   format,
   rows = 3,
+  ticks = false,
   onChange,
 }: {
   value: number;
@@ -42,6 +44,8 @@ export function Wheel({
   format: (v: number) => string;
   /** Rows shown, an odd number: the middle one is selected. */
   rows?: number;
+  /** Ruler marks along both sides, longer on every 5th and 10th value. */
+  ticks?: boolean;
   onChange: (v: number) => void;
 }) {
   const pad = (ITEM * (rows - 1)) / 2;
@@ -72,23 +76,32 @@ export function Wheel({
   return (
     <View style={[styles.root, { height: ITEM * rows }]}>
       <View pointerEvents="none" style={[styles.band, { top: pad }]} />
-      <Animated.FlatList
-        data={labels}
-        keyExtractor={(_, i) => String(i)}
-        renderItem={({ item, index }) => <Row label={item} index={index} y={y} />}
-        getItemLayout={(_, i) => ({ length: ITEM, offset: ITEM * i, index: i })}
-        initialScrollIndex={initialIndex}
-        contentContainerStyle={{ paddingVertical: pad }}
-        showsVerticalScrollIndicator={false}
-        snapToInterval={ITEM}
-        decelerationRate="fast"
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-        initialNumToRender={12}
-        maxToRenderPerBatch={20}
-        windowSize={5}
-        nestedScrollEnabled
-      />
+      <SheetScrollable>
+        <Animated.FlatList
+          data={labels}
+          keyExtractor={(_, i) => String(i)}
+          renderItem={({ item, index }) => (
+            <Row
+              label={item}
+              index={index}
+              y={y}
+              tick={ticks ? tickSize(Math.round((min + index * step) / step)) : undefined}
+            />
+          )}
+          getItemLayout={(_, i) => ({ length: ITEM, offset: ITEM * i, index: i })}
+          initialScrollIndex={initialIndex}
+          contentContainerStyle={{ paddingVertical: pad }}
+          showsVerticalScrollIndicator={false}
+          snapToInterval={ITEM}
+          decelerationRate="fast"
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          initialNumToRender={12}
+          maxToRenderPerBatch={20}
+          windowSize={5}
+          nestedScrollEnabled
+        />
+      </SheetScrollable>
       <View pointerEvents="none" style={[styles.unitBox, { top: pad }]}>
         <Text variant="caption" style={styles.unit}>
           {unit}
@@ -98,14 +111,20 @@ export function Wheel({
   );
 }
 
+type Tick = 'major' | 'mid' | 'minor';
+const tickSize = (n: number): Tick => (n % 10 === 0 ? 'major' : n % 5 === 0 ? 'mid' : 'minor');
+const TICK_W: Record<Tick, number> = { major: 28, mid: 20, minor: 12 };
+
 const Row = memo(function Row({
   label,
   index,
   y,
+  tick,
 }: {
   label: string;
   index: number;
   y: SharedValue<number>;
+  tick?: Tick;
 }) {
   const style = useAnimatedStyle(() => {
     const d = Math.abs(y.get() / ITEM - index);
@@ -114,12 +133,28 @@ const Row = memo(function Row({
       transform: [{ scale: interpolate(d, [0, 1], [1, 0.8], Extrapolation.CLAMP) }],
     };
   });
+  // Marks keep their size and fade less, so the ruler reads along the whole wheel.
+  const markStyle = useAnimatedStyle(() => {
+    const d = Math.abs(y.get() / ITEM - index);
+    return { opacity: interpolate(d, [0, 3], [1, 0.4], Extrapolation.CLAMP) };
+  });
   return (
-    <Animated.View style={[styles.row, style]}>
-      <Text variant="title" style={styles.label}>
-        {label}
-      </Text>
-    </Animated.View>
+    <View style={styles.row}>
+      {tick && (
+        <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, markStyle]}>
+          {/* A mark on the value and a short one halfway to the next. */}
+          <View style={[styles.mark, styles.markLeft, styles[tick], { width: TICK_W[tick] }]} />
+          <View style={[styles.mark, styles.markRight, styles[tick], { width: TICK_W[tick] }]} />
+          <View style={[styles.mark, styles.half, styles.markLeft]} />
+          <View style={[styles.mark, styles.half, styles.markRight]} />
+        </Animated.View>
+      )}
+      <Animated.View style={style}>
+        <Text variant="title" style={styles.label}>
+          {label}
+        </Text>
+      </Animated.View>
+    </View>
   );
 });
 
@@ -137,4 +172,11 @@ const styles = StyleSheet.create({
   label: { color: colors.text, fontSize: fontSize.xl, fontWeight: '800' },
   unitBox: { position: 'absolute', right: 12, height: ITEM, justifyContent: 'center' },
   unit: { color: colors.textSecondary },
+  mark: { position: 'absolute', top: ITEM / 2 - 1, height: 2, borderRadius: 1 },
+  markLeft: { left: spacing.md },
+  markRight: { right: spacing.md + 24 },
+  half: { top: ITEM - 1, width: 8, backgroundColor: colors.textMuted },
+  major: { backgroundColor: colors.text },
+  mid: { backgroundColor: colors.textSecondary },
+  minor: { backgroundColor: colors.textMuted },
 });
