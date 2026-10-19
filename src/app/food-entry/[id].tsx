@@ -2,7 +2,6 @@ import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { useDialog } from '@/components/dialog';
 import {
   digits,
   KcalInput,
@@ -57,7 +56,6 @@ export default function FoodEntryScreen() {
  * the numbers can also be fixed by hand.
  */
 function EntryEditor({ entry }: { entry: FoodEntry }) {
-  const dialog = useDialog();
   const [name, setName] = useState(entry.name);
   const [meal, setMeal] = useState<Meal>(entry.meal ?? mealAt(entry.eatenAt));
   const [amount, setAmount] = useState(entry.grams ? fieldText(entry.grams) : '');
@@ -119,22 +117,10 @@ function EntryEditor({ entry }: { entry: FoodEntry }) {
     }
   };
 
-  const remove = () =>
-    dialog.show({
-      title: tr('Видалити запис?', 'Delete entry?'),
-      message: entry.name,
-      buttons: [
-        { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
-        {
-          text: tr('Видалити', 'Delete'),
-          style: 'destructive',
-          onPress: async () => {
-            await deleteFoodEntry(entry.id);
-            goBack();
-          },
-        },
-      ],
-    });
+  const remove = async () => {
+    await deleteFoodEntry(entry.id);
+    goBack();
+  };
 
   return (
     <Screen
@@ -201,7 +187,6 @@ function EntryEditor({ entry }: { entry: FoodEntry }) {
           />
         </Row>
       </Card>
-      {dialog.element}
     </Screen>
   );
 }

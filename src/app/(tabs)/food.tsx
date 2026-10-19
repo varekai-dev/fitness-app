@@ -83,25 +83,9 @@ export default function FoodScreen() {
     });
   };
 
-  const remove = (
-    id: number,
-    label: string,
-    close: () => void,
-    collapse: (then: () => void) => void,
-  ) =>
-    dialog.show({
-      title: tr('Видалити запис?', 'Delete entry?'),
-      message: label,
-      buttons: [
-        { text: tr('Скасувати', 'Cancel'), style: 'cancel', onPress: close },
-        {
-          text: tr('Видалити', 'Delete'),
-          style: 'destructive',
-          // The row folds away first, so the meal card shrinks along with it.
-          onPress: () => collapse(() => deleteFoodEntry(id)),
-        },
-      ],
-    });
+  // The row folds away first, so the meal card shrinks along with it.
+  const remove = (id: number, collapse: (then: () => void) => void) =>
+    collapse(() => deleteFoodEntry(id));
 
   const chartMax = Math.max(goal, ...days.map((d) => d.kcal));
 
@@ -208,7 +192,7 @@ export default function FoodScreen() {
                   <ListRow key={e.id}>
                     {(collapse) => (
                       <SwipeToDelete
-                        onDelete={(close) => remove(e.id, `${time} · ${e.name}`, close, collapse)}>
+                        onDelete={() => remove(e.id, collapse)}>
                         <Pressable
                           onPress={() =>
                             router.push({ pathname: '/food-entry/[id]', params: { id: e.id } })

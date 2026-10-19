@@ -4,7 +4,6 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { useDialog } from '@/components/dialog';
 import { GoalPulse, GrowBar, GrowColumn, ListRow } from '@/components/motion';
 import { TAB_BAR_FAB_SPACE, TabBarFab, useTabBarSpace } from '@/components/floating-tab-bar';
 import { SwipeToDelete } from '@/components/swipe-to-delete';
@@ -44,30 +43,10 @@ export default function WaterScreen() {
   const day = useToday();
   const now = useNow();
   const { data } = useDbQuery(() => loadWater(), [day]);
-  const dialog = useDialog();
   const [pouring, setPouring] = useState<(PourRequest & { editId?: number }) | null>(null);
 
   if (!data) return <Loading />;
   const { goal, todayEntries, todayMl, days, today, dayWindow } = data;
-
-  const remove = (
-    id: number,
-    label: string,
-    close: () => void,
-    collapse: (then: () => void) => void,
-  ) =>
-    dialog.show({
-      title: tr('Видалити запис?', 'Delete entry?'),
-      message: label,
-      buttons: [
-        { text: tr('Скасувати', 'Cancel'), style: 'cancel', onPress: close },
-        {
-          text: tr('Видалити', 'Delete'),
-          style: 'destructive',
-          onPress: () => collapse(() => deleteWater(id)),
-        },
-      ],
-    });
 
   const chartMax = Math.max(goal, ...days.map((d) => d.totalMl));
 
@@ -146,14 +125,7 @@ export default function WaterScreen() {
               <ListRow key={e.id} gap={SCREEN_GAP}>
                 {(collapse) => (
                   <SwipeToDelete
-                    onDelete={(close) =>
-                      remove(
-                        e.id,
-                        `${time} · ${formatVolume(e.amountMl)} ${VOLUME_UNIT}`,
-                        close,
-                        collapse,
-                      )
-                    }>
+                    onDelete={() => collapse(() => deleteWater(e.id))}>
                     <Card
                       onPress={() =>
                         setPouring({
@@ -196,7 +168,6 @@ export default function WaterScreen() {
             else drinkWater(ml);
           }}
         />
-        {dialog.element}
       </Screen>
       <TabBarFab
         label={tr(
