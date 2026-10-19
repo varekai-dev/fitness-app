@@ -6,6 +6,13 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useDialog } from '@/components/dialog';
 import { FoodPhotoScanner, type PhotoScan } from '@/components/food-photo-scanner';
+import {
+  KcalInput,
+  MacroInputRow,
+  NameInput,
+  type MacroInputKey,
+  type MacroInputValues,
+} from '@/components/food-card-inputs';
 import { MacroRow } from '@/components/macro-row';
 import { MealPicker } from '@/components/meal-picker';
 import {
@@ -692,13 +699,7 @@ function UnitSwitch({
   );
 }
 
-const MACRO_FIELDS = [
-  { key: 'kcal', label: () => tr('Ккал', 'Kcal') },
-  { key: 'proteinG', label: () => tr('Білки, г', 'Protein, g') },
-  { key: 'fatG', label: () => tr('Жири, г', 'Fat, g') },
-  { key: 'carbsG', label: () => tr('Вуглеводи, г', 'Carbs, g') },
-] as const;
-type MacroKey = (typeof MACRO_FIELDS)[number]['key'];
+const MACRO_KEYS = ['kcal', 'proteinG', 'fatG', 'carbsG'] as const;
 
 /** A dish typed in by hand: its name and nutrition per 100 g (or ml). */
 function ManualCard({
@@ -712,7 +713,7 @@ function ManualCard({
 }) {
   const [name, setName] = useState(initialName);
   const [isDrink, setIsDrink] = useState(false);
-  const [values, setValues] = useState<Record<MacroKey, string>>({
+  const [values, setValues] = useState<MacroInputValues>({
     kcal: '',
     proteinG: '',
     fatG: '',
@@ -720,15 +721,13 @@ function ManualCard({
   });
   const [saving, setSaving] = useState(false);
   const parsed = Object.fromEntries(
-    MACRO_FIELDS.map(({ key }) => [key, parseDecimal(values[key]) ?? 0]),
-  ) as Record<MacroKey, number>;
+    MACRO_KEYS.map((key) => [key, parseDecimal(values[key]) ?? 0]),
+  ) as Record<MacroInputKey, number>;
   // Calories are required; macros left empty count as zero.
   const valid =
     name.trim() !== '' &&
     parseDecimal(values.kcal) !== null &&
-    MACRO_FIELDS.every(
-      ({ key }) => values[key].trim() === '' || parseDecimal(values[key]) !== null,
-    );
+    MACRO_KEYS.every((key) => values[key].trim() === '' || parseDecimal(values[key]) !== null);
   const unit = amountUnit({ isDrink });
 
   const save = async () => {
@@ -743,35 +742,29 @@ function ManualCard({
 
   return (
     <Card style={styles.pending}>
-      <Field
-        label={tr('Назва', 'Name')}
-        value={name}
-        onChangeText={setName}
-        placeholder={tr('Напр. «Сирники»', 'E.g. “Pancakes”')}
-        autoFocus={!initialName}
-        maxLength={80}
-      />
       <Row style={styles.spaceBetween}>
-        <Text variant="body">
+        <View style={styles.flex}>
+          <NameInput
+            value={name}
+            onChangeText={setName}
+            placeholder={tr('Напр. «Сирники»', 'E.g. “Pancakes”')}
+            autoFocus={!initialName}
+          />
+        </View>
+        <Badge label={tr('Вручну', 'Manual')} tone="muted" />
+      </Row>
+      <Row style={styles.spaceBetween}>
+        <Text variant="muted">
           {tr('На', 'Per')} 100 {unit}
         </Text>
         <UnitSwitch isDrink={isDrink} onChange={setIsDrink} />
       </Row>
-      <View style={styles.macroGrid}>
-        {MACRO_FIELDS.map(({ key, label }) => (
-          <Field
-            key={key}
-            label={label()}
-            value={values[key]}
-            onChangeText={(t) => setValues({ ...values, [key]: t.replace(/[^\d.,]/g, '') })}
-            keyboardType="decimal-pad"
-            placeholder="0"
-            maxLength={6}
-            autoFocus={key === 'kcal' && !!initialName}
-            containerStyle={styles.macroField}
-          />
-        ))}
-      </View>
+      <KcalInput
+        value={values.kcal}
+        onChangeText={(t) => setValues({ ...values, kcal: t })}
+        autoFocus={!!initialName}
+      />
+      <MacroInputRow values={values} onChange={(key, t) => setValues({ ...values, [key]: t })} />
       <Row>
         <Button
           title={tr('Скасувати', 'Cancel')}
@@ -923,8 +916,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.glass,
   },
   healthLabel: { fontWeight: '700' },
-  macroGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  macroField: { flexBasis: '45%', flexGrow: 1 },
   amountInput: { textAlign: 'center', fontSize: fontSize.xl, fontWeight: '700' },
   amountUnit: { color: colors.textSecondary, minWidth: 28 },
   photoRow: { gap: spacing.md },

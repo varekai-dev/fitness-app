@@ -3,6 +3,13 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useDialog } from '@/components/dialog';
+import {
+  digits,
+  KcalInput,
+  MacroInputRow,
+  NameInput,
+  type MacroInputValues,
+} from '@/components/food-card-inputs';
 import { MealPicker } from '@/components/meal-picker';
 import {
   Button,
@@ -18,7 +25,7 @@ import {
 import { deleteFoodEntry, getFoodEntry, updateFoodEntry } from '@/db/food';
 import type { FoodEntry } from '@/db/schema';
 import { useDbQuery } from '@/hooks/use-db-query';
-import { formatGrams } from '@/lib/food';
+import { formatGrams, formatKcal } from '@/lib/food';
 import { tr } from '@/lib/i18n';
 import { mealAt, type Meal } from '@/lib/meals';
 import { parseDecimal } from '@/lib/metrics';
@@ -26,17 +33,10 @@ import { colors, fontSize, spacing } from '@/theme';
 
 const MAX_AMOUNT = 5000;
 
-const MACRO_FIELDS = [
-  { key: 'kcal', label: () => tr('Ккал', 'Kcal') },
-  { key: 'proteinG', label: () => tr('Білки, г', 'Protein, g') },
-  { key: 'fatG', label: () => tr('Жири, г', 'Fat, g') },
-  { key: 'carbsG', label: () => tr('Вуглеводи, г', 'Carbs, g') },
-] as const;
-type MacroKey = (typeof MACRO_FIELDS)[number]['key'];
+const MACRO_KEYS = ['kcal', 'proteinG', 'fatG', 'carbsG'] as const;
 
 /** A number for a field: whole above 10, one decimal below. */
 const fieldText = (n: number) => String(n >= 10 ? Math.round(n) : Math.round(n * 10) / 10);
-const digits = (t: string) => t.replace(/[^\d.,]/g, '');
 
 export default function FoodEntryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -61,7 +61,7 @@ function EntryEditor({ entry }: { entry: FoodEntry }) {
   const [name, setName] = useState(entry.name);
   const [meal, setMeal] = useState<Meal>(entry.meal ?? mealAt(entry.eatenAt));
   const [amount, setAmount] = useState(entry.grams ? fieldText(entry.grams) : '');
-  const [values, setValues] = useState<Record<MacroKey, string>>(() => ({
+  const [values, setValues] = useState<MacroInputValues>(() => ({
     kcal: fieldText(entry.kcal),
     proteinG: fieldText(entry.proteinG),
     fatG: fieldText(entry.fatG),
@@ -75,7 +75,12 @@ function EntryEditor({ entry }: { entry: FoodEntry }) {
   const valid =
     name.trim() !== '' &&
     amountValid &&
-    MACRO_FIELDS.every(({ key }) => parseDecimal(values[key]) !== null);
+    MACRO_KEYS.every((key) => parseDecimal(values[key]) !== null);
+
+  const kcal = parseDecimal(values.kcal);
+  const stepSize = unit === tr('мл', 'ml') ? 50 : 10;
+  const step = (delta: number) =>
+    changeAmount(String(Math.round(Math.min(Math.max((grams ?? 0) + delta, stepSize), MAX_AMOUNT))));
 
   const changeAmount = (text: string) => {
     setAmount(text);
@@ -137,38 +142,48 @@ function EntryEditor({ entry }: { entry: FoodEntry }) {
       mode="modal"
       headerRight={<CircleButton icon="trash-outline" onPress={remove} />}>
       <MealPicker meal={meal} onChange={setMeal} />
-      <Card>
-        <Field label={tr('Назва', 'Name')} value={name} onChangeText={setName} maxLength={80} />
-        {!!entry.grams && (
-          <Row style={styles.amountRow}>
-            <Field
-              label={tr('Кількість', 'Amount')}
-              value={amount}
-              onChangeText={(t) => changeAmount(digits(t))}
-              keyboardType="decimal-pad"
-              selectTextOnFocus
-              maxLength={6}
-              containerStyle={styles.flex}
-            />
-            <Text variant="heading" style={styles.unit}>
-              {unit}
+      <Card style={styles.card}>
+        <View>
+          <NameInput value={name} onChangeText={setName} />
+          {!!entry.grams && grams !== null && grams > 0 && kcal !== null && (
+            <Text variant="muted" style={styles.per100}>
+              {formatKcal((kcal / grams) * 100)} {tr('ккал', 'kcal')} / 100 {unit}
             </Text>
-          </Row>
-        )}
-        <View style={styles.macroGrid}>
-          {MACRO_FIELDS.map(({ key, label }) => (
-            <Field
-              key={key}
-              label={label()}
-              value={values[key]}
-              onChangeText={(t) => setValues({ ...values, [key]: digits(t) })}
-              keyboardType="decimal-pad"
-              selectTextOnFocus
-              maxLength={6}
-              containerStyle={styles.macroField}
-            />
-          ))}
+          )}
         </View>
+        <KcalInput value={values.kcal} onChangeText={(t) => setValues({ ...values, kcal: t })} />
+        <MacroInputRow values={values} onChange={(key, t) => setValues({ ...values, [key]: t })} />
+        {!!entry.grams && (
+          <>
+            <Text variant="body">{tr('Кількість', 'Amount')}</Text>
+            <Row style={styles.amountRow}>
+              <CircleButton
+                icon="remove"
+                size={40}
+                disabled={!grams || grams <= stepSize}
+                onPress={() => step(-stepSize)}
+              />
+              <Field
+                value={amount}
+                onChangeText={(t) => changeAmount(digits(t))}
+                keyboardType="decimal-pad"
+                selectTextOnFocus
+                maxLength={6}
+                containerStyle={styles.flex}
+                style={styles.amountInput}
+              />
+              <Text variant="heading" style={styles.unit}>
+                {unit}
+              </Text>
+              <CircleButton
+                icon="add"
+                size={40}
+                disabled={grams !== null && grams >= MAX_AMOUNT}
+                onPress={() => step(stepSize)}
+              />
+            </Row>
+          </>
+        )}
         <Row>
           <Button
             title={tr('Скасувати', 'Cancel')}
@@ -193,13 +208,9 @@ function EntryEditor({ entry }: { entry: FoodEntry }) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  amountRow: { alignItems: 'flex-end', gap: spacing.sm },
-  unit: {
-    color: colors.textSecondary,
-    fontSize: fontSize.lg,
-    minWidth: 28,
-    paddingBottom: spacing.md,
-  },
-  macroGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  macroField: { flexBasis: '45%', flexGrow: 1 },
+  card: { borderWidth: 1, borderColor: colors.accent },
+  per100: { marginTop: spacing.xs },
+  amountRow: { gap: spacing.sm },
+  amountInput: { textAlign: 'center', fontSize: fontSize.xl, fontWeight: '700' },
+  unit: { color: colors.textSecondary, minWidth: 28 },
 });
