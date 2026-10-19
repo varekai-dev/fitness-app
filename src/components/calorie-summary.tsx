@@ -44,6 +44,10 @@ export function CalorieSummary({
 
   return (
     <Card style={styles.card} onPress={onPress}>
+      {onPress && (
+        // The whole card opens the goal settings; the pencil says so.
+        <Ionicons name="pencil" size={16} color={colors.textMuted} style={styles.edit} />
+      )}
       <View style={styles.gauge}>
         <Svg width={SIZE} height={SIZE} style={styles.arc}>
           <Circle
@@ -115,6 +119,7 @@ export function CalorieSummary({
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   card: { alignItems: 'center', paddingTop: spacing.xl },
+  edit: { position: 'absolute', top: spacing.lg, right: spacing.lg },
   gauge: { width: SIZE, height: SIZE, alignItems: 'center', justifyContent: 'center' },
   // Starts the arc at the bottom left, so its opening faces down.
   arc: { position: 'absolute', transform: [{ rotate: '135deg' }] },

@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -80,6 +81,8 @@ export default function WaterScreen() {
           <CircleButton icon="settings-outline" onPress={() => router.push('/settings')} />
         }>
         <Card onPress={() => router.push('/settings/water')}>
+          {/* The whole card opens the goal settings; the pencil says so. */}
+          <Ionicons name="pencil" size={16} color={colors.textMuted} style={styles.edit} />
           <Row style={styles.hero}>
             <GoalPulse reached={goal > 0 && todayMl >= goal}>
               <WaterBottle
@@ -253,6 +256,7 @@ function WaterSummary({ todayMl, goal }: { todayMl: number; goal: number }) {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   hero: { gap: spacing.lg },
+  edit: { position: 'absolute', top: spacing.lg, right: spacing.lg },
   heroInfo: { flex: 1, gap: spacing.xs },
   amount: {
     color: colors.text,
