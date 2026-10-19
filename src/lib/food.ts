@@ -138,17 +138,30 @@ const PROTEIN_SHARE = 0.25;
 const MAX_PROTEIN_SHARE = 0.35;
 const FAT_SHARE = 0.3;
 
+/** Daily grams the user set by hand; a macro left out is worked out from the kcal goal. */
+export type MacroGoals = Partial<Omit<Macros, 'kcal'>>;
+export const MAX_MACRO_GOAL = 999;
+
 /**
  * Daily protein, fat and carbs for a kcal goal: protein by body weight and the
- * weight goal, fat at 30% of kcal, carbs the rest. Rounded to whole grams.
+ * weight goal, fat at 30% of kcal, carbs the rest. A macro in `custom` takes
+ * its value from there, and auto carbs fill what custom protein and fat leave.
+ * Rounded to whole grams.
  */
-export function macroTargets(kcal: number, weightKg: number | null, goal: WeightGoal): Macros {
-  const proteinG = Math.min(
-    weightKg ? weightKg * PROTEIN_PER_KG[goal] : (kcal * PROTEIN_SHARE) / 4,
-    (kcal * MAX_PROTEIN_SHARE) / 4,
-  );
-  const fatG = (kcal * FAT_SHARE) / 9;
-  const carbsG = Math.max(0, (kcal - proteinG * 4 - fatG * 9) / 4);
+export function macroTargets(
+  kcal: number,
+  weightKg: number | null,
+  goal: WeightGoal,
+  custom: MacroGoals = {},
+): Macros {
+  const proteinG =
+    custom.proteinG ??
+    Math.min(
+      weightKg ? weightKg * PROTEIN_PER_KG[goal] : (kcal * PROTEIN_SHARE) / 4,
+      (kcal * MAX_PROTEIN_SHARE) / 4,
+    );
+  const fatG = custom.fatG ?? (kcal * FAT_SHARE) / 9;
+  const carbsG = custom.carbsG ?? Math.max(0, (kcal - proteinG * 4 - fatG * 9) / 4);
   return {
     kcal,
     proteinG: Math.round(proteinG),

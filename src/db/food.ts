@@ -12,6 +12,7 @@ import {
   scaleNutrition,
   splitAmount,
   sumMacros,
+  type MacroGoals,
   type Macros,
 } from '@/lib/food';
 import {
@@ -70,6 +71,36 @@ export async function setKcalGoal(kcal: number) {
     .insert(settings)
     .values({ key: GOAL_KEY, value: String(kcal) })
     .onConflictDoUpdate({ target: settings.key, set: { value: String(kcal) } });
+}
+
+const MACRO_GOALS_KEY = 'macro_goals';
+
+/** The protein, fat and carbs the user set by hand; the rest follow the kcal goal. */
+export async function getMacroGoals(): Promise<MacroGoals> {
+  const row = await db.query.settings.findFirst({ where: eq(settings.key, MACRO_GOALS_KEY) });
+  try {
+    const parsed = row ? (JSON.parse(row.value) as Record<string, unknown>) : {};
+    const goals: MacroGoals = {};
+    for (const key of ['proteinG', 'fatG', 'carbsG'] as const) {
+      const value = parsed[key];
+      if (typeof value === 'number' && Number.isFinite(value) && value >= 0) goals[key] = value;
+    }
+    return goals;
+  } catch {
+    return {};
+  }
+}
+
+/** Sets one macro's daily grams, or with `null` hands it back to the kcal goal. */
+export async function setMacroGoal(macro: MacroKey, grams: number | null) {
+  const goals = await getMacroGoals();
+  if (grams === null) delete goals[macro];
+  else goals[macro] = grams;
+  const value = JSON.stringify(goals);
+  await db
+    .insert(settings)
+    .values({ key: MACRO_GOALS_KEY, value })
+    .onConflictDoUpdate({ target: settings.key, set: { value } });
 }
 
 const SHORTCUT_KEYS = {
@@ -407,12 +438,15 @@ async function previousMeals(day: number) {
   return previous;
 }
 
-/** Daily protein, fat and carbs for the kcal goal, from the profile's weight goal and latest weight. */
+/**
+ * Daily protein, fat and carbs: the ones set by hand, the rest for the kcal
+ * goal from the profile's weight goal and latest weight.
+ */
 async function nutritionTargets(kcalGoal: number) {
-  const { profile, latestWeight } = await loadProfile();
+  const [{ profile, latestWeight }, custom] = await Promise.all([loadProfile(), getMacroGoals()]);
   return {
     weightGoal: profile.goal,
-    targets: macroTargets(kcalGoal, latestWeight?.weightKg ?? null, profile.goal),
+    targets: macroTargets(kcalGoal, latestWeight?.weightKg ?? null, profile.goal, custom),
   };
 }
 

@@ -2,14 +2,31 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
-import { Card, Loading, Row, Screen, Text } from '@/components/ui';
-import { getFoodShortcuts, getKcalGoal, setFoodShortcut, setKcalGoal } from '@/db/food';
+import { MACROS } from '@/components/calorie-summary';
+import { Card, IconButton, Loading, Row, Screen, Text } from '@/components/ui';
+import {
+  getFoodShortcuts,
+  getKcalGoal,
+  getMacroGoals,
+  setFoodShortcut,
+  setKcalGoal,
+  setMacroGoal,
+} from '@/db/food';
 import { loadProfile } from '@/db/profile';
 import { useDbQuery } from '@/hooks/use-db-query';
-import { formatKcal, KCAL_GOAL_STEP, MAX_KCAL_GOAL, MIN_KCAL_GOAL } from '@/lib/food';
+import {
+  formatKcal,
+  KCAL_GOAL_STEP,
+  macroTargets,
+  MAX_KCAL_GOAL,
+  MAX_MACRO_GOAL,
+  MIN_KCAL_GOAL,
+  type MacroGoals,
+  type Macros,
+} from '@/lib/food';
 import { tr } from '@/lib/i18n';
 import { formatWeightDelta } from '@/lib/labels';
 import { formatNumber, formatWeight } from '@/lib/metrics';
@@ -43,13 +60,13 @@ const PLAIN_SCALE: CalorieScale = {
  */
 export default function FoodSettingsScreen() {
   const { data } = useDbQuery(() =>
-    Promise.all([getKcalGoal(), loadProfile(), getFoodShortcuts()]),
+    Promise.all([getKcalGoal(), loadProfile(), getFoodShortcuts(), getMacroGoals()]),
   );
   // The value under the finger while the scale is dragged, saved on release. It
   // stays shown only until the saved goal moves away from the one it started at.
   const [draft, setDraft] = useState<{ value: number; from: number } | null>(null);
   if (!data) return <Loading />;
-  const [savedGoal, { profile, latestWeight }, shortcuts] = data;
+  const [savedGoal, { profile, latestWeight }, shortcuts, macroGoals] = data;
   const goal = draft?.from === savedGoal ? draft.value : savedGoal;
   const weightKg = latestWeight?.weightKg;
   const rec = recommendCalories(profile, weightKg);
@@ -66,6 +83,11 @@ export default function FoodSettingsScreen() {
         profile={<ProfileRow profile={profile} weightKg={weightKg} age={rec?.age} />}
         onDrag={(value) => setDraft({ value, from: savedGoal })}
         onRelease={(value) => (value === savedGoal ? setDraft(null) : setKcalGoal(value))}
+      />
+      <MacroGoalsCard
+        goal={goal}
+        targets={macroTargets(goal, weightKg ?? null, profile.goal, macroGoals)}
+        custom={macroGoals}
       />
       <Card style={styles.shortcuts}>
         <ShortcutRow
@@ -110,6 +132,137 @@ export default function FoodSettingsScreen() {
         />
       </Card>
     </Screen>
+  );
+}
+
+const MACRO_STEP = 5;
+const G = tr('г', 'g');
+
+const clampMacro = (grams: number) => Math.min(Math.max(Math.round(grams), 0), MAX_MACRO_GOAL);
+
+/**
+ * Daily protein, fat and carbs. Each follows the kcal goal until set by hand;
+ * auto carbs fill what protein and fat leave of it.
+ */
+function MacroGoalsCard({
+  goal,
+  targets,
+  custom,
+}: {
+  goal: number;
+  targets: Macros;
+  custom: MacroGoals;
+}) {
+  const total = MACROS.reduce((s, m) => s + targets[m.key] * m.kcalPerG, 0);
+  // Rounding to whole grams alone moves the sum by a few kcal.
+  const off = Math.abs(total - goal) > 25;
+  return (
+    <Card style={styles.macroCard}>
+      <Text variant="overline">{tr('БЖВ на день', 'Daily macros')}</Text>
+      {MACROS.map((m) => (
+        <MacroGoalRow
+          key={m.key}
+          label={m.label}
+          color={m.color}
+          kcalPerG={m.kcalPerG}
+          grams={targets[m.key]}
+          custom={custom[m.key] !== undefined}
+          onChange={(grams) => setMacroGoal(m.key, grams)}
+        />
+      ))}
+      <Text variant="muted" style={[styles.macroTotal, off && { color: colors.warning }]}>
+        {off
+          ? tr(
+              `Разом ${formatKcal(total)} ${KCAL}, а норма ${formatKcal(goal)} ${KCAL}`,
+              `${formatKcal(total)} ${KCAL} in all, the goal is ${formatKcal(goal)} ${KCAL}`,
+            )
+          : tr(
+              'Не змінене рахується з норми калорій.',
+              'What you leave alone follows the kcal goal.',
+            )}
+      </Text>
+    </Card>
+  );
+}
+
+/** One macro's daily grams: typed in or stepped by 5 g; cleared, it goes back to auto. */
+function MacroGoalRow({
+  label,
+  color,
+  kcalPerG,
+  grams,
+  custom,
+  onChange,
+}: {
+  label: string;
+  color: string;
+  kcalPerG: number;
+  grams: number;
+  custom: boolean;
+  onChange: (grams: number | null) => void;
+}) {
+  // The text being typed; the saved value shows otherwise.
+  const [text, setText] = useState<string | null>(null);
+  const commit = () => {
+    if (text === null) return;
+    setText(null);
+    const value = Number(text.replace(',', '.'));
+    if (!text.trim()) onChange(null);
+    else if (Number.isFinite(value) && clampMacro(value) !== grams) onChange(clampMacro(value));
+  };
+  const step = (dir: 1 | -1) =>
+    onChange(
+      clampMacro(
+        (dir > 0 ? Math.floor(grams / MACRO_STEP) + 1 : Math.ceil(grams / MACRO_STEP) - 1) *
+          MACRO_STEP,
+      ),
+    );
+
+  return (
+    <Row style={styles.macroRow}>
+      <View style={[styles.macroDot, { backgroundColor: color }]} />
+      <View style={styles.flex}>
+        <Text variant="body">{label}</Text>
+        <Row style={styles.macroMeta}>
+          <Text variant="muted">
+            {formatKcal(grams * kcalPerG)} {KCAL} ·{' '}
+          </Text>
+          {custom ? (
+            <Pressable hitSlop={8} onPress={() => onChange(null)}>
+              {({ pressed }) => (
+                <Text variant="muted" style={[styles.macroReset, pressed && styles.pressed]}>
+                  {tr('повернути авто', 'back to auto')}
+                </Text>
+              )}
+            </Pressable>
+          ) : (
+            <Text variant="muted">{tr('авто', 'auto')}</Text>
+          )}
+        </Row>
+      </View>
+      <IconButton icon="remove" size={20} disabled={grams <= 0} onPress={() => step(-1)} />
+      <View style={[styles.macroInput, custom && { borderColor: color }]}>
+        <TextInput
+          value={text ?? String(grams)}
+          onChangeText={setText}
+          onFocus={() => setText(String(grams))}
+          onBlur={commit}
+          onSubmitEditing={commit}
+          keyboardType="number-pad"
+          returnKeyType="done"
+          selectTextOnFocus
+          maxLength={3}
+          style={styles.macroValue}
+        />
+        <Text variant="muted">{G}</Text>
+      </View>
+      <IconButton
+        icon="add"
+        size={20}
+        disabled={grams >= MAX_MACRO_GOAL}
+        onPress={() => step(1)}
+      />
+    </Row>
   );
 }
 
@@ -563,6 +716,33 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   goalCard: { gap: spacing.lg },
   shortcuts: { gap: spacing.lg },
+  macroCard: { gap: spacing.lg },
+  macroRow: { gap: spacing.sm },
+  macroDot: { width: 10, height: 10, borderRadius: 5, marginRight: spacing.xs },
+  macroMeta: { flexWrap: 'wrap' },
+  macroReset: { color: colors.accent },
+  macroInput: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 2,
+    minWidth: 76,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+    backgroundColor: colors.glass,
+  },
+  macroValue: {
+    color: colors.text,
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+    textAlign: 'right',
+    padding: 0,
+  },
+  macroTotal: { textAlign: 'center' },
   shortcut: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   goalValue: { alignItems: 'center', gap: spacing.xs },
   goalUnit: { color: colors.textSecondary, fontSize: fontSize.md, fontWeight: '600' },
