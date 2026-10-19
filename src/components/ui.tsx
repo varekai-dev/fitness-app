@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { useRef, type ComponentProps, type ReactNode } from 'react';
+import { useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -296,13 +296,27 @@ export function Field({
   style?: StyleProp<TextStyle>;
   containerStyle?: StyleProp<ViewStyle>;
 }) {
+  const [focused, setFocused] = useState(false);
   return (
     <View style={[styles.field, containerStyle]}>
       {label && <Text variant="caption">{label}</Text>}
       <TextInput
         placeholderTextColor={colors.textMuted}
-        style={[styles.input, props.multiline && styles.inputMultiline, style]}
+        style={[
+          styles.input,
+          props.multiline && styles.inputMultiline,
+          focused && styles.inputFocused,
+          style,
+        ]}
         {...props}
+        onFocus={(e) => {
+          setFocused(true);
+          props.onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          setFocused(false);
+          props.onBlur?.(e);
+        }}
       />
     </View>
   );
@@ -541,6 +555,7 @@ const styles = StyleSheet.create({
   buttonTextSmall: { fontSize: fontSize.sm },
   iconButton: { padding: spacing.xs },
   field: { gap: spacing.xs },
+  inputFocused: { borderWidth: 1, borderColor: colors.accent },
   input: {
     backgroundColor: colors.glass,
     borderWidth: StyleSheet.hairlineWidth,

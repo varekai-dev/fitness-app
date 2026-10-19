@@ -1,5 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
+import { useRef, useState } from 'react';
+import { Pressable, StyleSheet, TextInput, type TextInputProps } from 'react-native';
 
 import { MACROS } from '@/components/calorie-summary';
 import { Row, Text } from '@/components/ui';
@@ -18,15 +19,24 @@ export const digits = (t: string) => t.replace(/[^\d.,]/g, '');
 
 /** The dish name as the card's heading, with a pencil to show it can be changed. */
 export function NameInput(props: TextInputProps) {
+  const [focused, setFocused] = useState(false);
   return (
-    <Row style={styles.name}>
+    <Row style={[styles.name, focused && styles.focusedLine]}>
       <TextInput
         placeholderTextColor={colors.textMuted}
         maxLength={80}
         style={styles.nameInput}
         {...props}
+        onFocus={(e) => {
+          setFocused(true);
+          props.onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          setFocused(false);
+          props.onBlur?.(e);
+        }}
       />
-      <Ionicons name="pencil" size={16} color={colors.textMuted} />
+      <Ionicons name="pencil" size={16} color={focused ? colors.accent : colors.textMuted} />
     </Row>
   );
 }
@@ -41,9 +51,17 @@ export function KcalInput({
   onChangeText: (text: string) => void;
   autoFocus?: boolean;
 }) {
+  const [focused, setFocused] = useState(false);
+  const input = useRef<TextInput>(null);
+  // The whole row focuses the field, not just its digits.
   return (
-    <Row style={styles.kcal}>
+    <Pressable
+      onPress={() => input.current?.focus()}
+      style={[styles.kcal, focused && styles.focusedLine]}>
       <TextInput
+        ref={input}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
         value={value}
         onChangeText={(t) => onChangeText(digits(t))}
         keyboardType="decimal-pad"
@@ -55,7 +73,7 @@ export function KcalInput({
         style={styles.kcalInput}
       />
       <Text style={styles.kcalUnit}>{tr('ккал', 'kcal')}</Text>
-    </Row>
+    </Pressable>
   );
 }
 
@@ -70,34 +88,65 @@ export function MacroInputRow({
   return (
     <Row style={styles.macros}>
       {MACROS.map((m) => (
-        // The macro's colour at ~12% opacity, as on the AI card.
-        <View key={m.key} style={[styles.macro, { backgroundColor: `${m.color}1F` }]}>
-          <Row style={styles.macroValue}>
-            <TextInput
-              value={values[m.key]}
-              onChangeText={(t) => onChange(m.key, digits(t))}
-              keyboardType="decimal-pad"
-              placeholder="0"
-              placeholderTextColor={`${m.color}80`}
-              selectTextOnFocus
-              maxLength={6}
-              style={[styles.macroInput, { color: m.color }]}
-            />
-            <Text variant="heading" style={{ color: m.color }}>
-              {tr('г', 'g')}
-            </Text>
-          </Row>
-          <Text variant="muted">{m.label}</Text>
-        </View>
+        <MacroTile
+          key={m.key}
+          label={m.label}
+          color={m.color}
+          value={values[m.key]}
+          onChangeText={(t) => onChange(m.key, t)}
+        />
       ))}
     </Row>
   );
 }
 
+/** One macro's grams field on a tile in its colour; the whole tile focuses it. */
+function MacroTile({
+  label,
+  color,
+  value,
+  onChangeText,
+}: {
+  label: string;
+  color: string;
+  value: string;
+  onChangeText: (text: string) => void;
+}) {
+  const [focused, setFocused] = useState(false);
+  const input = useRef<TextInput>(null);
+  return (
+    <Pressable
+      onPress={() => input.current?.focus()}
+      // The macro's colour at ~12% opacity, as on the AI card; outlined in it while typed into.
+      style={[styles.macro, { backgroundColor: `${color}1F` }, focused && { borderColor: color }]}>
+      <Row style={styles.macroValue}>
+        <TextInput
+          ref={input}
+          value={value}
+          onChangeText={(t) => onChangeText(digits(t))}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          keyboardType="decimal-pad"
+          placeholder="0"
+          placeholderTextColor={`${color}80`}
+          selectTextOnFocus
+          maxLength={6}
+          style={[styles.macroInput, { color }]}
+        />
+        <Text variant="heading" style={{ color }}>
+          {tr('г', 'g')}
+        </Text>
+      </Row>
+      <Text variant="muted">{label}</Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
+  focusedLine: { borderBottomColor: colors.accent },
   name: {
     gap: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 1,
     borderBottomColor: colors.glassBorder,
   },
   nameInput: {
@@ -108,7 +157,15 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     paddingHorizontal: 0,
   },
-  kcal: { alignItems: 'baseline', gap: spacing.xs },
+  kcal: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    alignSelf: 'flex-start',
+    gap: spacing.xs,
+    paddingBottom: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: 'transparent',
+  },
   kcalInput: {
     color: colors.text,
     fontSize: fontSize.xxl + 4,
@@ -122,6 +179,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.sm,
     borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   macroValue: { alignItems: 'baseline', gap: 2 },
   macroInput: {
