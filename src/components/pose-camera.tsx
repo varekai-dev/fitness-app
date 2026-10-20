@@ -29,12 +29,13 @@ const TIMERS = [0, 3, 10] as const;
 /**
  * Where the outline sits in the frame: its size (1 fits a full-height person)
  * and how far it is moved down, as a share of the frame height. One for all
- * poses, since the phone stays in the same spot for each of them.
+ * poses, since the phone stays in the same spot for each of them. `mirrored`
+ * turns the side outline to face the other way.
  */
-type Guide = { visible: boolean; scale: number; y: number };
+type Guide = { visible: boolean; scale: number; y: number; mirrored: boolean };
 
 const GUIDE_KEY = 'progressPhotoGuide';
-const DEFAULT_GUIDE: Guide = { visible: true, scale: 1, y: 0 };
+const DEFAULT_GUIDE: Guide = { visible: true, scale: 1, y: 0, mirrored: false };
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 3;
 const MAX_Y = 1;
@@ -224,6 +225,16 @@ function CameraContent({
           </Text>
         </View>
         <View style={styles.headerButtons}>
+          {pose === 'side' && guide.visible && (
+            <CircleButton
+              icon="swap-horizontal"
+              color={guide.mirrored ? colors.accent : colors.text}
+              onPress={() => {
+                updateGuide({ ...guide, mirrored: !guide.mirrored });
+              }}
+              background="rgba(0, 0, 0, 0.45)"
+            />
+          )}
           <CircleButton
             icon={guide.visible ? 'body' : 'body-outline'}
             color={guide.visible ? colors.accent : colors.text}
@@ -358,7 +369,12 @@ function PoseOutline({
               <Line x1="50%" y1="0" x2="50%" y2="100%" stroke="rgba(255, 255, 255, 0.25)" />
             </Svg>
             <Animated.View style={[StyleSheet.absoluteFill, style]}>
-              <Svg viewBox="0 0 300 400" style={StyleSheet.absoluteFill}>
+              <Svg
+                viewBox="0 0 300 400"
+                style={[
+                  StyleSheet.absoluteFill,
+                  pose === 'side' && guide.mirrored && styles.mirrored,
+                ]}>
                 {OUTLINES[sex][pose].map((d) => (
                   // About the same line width however far the outline is scaled.
                   <Path key={d} d={d} {...OUTLINE} strokeWidth={2.5 / guide.scale} />
@@ -438,4 +454,5 @@ const styles = StyleSheet.create({
   shutterInner: { width: 60, height: 60, borderRadius: 30, backgroundColor: colors.text },
   shutterStop: { width: 28, height: 28, borderRadius: radius.sm, backgroundColor: colors.danger },
   dim: { opacity: 0.6 },
+  mirrored: { transform: [{ scaleX: -1 }] },
 });
