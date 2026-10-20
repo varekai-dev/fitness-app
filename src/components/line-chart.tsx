@@ -11,14 +11,17 @@ const PAD = { top: 12, right: 12, bottom: 24, left: 44 };
 
 /**
  * Minimal time-series line chart. X is a timestamp, Y the metric.
- * Highlighted points (PRs) are drawn in the accent colour.
+ * Highlighted points (PRs) are drawn in the accent colour. With a `trend`, the
+ * points fade to dots and the trend is the line.
  */
 export function LineChart({
   points,
+  trend,
   formatY,
   formatX,
 }: {
   points: ChartPoint[];
+  trend?: ChartPoint[];
   formatY: (v: number) => string;
   formatX: (v: number) => string;
 }) {
@@ -28,7 +31,7 @@ export function LineChart({
   if (points.length === 0) return null;
 
   const xs = points.map((p) => p.x);
-  const ys = points.map((p) => p.y);
+  const ys = [...points, ...(trend ?? [])].map((p) => p.y);
   const [minX, maxX] = [Math.min(...xs), Math.max(...xs)];
   let [minY, maxY] = [Math.min(...ys), Math.max(...ys)];
   if (minY === maxY) {
@@ -40,7 +43,7 @@ export function LineChart({
   const sx = (x: number) =>
     PAD.left + (maxX === minX ? innerW / 2 : ((x - minX) / (maxX - minX)) * innerW);
   const sy = (y: number) => PAD.top + innerH - ((y - minY) / (maxY - minY)) * innerH;
-  const coords = points.map((p) => `${sx(p.x)},${sy(p.y)}`).join(' ');
+  const line = (list: ChartPoint[]) => list.map((p) => `${sx(p.x)},${sy(p.y)}`).join(' ');
 
   return (
     <View style={styles.container} onLayout={onLayout}>
@@ -81,26 +84,52 @@ export function LineChart({
               {formatX(maxX)}
             </SvgText>
           )}
-          {points.length > 1 && (
-            <Polyline
-              points={coords}
-              fill="none"
-              stroke={colors.accent}
-              strokeWidth={2.5}
-              strokeLinejoin="round"
-            />
+          {trend ? (
+            <>
+              {points.map((p) => (
+                <Circle
+                  key={p.x}
+                  cx={sx(p.x)}
+                  cy={sy(p.y)}
+                  r={3.5}
+                  fill={colors.textSecondary}
+                />
+              ))}
+              {trend.length > 1 && (
+                <Polyline
+                  points={line(trend)}
+                  fill="none"
+                  stroke={colors.accent}
+                  strokeWidth={2.5}
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                />
+              )}
+            </>
+          ) : (
+            <>
+              {points.length > 1 && (
+                <Polyline
+                  points={line(points)}
+                  fill="none"
+                  stroke={colors.accent}
+                  strokeWidth={2.5}
+                  strokeLinejoin="round"
+                />
+              )}
+              {points.map((p) => (
+                <Circle
+                  key={p.x}
+                  cx={sx(p.x)}
+                  cy={sy(p.y)}
+                  r={p.highlight ? 5 : 3.5}
+                  fill={p.highlight ? colors.text : colors.accent}
+                  stroke={colors.accent}
+                  strokeWidth={p.highlight ? 2.5 : 0}
+                />
+              ))}
+            </>
           )}
-          {points.map((p) => (
-            <Circle
-              key={p.x}
-              cx={sx(p.x)}
-              cy={sy(p.y)}
-              r={p.highlight ? 5 : 3.5}
-              fill={p.highlight ? colors.text : colors.accent}
-              stroke={colors.accent}
-              strokeWidth={p.highlight ? 2.5 : 0}
-            />
-          ))}
         </Svg>
       )}
     </View>

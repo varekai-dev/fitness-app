@@ -23,12 +23,14 @@ export async function getProfile(): Promise<Profile> {
   const rows = await db.query.settings.findMany({ where: like(settings.key, `${PREFIX}%`) });
   const get = (key: ProfileKey) => rows.find((r) => r.key === PREFIX + key)?.value;
   const height = Number(get('heightCm'));
+  const target = Number(get('targetWeightKg'));
   return {
     heightCm: Number.isFinite(height) && height > 0 ? height : null,
     birthDate: get('birthDate') ?? null,
     sex: oneOf<Sex>(SEXES, get('sex')) ?? null,
     activity: oneOf<ActivityLevel>(ACTIVITY_LEVELS, get('activity')) ?? 'moderate',
     goal: oneOf<WeightGoal>(WEIGHT_GOALS, get('goal')) ?? 'maintain',
+    targetWeightKg: Number.isFinite(target) && target > 0 ? target : null,
   };
 }
 

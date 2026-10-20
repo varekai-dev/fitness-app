@@ -10,6 +10,7 @@ import {
   Button,
   Card,
   EmptyState,
+  IconButton,
   Loading,
   Row,
   Screen,
@@ -19,6 +20,7 @@ import {
 } from '@/components/ui';
 import { WeightRulerModal } from '@/components/weight-ruler';
 import { deleteBodyWeight, listBodyWeights, saveBodyWeight } from '@/db/body-weight';
+import { getProfile, setProfileField } from '@/db/profile';
 import { listProgressPhotos } from '@/db/progress-photos';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { tr } from '@/lib/i18n';
@@ -26,25 +28,41 @@ import { formatDate, formatShortDate, formatWeightDelta } from '@/lib/labels';
 import { formatNumber, formatWeight } from '@/lib/metrics';
 import { photoUri } from '@/lib/progress-photos';
 import { displayToKg, kgToDisplay, unitSystem, WEIGHT_UNIT } from '@/lib/units';
+import { forecastGoal, weeklyRate, weightTrend, type GoalForecast } from '@/lib/weight-trend';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
-const DAY_MS = 24 * 60 * 60 * 1000;
 // Where the ruler opens before the first weigh-in, in the display unit.
 const START_WEIGHT = unitSystem === 'imperial' ? 160 : 70;
 
 export default function BodyWeightScreen() {
   const { data } = useDbQuery(listBodyWeights);
   const { data: photos } = useDbQuery(listProgressPhotos);
+  const { data: profile } = useDbQuery(getProfile);
   // The weight the ruler opens on, in the display unit; null keeps it closed.
   const [editing, setEditing] = useState<number | null>(null);
+  const [editingTarget, setEditingTarget] = useState<number | null>(null);
   const dialog = useDialog();
 
-  if (!data) return <Loading />;
+  if (!data || !profile) return <Loading />;
   const latest = data.at(-1);
+  const trend = weightTrend(data);
+  const trendNow = trend.at(-1);
+  const rate = weeklyRate(data);
+  const target = profile.targetWeightKg;
 
   const save = (value: number) => {
     saveBodyWeight(displayToKg(value));
     setEditing(null);
+  };
+
+  const saveTarget = (value: number) => {
+    setProfileField('targetWeightKg', displayToKg(value));
+    setEditingTarget(null);
+  };
+
+  const editTarget = () => {
+    const start = target ?? trendNow;
+    setEditingTarget(start ? Number(formatWeight(start, 1)) : START_WEIGHT);
   };
 
   const remove = (id: number, label: string) =>
@@ -61,9 +79,6 @@ export default function BodyWeightScreen() {
       ],
     });
 
-  // Change over the last 30 days, measured from the earliest entry inside that window.
-  const monthAgo = latest ? latest.measuredAt - 30 * DAY_MS : 0;
-  const monthStart = data.find((w) => w.measuredAt >= monthAgo);
   const first = data[0];
 
   return (
@@ -107,24 +122,35 @@ export default function BodyWeightScreen() {
         <>
           <Row style={styles.stats}>
             <StatTile
-              icon="scale-outline"
-              value={formatWeight(latest!.weightKg, 1)}
+              icon="analytics-outline"
+              value={formatWeight(trendNow!, 1)}
               unit={WEIGHT_UNIT}
-              label={tr('Зараз', 'Now')}
+              label={tr('Тренд', 'Trend')}
             />
             <StatTile
-              icon="calendar"
-              value={formatWeightDelta(latest!.weightKg - monthStart!.weightKg)}
-              unit={WEIGHT_UNIT}
-              label={tr('За 30 днів', '30 days')}
+              icon="speedometer-outline"
+              value={rate === null ? '—' : formatWeightDelta(rate)}
+              unit={rate === null ? undefined : WEIGHT_UNIT}
+              label={tr('За тиждень', 'Per week')}
             />
             <StatTile
               icon="trending-up"
-              value={formatWeightDelta(latest!.weightKg - first.weightKg)}
+              value={formatWeightDelta(trendNow! - first.weightKg)}
               unit={WEIGHT_UNIT}
               label={tr('Від початку', 'Since start')}
             />
           </Row>
+
+          <GoalCard
+            target={target}
+            trendKg={trendNow!}
+            rate={rate}
+            forecast={
+              target === null ? null : forecastGoal(trendNow!, target, rate, latest!.measuredAt)
+            }
+            onEdit={editTarget}
+            onClear={() => setProfileField('targetWeightKg', null)}
+          />
 
           {data.length === 1 ? (
             <Text variant="muted" style={styles.chartHint}>
@@ -140,9 +166,16 @@ export default function BodyWeightScreen() {
               </Text>
               <LineChart
                 points={data.map((w) => ({ x: w.measuredAt, y: kgToDisplay(w.weightKg) }))}
+                trend={data.map((w, i) => ({ x: w.measuredAt, y: kgToDisplay(trend[i]) }))}
                 formatY={(v) => formatNumber(v, 1)}
                 formatX={formatShortDate}
               />
+              <Text variant="muted">
+                {tr(
+                  'Лінія — згладжений тренд: денні коливання води й солі в ньому майже не видно.',
+                  'The line is the smoothed trend: daily swings of water and salt barely show in it.',
+                )}
+              </Text>
             </Card>
           )}
 
@@ -171,8 +204,94 @@ export default function BodyWeightScreen() {
         </>
       )}
       <WeightRulerModal value={editing} onClose={() => setEditing(null)} onSave={save} />
+      <WeightRulerModal
+        value={editingTarget}
+        title={tr('Цільова вага', 'Target weight')}
+        onClose={() => setEditingTarget(null)}
+        onSave={saveTarget}
+      />
       {dialog.element}
     </Screen>
+  );
+}
+
+/** The target weight and when the trend gets there at the current pace. */
+function GoalCard({
+  target,
+  trendKg,
+  rate,
+  forecast,
+  onEdit,
+  onClear,
+}: {
+  target: number | null;
+  trendKg: number;
+  rate: number | null;
+  forecast: GoalForecast | null;
+  onEdit: () => void;
+  onClear: () => void;
+}) {
+  if (target === null || !forecast) {
+    return (
+      <Card onPress={onEdit}>
+        <Row style={styles.spaceBetween}>
+          <Row style={styles.flex}>
+            <Ionicons name="flag-outline" size={22} color={colors.accent} />
+            <View style={styles.flex}>
+              <Text variant="heading">{tr('Цільова вага', 'Target weight')}</Text>
+              <Text variant="muted">
+                {tr(
+                  'Задай ціль, і побачиш, коли досягнеш її за поточним темпом',
+                  'Set a target to see when you reach it at the current pace',
+                )}
+              </Text>
+            </View>
+          </Row>
+          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+        </Row>
+      </Card>
+    );
+  }
+
+  const pace = rate === null ? '' : `${formatWeightDelta(rate)} ${WEIGHT_UNIT}`;
+  const hint = {
+    reached: tr('Ціль досягнута, тепер утримуй вагу.', 'Target reached, now hold the weight.'),
+    unknown: tr(
+      'Прогноз з’явиться, коли зважування охоплять хоча б тиждень.',
+      'The forecast appears once your weigh-ins span at least a week.',
+    ),
+    stalled: tr(
+      `Темп ${pace}/тиж зараз не веде до цілі.`,
+      `At ${pace}/week the trend is not heading to the target.`,
+    ),
+    far: tr(`За темпу ${pace}/тиж — більше ніж 2 роки.`, `At ${pace}/week, over 2 years away.`),
+    date: tr(`За поточного темпу ${pace}/тиж`, `At the current pace of ${pace}/week`),
+  }[forecast.kind];
+
+  return (
+    <Card onPress={onEdit}>
+      <Row style={styles.spaceBetween}>
+        <Row style={styles.flex}>
+          <Ionicons
+            name={forecast.kind === 'reached' ? 'flag' : 'flag-outline'}
+            size={22}
+            color={colors.accent}
+          />
+          <View style={styles.flex}>
+            <Text variant="caption">
+              {tr('Ціль', 'Target')} {formatWeight(target, 1)} {WEIGHT_UNIT}
+              {forecast.kind !== 'reached' &&
+                ` · ${tr('залишилось', 'to go')} ${formatWeightDelta(target - trendKg)} ${WEIGHT_UNIT}`}
+            </Text>
+            {forecast.kind === 'date' && (
+              <Text variant="heading">~ {formatDate(forecast.at)}</Text>
+            )}
+            <Text variant={forecast.kind === 'date' ? 'muted' : 'body'}>{hint}</Text>
+          </View>
+        </Row>
+        <IconButton icon="close" size={20} color={colors.textMuted} onPress={onClear} />
+      </Row>
+    </Card>
   );
 }
 

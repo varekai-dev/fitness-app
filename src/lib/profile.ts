@@ -67,6 +67,8 @@ export type Profile = {
   sex: Sex | null;
   activity: ActivityLevel;
   goal: WeightGoal;
+  /** The body weight to reach, for the forecast on the body weight screen. */
+  targetWeightKg: number | null;
 };
 
 export const MIN_AGE = 10;

@@ -98,10 +98,13 @@ export function WeightRuler({
         initialScrollIndex={Math.floor(initialStep / SUB)}
         contentContainerStyle={{ paddingHorizontal: width / 2 }}
         // initialScrollIndex lands on the whole unit; this moves on to the exact mark.
+        // On Android the initial index is applied after layout, so wait a frame.
         onLayout={() => {
           if (positioned.current) return;
           positioned.current = true;
-          ref.current?.scrollToOffset({ offset: initialStep * GAP, animated: false });
+          requestAnimationFrame(() =>
+            ref.current?.scrollToOffset({ offset: initialStep * GAP, animated: false }),
+          );
         }}
         showsHorizontalScrollIndicator={false}
         snapToInterval={GAP}
@@ -146,10 +149,12 @@ const Segment = memo(function Segment({ unit, last }: { unit: number; last: bool
  */
 export function WeightRulerModal({
   value,
+  title = tr('Вага', 'Weight'),
   onClose,
   onSave,
 }: {
   value: number | null;
+  title?: string;
   onClose: () => void;
   /** In the display unit. */
   onSave: (v: number) => void;
@@ -160,19 +165,27 @@ export function WeightRulerModal({
 
   return (
     <BottomSheet visible={value !== null} onClose={onClose}>
-      {shown !== null && <SheetContent initial={shown} onSave={onSave} />}
+      {shown !== null && <SheetContent initial={shown} title={title} onSave={onSave} />}
     </BottomSheet>
   );
 }
 
-function SheetContent({ initial, onSave }: { initial: number; onSave: (v: number) => void }) {
+function SheetContent({
+  initial,
+  title,
+  onSave,
+}: {
+  initial: number;
+  title: string;
+  onSave: (v: number) => void;
+}) {
   const [current, setCurrent] = useState(() => toValue(toStep(initial)));
   const delta = Math.round((current - initial) * 10) / 10;
 
   return (
     <View style={styles.content}>
       <Text variant="title" style={styles.title}>
-        {tr('Вага', 'Weight')}
+        {title}
       </Text>
 
       <View style={styles.readout}>
