@@ -37,6 +37,15 @@ export default function SettingsScreen() {
           href="/settings/water"
         />
       )}
+      <SettingsLink
+        icon="ribbon-outline"
+        title={tr('Підсумки', 'Recap')}
+        hint={tr(
+          'Місяць і рік у цифрах, щоб поділитися',
+          'Your month and year in numbers, to share',
+        )}
+        href="/recap"
+      />
       {notificationsSupported && (
         <SettingsLink
           icon="notifications-outline"

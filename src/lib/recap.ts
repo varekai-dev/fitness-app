@@ -135,3 +135,79 @@ export function computeRecap(all: FinishedWorkout[], range: Pick<PeriodRange, 'f
     records,
   } satisfies Recap;
 }
+
+/** Per-day totals of rows that fall in the range. */
+function byDay<T>(rows: T[], at: (r: T) => number, range: Pick<PeriodRange, 'from' | 'to'>) {
+  const days = new Map<number, T[]>();
+  for (const r of rows) {
+    const t = at(r);
+    if (t < range.from || t >= range.to) continue;
+    const day = startOfDay(t);
+    days.set(day, [...(days.get(day) ?? []), r]);
+  }
+  return days;
+}
+
+const sum = <T>(rows: T[], value: (r: T) => number) => rows.reduce((s, r) => s + value(r), 0);
+
+export type FoodRecap = {
+  /** Days with anything logged; the averages are over these. */
+  loggedDays: number;
+  avgKcal: number;
+  avgProteinG: number;
+  /** Logged days that stayed at or under the kcal goal. */
+  daysWithinGoal: number;
+  /** The dish logged most often. */
+  favorite: { name: string; times: number } | null;
+};
+
+export function computeFoodRecap(
+  entries: { eatenAt: number; name: string; kcal: number; proteinG: number }[],
+  kcalGoal: number,
+  range: Pick<PeriodRange, 'from' | 'to'>,
+): FoodRecap {
+  const days = [...byDay(entries, (e) => e.eatenAt, range).values()];
+  const kcal = days.map((d) => sum(d, (e) => e.kcal));
+  const dishes = new Map<string, { name: string; times: number }>();
+  for (const e of days.flat()) {
+    const key = e.name.trim().toLowerCase();
+    const d = dishes.get(key) ?? { name: e.name.trim(), times: 0 };
+    d.times++;
+    dishes.set(key, d);
+  }
+  const n = days.length;
+  return {
+    loggedDays: n,
+    avgKcal: n ? sum(kcal, (k) => k) / n : 0,
+    avgProteinG: n ? sum(days.flat(), (e) => e.proteinG) / n : 0,
+    daysWithinGoal: kcal.filter((k) => k > 0 && k <= kcalGoal).length,
+    favorite: [...dishes.values()].sort((a, b) => b.times - a.times)[0] ?? null,
+  };
+}
+
+export type WaterRecap = {
+  totalMl: number;
+  /** Days with any water logged; the average is over these. */
+  loggedDays: number;
+  avgMl: number;
+  daysAtGoal: number;
+  bestDayMl: number;
+};
+
+export function computeWaterRecap(
+  intakes: { drankAt: number; amountMl: number }[],
+  goalMl: number,
+  range: Pick<PeriodRange, 'from' | 'to'>,
+): WaterRecap {
+  const totals = [...byDay(intakes, (i) => i.drankAt, range).values()].map((d) =>
+    sum(d, (i) => i.amountMl),
+  );
+  const totalMl = sum(totals, (t) => t);
+  return {
+    totalMl,
+    loggedDays: totals.length,
+    avgMl: totals.length ? totalMl / totals.length : 0,
+    daysAtGoal: totals.filter((t) => t >= goalMl).length,
+    bestDayMl: totals.length ? Math.max(...totals) : 0,
+  };
+}

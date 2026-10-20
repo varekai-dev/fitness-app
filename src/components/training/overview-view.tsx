@@ -34,7 +34,6 @@ import { estimateKcal } from '@/lib/calories';
 import { plural, tr } from '@/lib/i18n';
 import { startOfWeek } from '@/lib/labels';
 import { notStarted } from '@/lib/metrics';
-import { computeRecap, periodRange } from '@/lib/recap';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 async function loadOverview() {
@@ -134,8 +133,6 @@ export function OverviewView({
         />
         <StatTile icon="trophy" value={String(finished.length)} label={tr('Усього', 'Total')} />
       </Row>
-
-      {finished.length > 0 && <RecapLink finished={finished} now={loadedAt} />}
 
       {activeWorkout && !draft ? (
         <HeroCard
@@ -265,35 +262,6 @@ export function OverviewView({
   );
 }
 
-/** This month's workouts and records at a glance, opening the full recap to share. */
-function RecapLink({
-  finished,
-  now,
-}: {
-  finished: Parameters<typeof computeRecap>[0];
-  now: number;
-}) {
-  const range = periodRange('month', 0, now);
-  const { workouts, records } = computeRecap(finished, range);
-  return (
-    <Card onPress={() => router.push('/recap')}>
-      <Row style={styles.recap}>
-        <Ionicons name="ribbon-outline" size={22} color={colors.accent} />
-        <View style={styles.flex}>
-          <Text variant="heading">{tr('Підсумки місяця', 'Monthly recap')}</Text>
-          <Text variant="muted" numberOfLines={1}>
-            {range.label}: {workouts}{' '}
-            {plural(workouts, ['тренування', 'тренування', 'тренувань'], ['workout', 'workouts'])} ·{' '}
-            {records.length}{' '}
-            {plural(records.length, ['рекорд', 'рекорди', 'рекордів'], ['record', 'records'])}
-          </Text>
-        </View>
-        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-      </Row>
-    </Card>
-  );
-}
-
 function HeroCard({
   overline,
   title,
@@ -360,8 +328,6 @@ function HeroCard({
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingTop: spacing.sm, gap: spacing.lg },
   stats: { gap: spacing.sm, alignItems: 'stretch' },
-  flex: { flex: 1 },
-  recap: { gap: spacing.md, alignItems: 'center' },
   pressed: { opacity: 0.85 },
   hero: {
     backgroundColor: colors.accent,
