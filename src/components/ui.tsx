@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import {
+  KeyboardAvoidingView,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -160,18 +161,22 @@ export function Screen({
     <View style={styles.screenRoot}>
       <Backdrop />
       {header && <ScreenHeader title={title} mode={mode} right={headerRight} />}
-      <ScrollView
-        ref={scrollRef}
-        style={styles.flex}
-        contentContainerStyle={[
-          styles.screen,
-          !header && { paddingTop: insets.top + spacing.sm },
-          bottomSpace !== undefined && { paddingBottom: bottomSpace },
-        ]}
-        keyboardShouldPersistTaps="handled">
-        {/* Rows animate in when added later, not all at once when the screen opens. */}
-        <LayoutAnimationConfig skipEntering>{children}</LayoutAnimationConfig>
-      </ScrollView>
+      {/* Edge-to-edge Android doesn't resize the window for the keyboard either, so
+          shrink the list on both platforms and keep the focused field above it. */}
+      <KeyboardAvoidingView style={styles.flex} behavior="padding">
+        <ScrollView
+          ref={scrollRef}
+          style={styles.flex}
+          contentContainerStyle={[
+            styles.screen,
+            !header && { paddingTop: insets.top + spacing.sm },
+            bottomSpace !== undefined && { paddingBottom: bottomSpace },
+          ]}
+          keyboardShouldPersistTaps="handled">
+          {/* Rows animate in when added later, not all at once when the screen opens. */}
+          <LayoutAnimationConfig skipEntering>{children}</LayoutAnimationConfig>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }
