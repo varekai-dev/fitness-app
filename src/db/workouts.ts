@@ -43,7 +43,7 @@ export const listFinishedWorkouts = () =>
     with: {
       exercises: {
         orderBy: [asc(workoutExercises.position)],
-        columns: { id: true, restSec: true },
+        columns: { id: true, exerciseId: true, restSec: true },
         with: {
           exercise: { columns: { name: true, trackingType: true } },
           // Values feed the calorie estimate.

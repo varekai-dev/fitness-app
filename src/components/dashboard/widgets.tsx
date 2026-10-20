@@ -35,11 +35,17 @@ import {
   WEEKDAY_SHORT,
   weekdayIndex,
 } from '@/lib/labels';
-import { formatNumber, formatWeight, notStarted, workoutDurationMs } from '@/lib/metrics';
+import {
+  formatNumber,
+  formatTonnage,
+  formatWeight,
+  notStarted,
+  workoutDurationMs,
+} from '@/lib/metrics';
 import { dailyPhrase } from '@/lib/motivation';
 import { paceShare } from '@/lib/reminders';
 import { averageOfLogged, daysBetween, dayStreak, weekStreak } from '@/lib/stats';
-import { formatVolume, kgToDisplay, unitSystem, VOLUME_UNIT, WEIGHT_UNIT } from '@/lib/units';
+import { formatVolume, kgToDisplay, VOLUME_UNIT, WEIGHT_UNIT } from '@/lib/units';
 import { GLASS_PRESETS, type GlassPreset } from '@/lib/water';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
@@ -835,19 +841,6 @@ function formatHours(ms: number): Pick<StatValue, 'value' | 'unit'> {
   return min < 60
     ? { value: String(min), unit: tr('хв', 'min') }
     : { value: formatNumber(min / 60, 1), unit: tr('год', 'h') };
-}
-
-/** Weight lifted, in tonnes from a tonne up (thousands of pounds from 10 000 lb). */
-function formatTonnage(kg: number): Pick<StatValue, 'value' | 'unit'> {
-  if (unitSystem === 'imperial') {
-    const lb = kgToDisplay(kg);
-    return lb < 10_000
-      ? { value: formatNumber(lb, 0), unit: KG }
-      : { value: formatNumber(lb / 1000, 1), unit: tr('тис. фн', 'k lb') };
-  }
-  return kg < 1000
-    ? { value: formatNumber(kg, 0), unit: KG }
-    : { value: formatNumber(kg / 1000, 1), unit: tr('т', 't') };
 }
 
 const pluralDays = (n: number) => plural(n, ['день', 'дні', 'днів'], ['day', 'days']);

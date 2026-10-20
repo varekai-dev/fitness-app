@@ -1,6 +1,6 @@
 import type { TrackingType, WorkoutSet } from '@/db/schema';
 import { tr } from '@/lib/i18n';
-import { DISTANCE_UNIT, kgToDisplay, kmToDisplay, WEIGHT_UNIT } from '@/lib/units';
+import { DISTANCE_UNIT, kgToDisplay, kmToDisplay, unitSystem, WEIGHT_UNIT } from '@/lib/units';
 
 export type SetValues = Pick<WorkoutSet, 'weightKg' | 'reps' | 'durationSec' | 'distanceKm'>;
 
@@ -108,6 +108,19 @@ export const formatMetric = (type: TrackingType, value: number) =>
 export function formatNumber(value: number, maxFractionDigits = 2): string {
   const factor = 10 ** maxFractionDigits;
   return String(Math.round(value * factor) / factor);
+}
+
+/** Weight lifted, in tonnes from a tonne up (thousands of pounds from 10 000 lb). */
+export function formatTonnage(kg: number): { value: string; unit: string } {
+  if (unitSystem === 'imperial') {
+    const lb = kgToDisplay(kg);
+    return lb < 10_000
+      ? { value: formatNumber(lb, 0), unit: KG }
+      : { value: formatNumber(lb / 1000, 1), unit: tr('тис. фн', 'k lb') };
+  }
+  return kg < 1000
+    ? { value: formatNumber(kg, 0), unit: KG }
+    : { value: formatNumber(kg / 1000, 1), unit: tr('т', 't') };
 }
 
 /** Kilograms shown in the chosen unit, without the unit. */
