@@ -161,9 +161,21 @@ export default function BodyWeightScreen() {
             </Text>
           ) : (
             <Card>
-              <Text variant="caption">
-                {tr('Вага', 'Weight')}, {WEIGHT_UNIT}
-              </Text>
+              <Row style={styles.spaceBetween}>
+                <Text variant="caption">
+                  {tr('Вага', 'Weight')}, {WEIGHT_UNIT}
+                </Text>
+                <Row style={styles.legend}>
+                  <Row style={styles.legendItem}>
+                    <View style={styles.legendDot} />
+                    <Text variant="muted">{tr('зважування', 'weigh-ins')}</Text>
+                  </Row>
+                  <Row style={styles.legendItem}>
+                    <View style={styles.legendLine} />
+                    <Text variant="muted">{tr('тренд', 'trend')}</Text>
+                  </Row>
+                </Row>
+              </Row>
               <LineChart
                 points={data.map((w) => ({ x: w.measuredAt, y: kgToDisplay(w.weightKg) }))}
                 trend={data.map((w, i) => ({ x: w.measuredAt, y: kgToDisplay(trend[i]) }))}
@@ -172,8 +184,8 @@ export default function BodyWeightScreen() {
               />
               <Text variant="muted">
                 {tr(
-                  'Лінія — згладжений тренд: денні коливання води й солі в ньому майже не видно.',
-                  'The line is the smoothed trend: daily swings of water and salt barely show in it.',
+                  'Тренд згладжує денні коливання води й солі.',
+                  'The trend smooths out daily swings of water and salt.',
                 )}
               </Text>
             </Card>
@@ -340,6 +352,11 @@ const styles = StyleSheet.create({
   spaceBetween: { justifyContent: 'space-between' },
   entryValue: { alignItems: 'flex-end' },
   chartHint: { textAlign: 'center' },
+  legend: { gap: spacing.md },
+  legendItem: { gap: spacing.xs, alignItems: 'center' },
+  // Match the weigh-in dots and the trend line drawn by LineChart.
+  legendDot: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: colors.textSecondary },
+  legendLine: { width: 14, height: 2.5, borderRadius: 1.25, backgroundColor: colors.accent },
   photoThumb: {
     width: 44,
     height: 58,
