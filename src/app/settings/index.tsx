@@ -3,6 +3,9 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { AppUpdateCard } from '@/components/app-update';
 import { SettingsLink } from '@/components/settings';
 import { Screen } from '@/components/ui';
+import { readSeenLevels } from '@/db/achievements';
+import { useAchievements } from '@/hooks/use-achievements';
+import { achievementTotals, newLevels } from '@/lib/achievements';
 import { healthName } from '@/lib/health';
 import { tr } from '@/lib/i18n';
 import { useEnabledModules } from '@/lib/modules';
@@ -10,6 +13,7 @@ import { notificationsSupported } from '@/lib/notifications';
 
 export default function SettingsScreen() {
   const enabled = useEnabledModules();
+  const achievements = useAchievements();
   return (
     <Screen title={tr('Налаштування', 'Settings')}>
       <SettingsLink
@@ -45,6 +49,12 @@ export default function SettingsScreen() {
           'Your month and year in numbers, to share',
         )}
         href="/recap"
+      />
+      <SettingsLink
+        icon="medal-outline"
+        title={tr('Досягнення', 'Achievements')}
+        hint={achievementsHint(achievements)}
+        href="/achievements"
       />
       {notificationsSupported && (
         <SettingsLink
@@ -83,6 +93,15 @@ export default function SettingsScreen() {
       {Platform.OS !== 'web' && <AppUpdateCard />}
     </Screen>
   );
+}
+
+function achievementsHint(list: ReturnType<typeof useAchievements>) {
+  if (!list) return tr('Рівні за тренування, їжу й воду', 'Levels for training, food and water');
+  const { unlocked, total } = achievementTotals(list);
+  const fresh = newLevels(list, readSeenLevels());
+  return fresh > 0
+    ? `${tr('Нових', 'New')}: ${fresh} · ${unlocked} / ${total}`
+    : `${unlocked} / ${total}`;
 }
 
 const styles = StyleSheet.create({
