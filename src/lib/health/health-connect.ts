@@ -1,12 +1,28 @@
 import type { ActivityReading } from '@/db/activities';
 import type { WeightReading } from '@/db/body-weight';
+import type { DailyHealthReading } from '@/db/daily-health';
 import type { ActivityKind } from '@/db/schema';
+import { addDays } from '@/lib/water';
+import { dailyRange, sleepByDay, type Interval } from './daily';
 import type { HealthProvider } from './types';
 
 // Loaded lazily: the module throws on import wherever its native side is missing.
 const load = () => import('react-native-health-connect');
 
-const READ_TYPES = ['Weight', 'ExerciseSession', 'Distance', 'ActiveCaloriesBurned'] as const;
+const READ_TYPES = [
+  'Weight',
+  'ExerciseSession',
+  'Distance',
+  'ActiveCaloriesBurned',
+  'Steps',
+  'SleepSession',
+] as const;
+
+/** Any of these granted is worth syncing for. */
+const SYNCED_TYPES: string[] = ['Weight', 'ExerciseSession', 'Steps', 'SleepSession'];
+
+/** Sleep stages (SleepStageType) that count as asleep, not awake or out of bed. */
+const ASLEEP_STAGES = new Set([2, 4, 5, 6]);
 
 /** Health Connect exercise types (ExerciseType constants) grouped into the app's kinds. */
 const KINDS: Record<number, ActivityKind> = {
@@ -29,7 +45,10 @@ const KINDS: Record<number, ActivityKind> = {
 };
 
 /** Every page of a record type from `since` on. */
-async function readAll<T extends 'Weight' | 'ExerciseSession'>(recordType: T, since: Date) {
+async function readAll<T extends 'Weight' | 'ExerciseSession' | 'SleepSession'>(
+  recordType: T,
+  since: Date,
+) {
   const { readRecords } = await load();
   const records = [];
   let pageToken: string | undefined;
@@ -65,8 +84,7 @@ export const healthConnect: HealthProvider = {
   async hasAccess() {
     const { getGrantedPermissions } = await load();
     return (await getGrantedPermissions()).some(
-      (p) =>
-        p.accessType === 'read' && (p.recordType === 'Weight' || p.recordType === 'ExerciseSession'),
+      (p) => p.accessType === 'read' && SYNCED_TYPES.includes(p.recordType),
     );
   },
 
@@ -83,7 +101,9 @@ export const healthConnect: HealthProvider = {
   async read(since) {
     const { aggregateRecord, getGrantedPermissions } = await load();
     const granted = new Set(
-      (await getGrantedPermissions()).filter((p) => p.accessType === 'read').map((p) => p.recordType),
+      (await getGrantedPermissions())
+        .filter((p) => p.accessType === 'read')
+        .map((p) => p.recordType),
     );
 
     const weights: WeightReading[] = granted.has('Weight')
@@ -122,7 +142,44 @@ export const healthConnect: HealthProvider = {
         });
       }
     }
-    return { weights, activities };
+    const range = dailyRange(since);
+    const days: DailyHealthReading[] = range.map((day) => ({ day }));
+
+    if (granted.has('Steps')) {
+      const now = Date.now();
+      for (const d of days) {
+        const { COUNT_TOTAL } = await aggregateRecord({
+          recordType: 'Steps',
+          timeRangeFilter: {
+            operator: 'between',
+            startTime: new Date(d.day).toISOString(),
+            endTime: new Date(Math.min(addDays(d.day, 1), now)).toISOString(),
+          },
+        });
+        d.steps = Math.round(COUNT_TOTAL ?? 0);
+      }
+    }
+
+    if (granted.has('SleepSession')) {
+      // From the evening before the first day, so its night is read whole.
+      const sessions = await readAll('SleepSession', new Date(addDays(range[0], -1)));
+      const intervals: Interval[] = sessions.flatMap((s) => {
+        const asleep = (s.stages ?? []).filter((st) => ASLEEP_STAGES.has(st.stage));
+        // Without stages the whole session is the sleep.
+        const spans = asleep.length ? asleep : [s];
+        return spans.map((sp) => ({
+          start: Date.parse(sp.startTime),
+          end: Date.parse(sp.endTime),
+        }));
+      });
+      const minutes = sleepByDay(intervals);
+      for (const d of days) {
+        const m = minutes.get(d.day);
+        if (m !== undefined) d.sleepMin = m;
+      }
+    }
+
+    return { weights, activities, days };
   },
 
   async revokeAccess() {

@@ -216,6 +216,17 @@ export const activities = sqliteTable(
   (t) => [index('activities_started_idx').on(t.startedAt)],
 );
 
+/**
+ * Steps and sleep per local day, read from Apple Health or Health Connect.
+ * Sleep counts on the day it ends, so last night is today's row.
+ */
+export const dailyHealth = sqliteTable('daily_health', {
+  // Local midnight of the day.
+  day: integer('day').primaryKey(),
+  steps: integer('steps'),
+  sleepMin: integer('sleep_min'),
+});
+
 /** Water log: one row per glass, summed per local day. */
 export const waterIntakes = sqliteTable(
   'water_intakes',

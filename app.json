@@ -2,7 +2,7 @@
   "expo": {
     "name": "Fitness",
     "slug": "fitness",
-    "version": "1.79.1",
+    "version": "1.80.0",
     "runtimeVersion": {
       "policy": "fingerprint"
     },
@@ -36,6 +36,8 @@
         "android.permission.health.READ_EXERCISE",
         "android.permission.health.READ_DISTANCE",
         "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_SLEEP",
         "android.permission.health.READ_HEALTH_DATA_HISTORY"
       ]
     },
@@ -98,7 +100,7 @@
       [
         "@kingstinct/react-native-healthkit",
         {
-          "NSHealthShareUsageDescription": "Fitness читає вагу та тренування, щоб показувати їх у журналі ваги та історії тренувань.",
+          "NSHealthShareUsageDescription": "Fitness читає вагу, тренування, кроки й сон, щоб показувати їх у журналі ваги, історії тренувань і на головній.",
           "NSHealthUpdateUsageDescription": false,
           "background": false
         }

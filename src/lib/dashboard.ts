@@ -41,6 +41,8 @@ export const WIDGET_TYPES = [
   'water-today',
   'water-week',
   'weight',
+  'steps',
+  'sleep',
 ] as const;
 export type WidgetType = (typeof WIDGET_TYPES)[number];
 
@@ -142,6 +144,22 @@ export const WIDGET_INFO: Record<
     ),
     icon: 'scale',
   },
+  steps: {
+    title: tr('Кроки', 'Steps'),
+    description: tr(
+      'Кроки за сьогодні проти цілі й за останні 7 днів, з Health Connect або Apple Health.',
+      'Steps today against the goal and over the last 7 days, from Health Connect or Apple Health.',
+    ),
+    icon: 'footsteps',
+  },
+  sleep: {
+    title: tr('Сон', 'Sleep'),
+    description: tr(
+      'Скільки спав минулої ночі й за останні 7 ночей, з Health Connect або Apple Health.',
+      'How long you slept last night and over the last 7 nights, from Health Connect or Apple Health.',
+    ),
+    icon: 'moon',
+  },
 };
 
 /** The picker lists widgets, then stat tiles, under the tab they belong to. */
@@ -166,6 +184,7 @@ export const WIDGET_GROUPS: {
     stats: STAT_TYPES.filter((t) => t.startsWith('stat-water-')),
   },
   { title: tr('Тіло', 'Body'), types: ['weight'], stats: [] },
+  { title: tr('Активність і сон', 'Activity and sleep'), types: ['steps', 'sleep'], stats: [] },
   { title: tr('Інше', 'Other'), types: ['quote'], stats: [] },
 ];
 

@@ -111,8 +111,8 @@ export function HealthCard() {
     dialog.show({
       title: tr(`Відключити ${healthName}?`, `Disconnect ${healthName}?`),
       message: tr(
-        'Вага та активності більше не підтягуватимуться. Уже імпортовані записи залишаться.',
-        'Weight and activities will no longer sync. Records already imported will stay.',
+        'Вага, активності, кроки й сон більше не підтягуватимуться. Уже імпортовані записи залишаться.',
+        'Weight, activities, steps and sleep will no longer sync. Records already imported will stay.',
       ),
       buttons: [
         { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
@@ -132,8 +132,8 @@ export function HealthCard() {
       </Row>
       <Text variant="muted">
         {tr(
-          'Підтягує вагу з розумних ваг, а прогулянки, біг та інші тренування з годинника — в історію тренувань. Оновлюється щоразу, коли відкриваєш застосунок.',
-          'Brings in weight from smart scales, and walks, runs and other workouts from your watch into the workout history. Updates every time you open the app.',
+          'Підтягує вагу з розумних ваг, прогулянки, біг та інші тренування з годинника — в історію тренувань, а кроки й сон — у віджети на головній. Оновлюється щоразу, коли відкриваєш застосунок.',
+          'Brings in weight from smart scales, walks, runs and other workouts from your watch into the workout history, and steps and sleep into the home widgets. Updates every time you open the app.',
         )}
       </Text>
       {!healthSupported ? (

@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 
 import { importActivities } from '@/db/activities';
 import { importBodyWeights } from '@/db/body-weight';
+import { importDailyHealth } from '@/db/daily-health';
 import { getHealthSettings, setHealthEnabled, setHealthSyncedAt } from '@/db/health';
 import { healthConnect } from './health-connect';
 import { healthKit } from './healthkit';
@@ -18,8 +19,7 @@ export const healthSupported = provider !== null && !isRunningInExpoGo();
 export const healthName = Platform.OS === 'ios' ? 'Apple Health' : 'Health Connect';
 
 export type HealthSyncResult =
-  | { status: 'ok'; weights: number; activities: number }
-  | { status: Exclude<HealthStatus, 'ok'> };
+  { status: 'ok'; weights: number; activities: number } | { status: Exclude<HealthStatus, 'ok'> };
 
 // Sessions edited after an earlier sync (a watch finishing its upload late) are
 // read again within this window.
@@ -42,8 +42,8 @@ export async function isHealthConnected() {
 }
 
 /**
- * Pulls weighings into the body weight log and walks, runs and other sessions
- * into the workout history. With `prompt`, asks for access when it's missing
+ * Pulls weighings into the body weight log, walks, runs and other sessions
+ * into the workout history, and daily steps and sleep for the dashboard. With `prompt`, asks for access when it's missing
  * and turns syncing back on; without it, quietly skips until connected.
  */
 export function syncHealth({ prompt }: { prompt: boolean }) {
@@ -66,6 +66,7 @@ export function syncHealth({ prompt }: { prompt: boolean }) {
     const readings = await provider.read(since);
     const weights = await importBodyWeights(readings.weights);
     const activities = await importActivities(readings.activities);
+    importDailyHealth(readings.days);
     await setHealthSyncedAt(startedAt);
     return { status: 'ok', weights, activities };
   });
