@@ -23,15 +23,17 @@ export const MACROS = [
   { key: 'carbsG', label: tr('Вуглеводи', 'Carbs'), kcalPerG: 4, color: colors.carbs },
 ] as const;
 
-/** Calories eaten against the goal, and the protein / fat / carbs split below it. */
+/** Calories eaten against the goal, and protein / fat / carbs against their daily targets. */
 export function CalorieSummary({
   totals,
   goal,
+  targets,
   onPress,
   onMacroPress,
 }: {
   totals: Macros;
   goal: number;
+  targets: Macros;
   onPress?: () => void;
   onMacroPress?: (macro: MacroKey) => void;
 }) {
@@ -39,8 +41,6 @@ export function CalorieSummary({
   const kcal = Math.round(useAnimatedNumber(totals.kcal));
   const left = goal - kcal;
   const over = left < 0;
-  const macroKcal = MACROS.map((m) => totals[m.key] * m.kcalPerG);
-  const macroSum = macroKcal.reduce((s, k) => s + k, 0);
 
   return (
     <Card style={styles.card} onPress={onPress}>
@@ -85,8 +85,9 @@ export function CalorieSummary({
       </View>
 
       <Row style={styles.macros}>
-        {MACROS.map((m, i) => {
-          const share = macroSum > 0 ? macroKcal[i] / macroSum : 0;
+        {MACROS.map((m) => {
+          const target = targets[m.key];
+          const progress = target > 0 ? totals[m.key] / target : 0;
           return (
             <Pressable
               key={m.key}
@@ -104,9 +105,9 @@ export function CalorieSummary({
                 {formatGrams(totals[m.key])}
                 <Text variant="muted"> {tr('г', 'g')}</Text>
               </Text>
-              <GrowBar progress={share} color={m.color} style={styles.track} />
-              <Text variant="muted" style={styles.share}>
-                {Math.round(share * 100)}% {tr('ккал', 'kcal')}
+              <GrowBar progress={progress} color={m.color} style={styles.track} />
+              <Text variant="muted" numberOfLines={1} style={styles.share}>
+                {Math.round(progress * 100)}% {tr('з', 'of')} {formatGrams(target)} {tr('г', 'g')}
               </Text>
             </Pressable>
           );

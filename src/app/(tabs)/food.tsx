@@ -54,6 +54,7 @@ export default function FoodScreen() {
     goal,
     dayEntries,
     totals,
+    targets,
     days,
     previous,
     templates,
@@ -101,6 +102,7 @@ export default function FoodScreen() {
         <CalorieSummary
           totals={totals}
           goal={goal}
+          targets={targets}
           onPress={() => router.push('/settings/food')}
           onMacroPress={(macro) =>
             router.push({ pathname: '/macro', params: { macro, day: String(day) } })
