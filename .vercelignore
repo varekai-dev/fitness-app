@@ -1,0 +1,9 @@
+# Vercel only builds the landing page, which reads the app's screenshots and icon.
+/*
+!/landing
+!/docs
+!/assets
+!/vercel.json
+/landing/node_modules
+/landing/dist
+/landing/.astro

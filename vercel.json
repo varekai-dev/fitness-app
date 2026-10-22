@@ -1,0 +1,8 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npm --prefix landing ci",
+  "buildCommand": "npm --prefix landing run build",
+  "outputDirectory": "landing/dist",
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- landing docs/screenshots assets/images vercel.json"
+}
