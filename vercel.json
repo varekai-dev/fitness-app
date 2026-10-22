@@ -4,5 +4,5 @@
   "installCommand": "npm --prefix landing ci",
   "buildCommand": "npm --prefix landing run build",
   "outputDirectory": "landing/dist",
-  "ignoreCommand": "git diff --quiet \"${VERCEL_GIT_PREVIOUS_SHA:-HEAD^}\" HEAD -- landing docs/screenshots assets/images vercel.json"
+  "ignoreCommand": "git diff --quiet \"${VERCEL_GIT_PREVIOUS_SHA:-HEAD^}\" HEAD -- landing docs/screenshots assets/images vercel.json || exit 1"
 }

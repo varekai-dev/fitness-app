@@ -4,6 +4,8 @@
 !/docs
 !/assets
 !/vercel.json
+# Kept for the skip check in vercel.json (git diff); the CLI never uploads it.
+!/.git
 /landing/node_modules
 /landing/dist
 /landing/.astro
