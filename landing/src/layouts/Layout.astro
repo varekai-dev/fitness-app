@@ -1,0 +1,55 @@
+---
+import favicon from '../../../assets/images/favicon.png';
+import { langOf, pathFor } from '../i18n';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const lang = langOf(Astro);
+const paths = { uk: pathFor('uk'), en: pathFor('en') };
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!--
+      Picks the language before the page paints: the one chosen with the switch,
+      else Ukrainian for a Ukrainian browser and English for any other.
+    -->
+    <script is:inline define:vars={{ paths, lang }}>
+      (() => {
+        let saved = null;
+        try {
+          saved = localStorage.getItem('fitness-lang');
+        } catch {}
+        const browser = (navigator.languages?.[0] || navigator.language || '').toLowerCase();
+        const want = saved === 'uk' || saved === 'en' ? saved : browser.startsWith('uk') ? 'uk' : 'en';
+        if (want !== lang) location.replace(paths[want] + location.search + location.hash);
+      })();
+    </script>
+    <meta name="theme-color" content="#121212" />
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <link rel="alternate" hreflang="uk" href={paths.uk} />
+    <link rel="alternate" hreflang="en" href={paths.en} />
+    <link rel="alternate" hreflang="x-default" href={paths.en} />
+    <link rel="icon" type="image/png" href={favicon.src} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <title>{title}</title>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

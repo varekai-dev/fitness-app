@@ -1,0 +1,107 @@
+---
+import { dict, langOf } from '../i18n';
+
+const t = dict[langOf(Astro)].faq;
+---
+
+<section class="section" id="faq">
+  <div class="container layout">
+    <div>
+      <span class="eyebrow reveal">{t.eyebrow}</span>
+      <h2 class="section-title reveal">{t.title}</h2>
+    </div>
+    <div class="list reveal">
+      {
+        t.items.map((item, i) => (
+          <details name="faq" open={i === 0}>
+            <summary>
+              {item.q}
+              <span class="plus" aria-hidden="true" />
+            </summary>
+            <p>{item.a}</p>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .layout {
+    display: grid;
+    grid-template-columns: 0.8fr 1.2fr;
+    gap: 48px;
+    align-items: start;
+  }
+  .list {
+    display: grid;
+    gap: 10px;
+  }
+  details {
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    transition: border-color 0.2s;
+  }
+  details[open] {
+    border-color: #3d3d3d;
+  }
+  summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 22px;
+    font-weight: 800;
+    font-size: 17px;
+    cursor: pointer;
+    list-style: none;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  .plus {
+    position: relative;
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--surface-raised);
+  }
+  .plus::before,
+  .plus::after {
+    content: '';
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: 12px;
+    height: 2px;
+    background: var(--accent);
+    translate: -50% -50%;
+    transition: rotate 0.25s ease;
+  }
+  .plus::after {
+    rotate: 90deg;
+  }
+  details[open] .plus::after {
+    rotate: 0deg;
+  }
+  details p {
+    padding: 0 22px 22px;
+    color: var(--text-secondary);
+  }
+  details[open] p {
+    animation: open 0.3s ease;
+  }
+  @keyframes open {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+  @media (max-width: 860px) {
+    .layout {
+      grid-template-columns: 1fr;
+      gap: 28px;
+    }
+  }
+</style>

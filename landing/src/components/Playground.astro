@@ -1,0 +1,736 @@
+---
+import { activity, glasses, weightGoals } from '../data';
+import { dict, langOf } from '../i18n';
+import { BOTTLE_BODY } from '../water-bottle';
+import Icon from './Icon.astro';
+import WorkoutDemo from './WorkoutDemo.astro';
+
+const p = dict[langOf(Astro)].play;
+const tabs = [
+  { id: 'kcal', label: p.tabs.kcal, icon: 'food' },
+  { id: 'water', label: p.tabs.water, icon: 'drop' },
+  { id: 'workout', label: p.tabs.workout, icon: 'dumbbell' },
+] as const;
+const levels = activity.map((_, i) => `${p.activityLevels[i][0]} — ${p.activityLevels[i][1]}`);
+
+---
+
+<section class="section" id="try">
+  <div class="container">
+    <span class="eyebrow reveal">{p.eyebrow}</span>
+    <h2 class="section-title reveal">{p.title}</h2>
+    <p class="section-lead reveal">{p.lead}</p>
+
+    <div class="play card reveal" data-play>
+      <div class="ptabs" role="tablist" aria-label={p.tools}>
+        {
+          tabs.map((t, i) => (
+            <button
+              role="tab"
+              id={`ptab-${t.id}`}
+              aria-controls={`ppanel-${t.id}`}
+              aria-selected={i === 0 ? 'true' : 'false'}
+              tabindex={i === 0 ? 0 : -1}
+            >
+              <Icon name={t.icon} size={18} />
+              {t.label}
+            </button>
+          ))
+        }
+      </div>
+
+      <!-- Calories: Mifflin–St Jeor × activity × goal, as recommendCalories() does. -->
+      <div class="panel" role="tabpanel" id="ppanel-kcal" aria-labelledby="ptab-kcal" data-kcal>
+        <form class="inputs">
+          <div class="seg" role="radiogroup" aria-label={p.sex}>
+            <label><input type="radio" name="sex" value="male" checked /><span>{p.male}</span></label>
+            <label><input type="radio" name="sex" value="female" /><span>{p.female}</span></label>
+          </div>
+          <label class="range">
+            <span>{p.age[0]} <output name="age-out">30</output> {p.age[1]}</span>
+            <input type="range" name="age" min="14" max="80" value="30" />
+          </label>
+          <label class="range">
+            <span>{p.height[0]} <output name="height-out">178</output> {p.height[1]}</span>
+            <input type="range" name="height" min="140" max="210" value="178" />
+          </label>
+          <label class="range">
+            <span>{p.weight[0]} <output name="weight-out">80</output> {p.weight[1]}</span>
+            <input type="range" name="weight" min="40" max="160" value="80" />
+          </label>
+          <label class="select">
+            <span>{p.activity}</span>
+            <select name="activity">
+              {levels.map((label, i) => <option value={i} selected={i === 2}>{label}</option>)}
+            </select>
+          </label>
+          <div class="seg" role="radiogroup" aria-label={p.goal}>
+            {
+              weightGoals.map((g, i) => (
+                <label>
+                  <input type="radio" name="goal" value={i} checked={i === 1} />
+                  <span>{p.goals[i]}</span>
+                </label>
+              ))
+            }
+          </div>
+        </form>
+        <div class="result">
+          <span class="result-label">{p.dailyNorm}</span>
+          <div class="big"><b data-out="kcal">2 760</b><small>{p.kcal}</small></div>
+          <dl class="stats">
+            <div><dt>{p.bmr}</dt><dd data-out="bmr">—</dd></div>
+            <div><dt>{p.tdee}</dt><dd data-out="tdee">—</dd></div>
+            <div><dt>{p.pace}</dt><dd data-out="pace">—</dd></div>
+          </dl>
+          <div class="macros" aria-hidden="true">
+            <span style="--c: var(--accent)" data-bar="p"></span>
+            <span style="--c: var(--fat)" data-bar="f"></span>
+            <span style="--c: var(--carbs)" data-bar="c"></span>
+          </div>
+          <p class="hint">{p.macrosHint}</p>
+        </div>
+      </div>
+
+      <!-- Water: 30 ml per kg plus the activity extra, rounded to 50 ml (recommendWater()). -->
+      <div class="panel" role="tabpanel" id="ppanel-water" aria-labelledby="ptab-water" hidden data-water>
+        <form class="inputs">
+          <label class="range">
+            <span>{p.weight[0]} <output name="weight-out">75</output> {p.weight[1]}</span>
+            <input type="range" name="weight" min="40" max="160" value="75" />
+          </label>
+          <label class="select">
+            <span>{p.activity}</span>
+            <select name="activity">
+              {levels.map((label, i) => <option value={i} selected={i === 2}>{label}</option>)}
+            </select>
+          </label>
+          <span class="label">{p.add}</span>
+          <div class="glasses">
+            {
+              glasses.map((g, i) => (
+                <button type="button" data-ml={g.ml} aria-label={p.addGlass(p.glasses[i], g.ml)}>
+                  <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+                    <path d={g.icon} fill="currentColor" />
+                  </svg>
+                  <span class="glass-label">{p.glasses[i]}</span>
+                  <b>+{g.ml}</b>
+                </button>
+              ))
+            }
+          </div>
+          <button type="button" class="link" data-reset>{p.resetDay}</button>
+        </form>
+
+        <!-- The hero card of the Water tab, with the bottle from src/components/water-bottle.tsx. -->
+        <div class="result water-card">
+          <svg class="bottle" viewBox="0 0 150 244" aria-hidden="true">
+            <defs>
+              <clipPath id="bottle-body"><path d={BOTTLE_BODY} /></clipPath>
+              <linearGradient id="bottle-water" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#F5FAA8" />
+                <stop offset="0.45" stop-color="#EAF46B" />
+                <stop offset="1" stop-color="#9DB52E" />
+              </linearGradient>
+            </defs>
+            {
+              Array.from({ length: 25 }, (_, i) => {
+                const y = 70 + (170 * i) / 24;
+                const long = i % 4 === 0;
+                return (
+                  <rect
+                    x={long ? 0 : 6}
+                    y={y - 0.75}
+                    width={long ? 16 : 10}
+                    height="1.5"
+                    rx="0.75"
+                    fill={long ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.16)'}
+                  />
+                );
+              })
+            }
+            <g transform="translate(30 0)">
+              <rect x="44" y="0" width="32" height="22" rx="6" fill="#EAF46B" />
+              {[52, 58, 64, 70].map((x) => <rect x={x - 0.75} y="4" width="1.5" height="14" rx="0.75" fill="#9DB52E" />)}
+              <path d={BOTTLE_BODY} fill="rgba(255,255,255,0.05)" />
+              <g clip-path="url(#bottle-body)">
+                <path data-wave="back" fill="#F5FAA8" opacity="0.45" />
+                <path data-wave="front" fill="url(#bottle-water)" />
+                <rect x="20" y="76" width="7" height="140" rx="3.5" fill="rgba(255,255,255,0.14)" />
+              </g>
+              <path d={BOTTLE_BODY} fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="2.5" />
+            </g>
+          </svg>
+
+          <div class="water-info">
+            <div class="water-total"><b data-out="drunk">0</b><small>{p.ml}</small></div>
+            <p class="water-share" data-out="share">{p.shareOfNorm(0)}</p>
+            <div class="water-bar"><span data-bar></span></div>
+            <dl class="water-stats">
+              <div><dt>{p.goalLabel}</dt><dd><span data-out="norm">2 750</span> {p.ml}</dd></div>
+              <div><dt>{p.left}</dt><dd><span data-out="left">2 750</span> {p.ml}</dd></div>
+            </dl>
+          </div>
+        </div>
+      </div>
+
+      <!-- Workout: the player from the app, playable. -->
+      <div class="panel" role="tabpanel" id="ppanel-workout" aria-labelledby="ptab-workout" hidden>
+        <WorkoutDemo />
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { activity, weightGoals } from '../data';
+  import { clientDict } from '../i18n';
+  import { waterBottle } from '../water-bottle';
+
+  const L = clientDict();
+  const P = L.play;
+  const fmt = (n: number) => Math.round(n).toLocaleString(L.locale);
+  const root = document.querySelector<HTMLElement>('[data-play]')!;
+  root.querySelectorAll('form').forEach((f) => f.addEventListener('submit', (e) => e.preventDefault()));
+
+  // Tabs
+  const tabs = [...root.querySelectorAll<HTMLButtonElement>('[role=tab]')];
+  const select = (tab: HTMLButtonElement) => {
+    for (const t of tabs) {
+      const on = t === tab;
+      t.setAttribute('aria-selected', String(on));
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')!)!.hidden = !on;
+    }
+  };
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => select(t));
+    t.addEventListener('keydown', (e) => {
+      const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+      if (!step) return;
+      const next = tabs[(i + step + tabs.length) % tabs.length];
+      select(next);
+      next.focus();
+    });
+  });
+
+  /** Mirrors each range input into its `<output name="<name>-out">`. */
+  const bindOutputs = (form: HTMLFormElement) => {
+    for (const input of form.querySelectorAll<HTMLInputElement>('input[type=range]')) {
+      const out = form.querySelector<HTMLOutputElement>(`output[name="${input.name}-out"]`);
+      const sync = () => {
+        if (out) out.value = Number(input.value).toLocaleString(L.locale);
+        const pct = ((+input.value - +input.min) / (+input.max - +input.min)) * 100;
+        input.style.setProperty('--pct', `${pct}%`);
+      };
+      input.addEventListener('input', sync);
+      sync();
+    }
+  };
+
+  // Calories
+  {
+    const panel = root.querySelector<HTMLElement>('[data-kcal]')!;
+    const form = panel.querySelector('form')!;
+    const out = (k: string) => panel.querySelector<HTMLElement>(`[data-out="${k}"]`)!;
+    const bar = (k: string) => panel.querySelector<HTMLElement>(`[data-bar="${k}"]`)!;
+    bindOutputs(form);
+    const update = () => {
+      const data = new FormData(form);
+      const weight = Number(data.get('weight'));
+      const height = Number(data.get('height'));
+      const age = Number(data.get('age'));
+      const male = data.get('sex') === 'male';
+      const bmr = 10 * weight + 6.25 * height - 5 * age + (male ? 5 : -161);
+      const tdee = bmr * activity[Number(data.get('activity'))].factor;
+      const kcal = Math.round((tdee * weightGoals[Number(data.get('goal'))].factor) / 10) * 10;
+      const weekly = ((kcal - tdee) * 7) / 7700;
+      out('kcal').textContent = fmt(kcal);
+      out('bmr').textContent = `${fmt(bmr)} ${P.kcal}`;
+      out('tdee').textContent = `${fmt(tdee)} ${P.kcal}`;
+      out('pace').textContent =
+        Math.abs(weekly) < 0.05
+          ? P.paceStable
+          : `${weekly > 0 ? '+' : '−'}${Math.abs(weekly).toLocaleString(L.locale, { maximumFractionDigits: 1, minimumFractionDigits: 1 })} ${P.paceUnit}`;
+      // A rough split: 1.8 g/kg protein, 25% of energy from fat, carbs for the rest.
+      const p = Math.min(1.8 * weight * 4, kcal * 0.4);
+      const f = kcal * 0.25;
+      const c = Math.max(kcal - p - f, 0);
+      bar('p').style.flexGrow = String(p);
+      bar('f').style.flexGrow = String(f);
+      bar('c').style.flexGrow = String(c);
+      bar('p').dataset.label = `${P.macros[0]} ${Math.round(p / 4)} ${P.gram}`;
+      bar('f').dataset.label = `${P.macros[1]} ${Math.round(f / 9)} ${P.gram}`;
+      bar('c').dataset.label = `${P.macros[2]} ${Math.round(c / 4)} ${P.gram}`;
+    };
+    form.addEventListener('input', update);
+    update();
+  }
+
+  // Water
+  {
+    const panel = root.querySelector<HTMLElement>('[data-water]')!;
+    const form = panel.querySelector('form')!;
+    const out = (k: string) => panel.querySelector<HTMLElement>(`[data-out="${k}"]`)!;
+    const bar = panel.querySelector<HTMLElement>('[data-bar]')!;
+    const bottle = waterBottle(panel.querySelector<SVGSVGElement>('.bottle')!);
+    let drunk = 0;
+    bindOutputs(form);
+    const update = () => {
+      const data = new FormData(form);
+      const norm =
+        Math.round((Number(data.get('weight')) * 30 + activity[Number(data.get('activity'))].waterMl) / 50) * 50;
+      const share = drunk / norm;
+      out('drunk').textContent = fmt(drunk);
+      out('norm').textContent = fmt(norm);
+      out('left').textContent = fmt(Math.max(norm - drunk, 0));
+      out('share').textContent = share >= 1 ? P.normDone : P.shareOfNorm(Math.round(share * 100));
+      bar.style.width = `${Math.min(share, 1) * 100}%`;
+      panel.classList.toggle('is-done', share >= 1);
+      bottle.fill(share);
+    };
+    form.addEventListener('input', update);
+    panel.querySelectorAll<HTMLButtonElement>('[data-ml]').forEach((b) =>
+      b.addEventListener('click', () => {
+        drunk += Number(b.dataset.ml);
+        update();
+      }),
+    );
+    panel.querySelector('[data-reset]')!.addEventListener('click', () => {
+      drunk = 0;
+      update();
+    });
+    update();
+  }
+</script>
+
+<style>
+  .play {
+    margin-top: 48px;
+    padding: clamp(16px, 3vw, 32px);
+  }
+  .ptabs {
+    display: flex;
+    gap: 6px;
+    padding: 6px;
+    border-radius: 999px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    width: fit-content;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .ptabs button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+    min-height: 44px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+      background 0.15s,
+      color 0.15s;
+  }
+  .ptabs button:hover {
+    color: var(--text);
+  }
+  .ptabs button[aria-selected='true'] {
+    background: var(--accent);
+    color: var(--accent-text);
+  }
+  .panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(24px, 4vw, 56px);
+    margin-top: 32px;
+    animation: fade 0.35s ease;
+  }
+  .panel[hidden] {
+    display: none;
+  }
+  @keyframes fade {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+  .inputs {
+    display: grid;
+    gap: 22px;
+    align-content: start;
+  }
+  .range,
+  .select {
+    display: grid;
+    gap: 10px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+  .range output {
+    color: var(--text);
+    font-weight: 800;
+  }
+  .label {
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: -10px;
+  }
+  input[type='range'] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 28px;
+    background: transparent;
+    cursor: pointer;
+  }
+  input[type='range']::-webkit-slider-runnable-track {
+    height: 8px;
+    border-radius: 999px;
+    background: linear-gradient(to right, var(--accent) var(--pct, 50%), var(--surface-raised) var(--pct, 50%));
+  }
+  input[type='range']::-moz-range-track {
+    height: 8px;
+    border-radius: 999px;
+    background: linear-gradient(to right, var(--accent) var(--pct, 50%), var(--surface-raised) var(--pct, 50%));
+  }
+  input[type='range']::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 26px;
+    height: 26px;
+    margin-top: -9px;
+    border-radius: 50%;
+    background: #fff;
+    border: 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  }
+  input[type='range']::-moz-range-thumb {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #fff;
+    border: 0;
+  }
+  select {
+    min-height: 48px;
+    padding: 0 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface-raised);
+    color: var(--text);
+    font-weight: 600;
+    width: 100%;
+  }
+  /* A styleable dropdown where supported; elsewhere the system one (with its own highlight). */
+  @supports (appearance: base-select) {
+    select,
+    ::picker(select) {
+      appearance: base-select;
+    }
+    select {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+    select:open {
+      border-color: var(--accent);
+    }
+    select::picker-icon {
+      color: var(--text-secondary);
+      transition: rotate 0.2s;
+    }
+    select:open::picker-icon {
+      rotate: 180deg;
+    }
+    ::picker(select) {
+      margin-top: 6px;
+      padding: 6px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface-raised);
+      box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.7);
+    }
+    option {
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-weight: 600;
+      cursor: pointer;
+    }
+    option:hover,
+    option:focus-visible {
+      background: rgba(255, 255, 255, 0.06);
+      outline: none;
+    }
+    option:checked {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+    option::checkmark {
+      color: var(--accent);
+    }
+  }
+  .seg {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+  }
+  .seg label {
+    flex: 1;
+    position: relative;
+  }
+  .seg input {
+    position: absolute;
+    opacity: 0;
+    inset: 0;
+    cursor: pointer;
+  }
+  .seg span {
+    display: grid;
+    place-items: center;
+    min-height: 40px;
+    padding: 0 8px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text-secondary);
+    text-align: center;
+    transition:
+      background 0.15s,
+      color 0.15s;
+  }
+  .seg input:checked + span {
+    background: var(--surface-raised);
+    color: var(--text);
+  }
+  .seg input:focus-visible + span {
+    outline: 2px solid var(--accent);
+  }
+  .result {
+    padding: clamp(20px, 3vw, 32px);
+    border-radius: var(--radius-lg);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    align-self: start;
+  }
+  .result-label {
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+  .big {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-top: 6px;
+  }
+  .big b {
+    font-family: var(--font-display);
+    font-size: clamp(48px, 7vw, 76px);
+    color: var(--accent);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .big small {
+    color: var(--text-secondary);
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 28px 0 0;
+  }
+  .stats div {
+    padding: 12px;
+    border-radius: 12px;
+    background: var(--surface);
+  }
+  .stats dt {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .stats dd {
+    margin: 4px 0 0;
+    font-weight: 800;
+    font-size: 15px;
+  }
+  .macros {
+    display: flex;
+    gap: 4px;
+    margin-top: 28px;
+  }
+  .macros span {
+    position: relative;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--c);
+    transition: flex-grow 0.4s ease;
+    margin-bottom: 22px;
+  }
+  .macros span::after {
+    content: attr(data-label);
+    position: absolute;
+    top: 16px;
+    left: 0;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+  .hint {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-top: 16px;
+  }
+  .inputs .hint {
+    margin-top: 0;
+  }
+  .glasses {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  /* GlassButton from src/components/water-card.tsx. */
+  .glasses button {
+    display: grid;
+    justify-items: center;
+    gap: 2px;
+    padding: 12px 8px;
+    border: 0;
+    border-radius: var(--radius-md);
+    background: var(--accent-soft);
+    color: var(--accent);
+    cursor: pointer;
+    transition:
+      background 0.15s,
+      opacity 0.1s,
+      transform 0.1s;
+  }
+  .glasses button:hover {
+    background: rgba(234, 244, 107, 0.2);
+  }
+  .glasses button:active {
+    opacity: 0.6;
+    transform: scale(0.96);
+  }
+  .glass-label {
+    margin-top: 2px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .glasses b {
+    color: var(--text);
+    font-size: 15px;
+  }
+  .link {
+    justify-self: start;
+    border: 0;
+    background: none;
+    padding: 0;
+    color: var(--text-secondary);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+  .water-card {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+  }
+  .bottle {
+    flex: none;
+    width: 125px;
+    height: auto;
+  }
+  .water-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .water-total {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .water-total b {
+    font-size: clamp(36px, 4.4vw, 48px);
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .water-total small {
+    color: var(--text-secondary);
+    font-size: 20px;
+    font-weight: 800;
+  }
+  .water-share {
+    margin-top: 8px;
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
+  .is-done .water-share {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .water-bar {
+    height: 6px;
+    margin-top: 10px;
+    border-radius: 999px;
+    background: var(--surface-raised);
+    overflow: hidden;
+  }
+  .water-bar span {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: inherit;
+    background: var(--accent);
+    transition: width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .water-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 20px 0 0;
+  }
+  .water-stats dt {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .water-stats dd {
+    margin: 2px 0 0;
+    font-weight: 800;
+    font-size: 17px;
+    white-space: nowrap;
+  }
+  @media (max-width: 860px) {
+    .panel {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 480px) {
+    .stats {
+      grid-template-columns: 1fr;
+    }
+    .water-card {
+      gap: 16px;
+    }
+    .bottle {
+      width: 96px;
+    }
+  }
+</style>

@@ -1,0 +1,96 @@
+---
+import { dict, langOf } from '../i18n';
+import Icon from './Icon.astro';
+
+const b = dict[langOf(Astro)].benefits;
+---
+
+<section class="section" id="benefits">
+  <div class="container">
+    <span class="eyebrow reveal">{b.eyebrow}</span>
+    <h2 class="section-title reveal">{b.title}</h2>
+    <p class="section-lead reveal">{b.lead}</p>
+
+    <div class="grid">
+      {
+        b.items.map((item, i) => (
+          <article class="card benefit reveal" style={`transition-delay:${(i % 3) * 80}ms`}>
+            <span class="icon">
+              <Icon name={item.icon} size={22} />
+            </span>
+            <h3>{item.title}</h3>
+            <p>{item.text}</p>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 56px;
+  }
+  .benefit {
+    position: relative;
+    padding: 28px;
+    overflow: hidden;
+    transition:
+      opacity 0.7s ease,
+      transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+      border-color 0.2s ease;
+  }
+  /* A soft spotlight that follows the cursor (set in index.astro). */
+  .benefit::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      320px circle at var(--x, 50%) var(--y, -20%),
+      rgba(234, 244, 107, 0.1),
+      transparent 60%
+    );
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .benefit:hover {
+    border-color: rgba(234, 244, 107, 0.35);
+  }
+  .benefit:hover::before {
+    opacity: 1;
+  }
+  .icon {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  h3 {
+    font-size: 19px;
+    margin-top: 22px;
+  }
+  p {
+    color: var(--text-secondary);
+    margin-top: 10px;
+  }
+  @media (max-width: 960px) {
+    .grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (max-width: 600px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+    .benefit {
+      padding: 22px;
+    }
+  }
+</style>

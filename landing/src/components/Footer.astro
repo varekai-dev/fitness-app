@@ -1,0 +1,80 @@
+---
+import { Image } from 'astro:assets';
+import icon from '../../../assets/images/icon.png';
+import { APK_URL, DEVELOPER_URL, RELEASES_URL } from '../data';
+import { dict, langOf } from '../i18n';
+
+const t = dict[langOf(Astro)];
+---
+
+<footer>
+  <div class="container bar">
+    <div class="brand">
+      <Image src={icon} alt="" width={32} height={32} />
+      <span>Fitness</span>
+    </div>
+    <nav aria-label={t.footer.links}>
+      <a href={APK_URL}>{t.download}</a>
+      <a href={RELEASES_URL} target="_blank" rel="noopener">{t.footer.releases}</a>
+    </nav>
+    <small>
+      {t.footer.developer}<a class="dev" href={DEVELOPER_URL} target="_blank" rel="noopener">Serhii Saviuk</a>{` · ${t.footer.madeIn} · ${new Date().getFullYear()}`}
+    </small>
+  </div>
+</footer>
+
+<style>
+  footer {
+    border-top: 1px solid var(--border);
+    padding-block: 36px;
+  }
+  .bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 20px 32px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-display);
+    font-weight: 700;
+  }
+  .brand img {
+    border-radius: 9px;
+  }
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+  }
+  nav a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  nav a:hover {
+    color: var(--text);
+  }
+  small {
+    margin-left: auto;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .dev {
+    color: var(--text);
+    font-weight: 700;
+    text-decoration: none;
+    border-bottom: 1px solid var(--accent);
+    transition: color 0.15s;
+  }
+  .dev:hover {
+    color: var(--accent);
+  }
+  @media (max-width: 600px) {
+    small {
+      margin-left: 0;
+    }
+  }
+</style>

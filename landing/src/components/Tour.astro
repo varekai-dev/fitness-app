@@ -1,0 +1,334 @@
+---
+import { Image } from 'astro:assets';
+import { dict, langOf } from '../i18n';
+import { screenshot } from '../screens';
+import Phone from './Phone.astro';
+
+const t = dict[langOf(Astro)].tour;
+const screens = t.screens;
+---
+
+<section class="section tour" id="tour">
+  <div class="container">
+    <span class="eyebrow reveal">{t.eyebrow}</span>
+    <h2 class="section-title reveal">{t.title}</h2>
+    <p class="section-lead reveal">{t.lead}</p>
+
+    <div class="layout reveal" data-tour>
+      <div class="tabs" role="tablist" aria-label={t.tabs}>
+        {
+          screens.map((s, i) => (
+            <button
+              class="tab"
+              role="tab"
+              id={`tab-${s.file}`}
+              aria-controls="tour-panel"
+              aria-selected={i === 0 ? 'true' : 'false'}
+              tabindex={i === 0 ? 0 : -1}
+              data-index={i}
+            >
+              <span class="num">{String(i + 1).padStart(2, '0')}</span>
+              <span class="tab-body">
+                <span class="tab-title">{s.title}</span>
+                <span class="tab-text">{s.text}</span>
+              </span>
+              <span class="progress" aria-hidden="true" />
+            </button>
+          ))
+        }
+      </div>
+
+      <div class="stage" id="tour-panel" role="tabpanel" aria-live="polite">
+        <Phone>
+          {
+            screens.map((s, i) => (
+              <Image
+                src={screenshot(s.file, langOf(Astro))}
+                alt={s.title}
+                class:list={['shot', { 'is-active': i === 0 }]}
+                data-index={i}
+                widths={[390, 780]}
+                sizes="340px"
+              />
+            ))
+          }
+        </Phone>
+        <div class="nav">
+          <button class="arrow" data-step="-1" aria-label={t.prev}>‹</button>
+          <span class="counter"><b data-counter>1</b> / {screens.length}</span>
+          <button class="arrow" data-step="1" aria-label={t.next}>›</button>
+        </div>
+        <p class="caption" data-caption>{screens[0].text}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const AUTOPLAY_MS = 6000;
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-tour]')) {
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('.tab')];
+    const shots = [...root.querySelectorAll<HTMLImageElement>('.shot')];
+    const counter = root.querySelector('[data-counter]')!;
+    const caption = root.querySelector('[data-caption]')!;
+    let current = 0;
+    let timer: number | undefined;
+    // Autoplay stops for good once the visitor picks a screen themselves.
+    let auto = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const show = (index: number, focus = false) => {
+      current = (index + tabs.length) % tabs.length;
+      tabs.forEach((tab, i) => {
+        const on = i === current;
+        tab.setAttribute('aria-selected', String(on));
+        tab.tabIndex = on ? 0 : -1;
+        tab.classList.toggle('is-playing', on && auto);
+      });
+      shots.forEach((img, i) => img.classList.toggle('is-active', i === current));
+      counter.textContent = String(current + 1);
+      caption.textContent = tabs[current].querySelector('.tab-text')!.textContent;
+      const tab = tabs[current];
+      if (focus) tab.focus();
+      // Keep the chosen chip in view on phones, where the tabs scroll sideways.
+      const list = tab.parentElement!;
+      if (list.scrollWidth > list.clientWidth) {
+        list.scrollTo({ left: tab.offsetLeft - 16, behavior: 'smooth' });
+      }
+      schedule();
+    };
+
+    const schedule = () => {
+      clearTimeout(timer);
+      if (auto) timer = window.setTimeout(() => show(current + 1), AUTOPLAY_MS);
+    };
+
+    const stopAuto = () => {
+      auto = false;
+      clearTimeout(timer);
+      tabs.forEach((t) => t.classList.remove('is-playing'));
+    };
+
+    tabs.forEach((tab, i) =>
+      tab.addEventListener('click', () => {
+        stopAuto();
+        show(i);
+      }),
+    );
+
+    root.querySelector('[role=tablist]')!.addEventListener('keydown', (e) => {
+      const key = (e as KeyboardEvent).key;
+      const step = key === 'ArrowDown' || key === 'ArrowRight' ? 1 : key === 'ArrowUp' || key === 'ArrowLeft' ? -1 : 0;
+      if (!step) return;
+      e.preventDefault();
+      stopAuto();
+      show(current + step, true);
+    });
+
+    root.querySelectorAll<HTMLButtonElement>('[data-step]').forEach((btn) =>
+      btn.addEventListener('click', () => {
+        stopAuto();
+        show(current + Number(btn.dataset.step));
+      }),
+    );
+
+    // Swipe the phone to change screens.
+    const stage = root.querySelector<HTMLElement>('.stage')!;
+    let startX: number | null = null;
+    stage.addEventListener('pointerdown', (e) => (startX = e.clientX));
+    stage.addEventListener('pointerup', (e) => {
+      if (startX === null) return;
+      const dx = e.clientX - startX;
+      startX = null;
+      if (Math.abs(dx) < 40) return;
+      stopAuto();
+      show(current + (dx < 0 ? 1 : -1));
+    });
+
+    // Only run the autoplay while the section is on screen.
+    new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) show(current);
+      else clearTimeout(timer);
+    }).observe(root);
+  }
+</script>
+
+<style>
+  .tour {
+    background: linear-gradient(180deg, transparent, rgba(234, 244, 107, 0.035) 50%, transparent);
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: clamp(32px, 6vw, 96px);
+    align-items: center;
+    margin-top: 56px;
+  }
+  .tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .tab {
+    position: relative;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 16px 18px;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    overflow: hidden;
+    transition:
+      background 0.2s,
+      border-color 0.2s;
+  }
+  .tab:hover {
+    background: var(--glass);
+  }
+  .tab[aria-selected='true'] {
+    background: var(--surface);
+    border-color: var(--border);
+  }
+  .num {
+    font-family: var(--font-display);
+    font-size: 13px;
+    color: var(--text-muted);
+    padding-top: 3px;
+  }
+  .tab[aria-selected='true'] .num {
+    color: var(--accent);
+  }
+  .tab-body {
+    display: grid;
+    gap: 4px;
+  }
+  .tab-title {
+    font-weight: 800;
+    font-size: 16px;
+  }
+  .tab-text {
+    display: none;
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .tab[aria-selected='true'] .tab-text {
+    display: block;
+  }
+  .tab[aria-selected='true'] {
+    grid-column: 1 / -1;
+  }
+  .progress {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 2px;
+    width: 100%;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  .tab.is-playing .progress {
+    animation: progress 6s linear forwards;
+  }
+  @keyframes progress {
+    to {
+      transform: scaleX(1);
+    }
+  }
+  .stage {
+    touch-action: pan-y;
+    user-select: none;
+  }
+  .stage :global(.shot) {
+    opacity: 0;
+    transform: scale(1.03);
+    transition:
+      opacity 0.45s ease,
+      transform 0.6s ease;
+  }
+  .stage :global(.shot.is-active) {
+    opacity: 1;
+    transform: none;
+  }
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    margin-top: 22px;
+  }
+  .arrow {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--glass-border);
+    background: var(--glass);
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .arrow:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
+  .counter {
+    font-family: var(--font-display);
+    color: var(--text-muted);
+    font-size: 14px;
+    min-width: 56px;
+    text-align: center;
+  }
+  .counter b {
+    color: var(--text);
+  }
+  /* On phones the selected screen's description sits under the phone instead. */
+  .caption {
+    display: none;
+    min-height: 4.65em;
+    margin-top: 16px;
+    color: var(--text-secondary);
+    text-align: center;
+  }
+  @media (max-width: 860px) {
+    .layout {
+      grid-template-columns: 1fr;
+    }
+    .stage {
+      order: -1;
+      width: min(300px, 80%);
+      margin-inline: auto;
+    }
+    /* Tabs become a row of chips with the description under the phone. */
+    .tabs {
+      display: flex;
+      overflow-x: auto;
+      scrollbar-width: none;
+      margin-inline: calc(var(--gutter) * -1);
+      padding-inline: var(--gutter);
+      scroll-snap-type: x proximity;
+    }
+    .tabs::-webkit-scrollbar {
+      display: none;
+    }
+    .tab {
+      flex: 0 0 auto;
+      align-items: center;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border-color: var(--border);
+      scroll-snap-align: start;
+    }
+    .num {
+      padding-top: 0;
+    }
+    .tab[aria-selected='true'] .tab-text {
+      display: none;
+    }
+    .caption {
+      display: block;
+    }
+  }
+</style>

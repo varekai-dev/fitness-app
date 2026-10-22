@@ -1,0 +1,160 @@
+---
+import { Image } from 'astro:assets';
+import icon from '../../../assets/images/icon.png';
+import { APK_URL } from '../data';
+import { dict, langOf, pathFor, type Lang } from '../i18n';
+import Icon from './Icon.astro';
+
+const lang = langOf(Astro);
+const t = dict[lang];
+const langs: { id: Lang; label: string; name: string }[] = [
+  { id: 'uk', label: 'UA', name: 'Українська' },
+  { id: 'en', label: 'EN', name: 'English' },
+];
+---
+
+<header class="header" data-header>
+  <div class="container bar">
+    <a class="brand" href="#top" aria-label={t.nav.home}>
+      <Image src={icon} alt="" width={36} height={36} />
+      <span>Fitness</span>
+    </a>
+    <nav aria-label={t.nav.sections}>
+      {t.nav.links.map((l) => <a href={l.href}>{l.label}</a>)}
+    </nav>
+    <div class="langs" role="group" aria-label={t.langSwitch}>
+      {
+        langs.map((l) => (
+          <a
+            href={pathFor(l.id)}
+            hreflang={l.id}
+            lang={l.id}
+            aria-label={l.name}
+            aria-current={l.id === lang ? 'true' : undefined}
+            data-lang={l.id}
+          >
+            {l.label}
+          </a>
+        ))
+      }
+    </div>
+    <a class="btn btn-primary get" href={APK_URL}>
+      <Icon name="download" size={18} />
+      <span>APK</span>
+    </a>
+  </div>
+</header>
+
+<script>
+  // The switch remembers the choice, so the page no longer follows the browser's language.
+  document.querySelectorAll<HTMLAnchorElement>('[data-lang]').forEach((link) =>
+    link.addEventListener('click', () => {
+      try {
+        localStorage.setItem('fitness-lang', link.dataset.lang!);
+      } catch {
+        // Without storage the switch still navigates; the next visit follows the browser again.
+      }
+    }),
+  );
+</script>
+
+<style>
+  .header {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 50;
+    transition:
+      background 0.25s ease,
+      border-color 0.25s ease;
+    border-bottom: 1px solid transparent;
+  }
+  .header.is-scrolled {
+    background: rgba(18, 18, 18, 0.78);
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    border-color: var(--border);
+  }
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    height: 68px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 18px;
+  }
+  .brand img {
+    border-radius: 10px;
+  }
+  nav {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+  }
+  nav a {
+    padding: 8px 14px;
+    border-radius: 999px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    transition:
+      color 0.15s,
+      background 0.15s;
+  }
+  nav a:hover {
+    color: var(--text);
+    background: var(--glass);
+  }
+  .langs {
+    display: flex;
+    padding: 3px;
+    border-radius: 999px;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+  }
+  .langs a {
+    display: grid;
+    place-items: center;
+    min-width: 38px;
+    height: 34px;
+    padding: 0 8px;
+    border-radius: 999px;
+    color: var(--text-secondary);
+    font-weight: 800;
+    font-size: 13px;
+    text-decoration: none;
+    transition:
+      background 0.15s,
+      color 0.15s;
+  }
+  .langs a:hover {
+    color: var(--text);
+  }
+  .langs a[aria-current='true'] {
+    background: var(--text);
+    color: var(--bg);
+  }
+  .get {
+    min-height: 42px;
+    padding: 0 18px;
+    font-size: 15px;
+  }
+  @media (max-width: 860px) {
+    nav {
+      display: none;
+    }
+    .bar {
+      gap: 12px;
+    }
+    .langs {
+      margin-left: auto;
+    }
+  }
+</style>

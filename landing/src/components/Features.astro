@@ -1,0 +1,168 @@
+---
+import { dict, langOf } from '../i18n';
+import Icon from './Icon.astro';
+
+const t = dict[langOf(Astro)].features;
+const features = t.items;
+---
+
+<section class="section" id="features">
+  <div class="container">
+    <span class="eyebrow reveal">{t.eyebrow}</span>
+    <h2 class="section-title reveal">{t.title}</h2>
+    <p class="section-lead reveal">{t.lead}</p>
+
+    <div class="filters reveal" role="group" aria-label={t.filter} data-filters>
+      {
+        t.groups.map((g, i) => (
+          <button class="filter" data-group={g.id} aria-pressed={i === 0 ? 'true' : 'false'}>
+            {g.label}
+            <span class="count">
+              {g.id === 'all' ? features.length : features.filter((f) => f.group === g.id).length}
+            </span>
+          </button>
+        ))
+      }
+    </div>
+
+    <ul class="grid" data-features>
+      {
+        features.map((f) => (
+          <li class="feature" data-group={f.group}>
+            <span class="icon">
+              <Icon name={f.icon} size={22} />
+            </span>
+            <div>
+              <h3>{f.title}</h3>
+              <p>{f.text}</p>
+            </div>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<script>
+  const filters = document.querySelector('[data-filters]');
+  const items = [...document.querySelectorAll<HTMLElement>('[data-features] .feature')];
+
+  filters?.addEventListener('click', (e) => {
+    const button = (e.target as HTMLElement).closest<HTMLButtonElement>('.filter');
+    if (!button) return;
+    const group = button.dataset.group;
+    filters.querySelectorAll('.filter').forEach((b) => b.setAttribute('aria-pressed', String(b === button)));
+    let shown = 0;
+    for (const item of items) {
+      const match = group === 'all' || item.dataset.group === group;
+      item.hidden = !match;
+      if (match) {
+        // Restart the entrance animation, staggered.
+        item.style.animation = 'none';
+        void item.offsetWidth;
+        item.style.animation = '';
+        item.style.animationDelay = `${shown++ * 40}ms`;
+      }
+    }
+  });
+</script>
+
+<style>
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 40px;
+  }
+  .filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 18px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition:
+      background 0.15s,
+      color 0.15s,
+      border-color 0.15s;
+  }
+  .filter:hover {
+    border-color: #444;
+  }
+  .filter[aria-pressed='true'] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-text);
+  }
+  .count {
+    font-size: 12px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .filter[aria-pressed='true'] .count {
+    background: rgba(0, 0, 0, 0.12);
+  }
+  .grid {
+    list-style: none;
+    padding: 0;
+    margin: 28px 0 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .feature {
+    display: flex;
+    gap: 16px;
+    padding: 22px;
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    animation: pop 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .feature[hidden] {
+    display: none;
+  }
+  .icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
+    background: var(--surface-raised);
+    color: var(--accent);
+  }
+  h3 {
+    font-family: var(--font-body);
+    font-weight: 800;
+    font-size: 17px;
+    letter-spacing: 0;
+  }
+  p {
+    color: var(--text-secondary);
+    font-size: 15px;
+    margin-top: 6px;
+  }
+  @keyframes pop {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.98);
+    }
+  }
+  @media (max-width: 960px) {
+    .grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (max-width: 600px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

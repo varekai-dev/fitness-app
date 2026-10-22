@@ -71,6 +71,8 @@ Always use the **Pixel_10_Pro_API_37.0** emulator. `npm run android` boots it (s
 | `food.png` | Food tab | `/food` |
 | `water.png` | Water tab | `/water` |
 
+The same screens in English (app language set to English in Settings → App) live in `docs/screenshots/en/` with the same file names; the landing page's `/en/` uses them, falling back to the Ukrainian one when a file is missing. Retake the English one too when a screen changes.
+
 Screenshots may come from either platform. On Android (Pixel emulator, app open in Expo Go via `npm run android`):
 
 1. Clean status bar with System UI demo mode: `adb shell settings put global sysui_demo_allowed 1`, then `adb shell am broadcast -a com.android.systemui.demo -e command <cmd>` for `enter`, `clock -e hhmm 0941`, `battery -e level 100 -e plugged false`, `network -e wifi show -e level 4 -e fully true`, `network -e mobile hide` and `notifications -e visible false`.

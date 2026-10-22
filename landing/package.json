@@ -1,0 +1,21 @@
+{
+  "name": "fitness-landing",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "@mdi/js": "^7.4.47",
+    "astro": "^7.4.2",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "@types/qrcode": "^1.5.6",
+    "typescript": "^6.0.3"
+  }
+}

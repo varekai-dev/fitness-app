@@ -1,0 +1,966 @@
+---
+import { Image } from 'astro:assets';
+import { screenshot } from '../screens';
+import { dict, langOf } from '../i18n';
+import Phone from './Phone.astro';
+
+/**
+ * A playable copy of the app's workout player (src/components/workout-player.tsx):
+ * the wheels, set chips, rest ring and hold-to-finish button, for one exercise.
+ */
+
+const L = dict[langOf(Astro)];
+const w = L.workout;
+const SETS = 5;
+// What the app would prefill from last time.
+const LAST = { weight: 22, reps: 10 };
+const wheels = [
+  { key: 'weight', unit: w.kg, min: 0, max: 60, step: 0.5, value: LAST.weight },
+  { key: 'reps', unit: w.repsUnit, min: 1, max: 30, step: 1, value: LAST.reps },
+];
+const label = (v: number) => v.toLocaleString(L.locale);
+const values = (wh: (typeof wheels)[number]) =>
+  Array.from({ length: Math.round((wh.max - wh.min) / wh.step) + 1 }, (_, i) => wh.min + i * wh.step);
+
+const RING = 2 * Math.PI * 88;
+const HOLD = 2 * Math.PI * 41;
+---
+
+<div class="steps-col">
+  <ol class="how">
+    {w.steps.map(([bold, rest]) => <li><b>{bold}</b>{rest}</li>)}
+  </ol>
+  <p class="hint">{w.note}</p>
+</div>
+
+<div class="demo" data-workout>
+  <Phone>
+    <Image src={screenshot('workout')} alt="" class="hero-shot" widths={[390, 780]} sizes="360px" />
+    <div class="clock" aria-hidden="true">
+      <svg viewBox="0 0 24 24" data-out="clock-icon"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" /></svg>
+      <span data-out="clock">0:00</span>
+    </div>
+    <div class="last">
+      <span>{w.lastTime}</span>
+      <b>{label(LAST.weight)} {w.kg} · {LAST.reps} {w.repsShort}</b>
+    </div>
+
+    <div class="sheet">
+      <span class="handle" aria-hidden="true"></span>
+
+      <!-- Doing a set -->
+      <div class="view" data-view="work">
+        <p class="overline"><span data-out="paused"></span><span data-out="set">{w.set(1, SETS)}</span> · {w.exercise(1, 4)}</p>
+        <h3 class="title">One-Arm Dumbbell Row</h3>
+        <p class="subtle">{w.target(SETS)}</p>
+        <div class="chips" data-chips>
+          {Array.from({ length: SETS }, (_, i) => <span class:list={['chip', { current: i === 0 }]}>{i + 1}</span>)}
+        </div>
+        <div class="fields">
+          {
+            wheels.map((wh) => (
+              <div class="wheel" data-wheel={wh.key} data-min={wh.min} data-step={wh.step} data-value={wh.value}>
+                <span class="band" aria-hidden="true" />
+                <div
+                  class="wheel-scroll"
+                  tabindex="0"
+                  role="spinbutton"
+                  aria-label={wh.key === 'weight' ? w.weightLabel : w.repsLabel}
+                  aria-valuemin={wh.min}
+                  aria-valuemax={wh.max}
+                  aria-valuenow={wh.value}
+                >
+                  {values(wh).map((v) => (
+                    <span class="item">{label(v)}</span>
+                  ))}
+                </div>
+                <span class="unit">{wh.unit}</span>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+
+      <!-- Resting between sets -->
+      <div class="view rest" data-view="rest" hidden>
+        <p class="overline center"><span data-out="paused"></span>{w.rest}</p>
+        <h3 class="title center">One-Arm Dumbbell Row</h3>
+        <p class="subtle center"><span data-out="next">{w.set(2, SETS)}</span> · {w.targetShort}</p>
+        <div class="ring">
+          <svg viewBox="0 0 196 196" aria-hidden="true">
+            <circle cx="98" cy="98" r="88" class="track-circle"></circle>
+            <circle cx="98" cy="98" r="88" class="arc" data-arc stroke-dasharray={RING}></circle>
+          </svg>
+          <b data-out="rest">1:00</b>
+        </div>
+      </div>
+
+      <!-- After the last set, or a hold on the main button -->
+      <div class="view done" data-view="done" hidden>
+        <p class="overline center" data-out="done-title">{w.finished}</p>
+        <h3 class="title center">{w.greatJob}</h3>
+        <dl class="summary">
+          <div><dt>{w.sets}</dt><dd data-out="sum-sets">0</dd></div>
+          <div><dt>{w.volume}</dt><dd data-out="sum-volume">0 {w.kg}</dd></div>
+          <div><dt>{w.time}</dt><dd data-out="sum-time">0:00</dd></div>
+          <div><dt>{w.prs}</dt><dd data-out="sum-prs">0</dd></div>
+        </dl>
+        <button type="button" class="again" data-again>{w.again}</button>
+      </div>
+
+      <div class="progress" data-progress-block>
+        <div class="track"><span data-progress></span></div>
+        <div class="track-labels">
+          <span data-out="elapsed">0:00</span>
+          <span data-out="count">{w.setsDone(0, SETS)}</span>
+        </div>
+      </div>
+
+      <div class="transport" data-transport>
+        <!-- As in the app: back undoes the last set, the middle pauses (a hold finishes), next completes the set or skips the rest. -->
+        <button type="button" class="side" data-back disabled aria-label={w.prev}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 5.5v13L9 12zM5.5 5H8v14H5.5z" /></svg>
+        </button>
+        <div class="main-wrap">
+          <svg class="hold-ring" viewBox="0 0 86 86" aria-hidden="true">
+            <circle cx="43" cy="43" r="41" data-hold stroke-dasharray={HOLD} stroke-dashoffset={HOLD}></circle>
+          </svg>
+          <button type="button" class="main" data-main aria-label={w.start}>
+            <svg viewBox="0 0 24 24" aria-hidden="true" data-icon="play"><path d="M8 5.5v13l11-6.5z" /></svg>
+            <svg viewBox="0 0 24 24" aria-hidden="true" data-icon="pause" class="is-off"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" /></svg>
+            <svg viewBox="0 0 24 24" aria-hidden="true" data-icon="stop" class="is-off"><rect x="6" y="6" width="12" height="12" rx="2" /></svg>
+          </button>
+        </div>
+        <button type="button" class="side" data-next disabled aria-label={w.nextSet}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5v13L15 12zM16 5h2.5v14H16z" /></svg>
+        </button>
+      </div>
+      <button type="button" class="extend" data-extend hidden>{w.extend}</button>
+      <p class="hold-hint" data-out="hint">{w.tapToStart}</p>
+      <div class="toast" data-toast role="status" aria-live="polite"></div>
+    </div>
+  </Phone>
+</div>
+
+<script>
+  import { clientDict } from '../i18n';
+
+  const ITEM = 40;
+  const SETS = 5;
+  const REST_SEC = 60;
+  const LAST_BEST = 22 * (1 + 10 / 30);
+  const HOLD_DELAY_MS = 150;
+  const HOLD_MS = 1000;
+
+  const root = document.querySelector<HTMLElement>('[data-workout]')!;
+  const $ = <T extends Element = HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
+  const out = (k: string) => $(`[data-out="${k}"]`);
+  const L = clientDict();
+  const W = L.workout;
+  const fmtKg = (n: number) => n.toLocaleString(L.locale);
+  const clock = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
+  const epley = (w: number, r: number) => (r === 1 ? w : w * (1 + r / 30));
+
+  /**
+   * An iOS-clock wheel: a snapping scroller whose rows fade and shrink away from
+   * the middle. It scrolls with a finger, the mouse wheel, by dragging with the
+   * mouse, by clicking a row or with the arrow keys.
+   */
+  function wheel(el: HTMLElement) {
+    const scroller = el.querySelector<HTMLElement>('.wheel-scroll')!;
+    const items = [...scroller.querySelectorAll<HTMLElement>('.item')];
+    const min = Number(el.dataset.min);
+    const step = Number(el.dataset.step);
+    const clamp = (i: number) => Math.min(items.length - 1, Math.max(0, i));
+    // The selected row lives here, not in scrollTop: a hidden scroller (the rest
+    // view hides it) loses its scroll, and reports 0 as it comes back.
+    let current = Math.round((Number(el.dataset.value) - min) / step);
+    let placed = false;
+
+    const paint = () => {
+      const center = scroller.scrollTop / ITEM;
+      const from = Math.max(0, Math.floor(center) - 4);
+      const to = Math.min(items.length, Math.ceil(center) + 5);
+      for (let i = from; i < to; i++) {
+        const d = Math.min(Math.abs(i - center), 2);
+        items[i].style.opacity = String(d <= 1 ? 1 - d * 0.65 : 0.35 - (d - 1) * 0.25);
+        items[i].style.transform = `scale(${1 - Math.min(d, 1) * 0.2})`;
+      }
+      scroller.setAttribute('aria-valuenow', String(min + current * step));
+    };
+    const scrollTo = (i: number) => scroller.scrollTo({ top: clamp(i) * ITEM, behavior: 'smooth' });
+
+    let raf = 0;
+    scroller.addEventListener('scroll', () => {
+      if (!placed) return;
+      current = clamp(Math.round(scroller.scrollTop / ITEM));
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(paint);
+    });
+
+    // Put the wheel back on its row whenever it comes into view.
+    new ResizeObserver(() => {
+      if (scroller.clientHeight === 0) {
+        placed = false;
+        return;
+      }
+      if (placed) return;
+      scroller.scrollTop = current * ITEM;
+      paint();
+      requestAnimationFrame(() => (placed = true));
+    }).observe(scroller);
+
+    scroller.addEventListener('keydown', (e) => {
+      const d = e.key === 'ArrowUp' ? -1 : e.key === 'ArrowDown' ? 1 : 0;
+      if (!d) return;
+      e.preventDefault();
+      scrollTo(current + d);
+    });
+
+    // Mouse drag; touch scrolls natively.
+    let dragY: number | null = null;
+    let dragTop = 0;
+    let dragged = false;
+    scroller.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      dragY = e.clientY;
+      dragTop = scroller.scrollTop;
+      dragged = false;
+      e.preventDefault();
+    });
+    window.addEventListener('pointermove', (e) => {
+      if (dragY === null) return;
+      const dy = e.clientY - dragY;
+      if (!dragged && Math.abs(dy) < 4) return;
+      if (!dragged) {
+        dragged = true;
+        scroller.classList.add('is-dragging');
+      }
+      scroller.scrollTop = dragTop - dy;
+    });
+    window.addEventListener('pointerup', () => {
+      if (dragY === null) return;
+      dragY = null;
+      if (!dragged) return;
+      scroller.classList.remove('is-dragging');
+      scrollTo(Math.round(scroller.scrollTop / ITEM));
+    });
+    items.forEach((item, i) =>
+      item.addEventListener('click', () => {
+        if (!dragged) scrollTo(i);
+      }),
+    );
+
+    return { value: () => Math.round((min + current * step) * 100) / 100 };
+  }
+
+  const weight = wheel($('[data-wheel="weight"]'));
+  const reps = wheel($('[data-wheel="reps"]'));
+
+  type Done = { weight: number; reps: number; pr: boolean };
+  let done: Done[] = [];
+  let best = LAST_BEST;
+  let state: 'work' | 'rest' | 'done' = 'work';
+  // Not started yet counts as paused, like a fresh workout in the app.
+  let started = false;
+  let paused = true;
+  // Workout time, without the pauses.
+  let activeMs = 0;
+  let resumedAt = 0;
+  // Rest left, counted only while not paused.
+  let restLeftMs = 0;
+  let restTotalMs = REST_SEC * 1000;
+  let lastTick = 0;
+
+  const views = [...root.querySelectorAll<HTMLElement>('[data-view]')];
+  const chips = $('[data-chips]');
+  const arc = $<SVGCircleElement>('[data-arc]');
+  const main = $<HTMLButtonElement>('[data-main]');
+  const back = $<HTMLButtonElement>('[data-back]');
+  const next = $<HTMLButtonElement>('[data-next]');
+  const toast = $('[data-toast]');
+  const RING = 2 * Math.PI * 88;
+
+  const elapsed = () => (activeMs + (paused || state === 'done' ? 0 : Date.now() - resumedAt)) / 1000;
+
+  let toastTimer = 0;
+  const showToast = (text: string) => {
+    toast.textContent = text;
+    toast.classList.add('is-on');
+    clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => toast.classList.remove('is-on'), 2200);
+  };
+
+  /** A short chime like the app's at the end of a rest. */
+  const chime = () => {
+    try {
+      const ctx = new AudioContext();
+      for (const [i, freq] of [880, 1320].entries()) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime + i * 0.18);
+        gain.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + i * 0.18 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i * 0.18 + 0.4);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(ctx.currentTime + i * 0.18);
+        osc.stop(ctx.currentTime + i * 0.18 + 0.45);
+      }
+      setTimeout(() => ctx.close(), 1000);
+    } catch {
+      // No audio: the ring still says it.
+    }
+    navigator.vibrate?.([200, 100, 200]);
+  };
+
+  const showIcon = (name: string) =>
+    root
+      .querySelectorAll<SVGElement>('[data-icon]')
+      .forEach((icon) => icon.classList.toggle('is-off', icon.dataset.icon !== name));
+
+  const render = () => {
+    views.forEach((v) => (v.hidden = v.dataset.view !== state));
+    const n = done.length;
+    root
+      .querySelectorAll('[data-out="paused"]')
+      .forEach((el) => (el.textContent = started && paused ? W.paused : ''));
+    out('set').textContent = W.set(Math.min(n + 1, SETS), SETS);
+    out('next').textContent = W.set(Math.min(n + 1, SETS), SETS);
+    out('count').textContent = W.setsDone(n, SETS);
+    chips.innerHTML = Array.from({ length: SETS }, (_, i) => {
+      const s = done[i];
+      if (s) return `<span class="chip is-done">${s.pr ? '🏆 ' : ''}${fmtKg(s.weight)} ${W.kg} · ${s.reps}</span>`;
+      return `<span class="chip${i === n ? ' current' : ''}">${i + 1}</span>`;
+    }).join('');
+
+    $('[data-extend]').hidden = state !== 'rest';
+    $('[data-transport]').hidden = state === 'done';
+    $('[data-progress-block]').hidden = state === 'done';
+    showIcon(paused ? 'play' : 'pause');
+    main.setAttribute('aria-label', !started ? W.start : paused ? W.resume : W.pause);
+    back.disabled = n === 0;
+    next.disabled = paused;
+    next.setAttribute('aria-label', state === 'rest' ? W.skipRest : W.nextSet);
+    // Shown only while paused, but always laid out so the sheet doesn't jump.
+    const hint = out('hint');
+    hint.hidden = state === 'done';
+    hint.classList.toggle('is-off', !paused);
+    hint.textContent = started
+      ? W.holdToFinish
+      : W.tapToStart;
+    out('clock-icon').classList.toggle('is-off', !(started && paused));
+    root.classList.toggle('is-paused', started && paused);
+
+    if (state === 'done') {
+      const volume = done.reduce((sum, s) => sum + s.weight * s.reps, 0);
+      out('done-title').textContent = n === SETS ? W.exerciseDone : W.finished;
+      out('sum-sets').textContent = String(n);
+      out('sum-volume').textContent = `${fmtKg(Math.round(volume))} ${W.kg}`;
+      out('sum-time').textContent = clock(elapsed());
+      out('sum-prs').textContent = String(done.filter((s) => s.pr).length);
+    }
+    lastTick = performance.now();
+    tick();
+  };
+
+  // One loop drives the clock, the rest countdown and the progress bar.
+  let frame = 0;
+  const tick = () => {
+    cancelAnimationFrame(frame);
+    const now = performance.now();
+    const dt = now - lastTick;
+    lastTick = now;
+    out('elapsed').textContent = clock(elapsed());
+    out('clock').textContent = clock(elapsed());
+    let progress = done.length / SETS;
+    if (state === 'rest') {
+      if (!paused) restLeftMs = Math.max(restLeftMs - dt, 0);
+      out('rest').textContent = clock(Math.ceil(restLeftMs / 1000));
+      arc.style.strokeDashoffset = String(RING * (1 - restLeftMs / restTotalMs));
+      progress = 1 - restLeftMs / restTotalMs;
+      if (restLeftMs <= 0) {
+        chime();
+        state = 'work';
+        render();
+        return;
+      }
+    }
+    $('[data-progress]').style.width = `${progress * 100}%`;
+    if (!paused && state !== 'done') frame = requestAnimationFrame(tick);
+  };
+
+  const togglePause = () => {
+    if (paused) {
+      started = true;
+      paused = false;
+      resumedAt = Date.now();
+    } else {
+      activeMs += Date.now() - resumedAt;
+      paused = true;
+    }
+    render();
+  };
+
+  const completeSet = () => {
+    const w = weight.value();
+    const r = reps.value();
+    const e1rm = epley(w, r);
+    const pr = w > 0 && e1rm > best;
+    if (pr) {
+      best = e1rm;
+      showToast(W.newPr(fmtKg(Math.round(e1rm * 2) / 2)));
+    }
+    done.push({ weight: w, reps: r, pr });
+    if (done.length === SETS) return finish();
+    restTotalMs = restLeftMs = REST_SEC * 1000;
+    state = 'rest';
+    render();
+  };
+
+  const undoSet = () => {
+    done.pop();
+    best = Math.max(LAST_BEST, ...done.map((s) => epley(s.weight, s.reps)));
+    state = 'work';
+    render();
+  };
+
+  const finish = () => {
+    if (!paused) activeMs += Date.now() - resumedAt;
+    paused = true;
+    state = 'done';
+    render();
+  };
+
+  // Main button: a tap pauses or resumes; a hold fills the ring round it, turns into stop and finishes.
+  const holdCircle = $<SVGCircleElement>('[data-hold]');
+  const HOLD_LEN = 2 * Math.PI * 41;
+  let holdStart = 0;
+  let holdFrame = 0;
+  let holdDelay = 0;
+  let held = false;
+  const setHold = (p: number) => (holdCircle.style.strokeDashoffset = String(HOLD_LEN * (1 - p)));
+  const holdTick = () => {
+    const p = Math.min((performance.now() - holdStart) / HOLD_MS, 1);
+    setHold(p);
+    if (p < 1) holdFrame = requestAnimationFrame(holdTick);
+    else {
+      held = true;
+      setHold(0);
+      finish();
+    }
+  };
+  const cancelHold = () => {
+    clearTimeout(holdDelay);
+    cancelAnimationFrame(holdFrame);
+    setHold(0);
+    if (!held && state !== 'done') showIcon(paused ? 'play' : 'pause');
+  };
+  main.addEventListener('pointerdown', () => {
+    held = false;
+    if (!started) return;
+    holdDelay = window.setTimeout(() => {
+      showIcon('stop');
+      holdStart = performance.now();
+      holdFrame = requestAnimationFrame(holdTick);
+    }, HOLD_DELAY_MS);
+  });
+  main.addEventListener('pointerup', cancelHold);
+  main.addEventListener('pointercancel', cancelHold);
+  main.addEventListener('pointerleave', cancelHold);
+  // A long press must not open the browser's context menu.
+  main.addEventListener('contextmenu', (e) => e.preventDefault());
+  main.addEventListener('click', () => {
+    if (!held) togglePause();
+  });
+
+  next.addEventListener('click', () => {
+    if (state === 'rest') {
+      state = 'work';
+      render();
+    } else if (state === 'work') completeSet();
+  });
+  back.addEventListener('click', undoSet);
+
+  $('[data-extend]').addEventListener('click', () => {
+    restLeftMs += 15_000;
+    restTotalMs = Math.max(restTotalMs, restLeftMs);
+    render();
+  });
+
+  $('[data-again]').addEventListener('click', () => {
+    done = [];
+    best = LAST_BEST;
+    started = false;
+    paused = true;
+    activeMs = 0;
+    state = 'work';
+    render();
+  });
+
+  render();
+</script>
+
+<style>
+  .steps-col {
+    align-self: center;
+  }
+  .how {
+    display: grid;
+    gap: 18px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: how;
+  }
+  .how li {
+    position: relative;
+    padding-left: 48px;
+    color: var(--text-secondary);
+    counter-increment: how;
+  }
+  .how li::before {
+    content: counter(how);
+    position: absolute;
+    left: 0;
+    top: -2px;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-family: var(--font-display);
+    font-size: 14px;
+  }
+  .how b {
+    color: var(--text);
+  }
+  .hint {
+    margin-top: 24px;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  .demo {
+    width: min(360px, 100%);
+    justify-self: center;
+  }
+  .demo :global(.hero-shot) {
+    object-fit: cover;
+    object-position: top;
+  }
+  .last {
+    position: absolute;
+    left: 14px;
+    top: 31%;
+    display: grid;
+    padding: 8px 12px;
+    border-radius: 14px;
+    background: rgba(38, 38, 38, 0.72);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    line-height: 1.3;
+  }
+  .last span {
+    color: var(--text-secondary);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .last b {
+    font-size: 14px;
+  }
+
+  /* The player sheet over the photo, in the app's sizes. */
+  .sheet {
+    position: absolute;
+    inset: auto 0 0;
+    top: 41%;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 26px 18px 14px;
+    border-radius: 30px 30px 0 0;
+    background: #262626;
+    font-size: 13px;
+  }
+  .handle {
+    position: absolute;
+    top: 9px;
+    left: 50%;
+    width: 36px;
+    height: 4px;
+    margin-left: -18px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.25);
+  }
+  .view {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .view[hidden] {
+    display: none;
+  }
+  .overline {
+    color: var(--text-secondary);
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+  }
+  .title {
+    font-family: var(--font-body);
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+  .subtle {
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
+  .center {
+    text-align: center;
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+  }
+  .chips :global(.chip) {
+    min-width: 28px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: #333;
+    border: 1.5px solid transparent;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .chips :global(.chip.current) {
+    border-color: var(--accent);
+  }
+  .chips :global(.chip.is-done) {
+    background: var(--accent);
+    color: var(--accent-text);
+    animation: chip-in 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  @keyframes chip-in {
+    from {
+      transform: scale(0.6);
+    }
+  }
+  .fields {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .wheel {
+    position: relative;
+    flex: 1;
+    height: 120px;
+  }
+  .band {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 40px;
+    height: 40px;
+    border-radius: 16px;
+    background: rgba(0, 0, 0, 0.25);
+    pointer-events: none;
+  }
+  .wheel-scroll {
+    position: relative;
+    height: 100%;
+    overflow-y: auto;
+    scroll-snap-type: y mandatory;
+    scrollbar-width: none;
+    padding-block: 40px;
+    overscroll-behavior: contain;
+  }
+  .wheel-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  .wheel-scroll:focus-visible {
+    outline: none;
+  }
+  .wheel:has(.wheel-scroll:focus-visible) .band {
+    outline: 2px solid var(--accent);
+  }
+  .item {
+    display: grid;
+    place-items: center;
+    height: 40px;
+    scroll-snap-align: center;
+    font-size: 19px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    opacity: 0.1;
+    user-select: none;
+  }
+  .unit {
+    position: absolute;
+    right: 12px;
+    top: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    color: var(--text-secondary);
+    font-size: 11px;
+    pointer-events: none;
+  }
+  .ring {
+    position: relative;
+    width: 168px;
+    margin: 14px auto 4px;
+  }
+  .ring svg {
+    display: block;
+    width: 100%;
+    transform: rotate(-90deg);
+  }
+  .ring circle {
+    fill: none;
+    stroke-width: 10;
+  }
+  .track-circle {
+    stroke: #333;
+  }
+  .arc {
+    stroke: var(--accent);
+    stroke-linecap: round;
+  }
+  .ring b {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-size: 40px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+  .summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 18px 0 0;
+  }
+  .summary div {
+    padding: 12px;
+    border-radius: 14px;
+    background: #333;
+  }
+  .summary dt {
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .summary dd {
+    margin: 2px 0 0;
+    font-size: 18px;
+    font-weight: 800;
+  }
+  .again {
+    margin-top: 16px;
+    min-height: 48px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--accent-text);
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .progress {
+    margin-top: auto;
+  }
+  .progress[hidden],
+  .transport[hidden],
+  .extend[hidden],
+  .hold-hint[hidden] {
+    display: none;
+  }
+  .track {
+    height: 6px;
+    margin-top: 10px;
+    border-radius: 3px;
+    background: #333;
+    overflow: hidden;
+  }
+  .track span {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: 3px;
+    background: var(--accent);
+  }
+  .track-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+  }
+  .transport {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    margin-top: 6px;
+  }
+  .side {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border: 0;
+    border-radius: 50%;
+    background: #333;
+    color: var(--text);
+  }
+  .side:not(:disabled) {
+    cursor: pointer;
+  }
+  .side:disabled {
+    opacity: 0.5;
+  }
+  .side svg,
+  .main svg {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+  }
+  .main-wrap {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 76px;
+    height: 76px;
+  }
+  .hold-ring {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    transform: rotate(-90deg);
+  }
+  .hold-ring circle {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 4;
+    stroke-linecap: round;
+  }
+  .main {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--accent-text);
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    transition: transform 0.1s;
+  }
+  .main:active {
+    transform: scale(0.94);
+  }
+  .main svg {
+    width: 28px;
+    height: 28px;
+  }
+  .main svg.is-off {
+    display: none;
+  }
+  .extend {
+    align-self: center;
+    margin-top: 4px;
+    padding: 6px 16px;
+    border: 0;
+    border-radius: 999px;
+    background: #333;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .hold-hint.is-off {
+    visibility: hidden;
+  }
+  .wheel-scroll {
+    cursor: grab;
+  }
+  .wheel-scroll.is-dragging {
+    cursor: grabbing;
+    scroll-snap-type: none;
+  }
+  /* The live workout clock over the one baked into the screenshot. */
+  .clock {
+    position: absolute;
+    top: 7.9%;
+    right: 3.6%;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 17.5%;
+    height: 4%;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: #3b2121;
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .clock svg {
+    width: 12px;
+    height: 12px;
+    fill: var(--accent);
+  }
+  .clock svg.is-off {
+    display: none;
+  }
+  .hold-hint {
+    color: var(--text-secondary);
+    font-size: 10px;
+    text-align: center;
+    margin-top: 2px;
+  }
+  .toast {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    top: -54px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: var(--accent);
+    color: var(--accent-text);
+    font-weight: 800;
+    font-size: 13px;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(8px);
+    transition:
+      opacity 0.25s,
+      transform 0.25s;
+    pointer-events: none;
+  }
+  .toast.is-on {
+    opacity: 1;
+    transform: none;
+  }
+  /* A narrower phone needs more of its height for the sheet. */
+  @media (max-width: 480px) {
+    .sheet {
+      top: 36%;
+    }
+    .last {
+      top: 25%;
+    }
+  }
+</style>

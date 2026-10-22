@@ -55,6 +55,17 @@ npm run build:android   # → dist/fitness-<version>.apk
 
 Ключ підпису береться з `credentials.json` у корені (як його завантажує `eas credentials -p android`) або зі змінних `ANDROID_KEYSTORE_PATH`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`. У CI це секрети репозиторію з тими ж назвами, але сам keystore передається в base64 як `ANDROID_KEYSTORE_BASE64`. Плюс `RELEASES_TOKEN` для публікації в репозиторій релізів і `EXPO_TOKEN` для OTA-оновлень.
 
+## Лендінг
+
+Сторінка для завантаження APK лежить у [landing/](landing/) (Astro). Скріншоти й іконку вона бере прямо з `docs/screenshots` і `assets/images`, а кнопка веде на `fitness.apk` з останнього релізу. Українська версія лежить у корені, англійська — в `/en/`: без вибору в перемикачі сторінка відкривається українською лише для браузера з українською основною мовою. Тексти обох мов — у `landing/src/i18n.ts`.
+
+```bash
+cd landing
+npm install
+npm run dev     # http://localhost:4321
+npm run build   # → landing/dist
+```
+
 ## Міграції БД
 
 Після зміни `src/db/schema.ts`:
