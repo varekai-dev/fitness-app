@@ -269,20 +269,26 @@ export default function AddFoodScreen() {
     setPhoto(null);
     setScan({ uri });
     setRecognizing(true);
+    let mode: PhotoScan['mode'];
     try {
       const photo = await readFoodPhoto(await readForAi(image));
+      // A label: the scan reads text while the product's numbers are looked up.
+      if (photo.kind === 'label') {
+        mode = 'label';
+        if (run === scanRun.current) setScan({ uri, mode });
+      }
       const result: Scanned =
         photo.kind === 'dish'
           ? photo
           : { kind: 'product', found: await lookupProduct(photo.product) };
       if (run === scanRun.current) {
         scanned.current = result;
-        setScan({ uri, result: scannedResult(result) });
+        setScan({ uri, mode, result: scannedResult(result) });
       }
     } catch (e) {
       const noKey = e instanceof GroqError && (e.kind === 'no-key' || e.kind === 'auth');
       if (run === scanRun.current) {
-        setScan({ uri, error: { message: (e as Error).message, settings: noKey } });
+        setScan({ uri, mode, error: { message: (e as Error).message, settings: noKey } });
       }
     } finally {
       if (run === scanRun.current) setRecognizing(false);

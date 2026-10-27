@@ -29,6 +29,11 @@ export type PhotoResult = { title: string; items: string[] };
 
 export type PhotoScan = {
   uri: string;
+  /**
+   * `label` once AI has found a product's label, so the scan reads text instead
+   * of looking at food; unset while it isn't known what's in the photo.
+   */
+  mode?: 'label';
   /** Set once the answer is in. */
   result?: PhotoResult;
   error?: { message: string; settings: boolean };
@@ -47,25 +52,42 @@ const MAX_MARKERS = 4;
 const SWEEP_MS = 2200;
 const GRID = 44;
 
-const stages = () => [
-  tr('Шукаю їжу чи етикетку', 'Finding food or a label'),
-  tr('Розпізнаю продукти', 'Recognizing the food'),
-  tr('Читаю етикетку', 'Reading the label'),
-  tr('Оцінюю порції', 'Estimating portions'),
-  tr('Рахую КБЖВ', 'Working out the nutrition'),
-];
+// Both lists are as long, so switching to the label's keeps the stage reached.
+const stages = (label: boolean) =>
+  label
+    ? [
+        tr('Знайшов етикетку', 'Found a label'),
+        tr('Читаю текст', 'Reading the text'),
+        tr('Шукаю харчову цінність', 'Finding the nutrition facts'),
+        tr('Уточнюю дані про продукт', 'Checking the product'),
+        tr('Складаю опис', 'Writing it up'),
+      ]
+    : [
+        tr('Шукаю їжу чи етикетку', 'Finding food or a label'),
+        tr('Розпізнаю, що на фото', 'Recognizing the photo'),
+        tr('Оцінюю порції', 'Estimating portions'),
+        tr('Рахую вагу', 'Working out the weight'),
+        tr('Складаю опис', 'Writing it up'),
+      ];
 
+// Neutral, since the photo may turn out to be a label rather than food.
 const markerLabels = () => [
   tr('текстура', 'texture'),
   tr('колір', 'color'),
   tr('форма', 'shape'),
+  tr('контур', 'outline'),
   tr('об’єм', 'volume'),
-  tr('порція', 'portion'),
-  tr('білки', 'protein'),
-  tr('жири', 'fat'),
-  tr('вуглеводи', 'carbs'),
-  tr('соус', 'sauce'),
-  tr('гарнір', 'side'),
+  tr('деталі', 'details'),
+];
+
+const textLabels = () => [
+  tr('текст', 'text'),
+  tr('назва', 'name'),
+  tr('бренд', 'brand'),
+  tr('склад', 'ingredients'),
+  tr('таблиця', 'table'),
+  tr('вага нетто', 'net weight'),
+  tr('штрихкод', 'barcode'),
 ];
 
 /**
@@ -125,7 +147,8 @@ function ScanContent({
   onSettings: () => void;
 }) {
   const insets = useSafeAreaInsets();
-  const steps = stages();
+  const label = scan.mode === 'label';
+  const steps = stages(label);
   const last = steps.length - 1;
   const [stage, setStage] = useState(0);
   const done = scan.result !== undefined;
@@ -161,7 +184,7 @@ function ScanContent({
       {scanning && (
         <Animated.View style={StyleSheet.absoluteFill} exiting={FadeOut.duration(300)}>
           <Grid />
-          <Markers />
+          {label ? <TextBoxes /> : <Markers />}
           <Sweep />
         </Animated.View>
       )}
@@ -222,7 +245,11 @@ function ScanContent({
                   key={`${i}-${d}`}
                   entering={ZoomIn.delay(150 + i * 140).springify()}
                   style={styles.chip}>
-                  <Ionicons name="restaurant" size={14} color={colors.accentText} />
+                  <Ionicons
+                    name={label ? 'document-text' : 'restaurant'}
+                    size={14}
+                    color={colors.accentText}
+                  />
                   <Text variant="secondary" style={styles.chipText}>
                     {d}
                   </Text>
@@ -405,6 +432,69 @@ function Markers() {
   );
 }
 
+type TextLine = { id: number; x: number; y: number; width: number; label: string };
+
+/** Boxes framing lines of text on a label one after another, as if each is being read. */
+function TextBoxes() {
+  const { width, height } = useWindowDimensions();
+  const [lines, setLines] = useState<TextLine[]>([]);
+  const next = useRef(0);
+
+  useEffect(() => {
+    const labels = textLabels();
+    const timer = setInterval(() => {
+      const id = next.current++;
+      const lineWidth = width * (0.25 + Math.random() * 0.4);
+      const line: TextLine = {
+        id,
+        // Inside the viewfinder, clear of the edges and the panel.
+        x: width * 0.1 + Math.random() * (width * 0.8 - lineWidth),
+        y: height * (0.18 + Math.random() * 0.38),
+        width: lineWidth,
+        label: labels[id % labels.length],
+      };
+      setLines((l) => [...l.slice(-(MAX_MARKERS - 1)), line]);
+      setTimeout(() => setLines((l) => l.filter((x) => x.id !== id)), MARKER_LIFE_MS);
+    }, MARKER_EVERY_MS);
+    return () => clearInterval(timer);
+  }, [width, height]);
+
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      {lines.map((l) => (
+        <Animated.View
+          key={l.id}
+          entering={FadeIn.duration(200)}
+          exiting={FadeOut.duration(250)}
+          style={[styles.textLine, { left: l.x, top: l.y }]}>
+          <View style={styles.tag}>
+            <Text variant="muted" style={styles.tagText}>
+              {l.label}
+            </Text>
+          </View>
+          <TextBox width={l.width} />
+        </Animated.View>
+      ))}
+    </View>
+  );
+}
+
+/** A frame around a line of text, its highlight running left to right like a reading cursor. */
+function TextBox({ width }: { width: number }) {
+  const read = useSharedValue(0);
+
+  useEffect(() => {
+    read.set(withTiming(1, { duration: 700, easing: Easing.out(Easing.quad) }));
+  }, [read]);
+
+  const highlight = useAnimatedStyle(() => ({ width: `${read.get() * 100}%` }));
+  return (
+    <View style={[styles.textBox, { width }]}>
+      <Animated.View style={[styles.textHighlight, highlight]} />
+    </View>
+  );
+}
+
 /** A dot with a ring spreading out of it. */
 function Ping() {
   const t = useSharedValue(0);
@@ -581,6 +671,15 @@ const styles = StyleSheet.create({
     borderColor: colors.accent,
   },
   tagText: { color: colors.accent, fontSize: fontSize.xs },
+  textLine: { position: 'absolute', alignItems: 'flex-start', gap: 4 },
+  textBox: {
+    height: 22,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    borderColor: colors.accent,
+    overflow: 'hidden',
+  },
+  textHighlight: { height: '100%', backgroundColor: 'rgba(234, 244, 107, 0.22)' },
   finder: { position: 'absolute', left: spacing.xl, right: spacing.xl },
   corner: { position: 'absolute', width: CORNER, height: CORNER },
   tl: {
