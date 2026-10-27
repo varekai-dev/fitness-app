@@ -5,7 +5,11 @@ import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useDialog } from '@/components/dialog';
-import { FoodPhotoScanner, type PhotoScan } from '@/components/food-photo-scanner';
+import {
+  FoodPhotoScanner,
+  type PhotoResult,
+  type PhotoScan,
+} from '@/components/food-photo-scanner';
 import {
   KcalInput,
   MacroInputRow,
@@ -36,13 +40,16 @@ import {
   logFood,
   lookupFood,
   lookupFoods,
+  lookupProduct,
   rateFood,
   saveFood,
   searchFoods,
   timeOnDay,
   type FailedFood,
   type FoundFood,
+  type FoundProduct,
   type ManualFood,
+  type ProductSource,
 } from '@/db/food';
 import type { Food, HealthRating, MealTemplate } from '@/db/schema';
 import { useDbQuery } from '@/hooks/use-db-query';
@@ -55,7 +62,7 @@ import {
   splitDishes,
   sumMacros,
 } from '@/lib/food';
-import { describeFoodPhoto, GroqError, type SuggestedFood } from '@/lib/groq';
+import { GroqError, readFoodPhoto, type SuggestedFood } from '@/lib/groq';
 import { tr } from '@/lib/i18n';
 import { captureForAi, readForAi } from '@/lib/images';
 import { MEALS, mealAt, type Meal } from '@/lib/meals';
@@ -71,14 +78,58 @@ const MAX_AMOUNT = 5000;
  * `isDrink`), so the user can clear it while typing; `isDrink` starts from the
  * AI's guess and the user can flip it.
  */
-type Pending = { food: Food; cached: boolean; amount: string; isDrink: boolean };
+type Pending = {
+  food: Food;
+  cached: boolean;
+  amount: string;
+  isDrink: boolean;
+  /** Set for a product photographed by its label. */
+  source?: ProductSource;
+};
 
-const startPending = (food: Food, cached: boolean, amount: number | null = null): Pending => ({
+const startPending = (
+  food: Food,
+  cached: boolean,
+  amount: number | null = null,
+  source?: ProductSource,
+): Pending => ({
   food,
   cached,
   amount: String(Math.round(amount ?? food.portionG ?? 100)),
   isDrink: food.isDrink,
+  source,
 });
+
+/** What a photo turned into: dishes to check in the field, or a product to log. */
+type Scanned = { kind: 'dish'; text: string } | { kind: 'product'; found: FoundProduct };
+
+const SOURCE_LABELS: Record<ProductSource, () => string> = {
+  label: () => tr('З етикетки', 'From the label'),
+  web: () => tr('Знайдено в інтернеті', 'Found on the web'),
+  ai: () => tr('Оцінка AI за назвою', 'AI estimate by name'),
+};
+
+/** The chips the scanner shows for what it found. */
+function scannedResult(scanned: Scanned): PhotoResult {
+  if (scanned.kind === 'dish') {
+    return {
+      title: tr('Ось що на тарілці', 'Here’s what’s on the plate'),
+      items: scanned.text.split(', '),
+    };
+  }
+  const { food, source, site } = scanned.found;
+  const per100 = scaleNutrition(food, 100);
+  const unit = amountUnit(food);
+  const g = tr('г', 'g');
+  return {
+    title: food.name,
+    items: [
+      `${formatKcal(per100.kcal)} ${tr('ккал', 'kcal')} / 100 ${unit}`,
+      `${tr('Б', 'P')} ${formatGrams(per100.proteinG)} ${g} · ${tr('Ж', 'F')} ${formatGrams(per100.fatG)} ${g} · ${tr('В', 'C')} ${formatGrams(per100.carbsG)} ${g}`,
+      site ? `${SOURCE_LABELS[source]()}: ${site}` : SOURCE_LABELS[source](),
+    ],
+  };
+}
 
 function parseSuggestion(json: string | undefined): SuggestedFood | undefined {
   try {
@@ -125,6 +176,8 @@ export default function AddFoodScreen() {
   const [scan, setScan] = useState<PhotoScan | null>(null);
   // Bumped when a scan is closed, so its late answer is ignored.
   const scanRun = useRef(0);
+  // What the open scan found, handed over once it has shown it.
+  const scanned = useRef<Scanned | null>(null);
   const busy = looking || recognizing;
   // Dishes waiting to be logged: one, or each dish of a list like "яйця 150 г, курка 100 г".
   const [pending, setPending] = useState<Pending[]>([]);
@@ -200,7 +253,8 @@ export default function AddFoodScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // The photo becomes a description in the field, to check and fix before calculating.
+  // A plate becomes a description in the field, to check and fix before calculating;
+  // a product's label opens straight on its card.
   const recognize = async (source: 'camera' | 'library') => {
     let image: Awaited<ReturnType<typeof captureForAi>>;
     try {
@@ -216,8 +270,15 @@ export default function AddFoodScreen() {
     setScan({ uri });
     setRecognizing(true);
     try {
-      const result = await describeFoodPhoto(await readForAi(image));
-      if (run === scanRun.current) setScan({ uri, result });
+      const photo = await readFoodPhoto(await readForAi(image));
+      const result: Scanned =
+        photo.kind === 'dish'
+          ? photo
+          : { kind: 'product', found: await lookupProduct(photo.product) };
+      if (run === scanRun.current) {
+        scanned.current = result;
+        setScan({ uri, result: scannedResult(result) });
+      }
     } catch (e) {
       const noKey = e instanceof GroqError && (e.kind === 'no-key' || e.kind === 'auth');
       if (run === scanRun.current) {
@@ -228,26 +289,35 @@ export default function AddFoodScreen() {
     }
   };
 
-  // The found dishes land in the field, under the photo they came from.
+  // The found dishes land in the field, under the photo they came from; a product on its card.
   const finishScan = () => {
-    if (!scan?.result) return;
-    setInput(scan.result);
-    setPhoto(scan.uri);
+    const result = scanned.current;
+    if (!scan || !result) return;
+    scanned.current = null;
+    if (result.kind === 'dish') {
+      setInput(result.text);
+      setPhoto(scan.uri);
+    } else {
+      const { food, cached, amount, source } = result.found;
+      setInput('');
+      setPending([startPending(food, cached, amount, source)]);
+    }
     setScan(null);
   };
 
   const closeScan = () => {
     scanRun.current++;
+    scanned.current = null;
     setRecognizing(false);
     setScan(null);
   };
 
   const choosePhotoSource = () =>
     dialog.show({
-      title: tr('Фото страви', 'Photo of the dish'),
+      title: tr('Фото їжі чи етикетки', 'Photo of food or a label'),
       message: tr(
-        'AI розпізнає їжу й оцінить порції. Найкраще знімати тарілку згори, цілком.',
-        'AI recognizes the food and estimates the portions. Shoot the whole plate from above.',
+        'AI розпізнає страви й оцінить порції або прочитає КБЖВ з етикетки. Тарілку знімай згори, цілком; етикетку — так, щоб було видно назву й таблицю харчової цінності.',
+        'AI recognizes the dishes and estimates the portions, or reads the nutrition off a label. Shoot the whole plate from above; a label so its name and nutrition table show.',
       ),
       icon: 'camera-outline',
       buttons: [
@@ -525,7 +595,7 @@ function PendingList({
 }
 
 function PendingCard({
-  pending: { food, cached, amount: amountText, isDrink },
+  pending: { food, cached, amount: amountText, isDrink, source },
   onChange,
   onRemove,
   children,
@@ -552,12 +622,27 @@ function PendingCard({
         <View style={styles.flex}>
           <Text variant="heading">{food.name}</Text>
           <Text variant="muted">
-            {cached ? tr('Зазвичай', 'Usually') : tr('Оцінка AI', 'AI estimate')}:{' '}
-            {formatGrams(food.portionG ?? 100)} {unit} · {formatKcal(per100.kcal)}{' '}
-            {tr('ккал', 'kcal')} / 100 {unit}
+            {source && source !== 'ai' ? (
+              <>
+                {SOURCE_LABELS[source]()}: {formatKcal(per100.kcal)} {tr('ккал', 'kcal')} / 100{' '}
+                {unit}
+              </>
+            ) : (
+              <>
+                {cached ? tr('Зазвичай', 'Usually') : tr('Оцінка AI', 'AI estimate')}:{' '}
+                {formatGrams(food.portionG ?? 100)} {unit} · {formatKcal(per100.kcal)}{' '}
+                {tr('ккал', 'kcal')} / 100 {unit}
+              </>
+            )}
           </Text>
         </View>
-        <Badge label={cached ? tr('З бази', 'Saved') : 'AI'} tone={cached ? 'muted' : 'accent'} />
+        {source === 'label' ? (
+          <Badge label={tr('Етикетка', 'Label')} tone="accent" />
+        ) : source === 'web' ? (
+          <Badge label={tr('Інтернет', 'Web')} tone="muted" />
+        ) : (
+          <Badge label={cached ? tr('З бази', 'Saved') : 'AI'} tone={cached ? 'muted' : 'accent'} />
+        )}
         {onRemove && <CircleButton icon="close" size={32} onPress={onRemove} />}
       </Row>
       <Text style={styles.pendingKcal}>

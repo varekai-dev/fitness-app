@@ -2,7 +2,7 @@
   "expo": {
     "name": "Fitness",
     "slug": "fitness",
-    "version": "1.84.4",
+    "version": "1.85.0",
     "runtimeVersion": {
       "policy": "fingerprint"
     },

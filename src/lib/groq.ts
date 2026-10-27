@@ -163,6 +163,44 @@ export type GroqRequest<T> = {
 // AI that failed (a reply cut short, a server error, a weak answer) usually copes when asked again.
 export const GROQ_ATTEMPTS = 3;
 
+/** The key to call Groq with; throws `GroqError` when there is none. */
+async function requireKey(apiKey?: string | null) {
+  const key = apiKey ?? (await getGroqKey());
+  if (!key)
+    throw new GroqError(
+      tr('Додай ключ Groq API у налаштуваннях.', 'Add a Groq API key in settings.'),
+      'no-key',
+    );
+  return key;
+}
+
+/** One chat completion request; throws `GroqError` when Groq can't be reached or rejects the key. */
+async function postCompletion(key: string, body: object) {
+  let res: Response;
+  try {
+    res = await fetch(`${API}/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    throw new GroqError(
+      tr('Немає з’єднання з Groq. Перевір інтернет.', 'Can’t reach Groq. Check your internet.'),
+      'network',
+    );
+  }
+  if (res.status === 401 || res.status === 403) {
+    throw new GroqError(
+      tr(
+        'Groq відхилив ключ. Перевір його в налаштуваннях.',
+        'Groq rejected the key. Check it in settings.',
+      ),
+      'auth',
+    );
+  }
+  return res;
+}
+
 /** One chat completion parsed as JSON; throws `GroqError` with a user-facing message. */
 export async function groqJson<T>({
   system,
@@ -177,12 +215,7 @@ export async function groqJson<T>({
   onAttempt,
   apiKey,
 }: GroqRequest<T>): Promise<T> {
-  const key = apiKey ?? (await getGroqKey());
-  if (!key)
-    throw new GroqError(
-      tr('Додай ключ Groq API у налаштуваннях.', 'Add a Groq API key in settings.'),
-      'no-key',
-    );
+  const key = await requireKey(apiKey);
 
   const badResponse = new GroqError(
     tr(
@@ -195,42 +228,20 @@ export async function groqJson<T>({
   for (let attempt = 1; ; attempt++) {
     const last = attempt === GROQ_ATTEMPTS;
     onAttempt?.(attempt);
-    let res: Response;
-    try {
-      res = await fetch(`${API}/chat/completions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-        body: JSON.stringify({
-          model,
-          temperature,
-          reasoning_effort: reasoningEffort,
-          max_completion_tokens: maxTokens,
-          messages: [
-            { role: 'system', content: system },
-            { role: 'user', content: user },
-          ],
-          response_format: {
-            type: 'json_schema',
-            json_schema: { name: schemaName, schema, strict: true },
-          },
-        }),
-      });
-    } catch {
-      throw new GroqError(
-        tr('Немає з’єднання з Groq. Перевір інтернет.', 'Can’t reach Groq. Check your internet.'),
-        'network',
-      );
-    }
-
-    if (res.status === 401 || res.status === 403) {
-      throw new GroqError(
-        tr(
-          'Groq відхилив ключ. Перевір його в налаштуваннях.',
-          'Groq rejected the key. Check it in settings.',
-        ),
-        'auth',
-      );
-    }
+    const res = await postCompletion(key, {
+      model,
+      temperature,
+      reasoning_effort: reasoningEffort,
+      max_completion_tokens: maxTokens,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: user },
+      ],
+      response_format: {
+        type: 'json_schema',
+        json_schema: { name: schemaName, schema, strict: true },
+      },
+    });
     if (!res.ok) {
       const body = await res.text().catch(() => '');
       const failedSchema = res.status === 400 && body.includes('json_validate_failed');
@@ -394,28 +405,56 @@ export async function askGroqHealth(dish: {
 }
 
 const PHOTO_PROMPT = tr(
-  `Ти нутриціолог. На фото їжа чи напій, найчастіше тарілка зверху або збоку.
-Назви все, що видно, і оціни кількість кожного за розміром тарілки, приборів, рук і упаковок.
-- Страву з кількох інгредієнтів (борщ, салат, піца, бутерброд) називай однією позицією.
-- Окремі страви на тарілці (гарнір, м'ясо, овочі, хліб, соус) — окремими позиціями.
-- Напиши, як приготовано, якщо це видно: смажене, варене, запечене.
-Поля:
-- is_food: false, якщо на фото немає їжі чи напою;
-- items: позиції; name — коротко українською з малої літери, без кількості; amount — число більше 0; unit — "g" для їжі, "ml" для напоїв і рідких страв у склянці.`,
-  `You are a nutritionist. The photo shows food or a drink, usually a plate from above or the side.
-Name everything you can see and estimate the amount of each by the size of the plate, cutlery, hands and packaging.
-- A dish made of several ingredients (soup, salad, pizza, sandwich) is one item.
-- Separate dishes on a plate (side, meat, vegetables, bread, sauce) are separate items.
-- Say how it is cooked if you can see it: fried, boiled, baked.
-Fields:
-- is_food: false if there is no food or drink in the photo;
-- items: the items; name: short, in English, lowercase, without the amount; amount: a number greater than 0; unit: "g" for food, "ml" for drinks and liquids in a glass.`,
+  `Ти нутриціолог. На фото або їжа чи напій (найчастіше тарілка зверху або збоку), або упаковка продукту чи її етикетка.
+Спершу визнач kind:
+- "label" — упаковка, етикетка чи таблиця харчової цінності продукту з магазину;
+- "dish" — приготована їжа, тарілка, фрукти чи напій без етикетки;
+- "none" — на фото немає їжі.
+Для "dish" заповни items, а product залиш порожнім (рядки "", числа 0, false):
+- назви все, що видно, і оціни кількість кожного за розміром тарілки, приборів, рук і упаковок;
+- страву з кількох інгредієнтів (борщ, салат, піца, бутерброд) називай однією позицією;
+- окремі страви на тарілці (гарнір, м'ясо, овочі, хліб, соус) — окремими позиціями;
+- напиши, як приготовано, якщо це видно: смажене, варене, запечене;
+- name — коротко українською з малої літери, без кількості; amount — число більше 0; unit — "g" для їжі, "ml" для напоїв і рідких страв у склянці.
+Для "label" заповни product, а items залиш порожнім:
+- name — назва продукту українською з великої літери, без бренду й ваги (напр. "Йогурт полуничний 2,5%");
+- original_name — назва так, як надрукована на упаковці, без бренду;
+- brand — торгова марка, "" якщо не видно;
+- barcode — цифри штрихкоду, якщо їх видно повністю, інакше "";
+- is_drink — true для напоїв;
+- net_amount — вага чи об'єм нетто всієї упаковки в г чи мл, 0 якщо не видно;
+- serving_amount — порція, вказана на етикетці, в г чи мл, 0 якщо не вказано;
+- nutrition_visible — true, лише якщо на фото чітко видно калорійність або білки, жири й вуглеводи;
+- kcal, protein_g, fat_g, carbs_g, fiber_g, sugar_g — саме з етикетки, на 100 г (чи 100 мл). Якщо вказано лише на порцію, перерахуй на 100 г. Калорії — в ккал, не в кДж. Чого не видно — 0.
+Не вигадуй цифр: переписуй лише ті, що видно на фото.`,
+  `You are a nutritionist. The photo shows either food or a drink (usually a plate from above or the side), or a product's packaging or its label.
+First pick kind:
+- "label": a shop product's packaging, label or nutrition facts table;
+- "dish": cooked food, a plate, fruit or a drink without a label;
+- "none": there is no food in the photo.
+For "dish" fill items and leave product empty ("" strings, 0 numbers, false):
+- name everything you can see and estimate the amount of each by the size of the plate, cutlery, hands and packaging;
+- a dish made of several ingredients (soup, salad, pizza, sandwich) is one item;
+- separate dishes on a plate (side, meat, vegetables, bread, sauce) are separate items;
+- say how it is cooked if you can see it: fried, boiled, baked;
+- name: short, in English, lowercase, without the amount; amount: a number greater than 0; unit: "g" for food, "ml" for drinks and liquids in a glass.
+For "label" fill product and leave items empty:
+- name: the product's name in English, capitalized, without the brand or weight (e.g. "Strawberry yogurt 2.5%");
+- original_name: the name as printed on the package, without the brand;
+- brand: the brand, "" if not visible;
+- barcode: the barcode digits if all of them are visible, otherwise "";
+- is_drink: true for drinks;
+- net_amount: the net weight or volume of the whole package in g or ml, 0 if not visible;
+- serving_amount: the serving the label states, in g or ml, 0 if none;
+- nutrition_visible: true only if the calories, or protein, fat and carbs, are clearly visible in the photo;
+- kcal, protein_g, fat_g, carbs_g, fiber_g, sugar_g: exactly from the label, per 100 g (or 100 ml). If it only gives them per serving, convert to per 100 g. Calories in kcal, not kJ. Anything not visible is 0.
+Don't make numbers up: copy only those visible in the photo.`,
 );
 
 const PHOTO_SCHEMA = {
   type: 'object',
   properties: {
-    is_food: { type: 'boolean' },
+    kind: { type: 'string', enum: ['dish', 'label', 'none'] },
     items: {
       type: 'array',
       items: {
@@ -429,22 +468,156 @@ const PHOTO_SCHEMA = {
         additionalProperties: false,
       },
     },
+    product: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        original_name: { type: 'string' },
+        brand: { type: 'string' },
+        barcode: { type: 'string' },
+        is_drink: { type: 'boolean' },
+        net_amount: { type: 'number' },
+        serving_amount: { type: 'number' },
+        nutrition_visible: { type: 'boolean' },
+        kcal: { type: 'number' },
+        protein_g: { type: 'number' },
+        fat_g: { type: 'number' },
+        carbs_g: { type: 'number' },
+        fiber_g: { type: 'number' },
+        sugar_g: { type: 'number' },
+      },
+      required: [
+        'name',
+        'original_name',
+        'brand',
+        'barcode',
+        'is_drink',
+        'net_amount',
+        'serving_amount',
+        'nutrition_visible',
+        'kcal',
+        'protein_g',
+        'fat_g',
+        'carbs_g',
+        'fiber_g',
+        'sugar_g',
+      ],
+      additionalProperties: false,
+    },
   },
-  required: ['is_food', 'items'],
+  required: ['kind', 'items', 'product'],
   additionalProperties: false,
 };
 
-type GroqPhoto = { is_food: boolean; items: { name: string; amount: number; unit: string }[] };
+type GroqPhoto = {
+  kind: 'dish' | 'label' | 'none';
+  items: { name: string; amount: number; unit: string }[];
+  product: {
+    name: string;
+    original_name: string;
+    brand: string;
+    barcode: string;
+    is_drink: boolean;
+    net_amount: number;
+    serving_amount: number;
+    nutrition_visible: boolean;
+    kcal: number;
+    protein_g: number;
+    fat_g: number;
+    carbs_g: number;
+    fiber_g: number;
+    sugar_g: number;
+  };
+};
+
+/** Nutrition per 100 g (or ml), as on a label or a product's page. */
+export type Per100 = Pick<Nutrition, 'kcal' | 'proteinG' | 'fatG' | 'carbsG' | 'fiberG' | 'sugarG'>;
+
+/** A packaged product read off its label. */
+export type LabelProduct = {
+  name: string;
+  /** The name as printed, to search the web by. */
+  originalName: string;
+  brand: string;
+  barcode: string | null;
+  isDrink: boolean;
+  /** What to log by default: the label's serving, a small package whole, or null. */
+  amount: number | null;
+  /** Null when the label's numbers aren't in the photo (or don't add up). */
+  nutrition: Per100 | null;
+};
+
+export type FoodPhoto = { kind: 'dish'; text: string } | { kind: 'label'; product: LabelProduct };
 
 /** Amounts guessed from a photo are rough, so round numbers read more honestly. */
 const roundAmount = (v: number) => Math.max(10, Math.round(v / 10) * 10);
 
+// A package up to this size is likely eaten whole (a yogurt, a bar, a can); a bigger one isn't.
+const WHOLE_PACKAGE_MAX = 500;
+// A serving bigger than this is a misread.
+const MAX_AMOUNT = 5000;
+// Nothing has more per 100 g than pure fat; more means kJ was read as kcal.
+const MAX_KCAL_100G = 900;
+
+type RawPer100 = Pick<
+  GroqPhoto['product'],
+  'kcal' | 'protein_g' | 'fat_g' | 'carbs_g' | 'fiber_g' | 'sugar_g'
+>;
+
+/** AI's numbers per 100 g, or null when they're missing or impossible. */
+function toPer100(p: RawPer100): Per100 | null {
+  const proteinG = num(p.protein_g);
+  const fatG = num(p.fat_g);
+  const carbsG = num(p.carbs_g);
+  const fromMacros = proteinG * 4 + fatG * 9 + carbsG * 4;
+  let kcal = num(p.kcal) || fromMacros;
+  if (kcal > MAX_KCAL_100G) kcal /= 4.184;
+  if (!(kcal > 0) || kcal > MAX_KCAL_100G || proteinG + fatG + carbsG > 100) return null;
+  return {
+    kcal: Math.round(kcal * 10) / 10,
+    proteinG,
+    fatG,
+    carbsG,
+    fiberG: num(p.fiber_g) || null,
+    sugarG: num(p.sugar_g) || null,
+  };
+}
+
+function toLabelProduct(p: GroqPhoto['product']): LabelProduct {
+  const serving = num(p.serving_amount);
+  const net = num(p.net_amount);
+  const barcode = p.barcode.replace(/\D/g, '');
+  return {
+    name: p.name.trim() || p.original_name.trim(),
+    originalName: p.original_name.trim() || p.name.trim(),
+    brand: p.brand.trim(),
+    // EAN-8, UPC-A, EAN-13 or ITF-14; anything else was misread.
+    barcode: [8, 12, 13, 14].includes(barcode.length) ? barcode : null,
+    isDrink: p.is_drink === true,
+    amount:
+      serving > 0 && serving <= MAX_AMOUNT
+        ? serving
+        : net > 0 && net <= WHOLE_PACKAGE_MAX
+          ? net
+          : null,
+    nutrition: p.nutrition_visible ? toPer100(p) : null,
+  };
+}
+
 /**
- * Recognizes the food in a photo and describes it the way the user would type
- * it, e.g. "гречка 180 г, курячий стейк 120 г", for the usual nutrition lookup.
- * Throws `GroqError` with a user-facing message.
+ * Recognizes a food photo. A plate comes back described the way the user would
+ * type it, e.g. "гречка 180 г, курячий стейк 120 г", for the usual nutrition
+ * lookup; a product's label comes back as the product with the label's numbers,
+ * if they're in the photo. Throws `GroqError` with a user-facing message.
  */
-export async function describeFoodPhoto(image: { base64: string; mimeType: string }) {
+export async function readFoodPhoto(image: {
+  base64: string;
+  mimeType: string;
+}): Promise<FoodPhoto> {
+  const usable = (r: GroqPhoto) =>
+    r.kind === 'label'
+      ? !!(r.product.name.trim() || r.product.original_name.trim())
+      : r.items.some((i) => i.name.trim() && num(i.amount) > 0);
   const parsed = await groqJson<GroqPhoto>({
     model: GROQ_VISION_MODEL,
     system: PHOTO_PROMPT,
@@ -455,11 +628,13 @@ export async function describeFoodPhoto(image: { base64: string; mimeType: strin
     schema: PHOTO_SCHEMA,
     schemaName: 'food_photo',
     reasoningEffort: 'none',
-    accept: (r) => !r.is_food || r.items.some((i) => i.name.trim() && num(i.amount) > 0),
+    accept: (r) => r.kind === 'none' || usable(r),
   });
-  const items = parsed.is_food
-    ? parsed.items.filter((i) => i.name.trim() && num(i.amount) > 0)
-    : [];
+  if (parsed.kind === 'label' && usable(parsed)) {
+    return { kind: 'label', product: toLabelProduct(parsed.product) };
+  }
+  const items =
+    parsed.kind === 'dish' ? parsed.items.filter((i) => i.name.trim() && num(i.amount) > 0) : [];
   if (items.length === 0) {
     throw new GroqError(
       tr(
@@ -469,12 +644,96 @@ export async function describeFoodPhoto(image: { base64: string; mimeType: strin
       'not-food',
     );
   }
-  return items
+  const text = items
     .map(
       (i) =>
         `${i.name.trim()} ${roundAmount(i.amount)} ${i.unit === 'ml' ? tr('мл', 'ml') : tr('г', 'g')}`,
     )
     .join(', ');
+  return { kind: 'dish', text };
+}
+
+const SEARCH_PROMPT = tr(
+  `Користувач сфотографував упаковку продукту з магазину, але харчової цінності на фото не видно. Знайди в інтернеті харчову цінність саме цього продукту: той самий бренд і вид, а також смак і жирність, якщо вони відомі. Найкраще — сайт виробника чи магазину.
+Відповідай коротко: ккал, білки, жири, вуглеводи, клітковина й цукор на 100 г (чи 100 мл) і сайт, де це знайдено. Якщо саме цього продукту не знайшов, так і напиши, не підставляй схожий.`,
+  `The user photographed a shop product's package, but its nutrition isn't in the photo. Find this exact product's nutrition on the web: the same brand and kind, and the flavor and fat content when known. The maker's or a shop's site is best.
+Answer briefly: kcal, protein, fat, carbs, fiber and sugar per 100 g (or 100 ml), and the site it's from. If you can't find this exact product, say so; don't substitute a similar one.`,
+);
+
+const FOUND_PROMPT = tr(
+  `Ось результат пошуку харчової цінності продукту в інтернеті. Перепиши числа на 100 г (чи 100 мл):
+- found: true, лише якщо знайдено калорійність або білки, жири й вуглеводи саме цього продукту;
+- kcal — у ккал (кДж поділи на 4,184); protein_g, fat_g, carbs_g, fiber_g, sugar_g — у грамах; чого немає — 0;
+- source: домен сайту, звідки числа (напр. "silpo.ua"), "" якщо невідомо.`,
+  `Here is the result of a web search for a product's nutrition. Copy the numbers per 100 g (or 100 ml):
+- found: true only if the calories, or protein, fat and carbs, of this exact product were found;
+- kcal in kcal (divide kJ by 4.184); protein_g, fat_g, carbs_g, fiber_g, sugar_g in grams; anything missing is 0;
+- source: the domain of the site the numbers are from (e.g. "tesco.com"), "" if unknown.`,
+);
+
+const FOUND_SCHEMA = {
+  type: 'object',
+  properties: {
+    found: { type: 'boolean' },
+    kcal: { type: 'number' },
+    protein_g: { type: 'number' },
+    fat_g: { type: 'number' },
+    carbs_g: { type: 'number' },
+    fiber_g: { type: 'number' },
+    sugar_g: { type: 'number' },
+    source: { type: 'string' },
+  },
+  required: ['found', 'kcal', 'protein_g', 'fat_g', 'carbs_g', 'fiber_g', 'sugar_g', 'source'],
+  additionalProperties: false,
+};
+
+/**
+ * The product's nutrition per 100 g as found on the web, with the site it came
+ * from, or null when AI didn't find this exact product. Web search can't reply
+ * in a JSON schema, so a second request reads its answer. Throws `GroqError`.
+ */
+export async function searchProductNutrition(
+  product: Pick<LabelProduct, 'name' | 'originalName' | 'brand' | 'barcode'>,
+): Promise<(Per100 & { source: string | null }) | null> {
+  const key = await requireKey();
+  const wanted = [
+    product.brand && `${tr('Бренд', 'Brand')}: ${product.brand}`,
+    `${tr('Назва на упаковці', 'Name on the package')}: ${product.originalName}`,
+    product.name !== product.originalName && `${tr('Переклад', 'Translation')}: ${product.name}`,
+    product.barcode && `${tr('Штрихкод', 'Barcode')}: ${product.barcode}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+  const res = await postCompletion(key, {
+    model: GROQ_MODEL,
+    temperature: 0,
+    // Higher effort makes the search browse much longer for little gain.
+    reasoning_effort: 'low',
+    tool_choice: 'required',
+    tools: [{ type: 'browser_search' }],
+    messages: [
+      { role: 'system', content: SEARCH_PROMPT },
+      { role: 'user', content: wanted },
+    ],
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new GroqError(
+      `${tr('Groq повернув помилку', 'Groq returned error')} ${res.status}. ${body.slice(0, 200)}`,
+      'network',
+    );
+  }
+  const answer: unknown = (await res.json().catch(() => null))?.choices?.[0]?.message?.content;
+  if (typeof answer !== 'string' || !answer.trim()) return null;
+  const parsed = await groqJson<RawPer100 & { found: boolean; source: string }>({
+    system: FOUND_PROMPT,
+    user: `${wanted}\n\n${answer}`,
+    schema: FOUND_SCHEMA,
+    schemaName: 'product_nutrition',
+    apiKey: key,
+  });
+  const per100 = parsed.found ? toPer100(parsed) : null;
+  return per100 && { ...per100, source: parsed.source.trim() || null };
 }
 
 /**

@@ -24,10 +24,13 @@ import { Button, CircleButton, Text } from '@/components/ui';
 import { tr } from '@/lib/i18n';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
+/** What the scan found, shown as a title over chips before `onFinish`. */
+export type PhotoResult = { title: string; items: string[] };
+
 export type PhotoScan = {
   uri: string;
-  /** The recognized description; set once the answer is in. */
-  result?: string;
+  /** Set once the answer is in. */
+  result?: PhotoResult;
   error?: { message: string; settings: boolean };
 };
 
@@ -45,11 +48,11 @@ const SWEEP_MS = 2200;
 const GRID = 44;
 
 const stages = () => [
-  tr('Шукаю страви на фото', 'Finding dishes in the photo'),
-  tr('Розпізнаю інгредієнти', 'Recognizing ingredients'),
-  tr('Оцінюю розмір порцій', 'Estimating portion sizes'),
-  tr('Рахую вагу', 'Working out the weight'),
-  tr('Складаю опис', 'Writing it up'),
+  tr('Шукаю їжу чи етикетку', 'Finding food or a label'),
+  tr('Розпізнаю продукти', 'Recognizing the food'),
+  tr('Читаю етикетку', 'Reading the label'),
+  tr('Оцінюю порції', 'Estimating portions'),
+  tr('Рахую КБЖВ', 'Working out the nutrition'),
 ];
 
 const markerLabels = () => [
@@ -69,8 +72,8 @@ const markerLabels = () => [
  * Full-screen wait while AI looks at a food photo: the photo under a sweeping
  * scan line, a grid, detection markers popping up and a checklist of stages.
  * The stages are paced by time, since the request gives no progress of its
- * own; once `scan.result` is in, the rest tick off, the found dishes show up
- * and `onFinish` hands them over. A failure stays on screen until closed.
+ * own; once `scan.result` is in, the rest tick off, what was found shows up
+ * and `onFinish` hands it over. A failure stays on screen until closed.
  */
 export function FoodPhotoScanner({
   scan,
@@ -148,7 +151,7 @@ function ScanContent({
   }, [stage, last, done, failed, finished, onFinish]);
 
   const scanning = !finished && !failed;
-  const dishes = scan.result?.split(', ') ?? [];
+  const dishes = scan.result?.items ?? [];
 
   return (
     <View style={styles.root}>
@@ -210,7 +213,7 @@ function ScanContent({
           <View style={styles.gap}>
             <Animated.View entering={FadeInDown.duration(300)}>
               <Row icon="checkmark-circle" color={colors.accent}>
-                <Text variant="title">{tr('Ось що на тарілці', 'Here’s what’s on the plate')}</Text>
+                <Text variant="title">{scan.result?.title}</Text>
               </Row>
             </Animated.View>
             <View style={styles.chips}>

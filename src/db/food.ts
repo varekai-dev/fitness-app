@@ -22,7 +22,10 @@ import {
   askGroqMealAdvice,
   askGroqNutrition,
   askGroqNutritionList,
+  GroqError,
+  searchProductNutrition,
   type DayReview,
+  type LabelProduct,
   type MacroKey,
   type MacroTips,
   type MealAdvice,
@@ -255,7 +258,8 @@ export async function cacheSuggestion(suggestion: SuggestedFood): Promise<FoundF
   return { food, cached: true, amount: split.grams };
 }
 
-export type ManualFood = Pick<Food, 'name' | 'isDrink' | 'kcal' | 'proteinG' | 'fatG' | 'carbsG'>;
+export type ManualFood = Pick<Food, 'name' | 'isDrink' | 'kcal' | 'proteinG' | 'fatG' | 'carbsG'> &
+  Partial<Pick<Food, 'fiberG' | 'sugarG'>>;
 
 /**
  * Saves a dish entered by hand, its values per 100 g (or ml), replacing a cached
@@ -267,8 +271,8 @@ export async function saveFood(food: ManualFood): Promise<Food> {
     name: food.name.trim(),
     portion: `100 ${amountUnit(food)}`,
     portionG: 100,
-    fiberG: null,
-    sugarG: null,
+    fiberG: food.fiberG ?? null,
+    sugarG: food.sugarG ?? null,
     // New numbers need a new rating: AI rates the dish once it's picked.
     health: null,
     healthNote: null,
@@ -279,6 +283,40 @@ export async function saveFood(food: ManualFood): Promise<Food> {
     .onConflictDoUpdate({ target: foods.query, set: values })
     .returning();
   return saved;
+}
+
+/** Where a product's numbers came from: its label, a web search, or AI's estimate. */
+export type ProductSource = 'label' | 'web' | 'ai';
+
+/** `site` is the domain a web search found the numbers on, if it said. */
+export type FoundProduct = FoundFood & { source: ProductSource; site?: string | null };
+
+/**
+ * The photographed product, cached for next time: by the label's numbers when
+ * they're in the photo, otherwise as found on the web by its name and brand,
+ * otherwise as AI estimates it by name. Throws `GroqError` when AI fails.
+ */
+export async function lookupProduct(product: LabelProduct): Promise<FoundProduct> {
+  const name = [product.name, product.brand].filter(Boolean).join(' ');
+  const save = async (per100: Omit<ManualFood, 'name' | 'isDrink'>) =>
+    saveFood({ name, isDrink: product.isDrink, ...per100 });
+  if (product.nutrition) {
+    const food = await save(product.nutrition);
+    return { food, cached: true, amount: product.amount, source: 'label' };
+  }
+
+  const found = await searchProductNutrition(product).catch((e) => {
+    if (e instanceof GroqError && (e.kind === 'no-key' || e.kind === 'auth')) throw e;
+    // The search is a bonus: when it fails, AI estimates the product instead.
+    return null;
+  });
+  if (found) {
+    const { source: site, ...per100 } = found;
+    const food = await save(per100);
+    return { food, cached: true, amount: product.amount, source: 'web', site };
+  }
+  const estimate = await lookupFood(name);
+  return { ...estimate, amount: product.amount ?? estimate.amount, source: 'ai' };
 }
 
 /** Asks AI how healthy a cached dish is (by its nutrition per 100 g) and stores the answer. */
