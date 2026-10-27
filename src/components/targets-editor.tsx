@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Text } from '@/components/ui';
 import type { Targets, TrackingType } from '@/db/schema';
+import { selectOnFocus } from '@/hooks/select-on-focus';
 import { tr } from '@/lib/i18n';
 import { formatDistance, parseDecimal } from '@/lib/metrics';
 import { DISTANCE_UNIT, displayToKm } from '@/lib/units';
@@ -103,14 +104,16 @@ function Cell({
   onSave: () => void;
   decimal?: boolean;
 }) {
+  const input = useRef<TextInput>(null);
   return (
     <View style={styles.cell}>
       <TextInput
+        ref={input}
         value={value}
+        onFocus={() => selectOnFocus(input, value)}
         onChangeText={onChange}
         onEndEditing={onSave}
         keyboardType={decimal ? 'decimal-pad' : 'number-pad'}
-        selectTextOnFocus
         placeholder="—"
         placeholderTextColor={colors.textMuted}
         style={styles.input}

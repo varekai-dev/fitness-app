@@ -527,7 +527,7 @@ export default function AddFoodScreen() {
   );
 }
 
-type PendingPatch = Partial<Pick<Pending, 'amount' | 'isDrink'>>;
+type PendingPatch = Partial<Pending>;
 
 /**
  * The dishes waiting to be logged. One dish has its buttons on its card; a list
@@ -546,9 +546,34 @@ function PendingList({
   onAdd: () => void;
   onCancel: () => void;
 }) {
+  // The dish being fixed by hand, shown as the manual form in place of its card.
+  const [editing, setEditing] = useState<number | null>(null);
   const amounts = pending.map((p) => parseAmount(p.amount));
   const many = pending.length > 1;
-  const actions = (
+  const card = (p: Pending, i: number, children?: ReactNode) =>
+    editing === i ? (
+      <ManualCard
+        key={`${i}-${p.food.id}`}
+        initial={p}
+        onSave={async (food) => {
+          const saved = await saveFood(food, p.food.id);
+          onChange(i, { food: saved, cached: true, isDrink: food.isDrink, source: undefined });
+          setEditing(null);
+        }}
+        onCancel={() => setEditing(null)}
+      />
+    ) : (
+      <PendingCard
+        key={`${i}-${p.food.id}`}
+        pending={p}
+        onChange={(patch) => onChange(i, patch)}
+        onEdit={editing === null ? () => setEditing(i) : undefined}
+        onRemove={many ? () => onRemove(i) : undefined}>
+        {children}
+      </PendingCard>
+    );
+  // While a dish is being fixed, only its form's buttons show.
+  const actions = editing === null && (
     <Row>
       <Button
         title={tr('Скасувати', 'Cancel')}
@@ -569,24 +594,11 @@ function PendingList({
       />
     </Row>
   );
-  if (!many) {
-    return (
-      <PendingCard pending={pending[0]} onChange={(patch) => onChange(0, patch)}>
-        {actions}
-      </PendingCard>
-    );
-  }
+  if (!many) return card(pending[0], 0, actions);
   const total = sumMacros(pending.map((p, i) => scaleNutrition(p.food, amounts[i] ?? 0)));
   return (
     <>
-      {pending.map((p, i) => (
-        <PendingCard
-          key={`${i}-${p.food.id}`}
-          pending={p}
-          onChange={(patch) => onChange(i, patch)}
-          onRemove={() => onRemove(i)}
-        />
-      ))}
+      {pending.map((p, i) => card(p, i))}
       <Card>
         <Text variant="caption">{tr('Разом', 'Total')}</Text>
         <Text style={styles.pendingKcal}>
@@ -603,11 +615,14 @@ function PendingList({
 function PendingCard({
   pending: { food, cached, amount: amountText, isDrink, source },
   onChange,
+  onEdit,
   onRemove,
   children,
 }: {
   pending: Pending;
   onChange: (patch: PendingPatch) => void;
+  /** Shown as a pencil: opens the dish's numbers in the manual form. */
+  onEdit?: () => void;
   /** Shown as a close button on a dish of a list. */
   onRemove?: () => void;
   children?: ReactNode;
@@ -649,6 +664,7 @@ function PendingCard({
         ) : (
           <Badge label={cached ? tr('З бази', 'Saved') : 'AI'} tone={cached ? 'muted' : 'accent'} />
         )}
+        {onEdit && <CircleButton icon="pencil" size={32} onPress={onEdit} />}
         {onRemove && <CircleButton icon="close" size={32} onPress={onRemove} />}
       </Row>
       <Text style={styles.pendingKcal}>
@@ -792,24 +808,37 @@ function UnitSwitch({
 
 const MACRO_KEYS = ['kcal', 'proteinG', 'fatG', 'carbsG'] as const;
 
-/** A dish typed in by hand: its name and nutrition per 100 g (or ml). */
+/** A number for a field: whole above 10, one decimal below. */
+const fieldText = (n: number) => String(n >= 10 ? Math.round(n) : Math.round(n * 10) / 10);
+
+/**
+ * A dish typed in by hand: its name and nutrition per 100 g (or ml). With
+ * `initial`, a dish already counted (by AI, a label or before) to fix.
+ */
 function ManualCard({
-  initialName,
+  initialName = '',
+  initial,
   onSave,
   onCancel,
 }: {
-  initialName: string;
+  initialName?: string;
+  initial?: Pending;
   onSave: (food: ManualFood) => Promise<void>;
   onCancel: () => void;
 }) {
-  const [name, setName] = useState(initialName);
-  const [isDrink, setIsDrink] = useState(false);
-  const [values, setValues] = useState<MacroInputValues>({
-    kcal: '',
-    proteinG: '',
-    fatG: '',
-    carbsG: '',
-  });
+  const per100 = initial && scaleNutrition(initial.food, 100);
+  const [name, setName] = useState(initial?.food.name ?? initialName);
+  const [isDrink, setIsDrink] = useState(initial?.isDrink ?? false);
+  const [values, setValues] = useState<MacroInputValues>(() =>
+    per100
+      ? {
+          kcal: fieldText(per100.kcal),
+          proteinG: fieldText(per100.proteinG),
+          fatG: fieldText(per100.fatG),
+          carbsG: fieldText(per100.carbsG),
+        }
+      : { kcal: '', proteinG: '', fatG: '', carbsG: '' },
+  );
   const [saving, setSaving] = useState(false);
   const parsed = Object.fromEntries(
     MACRO_KEYS.map((key) => [key, parseDecimal(values[key]) ?? 0]),
@@ -825,7 +854,14 @@ function ManualCard({
     if (!valid || saving) return;
     setSaving(true);
     try {
-      await onSave({ name, isDrink, ...parsed });
+      // Fiber and sugar have no fields: a fixed dish keeps its own.
+      await onSave({
+        name,
+        isDrink,
+        fiberG: per100?.fiberG,
+        sugarG: per100?.sugarG,
+        ...parsed,
+      });
     } finally {
       setSaving(false);
     }
@@ -839,10 +875,10 @@ function ManualCard({
             value={name}
             onChangeText={setName}
             placeholder={tr('Напр. «Сирники»', 'E.g. “Pancakes”')}
-            autoFocus={!initialName}
+            autoFocus={!initial && !initialName}
           />
         </View>
-        <Badge label={tr('Вручну', 'Manual')} tone="muted" />
+        <Badge label={initial ? tr('Редагую', 'Editing') : tr('Вручну', 'Manual')} tone="muted" />
       </Row>
       <Row style={styles.spaceBetween}>
         <Text variant="muted">
@@ -853,7 +889,7 @@ function ManualCard({
       <KcalInput
         value={values.kcal}
         onChangeText={(t) => setValues({ ...values, kcal: t })}
-        autoFocus={!!initialName}
+        autoFocus={!initial && !!initialName}
       />
       <MacroInputRow values={values} onChange={(key, t) => setValues({ ...values, [key]: t })} />
       <Row>

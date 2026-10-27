@@ -263,9 +263,10 @@ export type ManualFood = Pick<Food, 'name' | 'isDrink' | 'kcal' | 'proteinG' | '
 
 /**
  * Saves a dish entered by hand, its values per 100 g (or ml), replacing a cached
- * dish of the same name.
+ * dish of the same name. With `id`, fixes that cached dish instead (e.g. one AI
+ * counted), so the same query finds the corrected numbers next time.
  */
-export async function saveFood(food: ManualFood): Promise<Food> {
+export async function saveFood(food: ManualFood, id?: number): Promise<Food> {
   const values = {
     ...food,
     name: food.name.trim(),
@@ -277,6 +278,10 @@ export async function saveFood(food: ManualFood): Promise<Food> {
     health: null,
     healthNote: null,
   };
+  if (id !== undefined) {
+    const [updated] = await db.update(foods).set(values).where(eq(foods.id, id)).returning();
+    if (updated) return updated;
+  }
   const [saved] = await db
     .insert(foods)
     .values({ query: normalizeDish(food.name), ...values })

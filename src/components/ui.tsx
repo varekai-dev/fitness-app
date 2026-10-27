@@ -20,6 +20,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Backdrop, Glass } from '@/components/glass';
 import { PressScale } from '@/components/motion';
 import { Spinner } from '@/components/spinner';
+import { selectOnFocus } from '@/hooks/select-on-focus';
 import { useDeferredFocus } from '@/hooks/use-deferred-focus';
 import { useScrollResetOnTabLeave } from '@/hooks/use-scroll-reset-on-tab-leave';
 import { colors, fontSize, radius, spacing } from '@/theme';
@@ -297,6 +298,7 @@ export function Field({
   style,
   containerStyle,
   autoFocus,
+  selectTextOnFocus,
   ...props
 }: TextInputProps & {
   label?: string;
@@ -320,6 +322,7 @@ export function Field({
         {...props}
         onFocus={(e) => {
           setFocused(true);
+          if (selectTextOnFocus) selectOnFocus(input, props.value);
           props.onFocus?.(e);
         }}
         onBlur={(e) => {

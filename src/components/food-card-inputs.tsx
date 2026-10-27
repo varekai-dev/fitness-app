@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, TextInput, type TextInputProps } from 'react-nat
 
 import { MACROS } from '@/components/calorie-summary';
 import { Row, Text } from '@/components/ui';
+import { selectOnFocus } from '@/hooks/select-on-focus';
 import { useDeferredFocus } from '@/hooks/use-deferred-focus';
 import { tr } from '@/lib/i18n';
 import { colors, fontSize, radius, spacing } from '@/theme';
@@ -63,14 +64,16 @@ export function KcalInput({
       style={[styles.kcal, focused && styles.focusedLine]}>
       <TextInput
         ref={input}
-        onFocus={() => setFocused(true)}
+        onFocus={() => {
+          setFocused(true);
+          selectOnFocus(input, value);
+        }}
         onBlur={() => setFocused(false)}
         value={value}
         onChangeText={(t) => onChangeText(digits(t))}
         keyboardType="decimal-pad"
         placeholder="0"
         placeholderTextColor={colors.textMuted}
-        selectTextOnFocus
         maxLength={6}
         style={styles.kcalInput}
       />
@@ -126,13 +129,15 @@ function MacroTile({
           ref={input}
           value={value}
           onChangeText={(t) => onChangeText(digits(t))}
-          onFocus={() => setFocused(true)}
+          onFocus={() => {
+            setFocused(true);
+            selectOnFocus(input, value);
+          }}
           onBlur={() => setFocused(false)}
           keyboardType="decimal-pad"
           placeholder="0"
           placeholderTextColor={`${color}80`}
-          selectTextOnFocus
-          maxLength={6}
+            maxLength={6}
           style={[styles.macroInput, { color }]}
         />
         <Text variant="heading" style={{ color }}>
