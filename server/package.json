@@ -1,0 +1,23 @@
+{
+  "name": "fitness-server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler d1 migrations apply fitness --remote && wrangler deploy",
+    "db:migrate:local": "wrangler d1 migrations apply fitness --local",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261027.1",
+    "@types/nodemailer": "^8.0.2",
+    "typescript": "~6.0.3",
+    "wrangler": "^4.154.0"
+  },
+  "allowScripts": {
+    "workerd@1.20261023.1": true
+  },
+  "dependencies": {
+    "nodemailer": "^10.2.1"
+  }
+}

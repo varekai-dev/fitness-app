@@ -35,6 +35,10 @@ No EAS Build (the free build quota runs out). Release APKs are built with `expo 
 
 The APK must be signed with the same key as the installed app, or Android refuses to install it over the old one. The key comes from `credentials.json` (downloaded with `eas credentials -p android`, gitignored) or the `ANDROID_KEYSTORE_PATH` / `ANDROID_KEYSTORE_PASSWORD` / `ANDROID_KEY_ALIAS` / `ANDROID_KEY_PASSWORD` env vars; in CI from repository secrets (keystore as `ANDROID_KEYSTORE_BASE64`).
 
+## Backend
+
+`server/` is a Cloudflare Worker with a D1 database (accounts: sign-up, sign-in, password reset by an emailed code sent over SMTP with nodemailer, Gmail with an app password by default). It has its own `package.json`; run its commands inside `server/`: `npm run dev` (`wrangler dev`, apply migrations first with `npm run db:migrate:local`), `npm run typecheck`, `npm run deploy` (remote migrations + deploy). New tables go in `server/migrations/` as numbered SQL files. The app talks to it from `src/lib/account.ts`; set `EXPO_PUBLIC_API_URL` to point the app at `wrangler dev`. It's not part of the app's release: pushes touching only `server/` don't trigger `release.yml`.
+
 ## Rules
 
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.

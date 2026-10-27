@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "fitness-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  // nodemailer needs node:net / node:tls for SMTP.
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "fitness",
+      "database_id": "aab456a4-5432-4280-ad16-ebfa31f94193",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "SMTP_HOST": "smtp.gmail.com",
+    "SMTP_PORT": "465",
+    "MAIL_FROM_NAME": "Fitness"
+  }
+  // Secrets, set with `npx wrangler secret put SMTP_USER` and `… SMTP_PASS`: the
+  // Gmail address and an app password for it (myaccount.google.com/apppasswords).
+  // Without them reset codes are only written to the log, which is enough for
+  // `wrangler dev`.
+}

@@ -52,3 +52,6 @@ example
 
 # Gradle output of local Expo modules
 /modules/*/android/build/
+
+# Cloudflare Worker local state
+.wrangler/

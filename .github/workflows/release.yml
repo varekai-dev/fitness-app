@@ -8,8 +8,8 @@ name: Release
 on:
   push:
     branches: [main]
-    # The landing page is not part of the app.
-    paths-ignore: ['landing/**']
+    # The landing page and the backend are not part of the app.
+    paths-ignore: ['landing/**', 'server/**']
   workflow_dispatch:
     inputs:
       force_build:

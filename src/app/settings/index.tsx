@@ -5,6 +5,7 @@ import { SettingsLink } from '@/components/settings';
 import { Screen } from '@/components/ui';
 import { readSeenLevels } from '@/db/achievements';
 import { useAchievements } from '@/hooks/use-achievements';
+import { useAccount } from '@/lib/account';
 import { achievementTotals, newLevels } from '@/lib/achievements';
 import { healthName } from '@/lib/health';
 import { tr } from '@/lib/i18n';
@@ -14,8 +15,15 @@ import { notificationsSupported } from '@/lib/notifications';
 export default function SettingsScreen() {
   const enabled = useEnabledModules();
   const achievements = useAchievements();
+  const user = useAccount();
   return (
     <Screen title={tr('Налаштування', 'Settings')}>
+      <SettingsLink
+        icon="person-circle-outline"
+        title={tr('Акаунт', 'Account')}
+        hint={user ? user.email : tr('Вхід, реєстрація', 'Sign in, sign up')}
+        href="/settings/account"
+      />
       <SettingsLink
         icon="person-outline"
         title={tr('Профіль', 'Profile')}
