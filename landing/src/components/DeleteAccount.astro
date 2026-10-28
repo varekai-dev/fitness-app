@@ -1,0 +1,171 @@
+---
+import { Image } from 'astro:assets';
+import icon from '../../../assets/images/icon.png';
+import { API_URL } from '../data';
+import { dict, langOf, pathFor } from '../i18n';
+import Layout from '../layouts/Layout.astro';
+
+const lang = langOf(Astro);
+const t = dict[lang].deleteAccount;
+---
+
+<Layout title={t.title} description={t.description} page="delete-account/">
+  <main class="container page">
+    <a class="brand" href={pathFor(lang)} aria-label={t.back}>
+      <Image src={icon} alt="" width={36} height={36} />
+      <span>Fitness</span>
+    </a>
+    <h1>{t.heading}</h1>
+    <p class="lead">{t.lead}</p>
+    <ul class="facts">
+      <li>{t.deleted}</li>
+      <li>{t.kept}</li>
+    </ul>
+
+    <form class="card form" data-delete-form data-api={API_URL}>
+      <label>
+        <span>{t.email}</span>
+        <input name="email" type="email" autocomplete="email" required />
+      </label>
+      <label>
+        <span>{t.password}</span>
+        <input name="password" type="password" autocomplete="current-password" required />
+      </label>
+      <p class="error" role="alert" data-error hidden></p>
+      <button class="btn btn-danger" type="submit">{t.submit}</button>
+      <p class="hint">{t.forgot}</p>
+    </form>
+    <p class="card done" role="status" data-done hidden>{t.done}</p>
+  </main>
+</Layout>
+
+<script>
+  import { clientDict } from '../i18n';
+
+  type ErrorKey = keyof ReturnType<typeof clientDict>['deleteAccount']['errors'];
+
+  const form = document.querySelector<HTMLFormElement>('[data-delete-form]')!;
+  const errorEl = form.querySelector<HTMLElement>('[data-error]')!;
+  const button = form.querySelector('button')!;
+  const t = clientDict().deleteAccount;
+  const api = form.dataset.api;
+
+  /** The server's error code, or `network` when it can't be reached. */
+  async function call(path: string, init: RequestInit) {
+    let res: Response;
+    try {
+      res = await fetch(`${api}${path}`, init);
+    } catch {
+      throw 'network';
+    }
+    if (res.ok) return res.status === 204 ? null : res.json();
+    const data = await res.json().catch(() => null);
+    throw data?.error ?? 'unknown';
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!confirm(t.confirm)) return;
+    const data = new FormData(form);
+    errorEl.hidden = true;
+    button.disabled = true;
+    try {
+      // Signs in for a token, the same way the app does, then deletes with it.
+      const { token } = await call('/auth/login', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: data.get('email'), password: data.get('password') }),
+      });
+      await call('/account', { method: 'DELETE', headers: { authorization: `Bearer ${token}` } });
+      form.hidden = true;
+      document.querySelector<HTMLElement>('[data-done]')!.hidden = false;
+    } catch (code) {
+      errorEl.textContent = t.errors[(code as ErrorKey) in t.errors ? (code as ErrorKey) : 'unknown'];
+      errorEl.hidden = false;
+      button.disabled = false;
+    }
+  });
+</script>
+
+<style>
+  .page {
+    max-width: calc(560px + var(--gutter) * 2);
+    padding-block: 40px 80px;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .brand img {
+    border-radius: 10px;
+  }
+  h1 {
+    font-size: clamp(30px, 6vw, 42px);
+    margin-top: 40px;
+  }
+  .lead {
+    color: var(--text-secondary);
+    font-size: 17px;
+    margin-top: 16px;
+  }
+  .facts {
+    display: grid;
+    gap: 12px;
+    padding-left: 20px;
+    margin: 20px 0 0;
+    color: var(--text-secondary);
+  }
+  .form,
+  .done {
+    margin-top: 32px;
+    padding: 24px;
+  }
+  .form {
+    display: grid;
+    gap: 16px;
+  }
+  .form[hidden] {
+    display: none;
+  }
+  label {
+    display: grid;
+    gap: 8px;
+    font-weight: 600;
+  }
+  input {
+    min-height: 52px;
+    padding: 0 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface-raised);
+    font-size: 16px;
+  }
+  input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .btn-danger {
+    background: var(--danger);
+    color: #fff;
+  }
+  .btn-danger:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+  .error {
+    color: var(--danger);
+    font-weight: 600;
+  }
+  .hint {
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+  .done {
+    color: var(--success);
+    font-weight: 700;
+  }
+</style>

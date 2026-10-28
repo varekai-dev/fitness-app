@@ -64,11 +64,14 @@ function accountErrorMessage(code: ErrorCode) {
   }
 }
 
-async function request<T>(path: string, init: { body?: object; token?: string } = {}) {
+async function request<T>(
+  path: string,
+  init: { body?: object; token?: string; method?: 'DELETE' } = {},
+) {
   let res: Response;
   try {
     res = await fetch(`${API_URL}${path}`, {
-      method: init.body || path === '/auth/logout' ? 'POST' : 'GET',
+      method: init.method ?? (init.body || path === '/auth/logout' ? 'POST' : 'GET'),
       headers: {
         'content-type': 'application/json',
         ...(init.token && { authorization: `Bearer ${init.token}` }),
@@ -159,6 +162,22 @@ export async function logout() {
   await setSession(null);
   // Signed out on the phone either way; the server copy just expires if this fails.
   if (token) await request('/auth/logout', { token }).catch(() => {});
+}
+
+/**
+ * Deletes the account and its server backups, then signs out. Unlike logout this
+ * throws when the server can't be reached, so the user knows nothing was deleted.
+ */
+export async function deleteAccount() {
+  const token = session?.token;
+  if (!token) return;
+  try {
+    await request('/account', { token, method: 'DELETE' });
+  } catch (e) {
+    // Already gone on the server (deleted from the website or another phone).
+    if (!(e instanceof UnauthorizedError)) throw e;
+  }
+  await setSession(null);
 }
 
 /** Emails a six-digit code. Succeeds whether or not the email has an account. */

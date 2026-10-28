@@ -6,6 +6,8 @@ export const APK_URL = `https://github.com/${RELEASES_REPO}/releases/latest/down
 export const RELEASES_URL = `https://github.com/${RELEASES_REPO}/releases`;
 export const LATEST_RELEASE_API = `https://api.github.com/repos/${RELEASES_REPO}/releases/latest`;
 export const DEVELOPER_URL = 'https://serhiisaviuk.com/';
+/** The app's server (server/ in the repo), for deleting an account from the website. */
+export const API_URL = import.meta.env.PUBLIC_API_URL ?? 'https://fitness-api.serhijsav.workers.dev';
 
 /**
  * The app's activity levels and goals (src/lib/profile.ts), for the calculators.

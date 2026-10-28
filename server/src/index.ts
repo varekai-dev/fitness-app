@@ -50,7 +50,7 @@ class HttpError extends Error {
 // The app sends a bearer token, never cookies, so any origin (the web build) may call.
 const CORS = {
   'access-control-allow-origin': '*',
-  'access-control-allow-methods': 'GET, POST, PUT, OPTIONS',
+  'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'access-control-allow-headers': 'authorization, content-type',
 };
 
@@ -230,6 +230,27 @@ async function resetPassword(req: Request, env: Env) {
   return json(await createSession(env, user));
 }
 
+/**
+ * Deletes the account with everything the server keeps for it: backups,
+ * sessions and a pending reset code. The data on the phone isn't touched.
+ */
+async function deleteAccount(req: Request, env: Env) {
+  const { user } = await authenticate(req, env);
+  // Backups first: if this fails the account is still there to retry with.
+  let cursor: string | undefined;
+  do {
+    const page = await env.BACKUPS.list({ prefix: `${user.id}/`, cursor });
+    if (page.objects.length) await env.BACKUPS.delete(page.objects.map((o) => o.key));
+    cursor = page.truncated ? page.cursor : undefined;
+  } while (cursor);
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(user.id),
+    env.DB.prepare('DELETE FROM password_resets WHERE user_id = ?').bind(user.id),
+    env.DB.prepare('DELETE FROM users WHERE id = ?').bind(user.id),
+  ]);
+  return empty();
+}
+
 const BACKUP_ID = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
@@ -294,6 +315,7 @@ const ROUTES: Record<string, Handler> = {
   'POST /auth/login': login,
   'POST /auth/logout': logout,
   'GET /auth/me': me,
+  'DELETE /account': deleteAccount,
   'POST /auth/password/forgot': forgotPassword,
   'POST /auth/password/reset': resetPassword,
   'PUT /backups': uploadBackup,

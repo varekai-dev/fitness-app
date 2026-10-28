@@ -2,9 +2,10 @@
 import { Image } from 'astro:assets';
 import icon from '../../../assets/images/icon.png';
 import { APK_URL, DEVELOPER_URL, RELEASES_URL } from '../data';
-import { dict, langOf } from '../i18n';
+import { dict, langOf, pathFor } from '../i18n';
 
-const t = dict[langOf(Astro)];
+const lang = langOf(Astro);
+const t = dict[lang];
 ---
 
 <footer>
@@ -16,6 +17,7 @@ const t = dict[langOf(Astro)];
     <nav aria-label={t.footer.links}>
       <a href={APK_URL}>{t.download}</a>
       <a href={RELEASES_URL} target="_blank" rel="noopener">{t.footer.releases}</a>
+      <a href={pathFor(lang, 'delete-account/')}>{t.footer.deleteAccount}</a>
     </nav>
     <small>
       {t.footer.developer}<a class="dev" href={DEVELOPER_URL} target="_blank" rel="noopener">Serhii Saviuk</a>{` · ${t.footer.madeIn} · ${new Date().getFullYear()}`}

@@ -3,8 +3,9 @@ import type { IconName } from './components/Icon.astro';
 export const LANGS = ['uk', 'en'] as const;
 export type Lang = (typeof LANGS)[number];
 
-/** Where each language lives: Ukrainian at the root, English under /en/. */
-export const pathFor = (lang: Lang) => `${import.meta.env.BASE_URL.replace(/\/$/, '')}${lang === 'uk' ? '/' : '/en/'}`;
+/** Where each language lives: Ukrainian at the root, English under /en/. `page` is e.g. `delete-account/`. */
+export const pathFor = (lang: Lang, page = '') =>
+  `${import.meta.env.BASE_URL.replace(/\/$/, '')}${lang === 'uk' ? '/' : '/en/'}${page}`;
 
 /** The page's language, from Astro's i18n routing. */
 export const langOf = (astro: { currentLocale?: string }): Lang =>
@@ -380,8 +381,30 @@ const uk = {
   footer: {
     links: 'Посилання',
     releases: 'Релізи',
+    deleteAccount: 'Видалення акаунта',
     developer: 'Розробник — ',
     madeIn: 'Зроблено в Україні 💛💙',
+  },
+  deleteAccount: {
+    title: 'Видалення акаунта — Fitness',
+    description: 'Як видалити акаунт Fitness і резервні копії на сервері.',
+    back: 'На головну',
+    heading: 'Видалення акаунта',
+    lead: 'Акаунт потрібен лише для резервних копій на сервері. Видалити його можна в застосунку (Налаштування → Акаунт → Видалити акаунт) або тут.',
+    deleted: 'Що видаляється: пошта, пароль, сесії на всіх пристроях і всі резервні копії на сервері. Видалення одразу й назавжди, відновити їх не вийде.',
+    kept: 'Що залишається: дані на телефоні (тренування, їжа, вода, вага, фото). Їх можна стерти, видаливши застосунок або очистивши його дані.',
+    email: 'Пошта',
+    password: 'Пароль',
+    submit: 'Видалити акаунт',
+    confirm: 'Видалити акаунт і всі резервні копії назавжди?',
+    forgot: 'Забули пароль? Відновіть його в застосунку на екрані входу.',
+    done: 'Акаунт видалено. На сервері більше немає ваших даних.',
+    errors: {
+      wrong_credentials: 'Неправильна пошта або пароль.',
+      invalid_email: 'Перевірте адресу пошти.',
+      network: 'Немає з’єднання з сервером. Перевірте інтернет.',
+      unknown: 'Щось пішло не так. Спробуйте ще раз.',
+    },
   },
 };
 
@@ -755,8 +778,30 @@ const en: Dict = {
   footer: {
     links: 'Links',
     releases: 'Releases',
+    deleteAccount: 'Delete account',
     developer: 'Developer — ',
     madeIn: 'Made in Ukraine 💛💙',
+  },
+  deleteAccount: {
+    title: 'Delete your account — Fitness',
+    description: 'How to delete your Fitness account and its backups on the server.',
+    back: 'Home',
+    heading: 'Delete your account',
+    lead: 'The account is only there for backups on the server. Delete it in the app (Settings → Account → Delete account) or here.',
+    deleted: 'What’s deleted: your email, password, sessions on every device and all backups on the server. It happens at once and for good, they can’t be restored.',
+    kept: 'What stays: the data on your phone (workouts, food, water, weight, photos). Uninstall the app or clear its data to erase it.',
+    email: 'Email',
+    password: 'Password',
+    submit: 'Delete account',
+    confirm: 'Delete the account and all its backups for good?',
+    forgot: 'Forgot the password? Reset it in the app on the sign-in screen.',
+    done: 'The account is deleted. The server keeps none of your data any more.',
+    errors: {
+      wrong_credentials: 'Wrong email or password.',
+      invalid_email: 'Check the email address.',
+      network: 'Can’t reach the server. Check your connection.',
+      unknown: 'Something went wrong. Try again.',
+    },
   },
 };
 
