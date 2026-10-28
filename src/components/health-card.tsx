@@ -38,12 +38,12 @@ const STORE_HINT =
 function resultMessage(result: HealthSyncResult) {
   switch (result.status) {
     case 'ok':
-      return result.weights + result.activities > 0
+      return result.weights > 0
         ? {
             title: tr('Синхронізовано', 'Synced'),
             message: tr(
-              `Днів з вагою: ${result.weights}. Нових активностей: ${result.activities}.`,
-              `Days with weight: ${result.weights}. New activities: ${result.activities}.`,
+              `Днів з вагою: ${result.weights}.`,
+              `Days with weight: ${result.weights}.`,
             ),
           }
         : {
@@ -85,7 +85,7 @@ async function loadHealth() {
   return { ...settings, connected };
 }
 
-/** Connects Apple Health or Health Connect: weight and activities sync from there. */
+/** Connects Apple Health or Health Connect: weight syncs from there. */
 export function HealthCard() {
   const { data } = useDbQuery(loadHealth);
   const [syncing, setSyncing] = useState(false);
@@ -111,8 +111,8 @@ export function HealthCard() {
     dialog.show({
       title: tr(`Відключити ${healthName}?`, `Disconnect ${healthName}?`),
       message: tr(
-        'Вага, активності, кроки й сон більше не підтягуватимуться. Уже імпортовані записи залишаться.',
-        'Weight, activities, steps and sleep will no longer sync. Records already imported will stay.',
+        'Вага більше не підтягуватиметься. Уже імпортовані записи залишаться.',
+        'Weight will no longer sync. Records already imported will stay.',
       ),
       buttons: [
         { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
@@ -132,8 +132,8 @@ export function HealthCard() {
       </Row>
       <Text variant="muted">
         {tr(
-          'Підтягує вагу з розумних ваг, прогулянки, біг та інші тренування з годинника — в історію тренувань, а кроки й сон — у віджети на головній. Оновлюється щоразу, коли відкриваєш застосунок.',
-          'Brings in weight from smart scales, walks, runs and other workouts from your watch into the workout history, and steps and sleep into the home widgets. Updates every time you open the app.',
+          'Підтягує вагу з розумних ваг у журнал ваги. Оновлюється щоразу, коли відкриваєш застосунок.',
+          'Brings weight from smart scales into the weight log. Updates every time you open the app.',
         )}
       </Text>
       {!healthSupported ? (

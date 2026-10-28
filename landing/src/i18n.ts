@@ -213,7 +213,7 @@ const uk = {
         group: 'body',
         icon: 'heart',
         title: 'Health Connect',
-        text: 'Вага, прогулянки й біг з годинника, кроки та сон підтягуються самі.',
+        text: 'Вага з розумних ваг підтягується в журнал сама.',
       },
       {
         group: 'more',
@@ -615,7 +615,7 @@ const en: Dict = {
         group: 'body',
         icon: 'heart',
         title: 'Health Connect',
-        text: 'Weight, walks and runs from your watch, steps and sleep come in on their own.',
+        text: 'Weight from your smart scale comes into the log on its own.',
       },
       {
         group: 'more',

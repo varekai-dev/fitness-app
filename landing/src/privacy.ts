@@ -58,7 +58,7 @@ const uk = (date: string, deletePage: string): Policy => ({
         'їжу, калорії й нутрієнти, воду;',
         'вагу, фото прогресу;',
         'профіль: стать, дату народження, зріст, вагу, рівень активності й ціль;',
-        'дані з Health Connect або Apple Health (див. нижче);',
+        'вагу з Health Connect або Apple Health (див. нижче);',
         'налаштування й нагадування.',
       ],
     },
@@ -71,15 +71,15 @@ const uk = (date: string, deletePage: string): Policy => ({
     {
       title: 'Резервні копії',
       text: [
-        'Раз на день застосунок надсилає на сервер повну резервну копію ваших даних: базу з усіма записами, включно з профілем і даними з Health Connect / Apple Health, а також фото прогресу та зображення вправ. Копії потрібні лише для того, щоб ви могли відновити дані на новому телефоні. Ми зберігаємо 7 останніх щоденних копій, старіші видаляються автоматично.',
+        'Раз на день застосунок надсилає на сервер повну резервну копію ваших даних: базу з усіма записами, включно з профілем і вагою з Health Connect / Apple Health, а також фото прогресу та зображення вправ. Копії потрібні лише для того, щоб ви могли відновити дані на новому телефоні. Ми зберігаємо 7 останніх щоденних копій, старіші видаляються автоматично.',
         'Сервер працює на Cloudflare (Workers, D1 і R2). Дані передаються лише через HTTPS. Доступ до копій має тільки ваш акаунт.',
       ],
     },
     {
       title: 'Health Connect і Apple Health',
       text: [
-        'Якщо ви дозволите, застосунок <strong>лише читає</strong> з Health Connect (Android) або Apple Health (iOS) вагу, тренування, дистанцію, активні калорії, кроки, сон і давніші записи цих типів. Нічого не записується назад.',
-        'Ці дані показуються в журналі ваги, історії тренувань і на головному екрані, зберігаються в базі на телефоні та потрапляють у вашу резервну копію на сервері. Вони <strong>не</strong> передаються іншим сервісам, зокрема AI, не використовуються для реклами, не продаються і не використовуються для оцінки кредитоспроможності чи страхування.',
+        'Якщо ви дозволите, застосунок <strong>лише читає</strong> з Health Connect (Android) або Apple Health (iOS) один тип даних — вагу тіла, щоб показувати її в журналі ваги. Інших даних про здоров’я застосунок не запитує і нічого не записує назад.',
+        'Записи ваги зберігаються в базі на телефоні та потрапляють у вашу резервну копію на сервері. Вони <strong>не</strong> передаються іншим сервісам, зокрема AI, не використовуються для реклами, не продаються і не використовуються для оцінки кредитоспроможності чи страхування.',
         'Використання інформації, отриманої з Health Connect, відповідає політиці дозволів Health Connect, зокрема вимогам щодо обмеженого використання (Limited Use). Доступ можна відкликати будь-коли в налаштуваннях Health Connect або Apple Health.',
       ],
     },
@@ -168,7 +168,7 @@ const en = (date: string, deletePage: string): Policy => ({
         'food, calories and nutrients, water;',
         'body weight, progress photos;',
         'your profile: sex, birth date, height, weight, activity level and goal;',
-        'data from Health Connect or Apple Health (see below);',
+        'weight from Health Connect or Apple Health (see below);',
         'settings and reminders.',
       ],
     },
@@ -181,15 +181,15 @@ const en = (date: string, deletePage: string): Policy => ({
     {
       title: 'Backups',
       text: [
-        'Once a day the app uploads a full backup of your data to the server: the database with every record, your profile and data from Health Connect / Apple Health included, plus progress photos and exercise images. Backups exist only so you can restore your data on a new phone. We keep the 7 newest daily backups and delete older ones automatically.',
+        'Once a day the app uploads a full backup of your data to the server: the database with every record, your profile and weight from Health Connect / Apple Health included, plus progress photos and exercise images. Backups exist only so you can restore your data on a new phone. We keep the 7 newest daily backups and delete older ones automatically.',
         'The server runs on Cloudflare (Workers, D1 and R2). Data travels only over HTTPS, and only your account can reach your backups.',
       ],
     },
     {
       title: 'Health Connect and Apple Health',
       text: [
-        'With your permission the app <strong>only reads</strong> weight, workouts, distance, active calories, steps, sleep and older records of these types from Health Connect (Android) or Apple Health (iOS). It never writes anything back.',
-        'This data is shown in the weight log, workout history and on the home screen, stored in the database on your phone and included in your backup on the server. It is <strong>not</strong> shared with other services, AI included, not used for advertising, not sold, and not used to judge creditworthiness or for insurance.',
+        'With your permission the app <strong>only reads</strong> one data type from Health Connect (Android) or Apple Health (iOS): body weight, to show it in the weight log. It asks for no other health data and never writes anything back.',
+        'Weight records are stored in the database on your phone and included in your backup on the server. They are <strong>not</strong> shared with other services, AI included, not used for advertising, not sold, and not used to judge creditworthiness or for insurance.',
         'Use of information received from Health Connect adheres to the Health Connect Permissions policy, including the Limited Use requirements. You can revoke access at any time in the settings of Health Connect or Apple Health.',
       ],
     },

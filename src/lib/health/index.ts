@@ -1,9 +1,7 @@
 import { isRunningInExpoGo } from 'expo';
 import { Platform } from 'react-native';
 
-import { importActivities } from '@/db/activities';
 import { importBodyWeights } from '@/db/body-weight';
-import { importDailyHealth } from '@/db/daily-health';
 import { getHealthSettings, setHealthEnabled, setHealthSyncedAt } from '@/db/health';
 import { healthConnect } from './health-connect';
 import { healthKit } from './healthkit';
@@ -19,10 +17,9 @@ export const healthSupported = provider !== null && !isRunningInExpoGo();
 export const healthName = Platform.OS === 'ios' ? 'Apple Health' : 'Health Connect';
 
 export type HealthSyncResult =
-  { status: 'ok'; weights: number; activities: number } | { status: Exclude<HealthStatus, 'ok'> };
+  { status: 'ok'; weights: number } | { status: Exclude<HealthStatus, 'ok'> };
 
-// Sessions edited after an earlier sync (a watch finishing its upload late) are
-// read again within this window.
+// Weighings a scale's app uploads late are read again within this window.
 const RESYNC_MS = 7 * 24 * 60 * 60 * 1000;
 
 let queue: Promise<unknown> = Promise.resolve();
@@ -42,8 +39,7 @@ export async function isHealthConnected() {
 }
 
 /**
- * Pulls weighings into the body weight log, walks, runs and other sessions
- * into the workout history, and daily steps and sleep for the dashboard. With `prompt`, asks for access when it's missing
+ * Pulls weighings into the body weight log. With `prompt`, asks for access when it's missing
  * and turns syncing back on; without it, quietly skips until connected.
  */
 export function syncHealth({ prompt }: { prompt: boolean }) {
@@ -63,12 +59,9 @@ export function syncHealth({ prompt }: { prompt: boolean }) {
     // A connect from the settings rereads everything, in case access widened since.
     const startedAt = Date.now();
     const since = new Date(prompt || !settings.syncedAt ? 0 : settings.syncedAt - RESYNC_MS);
-    const readings = await provider.read(since);
-    const weights = await importBodyWeights(readings.weights);
-    const activities = await importActivities(readings.activities);
-    importDailyHealth(readings.days);
+    const weights = await importBodyWeights(await provider.read(since));
     await setHealthSyncedAt(startedAt);
-    return { status: 'ok', weights, activities };
+    return { status: 'ok', weights };
   });
 }
 

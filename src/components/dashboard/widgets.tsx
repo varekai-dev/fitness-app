@@ -26,7 +26,6 @@ import {
   type WidgetSize,
 } from '@/lib/dashboard';
 import { formatGrams, formatKcal } from '@/lib/food';
-import { healthName } from '@/lib/health';
 import { locale, plural, tr } from '@/lib/i18n';
 import {
   formatShortDate,
@@ -119,9 +118,6 @@ export function WidgetView({
         return <WaterWeekWidget {...props} />;
       case 'weight':
         return <WeightWidget {...props} />;
-      case 'steps':
-      case 'sleep':
-        return <HealthWidget metric={widget.type} {...props} />;
     }
   })();
   return (
@@ -1121,189 +1117,6 @@ function WeightWidget({ size, data }: WidgetProps) {
           </Text>
         )}
       </View>
-    </Tile>
-  );
-}
-
-// ---------- steps and sleep ----------
-
-const STEPS_GOAL = 10_000;
-const SLEEP_GOAL_MIN = 8 * 60;
-
-const stepsFormatter = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
-
-type HealthMetric = {
-  title: string;
-  icon: IconName;
-  goal: number;
-  value: (day: DashboardData['health']['days'][number]) => number | null;
-  /** The number in large type, with its units drawn smaller. */
-  big: (v: number) => ReactNode;
-  /** The same as plain text, for captions and bar labels. */
-  short: (v: number) => string;
-  goalText: string;
-  empty: string;
-};
-
-const sleepParts = (min: number) => ({ h: Math.floor(min / 60), m: Math.round(min % 60) });
-
-const HEALTH_METRICS: Record<'steps' | 'sleep', HealthMetric> = {
-  steps: {
-    title: tr('Кроки', 'Steps'),
-    icon: 'footsteps',
-    goal: STEPS_GOAL,
-    value: (d) => d.steps,
-    big: (v) => stepsFormatter.format(v),
-    short: (v) => (v >= 1000 ? `${formatNumber(v / 1000, 1)}${tr('к', 'k')}` : String(v)),
-    goalText: `${tr('ціль', 'goal')} ${stepsFormatter.format(STEPS_GOAL)}`,
-    empty: tr('Кроків за сьогодні ще немає', 'No steps today yet'),
-  },
-  sleep: {
-    title: tr('Сон', 'Sleep'),
-    icon: 'moon',
-    goal: SLEEP_GOAL_MIN,
-    value: (d) => d.sleepMin,
-    big: (v) => {
-      const { h, m } = sleepParts(v);
-      return (
-        <>
-          {h}
-          <Unit> {tr('год', 'h')} </Unit>
-          {m}
-          <Unit> {tr('хв', 'min')}</Unit>
-        </>
-      );
-    },
-    short: (v) => {
-      const { h, m } = sleepParts(v);
-      return `${h}:${String(m).padStart(2, '0')}`;
-    },
-    goalText: `${tr('ціль', 'goal')} ${SLEEP_GOAL_MIN / 60} ${tr('год', 'h')}`,
-    empty: tr('Сну за минулу ніч немає', 'No sleep logged last night'),
-  },
-};
-
-function HealthWidget({ metric: key, size, data }: WidgetProps & { metric: 'steps' | 'sleep' }) {
-  const metric = HEALTH_METRICS[key];
-  const { days, today, synced } = data.health;
-
-  if (!synced) {
-    return (
-      <Tile onPress={() => router.push('/settings/integrations')}>
-        <TileTitle title={metric.title} icon={metric.icon} />
-        <Empty
-          text={tr(`Підключи ${healthName} в інтеграціях`, `Connect ${healthName} in integrations`)}
-        />
-      </Tile>
-    );
-  }
-
-  const todayValue = metric.value(days.find((d) => d.dayStart === today)!);
-  const logged = days.map(metric.value).filter((v): v is number => v !== null);
-  const average = logged.length ? logged.reduce((a, b) => a + b, 0) / logged.length : null;
-  const progress = todayValue === null ? 0 : todayValue / metric.goal;
-
-  // Only in the large tile, above the bars, which take the rest of its height.
-  const headline = (
-    <View style={[styles.rowCenter, styles.noGrow]}>
-      <ProgressRing progress={progress} icon={metric.icon} size={56} />
-      <View style={styles.flex}>
-        {todayValue === null ? (
-          <Text variant="muted">{metric.empty}</Text>
-        ) : (
-          <>
-            <Big>{metric.big(todayValue)}</Big>
-            <Text variant="muted" numberOfLines={1}>
-              {Math.round(progress * 100)}% · {metric.goalText}
-            </Text>
-          </>
-        )}
-      </View>
-    </View>
-  );
-
-  // Half a row is too narrow for the ring beside "7 h 25 min": the value goes under it.
-  if (size === 'small') {
-    return (
-      <Tile>
-        <TileTitle title={metric.title} icon={metric.icon} />
-        <View style={styles.bottleRow}>
-          <ProgressRing progress={progress} icon={metric.icon} size={48} />
-          <View>
-            <Big small>
-              {Math.round(progress * 100)}
-              <Unit> %</Unit>
-            </Big>
-            <Text variant="muted">{tr('цілі', 'of goal')}</Text>
-          </View>
-        </View>
-        {todayValue === null ? (
-          <Text variant="muted" numberOfLines={1}>
-            {metric.empty}
-          </Text>
-        ) : (
-          <Big small>{metric.big(todayValue)}</Big>
-        )}
-      </Tile>
-    );
-  }
-
-  const chartHeight = size === 'large' ? 120 : 64;
-  const max = Math.max(metric.goal, ...logged);
-  const bars = (
-    <View style={styles.bars}>
-      {days.map((d) => {
-        const v = metric.value(d) ?? 0;
-        return (
-          <View key={d.dayStart} style={styles.barColumn}>
-            {size === 'large' && (
-              <Text variant="muted" style={styles.barValue} numberOfLines={1}>
-                {v > 0 ? metric.short(v) : ''}
-              </Text>
-            )}
-            <View style={[styles.barTrack, { height: chartHeight }]}>
-              <View style={[styles.goalLine, { bottom: (metric.goal / max) * chartHeight }]} />
-              <GrowColumn
-                height={Math.max((v / max) * chartHeight, v ? 3 : 0)}
-                style={[styles.bar, v < metric.goal && styles.barPartial]}
-              />
-            </View>
-            <Text variant="caption" style={[styles.barLabel, d.dayStart === today && styles.today]}>
-              {WEEKDAY_SHORT[weekdayIndex(d.dayStart)]}
-            </Text>
-          </View>
-        );
-      })}
-    </View>
-  );
-  const averageText =
-    average === null
-      ? null
-      : `${tr('У середньому', 'Average')} ${metric.short(Math.round(average))}`;
-
-  if (size === 'medium') {
-    return (
-      <Tile>
-        <TileTitle
-          title={
-            todayValue === null
-              ? metric.title
-              : `${metric.title} · ${tr('сьогодні', 'today')} ${metric.short(todayValue)}`
-          }
-          icon={metric.icon}
-        />
-        {bars}
-        {averageText && <Text variant="muted">{averageText}</Text>}
-      </Tile>
-    );
-  }
-
-  return (
-    <Tile>
-      <TileTitle title={metric.title} icon={metric.icon} />
-      {headline}
-      {bars}
-      {averageText && <Text variant="muted">{averageText}</Text>}
     </Tile>
   );
 }

@@ -8,10 +8,9 @@ import {
   type WidgetType,
 } from '@/lib/dashboard';
 import { STREAK_DAYS, totalsByDay } from '@/lib/stats';
-import { addDays, startOfDay } from '@/lib/water';
+import { addDays } from '@/lib/water';
 import { listBodyWeights } from './body-weight';
 import { db } from './client';
-import { hasDailyHealth, listDailyHealth } from './daily-health';
 import { loadFood } from './food';
 import { getActiveProgram, getNextDayId } from './programs';
 import { foodEntries, settings, waterIntakes } from './schema';
@@ -81,23 +80,10 @@ async function loadDailyTotals(now: number) {
   return { waterMl: byDay(water), foodKcal: byDay(food) };
 }
 
-/** Steps and sleep for each of the last 7 days ending today, from the health app sync. */
-async function loadHealthWeek(now: number) {
-  const today = startOfDay(now);
-  const from = addDays(today, -6);
-  const [rows, synced] = await Promise.all([listDailyHealth(from), hasDailyHealth()]);
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const dayStart = addDays(from, i);
-    const row = rows.find((r) => r.day === dayStart);
-    return { dayStart, steps: row?.steps ?? null, sleepMin: row?.sleepMin ?? null };
-  });
-  return { days, today, synced };
-}
-
 /** Everything any widget may show, loaded once for the whole dashboard. */
 export async function loadDashboardData() {
   const now = Date.now();
-  const [activeWorkout, program, finished, bodyWeights, water, food, daily, health] =
+  const [activeWorkout, program, finished, bodyWeights, water, food, daily] =
     await Promise.all([
       getActiveWorkout(),
       getActiveProgram(),
@@ -106,7 +92,6 @@ export async function loadDashboardData() {
       loadWater(now),
       loadFood(now),
       loadDailyTotals(now),
-      loadHealthWeek(now),
     ]);
   const nextDayId = program ? await getNextDayId(program.id) : null;
   const nextDay = program?.days.find((d) => d.id === nextDayId) ?? null;
@@ -119,7 +104,6 @@ export async function loadDashboardData() {
     water,
     food,
     daily,
-    health,
     loadedAt: now,
   };
 }
