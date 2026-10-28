@@ -16,6 +16,9 @@ export interface Env {
   GOOGLE_CLIENT_ID?: string;
   /** Comma-separated Google accounts allowed on the admin page. */
   ADMIN_EMAILS?: string;
+  /** For the admin page's Cloudflare usage: the account, and a token with Account Analytics Read. */
+  CF_ACCOUNT_ID?: string;
+  CF_API_TOKEN?: string;
 }
 
 const DAY = 24 * 60 * 60 * 1000;

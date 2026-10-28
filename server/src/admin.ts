@@ -1,5 +1,6 @@
 import { adminPage } from './admin-page';
 import { checkGroqKey, dailyLimit, getConfig } from './ai';
+import { cloudflareUsage } from './cloudflare';
 import { newToken, sha256 } from './crypto';
 import { HttpError, json, readBody } from './http';
 import type { Env } from './index';
@@ -191,6 +192,12 @@ async function saveModel(req: Request, env: Env) {
   return json({});
 }
 
+/** Free plan usage of the Cloudflare account; asked separately, it takes a second. */
+async function cloudflare(req: Request, env: Env) {
+  await requireAdmin(req, env);
+  return json(await cloudflareUsage(env));
+}
+
 type Handler = (req: Request, env: Env) => Promise<Response>;
 
 export const ADMIN_ROUTES: Record<string, Handler> = {
@@ -201,4 +208,5 @@ export const ADMIN_ROUTES: Record<string, Handler> = {
   'PUT /admin/api/groq-key': saveGroqKey,
   'PUT /admin/api/daily-limit': saveLimit,
   'PUT /admin/api/models': saveModel,
+  'GET /admin/api/cloudflare': cloudflare,
 };

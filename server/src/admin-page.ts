@@ -45,6 +45,13 @@ export const adminPage = (clientId: string) => `<!doctype html>
   #login { text-align:center; padding:48px 16px; }
   #login .card { display:inline-block; padding:32px; }
   #gbtn { display:flex; justify-content:center; margin-top:16px; }
+  .meters { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px 24px; }
+  .meter-head { display:flex; justify-content:space-between; gap:8px; font-size:14px; }
+  .meter-head span:last-child { font-variant-numeric:tabular-nums; }
+  .bar { height:8px; background:var(--line); border-radius:4px; overflow:hidden; margin:6px 0 2px; }
+  .bar i { display:block; height:100%; background:var(--accent); border-radius:4px; }
+  .bar i.warn { background:#f59e0b; }
+  .bar i.over { background:var(--danger); }
   [hidden] { display:none !important; }
 </style>
 </head>
@@ -128,6 +135,15 @@ export const adminPage = (clientId: string) => `<!doctype html>
     <div style="height:16px"></div>
 
     <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <h2 style="margin:0">Cloudflare: безкоштовний план</h2>
+        <button class="ghost" id="cf-refresh">Оновити</button>
+      </div>
+      <p class="muted" id="cf-note">Завантаження…</p>
+      <div class="meters" id="cf"></div>
+    </div>
+
+    <div class="card">
       <h2>Моделі та ціни</h2>
       <p class="muted">USD за мільйон токенів (console.groq.com/docs/models). Застосунок може викликати лише моделі з цього списку. Витрати рахуються за поточними цінами.</p>
       <div class="scroll"><table id="models"></table></div>
@@ -179,7 +195,7 @@ async function onCredential({ credential }) {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ credential }),
   });
-  if (res.ok) return load();
+  if (res.ok) return load().then(loadCloudflare);
   $('login-msg').textContent = res.status === 403
     ? 'Цього акаунта немає в ADMIN_EMAILS.'
     : 'Не вдалося увійти.';
@@ -268,13 +284,57 @@ $('limit-form').addEventListener('submit', async (e) => {
   } catch (err) { say('limit-msg', err.message, true); }
 });
 
+const bytes = (b) => {
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let i = 0;
+  while (b >= 1000 && i < units.length - 1) { b /= 1000; i++; }
+  return (i ? b.toFixed(b >= 100 ? 0 : 1) : b) + ' ' + units[i];
+};
+
+function meter(title, used, limit, format, period) {
+  const share = limit ? used / limit : 0;
+  const pct = Math.min(share * 100, 100);
+  const cls = share >= 1 ? 'over' : share >= 0.8 ? 'warn' : '';
+  const left = Math.max(limit - used, 0);
+  return '<div><div class="meter-head"><span>' + title + '</span><span>' + format(used) + ' / ' + format(limit) + '</span></div>'
+    + '<div class="bar"><i class="' + cls + '" style="width:' + pct.toFixed(1) + '%"></i></div>'
+    + '<div class="muted">Лишилось ' + format(left) + ' (' + Math.max(0, 100 - share * 100).toFixed(1) + '%) · ' + period + '</div></div>';
+}
+
+async function loadCloudflare() {
+  $('cf-note').textContent = 'Завантаження…';
+  $('cf').innerHTML = '';
+  let d;
+  try { d = await api('cloudflare'); } catch (err) { $('cf-note').textContent = err.message; return; }
+  if (!d.configured) {
+    $('cf-note').textContent = 'Не налаштовано: потрібні CF_ACCOUNT_ID у wrangler.jsonc і секрет CF_API_TOKEN (токен з правом Account Analytics: Read).';
+    return;
+  }
+  if (d.error) { $('cf-note').textContent = 'Cloudflare повернув помилку: ' + d.error; return; }
+  const l = d.limits;
+  const hours = Math.max(0, (d.resetsAt - Date.now()) / 3600000);
+  const day = 'за сьогодні, скидається через ' + Math.floor(hours) + ' год ' + Math.round((hours % 1) * 60) + ' хв';
+  const month = 'з 1-го числа місяця';
+  $('cf-note').textContent = 'Ліміти на весь акаунт Cloudflare (UTC). Дані аналітики приходять із затримкою в кілька хвилин.';
+  $('cf').innerHTML = [
+    meter('Запити до Workers', d.workerRequests, l.workerRequestsPerDay, int, day),
+    meter('D1: прочитано рядків', d.d1RowsRead, l.d1RowsReadPerDay, int, day),
+    meter('D1: записано рядків', d.d1RowsWritten, l.d1RowsWrittenPerDay, int, day),
+    meter('D1: розмір бази', d.d1StorageBytes, l.d1StorageBytes, bytes, 'зараз'),
+    meter('R2: сховище (' + int(d.r2Objects) + ' файлів)', d.r2StorageBytes, l.r2StorageBytes, bytes, 'зараз'),
+    meter('R2: операції класу A (запис)', d.r2ClassA, l.r2ClassAPerMonth, int, month),
+    meter('R2: операції класу B (читання)', d.r2ClassB, l.r2ClassBPerMonth, int, month),
+  ].join('');
+}
+
+$('cf-refresh').addEventListener('click', loadCloudflare);
 $('days').addEventListener('change', () => load().catch(() => {}));
 $('logout').addEventListener('click', async () => {
   await api('logout', {}, 'POST').catch(() => {});
   showLogin();
 });
 
-load().catch(() => {});
+load().then(loadCloudflare).catch(() => {});
 </script>
 </body>
 </html>`;

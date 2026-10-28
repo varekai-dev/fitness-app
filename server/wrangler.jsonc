@@ -25,7 +25,11 @@
     // http://localhost:8787 for `wrangler dev`) as authorized JavaScript origins,
     // and the Google accounts allowed in, comma-separated.
     "GOOGLE_CLIENT_ID": "548785441149-iun2rahcarqttvacjvdihm1jhp7c9mbg.apps.googleusercontent.com",
-    "ADMIN_EMAILS": "serhijsav@gmail.com"
+    "ADMIN_EMAILS": "serhijsav@gmail.com",
+    // The admin page shows this account's free plan usage. It also needs the
+    // secret CF_API_TOKEN: a token with Account → Account Analytics → Read
+    // (dash.cloudflare.com/profile/api-tokens), set with `npx wrangler secret put CF_API_TOKEN`.
+    "CF_ACCOUNT_ID": "eacf2393480be5abb18c98eaf1c7d936"
   }
   // Secrets, set with `npx wrangler secret put SMTP_USER` and `… SMTP_PASS`: the
   // Gmail address and an app password for it (myaccount.google.com/apppasswords).
