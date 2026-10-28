@@ -155,8 +155,8 @@ export default function BackupSettingsScreen() {
         </Row>
         <Text variant="muted">
           {tr(
-            'Збережи копію у файл: у Google Drive, Telegram чи інше місце. Фото прогресу й вправ теж потрапляють у копію, ключ Groq — ні.',
-            'Save a backup to a file: to Google Drive, Telegram or elsewhere. Progress photos and exercise images are included, the Groq key isn’t.',
+            'Збережи копію у файл: у Google Drive, Telegram чи інше місце. Фото прогресу й вправ теж потрапляють у копію.',
+            'Save a backup to a file: to Google Drive, Telegram or elsewhere. Progress photos and exercise images are included.',
           )}
         </Text>
         <Button
