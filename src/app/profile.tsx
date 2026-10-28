@@ -1,8 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { ActivityPicker } from '@/components/activity-picker';
 import { Card, ChipGroup, Field, Loading, Row, Screen, Text } from '@/components/ui';
 import { loadProfile, setProfileField } from '@/db/profile';
 import { useDbQuery } from '@/hooks/use-db-query';
@@ -11,22 +12,19 @@ import { tr } from '@/lib/i18n';
 import { formatShortDate } from '@/lib/labels';
 import { formatNumber, formatWeight, parseDecimal } from '@/lib/metrics';
 import {
-  ACTIVITY,
-  ACTIVITY_LEVELS,
   ageOn,
   formatBirthDate,
+  GOAL_LABELS,
   maskBirthDate,
   missingForRecommendation,
   parseBirthDate,
   recommendCalories,
   SEX_LABELS,
   SEXES,
-  WEIGHT_GOAL,
   WEIGHT_GOALS,
-  type WeightGoal,
 } from '@/lib/profile';
 import { cmToDisplay, displayToCm, HEIGHT_UNIT, WEIGHT_UNIT } from '@/lib/units';
-import { colors, fontSize, radius, spacing } from '@/theme';
+import { colors, fontSize } from '@/theme';
 
 const MIN_HEIGHT_CM = 100;
 const MAX_HEIGHT_CM = 250;
@@ -34,10 +32,6 @@ const heightValidCm = (cm: number | null): cm is number =>
   cm !== null && cm >= MIN_HEIGHT_CM && cm <= MAX_HEIGHT_CM;
 /** Height range in the chosen unit, for the hint below the field. */
 const HEIGHT_RANGE = [MIN_HEIGHT_CM, MAX_HEIGHT_CM].map((cm) => Math.round(cmToDisplay(cm)));
-
-const GOAL_LABELS = Object.fromEntries(
-  WEIGHT_GOALS.map((g) => [g, WEIGHT_GOAL[g].label]),
-) as Record<WeightGoal, string>;
 
 export default function ProfileScreen() {
   const { data } = useDbQuery(loadProfile);
@@ -150,27 +144,7 @@ export default function ProfileScreen() {
       />
 
       <Text variant="caption">{tr('Активність', 'Activity')}</Text>
-      <View style={styles.options}>
-        {ACTIVITY_LEVELS.map((level) => {
-          const selected = profile.activity === level;
-          return (
-            <Pressable
-              key={level}
-              onPress={() => pick('activity', level)}
-              style={[styles.option, selected && styles.optionSelected]}>
-              <View style={styles.flex}>
-                <Text variant="body" style={selected && styles.optionText}>
-                  {ACTIVITY[level].label}
-                </Text>
-                <Text variant="muted" style={selected && styles.optionHint}>
-                  {ACTIVITY[level].hint}
-                </Text>
-              </View>
-              {selected && <Ionicons name="checkmark" size={20} color={colors.accentText} />}
-            </Pressable>
-          );
-        })}
-      </View>
+      <ActivityPicker value={profile.activity} onChange={(level) => pick('activity', level)} />
 
       <Text variant="caption">{tr('Мета', 'Goal')}</Text>
       <ChipGroup
@@ -215,22 +189,9 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
   spaceBetween: { justifyContent: 'space-between' },
   right: { alignItems: 'flex-end' },
   error: { color: colors.danger },
-  options: { gap: spacing.sm },
-  option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    padding: spacing.md,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-  },
-  optionSelected: { backgroundColor: colors.accent },
-  optionText: { color: colors.accentText },
-  optionHint: { color: colors.onAccentMuted },
   kcal: { color: colors.text, fontSize: fontSize.hero, fontWeight: '800', letterSpacing: -1 },
   unit: { color: colors.textSecondary, fontSize: fontSize.lg, fontWeight: '600' },
 });

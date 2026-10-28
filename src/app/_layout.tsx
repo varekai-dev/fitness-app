@@ -8,7 +8,9 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { Text } from '@/components/ui';
 import { db } from '@/db/client';
+import { isProfileComplete } from '@/db/profile';
 import { runContentSeeds, seedIfEmpty } from '@/db/seed';
+import { useDbQuery } from '@/hooks/use-db-query';
 import { useHealthAutoSync } from '@/hooks/use-health-auto-sync';
 import { useHomeWidgetSync } from '@/hooks/use-home-widget-sync';
 import { useNotifications } from '@/hooks/use-notifications';
@@ -52,8 +54,13 @@ export default function RootLayout() {
 
   // undefined while the saved session is read, so the splash covers it too.
   const user = useAccount();
-  const loaded = ready && user !== undefined;
-
+  // Re-checked on every database change, so saving the last value opens the app.
+  // A boolean, so the layout only re-renders when it flips.
+  const { data: profileComplete } = useDbQuery(
+    () => (ready ? isProfileComplete() : Promise.resolve(undefined)),
+    [ready],
+  );
+  const loaded = ready && user !== undefined && profileComplete !== undefined;
   const error = migrationError ?? seedError;
   useEffect(() => {
     if (loaded || error) SplashScreen.hideAsync();
@@ -82,10 +89,11 @@ export default function RootLayout() {
           }}>
           {/*
             Every route has to be listed here: Expo Router leaves undeclared ones
-            unguarded. Signed out, the only screen left is sign-in, and signing
-            in drops it and opens the tabs.
+            unguarded. Signed out, the only screen left is sign-in; signed in
+            without weight, height or birth date, onboarding. Each flips to the
+            next on its own once its condition is met.
           */}
-          <Stack.Protected guard={!!user}>
+          <Stack.Protected guard={!!user && profileComplete}>
             {/*
               First on purpose: the Stack mounts only once the database is ready,
               after the launch URL was read, and then opens its first screen.
@@ -118,6 +126,9 @@ export default function RootLayout() {
             <Stack.Screen name="settings/integrations" />
             <Stack.Screen name="settings/notifications" />
             <Stack.Screen name="settings/water" />
+          </Stack.Protected>
+          <Stack.Protected guard={!!user && !profileComplete}>
+            <Stack.Screen name="onboarding" />
           </Stack.Protected>
           <Stack.Protected guard={!user}>
             <Stack.Screen name="sign-in" />

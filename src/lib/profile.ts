@@ -60,6 +60,10 @@ export const WEIGHT_GOAL: Record<WeightGoal, { label: string; factor: number }> 
   gain: { label: tr('Набір маси', 'Gain weight'), factor: 1.1 },
 };
 
+export const GOAL_LABELS = Object.fromEntries(
+  WEIGHT_GOALS.map((g) => [g, WEIGHT_GOAL[g].label]),
+) as Record<WeightGoal, string>;
+
 export type Profile = {
   heightCm: number | null;
   /** ISO date, "1990-05-31". */

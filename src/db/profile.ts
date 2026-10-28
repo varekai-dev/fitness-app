@@ -46,6 +46,20 @@ export async function setProfileField<K extends ProfileKey>(key: K, value: Profi
     .onConflictDoUpdate({ target: settings.key, set: { value: row.value } });
 }
 
+/**
+ * Whether the calorie formula has its inputs: a logged weight, the height, the
+ * birth date and the sex. Activity and goal have defaults, so they don't count.
+ */
+export async function isProfileComplete() {
+  const { profile, latestWeight } = await loadProfile();
+  return (
+    !!latestWeight &&
+    profile.heightCm !== null &&
+    profile.birthDate !== null &&
+    profile.sex !== null
+  );
+}
+
 /** The profile together with the latest logged body weight. */
 export async function loadProfile() {
   const [profile, latestWeight] = await Promise.all([
