@@ -6,7 +6,8 @@ import * as schema from './schema';
 export const sqlite = openDatabaseSync('fitness.db', {
   enableChangeListener: true,
 });
-sqlite.execSync('PRAGMA foreign_keys = ON;');
+// WAL: writes don't block reads and commit without rewriting the main file.
+sqlite.execSync('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
 
 /**
  * The Expo driver is synchronous: `db.transaction` callbacks must not be async.

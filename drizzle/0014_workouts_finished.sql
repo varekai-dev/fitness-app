@@ -1,0 +1,1 @@
+CREATE INDEX `workouts_finished_idx` ON `workouts` (`finished_at`);

@@ -113,7 +113,11 @@ export const workouts = sqliteTable(
     pausedAt: integer('paused_at'),
     pausedMs: integer('paused_ms').notNull().default(0),
   },
-  (t) => [index('workouts_program_idx').on(t.programId, t.finishedAt)],
+  (t) => [
+    index('workouts_program_idx').on(t.programId, t.finishedAt),
+    // The active workout (finished_at IS NULL) is looked up on every screen load.
+    index('workouts_finished_idx').on(t.finishedAt),
+  ],
 );
 
 export const workoutExercises = sqliteTable(
