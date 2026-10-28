@@ -14,6 +14,7 @@ import { useDbQuery } from '@/hooks/use-db-query';
 import { useHealthAutoSync } from '@/hooks/use-health-auto-sync';
 import { useHomeWidgetSync } from '@/hooks/use-home-widget-sync';
 import { useNotifications } from '@/hooks/use-notifications';
+import { useServerBackup } from '@/hooks/use-server-backup';
 import { useAccount } from '@/lib/account';
 import { tr } from '@/lib/i18n';
 import { colors } from '@/theme';
@@ -51,6 +52,7 @@ export default function RootLayout() {
   useHealthAutoSync(ready);
   useNotifications(ready);
   useHomeWidgetSync(ready);
+  useServerBackup(ready);
 
   // undefined while the saved session is read, so the splash covers it too.
   const user = useAccount();

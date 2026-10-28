@@ -4,7 +4,8 @@ import { useSyncExternalStore } from 'react';
 import { lang, tr } from '@/lib/i18n';
 
 /** The Cloudflare Worker in `server/`. EXPO_PUBLIC_API_URL points at `wrangler dev` instead. */
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://fitness-api.serhijsav.workers.dev';
+export const API_URL =
+  process.env.EXPO_PUBLIC_API_URL ?? 'https://fitness-api.serhijsav.workers.dev';
 
 const SESSION_KEY = 'account_session';
 
@@ -137,6 +138,12 @@ export function useAccount() {
   return useSyncExternalStore(subscribe, () =>
     session === undefined ? undefined : (session?.user ?? null),
   );
+}
+
+/** Token of the signed-in session once the saved one is read, null when signed out. */
+export async function sessionToken() {
+  await load();
+  return session?.token ?? null;
 }
 
 const signedIn = (next: Session) => setSession(next).then(() => next.user);

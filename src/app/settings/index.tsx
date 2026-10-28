@@ -92,7 +92,7 @@ export default function SettingsScreen() {
         <SettingsLink
           icon="cloud-upload-outline"
           title={tr('Резервна копія', 'Backup')}
-          hint={tr('Експорт, імпорт', 'Export, import')}
+          hint={tr('Сервер, експорт, імпорт', 'Server, export, import')}
           href="/settings/backup"
         />
       )}

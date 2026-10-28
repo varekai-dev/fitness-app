@@ -1,5 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useDialog } from '@/components/dialog';
 import { Button, Card, Row, Screen, Text } from '@/components/ui';
@@ -13,19 +14,70 @@ import {
   type PendingBackup,
 } from '@/lib/backup';
 import { locale, tr } from '@/lib/i18n';
-import { colors } from '@/theme';
+import {
+  downloadServerBackup,
+  listServerBackups,
+  ServerBackupError,
+  uploadBackup,
+  type ServerBackup,
+} from '@/lib/server-backup';
+import { colors, spacing } from '@/theme';
+
+const formatSize = (bytes: number) =>
+  bytes < 1024 * 1024
+    ? `${Math.max(1, Math.round(bytes / 1024))} ${tr('КБ', 'KB')}`
+    : `${(bytes / 1024 / 1024).toFixed(1)} ${tr('МБ', 'MB')}`;
 
 /** Export all data to a file and restore it, e.g. on a new phone. */
 export default function BackupSettingsScreen() {
   const dialog = useDialog();
-  const [busy, setBusy] = useState<'export' | 'import' | null>(null);
+  const [busy, setBusy] = useState<'export' | 'import' | 'upload' | 'download' | null>(null);
+  // undefined while loading, null when the list couldn't be loaded.
+  const [serverBackups, setServerBackups] = useState<ServerBackup[] | null>();
 
   const fail = (title: string, e: unknown) =>
     dialog.show({
       title,
-      message: e instanceof BackupError ? e.message : String(e),
+      message: e instanceof BackupError || e instanceof ServerBackupError ? e.message : String(e),
       icon: 'alert-circle',
     });
+
+  const loadServerBackups = useCallback(
+    () =>
+      listServerBackups()
+        .then(setServerBackups)
+        .catch(() => setServerBackups(null)),
+    [],
+  );
+  useEffect(() => {
+    loadServerBackups();
+  }, [loadServerBackups]);
+
+  const startUpload = async () => {
+    setBusy('upload');
+    try {
+      await uploadBackup();
+      await loadServerBackups();
+    } catch (e) {
+      fail(tr('Не вдалося зберегти копію', 'Couldn’t save the backup'), e);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const startDownload = async (backup: ServerBackup) => {
+    setBusy('download');
+    let pending: PendingBackup;
+    try {
+      pending = await downloadServerBackup(backup.id);
+    } catch (e) {
+      fail(tr('Не вдалося завантажити копію', 'Couldn’t download the backup'), e);
+      return;
+    } finally {
+      setBusy(null);
+    }
+    confirmRestore(pending);
+  };
 
   const startExport = async () => {
     setBusy('export');
@@ -60,13 +112,18 @@ export default function BackupSettingsScreen() {
     } finally {
       setBusy(null);
     }
-    if (!pending) return;
+    if (pending) confirmRestore(pending);
+  };
+
+  const confirmRestore = (pending: PendingBackup) => {
     const s = pending.summary;
     const lines = [
       tr(
         `Копія від ${new Date(s.exportedAt).toLocaleString(locale)}`,
         `Backup from ${new Date(s.exportedAt).toLocaleString(locale)}`,
-      ) + (s.appVersion ? ` (v${s.appVersion})` : '') + ':',
+      ) +
+        (s.appVersion ? ` (v${s.appVersion})` : '') +
+        ':',
       `${tr('тренувань', 'workouts')}: ${s.workouts}`,
       `${tr('записів їжі', 'food entries')}: ${s.foodEntries}`,
       `${tr('зважувань', 'weigh-ins')}: ${s.bodyWeights}`,
@@ -78,14 +135,13 @@ export default function BackupSettingsScreen() {
         'All current data on this phone will be replaced. This can’t be undone.',
       ),
     ];
-    const chosen = pending;
     dialog.show({
       title: tr('Замінити всі дані?', 'Replace all data?'),
       message: lines.join('\n'),
       icon: 'warning-outline',
       buttons: [
-        { text: tr('Скасувати', 'Cancel'), style: 'cancel', onPress: () => discardBackup(chosen) },
-        { text: tr('Замінити', 'Replace'), style: 'destructive', onPress: () => restore(chosen) },
+        { text: tr('Скасувати', 'Cancel'), style: 'cancel', onPress: () => discardBackup(pending) },
+        { text: tr('Замінити', 'Replace'), style: 'destructive', onPress: () => restore(pending) },
       ],
     });
   };
@@ -99,8 +155,8 @@ export default function BackupSettingsScreen() {
         </Row>
         <Text variant="muted">
           {tr(
-            'Усі дані зберігаються лише на цьому телефоні. Збережи копію в Google Drive, Telegram чи іншому місці, щоб не втратити їх разом із телефоном. Фото прогресу й вправ теж потрапляють у копію, ключ Groq — ні.',
-            'All data is stored only on this phone. Save a backup to Google Drive, Telegram or elsewhere so you don’t lose it with the phone. Progress photos and exercise images are included, the Groq key isn’t.',
+            'Збережи копію у файл: у Google Drive, Telegram чи інше місце. Фото прогресу й вправ теж потрапляють у копію, ключ Groq — ні.',
+            'Save a backup to a file: to Google Drive, Telegram or elsewhere. Progress photos and exercise images are included, the Groq key isn’t.',
           )}
         </Text>
         <Button
@@ -108,6 +164,50 @@ export default function BackupSettingsScreen() {
           icon="share-outline"
           onPress={startExport}
           loading={busy === 'export'}
+          disabled={busy !== null}
+        />
+      </Card>
+      <Card>
+        <Row>
+          <Ionicons name="server-outline" size={20} color={colors.accent} />
+          <Text variant="heading">{tr('На сервері', 'On the server')}</Text>
+        </Row>
+        <Text variant="muted">
+          {tr(
+            'Раз на добу, коли відкриваєш застосунок, копія сама зберігається у твоєму акаунті. Сервер тримає копії за останні 7 днів. Торкнись копії, щоб відновити з неї дані.',
+            'Once a day, when you open the app, a backup is saved to your account. The server keeps the last 7 days. Tap a backup to restore from it.',
+          )}
+        </Text>
+        {serverBackups === null && (
+          <Text variant="secondary">
+            {tr('Не вдалося отримати список копій.', 'Couldn’t load the list of backups.')}
+          </Text>
+        )}
+        {serverBackups?.length === 0 && (
+          <Text variant="secondary">{tr('Копій ще немає.', 'No backups yet.')}</Text>
+        )}
+        {serverBackups?.map((b) => (
+          <Pressable
+            key={b.id}
+            style={({ pressed }) => [styles.backup, pressed && styles.pressed]}
+            onPress={() => startDownload(b)}
+            disabled={busy !== null}>
+            <View style={styles.backupText}>
+              <Text>{new Date(b.uploadedAt).toLocaleString(locale)}</Text>
+              <Text variant="muted">
+                {formatSize(b.size)}
+                {b.appVersion ? ` · v${b.appVersion}` : ''}
+              </Text>
+            </View>
+            <Ionicons name="cloud-download-outline" size={20} color={colors.textSecondary} />
+          </Pressable>
+        ))}
+        <Button
+          title={tr('Зберегти зараз', 'Back up now')}
+          icon="cloud-upload-outline"
+          variant="secondary"
+          onPress={startUpload}
+          loading={busy === 'upload' || busy === 'download'}
           disabled={busy !== null}
         />
       </Card>
@@ -135,3 +235,16 @@ export default function BackupSettingsScreen() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  backup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+  },
+  backupText: { flex: 1, gap: 2 },
+  pressed: { opacity: 0.6 },
+});

@@ -3,6 +3,7 @@ import { sendResetCode, type Lang } from './mail';
 
 export interface Env {
   DB: D1Database;
+  BACKUPS: R2Bucket;
   SMTP_HOST: string;
   SMTP_PORT: string;
   MAIL_FROM_NAME: string;
@@ -17,6 +18,10 @@ const RESET_TTL = 15 * 60 * 1000;
 const RESET_RESEND = 60 * 1000;
 const RESET_MAX_ATTEMPTS = 5;
 const MIN_PASSWORD = 8;
+/** Daily backups kept per user; older ones are deleted on upload. */
+const BACKUPS_KEPT = 7;
+/** Workers take request bodies up to 100 MB on the free plan. */
+const MAX_BACKUP = 100 * 1024 * 1024;
 
 type User = { id: string; email: string; created_at: number };
 
@@ -30,6 +35,7 @@ type ErrorCode =
   | 'invalid_code'
   | 'too_many_attempts'
   | 'unauthorized'
+  | 'too_large'
   | 'not_found';
 
 class HttpError extends Error {
@@ -44,7 +50,7 @@ class HttpError extends Error {
 // The app sends a bearer token, never cookies, so any origin (the web build) may call.
 const CORS = {
   'access-control-allow-origin': '*',
-  'access-control-allow-methods': 'GET, POST, OPTIONS',
+  'access-control-allow-methods': 'GET, POST, PUT, OPTIONS',
   'access-control-allow-headers': 'authorization, content-type',
 };
 
@@ -224,6 +230,63 @@ async function resetPassword(req: Request, env: Env) {
   return json(await createSession(env, user));
 }
 
+const BACKUP_ID = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Saves the app's backup file as today's (UTC) copy, replacing an earlier one
+ * from the same day, and drops copies beyond the newest BACKUPS_KEPT.
+ */
+async function uploadBackup(req: Request, env: Env) {
+  const { user } = await authenticate(req, env);
+  const length = Number(req.headers.get('content-length'));
+  if (length > MAX_BACKUP) throw new HttpError(413, 'too_large');
+  // R2 streams a body only when its length is known up front.
+  const body = length > 0 && req.body ? req.body : await req.arrayBuffer();
+  if (body instanceof ArrayBuffer && body.byteLength === 0) throw new HttpError(400, 'bad_request');
+  const id = new Date().toISOString().slice(0, 10);
+  await env.BACKUPS.put(`${user.id}/${id}.db`, body, {
+    customMetadata: { appVersion: req.headers.get('x-app-version') ?? '' },
+  });
+  const old = (await listBackups(env, user.id)).slice(BACKUPS_KEPT);
+  if (old.length) await env.BACKUPS.delete(old.map((b) => `${user.id}/${b.id}.db`));
+  return empty();
+}
+
+/** The user's backups, newest first. */
+async function listBackups(env: Env, userId: string) {
+  const { objects } = await env.BACKUPS.list({
+    prefix: `${userId}/`,
+    include: ['customMetadata'],
+  });
+  return objects
+    .map((o) => ({
+      id: o.key.slice(userId.length + 1, -'.db'.length),
+      size: o.size,
+      uploadedAt: o.uploaded.getTime(),
+      appVersion: o.customMetadata?.appVersion ?? '',
+    }))
+    .sort((a, b) => b.uploadedAt - a.uploadedAt);
+}
+
+async function backups(req: Request, env: Env) {
+  const { user } = await authenticate(req, env);
+  return json({ backups: await listBackups(env, user.id) });
+}
+
+async function downloadBackup(req: Request, env: Env, id: string) {
+  const { user } = await authenticate(req, env);
+  if (!BACKUP_ID.test(id)) throw new HttpError(404, 'not_found');
+  const object = await env.BACKUPS.get(`${user.id}/${id}.db`);
+  if (!object) throw new HttpError(404, 'not_found');
+  return new Response(object.body, {
+    headers: {
+      'content-type': 'application/octet-stream',
+      'content-length': String(object.size),
+      ...CORS,
+    },
+  });
+}
+
 type Handler = (req: Request, env: Env, ctx: ExecutionContext) => Promise<Response>;
 
 const ROUTES: Record<string, Handler> = {
@@ -233,13 +296,18 @@ const ROUTES: Record<string, Handler> = {
   'GET /auth/me': me,
   'POST /auth/password/forgot': forgotPassword,
   'POST /auth/password/reset': resetPassword,
+  'PUT /backups': uploadBackup,
+  'GET /backups': backups,
 };
 
 export default {
   async fetch(req, env, ctx) {
     if (req.method === 'OPTIONS') return empty();
-    const route = ROUTES[`${req.method} ${new URL(req.url).pathname}`];
+    const path = new URL(req.url).pathname;
+    const route = ROUTES[`${req.method} ${path}`];
+    const backupId = req.method === 'GET' && path.match(/^\/backups\/([^/]+)$/)?.[1];
     try {
+      if (backupId) return await downloadBackup(req, env, backupId);
       if (!route) throw new HttpError(404, 'not_found');
       return await route(req, env, ctx);
     } catch (e) {

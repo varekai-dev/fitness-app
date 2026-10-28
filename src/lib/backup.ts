@@ -56,8 +56,8 @@ export class BackupError extends Error {}
  * `uri` as is: it parses the directory as a URI, and a decoded path breaks on
  * folders with escaped characters, such as Expo Go's per-project folder.
  */
-function workDir() {
-  const dir = new Directory(Paths.cache, 'backup');
+function workDir(name = 'backup') {
+  const dir = new Directory(Paths.cache, name);
   if (dir.exists) dir.delete();
   dir.create({ intermediates: true });
   return dir;
@@ -71,10 +71,25 @@ const count = async (db: SQLiteDatabase, from: string) =>
  * share sheet to save it, e.g. to Google Drive or Telegram.
  */
 export async function exportBackup() {
-  const dir = workDir();
+  const file = await createBackupFile();
+  await Sharing.shareAsync(file.uri, {
+    mimeType: 'application/octet-stream',
+    UTI: 'public.database',
+    dialogTitle: tr('Зберегти резервну копію', 'Save the backup'),
+  });
+}
+
+/**
+ * Writes all data to a new backup file in its own scratch folder, `dirName`, so
+ * the daily upload doesn't wipe the files of an export or restore in progress.
+ */
+export async function createBackupFile(dirName?: string) {
+  const dir = workDir(dirName);
   const now = new Date();
   // Local date, so a backup made after midnight isn't named after the day before.
-  const date = new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+  const date = new Date(now.getTime() - now.getTimezoneOffset() * 60_000)
+    .toISOString()
+    .slice(0, 10);
   const name = `fitness-backup-${date}.db`;
   const copy = await openDatabaseAsync(name, { useNewConnection: true }, dir.uri);
   try {
@@ -117,11 +132,7 @@ export async function exportBackup() {
   } finally {
     await copy.closeAsync();
   }
-  await Sharing.shareAsync(new File(dir, name).uri, {
-    mimeType: 'application/octet-stream',
-    UTI: 'public.database',
-    dialogTitle: tr('Зберегти резервну копію', 'Save the backup'),
-  });
+  return new File(dir, name);
 }
 
 /** Lets the user pick a backup file and checks it. Null if cancelled. */
@@ -133,8 +144,14 @@ export async function pickBackup(): Promise<PendingBackup | null> {
     copyToCacheDirectory: Platform.OS !== 'android',
   });
   if (result.canceled || result.assets.length === 0) return null;
+  const picked = new File(result.assets[0].uri);
+  return openBackup(async (target) => picked.copy(target));
+}
+
+/** Checks a backup that `write` puts in a fresh scratch file, e.g. by copying or downloading it. */
+export async function openBackup(write: (target: File) => Promise<unknown>) {
   const dir = workDir();
-  await new File(result.assets[0].uri).copy(new File(dir, IMPORT_NAME));
+  await write(new File(dir, IMPORT_NAME));
   const db = await openDatabaseAsync(IMPORT_NAME, { useNewConnection: true }, dir.uri);
   try {
     return { db, summary: await readSummary(db) };
@@ -157,10 +174,7 @@ async function readSummary(db: SQLiteDatabase): Promise<BackupSummary> {
   }
   if (info.format !== FORMAT) {
     throw new BackupError(
-      tr(
-        'Це не файл резервної копії цього застосунку.',
-        'This isn’t a backup file from this app.',
-      ),
+      tr('Це не файл резервної копії цього застосунку.', 'This isn’t a backup file from this app.'),
     );
   }
   const migrated = await db.getFirstAsync<{ at: number | null }>(
