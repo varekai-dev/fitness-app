@@ -12,6 +12,7 @@ import { runContentSeeds, seedIfEmpty } from '@/db/seed';
 import { useHealthAutoSync } from '@/hooks/use-health-auto-sync';
 import { useHomeWidgetSync } from '@/hooks/use-home-widget-sync';
 import { useNotifications } from '@/hooks/use-notifications';
+import { useAccount } from '@/lib/account';
 import { tr } from '@/lib/i18n';
 import { colors } from '@/theme';
 import migrations from '../../drizzle/migrations';
@@ -49,10 +50,14 @@ export default function RootLayout() {
   useNotifications(ready);
   useHomeWidgetSync(ready);
 
+  // undefined while the saved session is read, so the splash covers it too.
+  const user = useAccount();
+  const loaded = ready && user !== undefined;
+
   const error = migrationError ?? seedError;
   useEffect(() => {
-    if (ready || error) SplashScreen.hideAsync();
-  }, [ready, error]);
+    if (loaded || error) SplashScreen.hideAsync();
+  }, [loaded, error]);
 
   if (error) {
     return (
@@ -64,7 +69,7 @@ export default function RootLayout() {
       </View>
     );
   }
-  if (!ready) return null;
+  if (!loaded) return null;
 
   return (
     <GestureHandlerRootView style={styles.root}>
@@ -76,21 +81,47 @@ export default function RootLayout() {
             contentStyle: { backgroundColor: colors.background },
           }}>
           {/*
-            First on purpose: the Stack mounts only once the database is ready,
-            after the launch URL was read, and then opens its first screen.
+            Every route has to be listed here: Expo Router leaves undeclared ones
+            unguarded. Signed out, the only screen left is sign-in, and signing
+            in drops it and opens the tabs.
           */}
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="exercise/edit" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="pick-exercise" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="widgets" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="add-food" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="food-entry/[id]" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="macro" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="program/ai" options={{ presentation: 'modal' }} />
-          <Stack.Screen
-            name="workout/[id]"
-            options={{ presentation: 'fullScreenModal', gestureEnabled: false }}
-          />
+          <Stack.Protected guard={!!user}>
+            {/*
+              First on purpose: the Stack mounts only once the database is ready,
+              after the launch URL was read, and then opens its first screen.
+            */}
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="exercise/edit" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="pick-exercise" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="widgets" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="add-food" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="food-entry/[id]" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="macro" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="program/ai" options={{ presentation: 'modal' }} />
+            <Stack.Screen
+              name="workout/[id]"
+              options={{ presentation: 'fullScreenModal', gestureEnabled: false }}
+            />
+            <Stack.Screen name="achievements" />
+            <Stack.Screen name="body-weight" />
+            <Stack.Screen name="exercise/[id]" />
+            <Stack.Screen name="profile" />
+            <Stack.Screen name="program/[id]" />
+            <Stack.Screen name="program/day/[id]" />
+            <Stack.Screen name="progress-photos" />
+            <Stack.Screen name="recap" />
+            <Stack.Screen name="settings/index" />
+            <Stack.Screen name="settings/account" />
+            <Stack.Screen name="settings/app" />
+            <Stack.Screen name="settings/backup" />
+            <Stack.Screen name="settings/food" />
+            <Stack.Screen name="settings/integrations" />
+            <Stack.Screen name="settings/notifications" />
+            <Stack.Screen name="settings/water" />
+          </Stack.Protected>
+          <Stack.Protected guard={!user}>
+            <Stack.Screen name="sign-in" />
+          </Stack.Protected>
         </Stack>
       </ThemeProvider>
     </GestureHandlerRootView>
