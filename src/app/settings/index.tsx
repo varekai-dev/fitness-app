@@ -77,12 +77,14 @@ export default function SettingsScreen() {
           href="/settings/notifications"
         />
       )}
-      <SettingsLink
-        icon="link-outline"
-        title={tr('Інтеграції', 'Integrations')}
-        hint={Platform.OS === 'web' ? 'Groq AI' : `${healthName}, Groq AI`}
-        href="/settings/integrations"
-      />
+      {Platform.OS !== 'web' && (
+        <SettingsLink
+          icon="link-outline"
+          title={tr('Інтеграції', 'Integrations')}
+          hint={healthName}
+          href="/settings/integrations"
+        />
+      )}
       <SettingsLink
         icon="options-outline"
         title={tr('Застосунок', 'App')}

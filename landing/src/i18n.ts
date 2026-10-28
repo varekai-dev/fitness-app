@@ -67,7 +67,7 @@ const uk = {
       {
         icon: 'sparkles',
         title: 'AI рахує їжу за вас',
-        text: 'Фото тарілки чи «2 яйця і тост» — і калорії з БЖВ готові. Працює на вашому безкоштовному ключі Groq.',
+        text: 'Фото тарілки чи «2 яйця і тост» — і калорії з БЖВ готові. Нічого налаштовувати не треба.',
       },
       {
         icon: 'refresh',
@@ -343,8 +343,8 @@ const uk = {
         a: 'Для входу потрібні лише пошта й пароль. В акаунті щодня зберігається резервна копія, тож на новому телефоні достатньо увійти — і всі дані повернуться. Видалити акаунт разом із копіями можна будь-коли в налаштуваннях або на сайті.',
       },
       {
-        q: 'Навіщо ключ Groq і скільки це коштує?',
-        a: 'Groq — сервіс AI-моделей з безкоштовним тарифом, якого для щоденного харчування вистачає з головою. Ключ створюється за хвилину на console.groq.com і вставляється в налаштуваннях. Без ключа працює все, крім AI-оцінки їжі.',
+        q: 'Чи потрібен ключ для AI?',
+        a: 'Ні. AI-функції працюють через наш сервер на моделях Groq, нічого вводити не треба. Щоб сервер не перевантажували, на кожен акаунт діє денний ліміт запитів, якого для щоденного харчування вистачає з головою.',
       },
       {
         q: 'Яка потрібна версія Android?',
@@ -438,7 +438,7 @@ const en: Dict = {
       {
         icon: 'sparkles',
         title: 'AI counts your food',
-        text: 'A photo of your plate or “2 eggs and toast” — calories and macros are done. Runs on your own free Groq key.',
+        text: 'A photo of your plate or “2 eggs and toast” — calories and macros are done. Nothing to set up.',
       },
       {
         icon: 'refresh',
@@ -714,8 +714,8 @@ const en: Dict = {
         a: 'Signing in takes only an email and a password. The account keeps a daily backup, so on a new phone you just sign in and all your data comes back. Delete the account with its backups at any time in the settings or on the website.',
       },
       {
-        q: 'Why a Groq key, and what does it cost?',
-        a: 'Groq is an AI model service with a free tier that’s more than enough for daily food logging. A key takes a minute to create at console.groq.com and goes into settings. Without one, everything works except the AI food estimates.',
+        q: 'Do I need a key for AI?',
+        a: 'No. AI features run on Groq models through our server, with nothing to enter. To keep the server from being overloaded, each account has a daily request limit that’s more than enough for daily food logging.',
       },
       {
         q: 'Which Android version do I need?',

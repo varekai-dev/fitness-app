@@ -302,7 +302,7 @@ export async function lookupProduct(product: LabelProduct): Promise<FoundProduct
   }
 
   const found = await searchProductNutrition(product).catch((e) => {
-    if (e instanceof GroqError && (e.kind === 'no-key' || e.kind === 'auth')) throw e;
+    if (e instanceof GroqError && e.kind === 'auth') throw e;
     // The search is a bonus: when it fails, AI estimates the product instead.
     return null;
   });

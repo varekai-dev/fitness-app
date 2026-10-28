@@ -1,4 +1,7 @@
+import { ADMIN_ROUTES } from './admin';
+import { aiChat } from './ai';
 import { hashPassword, newCode, newId, newToken, sha256, verifyPassword } from './crypto';
+import { CORS, empty, HttpError, json, readBody } from './http';
 import { sendResetCode, type Lang } from './mail';
 
 export interface Env {
@@ -9,6 +12,10 @@ export interface Env {
   MAIL_FROM_NAME: string;
   SMTP_USER?: string;
   SMTP_PASS?: string;
+  /** OAuth client ID (Web application) for the admin page's Google sign-in. */
+  GOOGLE_CLIENT_ID?: string;
+  /** Comma-separated Google accounts allowed on the admin page. */
+  ADMIN_EMAILS?: string;
 }
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -27,50 +34,6 @@ const MAX_REPORT = 64 * 1024;
 const AI_FEATURES = ['day_review', 'meal_advice', 'macro_tips', 'program_plan'];
 
 type User = { id: string; email: string; created_at: number };
-
-/** Error codes the app turns into messages in its own language. */
-type ErrorCode =
-  | 'bad_request'
-  | 'invalid_email'
-  | 'weak_password'
-  | 'email_taken'
-  | 'wrong_credentials'
-  | 'invalid_code'
-  | 'too_many_attempts'
-  | 'unauthorized'
-  | 'too_large'
-  | 'not_found';
-
-class HttpError extends Error {
-  constructor(
-    readonly status: number,
-    readonly code: ErrorCode,
-  ) {
-    super(code);
-  }
-}
-
-// The app sends a bearer token, never cookies, so any origin (the web build) may call.
-const CORS = {
-  'access-control-allow-origin': '*',
-  'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'access-control-allow-headers': 'authorization, content-type, x-app-version',
-};
-
-const json = (data: unknown, status = 200) =>
-  new Response(JSON.stringify(data), {
-    status,
-    headers: { 'content-type': 'application/json', ...CORS },
-  });
-const empty = () => new Response(null, { status: 204, headers: CORS });
-
-async function readBody(req: Request) {
-  try {
-    const body = await req.json();
-    if (body && typeof body === 'object') return body as Record<string, unknown>;
-  } catch {}
-  throw new HttpError(400, 'bad_request');
-}
 
 function readEmail(body: Record<string, unknown>) {
   const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
@@ -235,7 +198,7 @@ async function resetPassword(req: Request, env: Env) {
 
 /**
  * Deletes the account with everything the server keeps for it: backups,
- * sessions, a pending reset code and AI reports. The data on the phone isn't touched.
+ * sessions, a pending reset code, AI reports and AI usage. The data on the phone isn't touched.
  */
 async function deleteAccount(req: Request, env: Env) {
   const { user } = await authenticate(req, env);
@@ -250,6 +213,7 @@ async function deleteAccount(req: Request, env: Env) {
     env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(user.id),
     env.DB.prepare('DELETE FROM password_resets WHERE user_id = ?').bind(user.id),
     env.DB.prepare('DELETE FROM ai_reports WHERE user_id = ?').bind(user.id),
+    env.DB.prepare('DELETE FROM ai_usage WHERE user_id = ?').bind(user.id),
     env.DB.prepare('DELETE FROM users WHERE id = ?').bind(user.id),
   ]);
   return empty();
@@ -312,6 +276,11 @@ async function listBackups(env: Env, userId: string) {
     .sort((a, b) => b.uploadedAt - a.uploadedAt);
 }
 
+async function chat(req: Request, env: Env, ctx: ExecutionContext) {
+  const { user } = await authenticate(req, env);
+  return aiChat(req, env, ctx, user.id);
+}
+
 async function backups(req: Request, env: Env) {
   const { user } = await authenticate(req, env);
   return json({ backups: await listBackups(env, user.id) });
@@ -334,12 +303,14 @@ async function downloadBackup(req: Request, env: Env, id: string) {
 type Handler = (req: Request, env: Env, ctx: ExecutionContext) => Promise<Response>;
 
 const ROUTES: Record<string, Handler> = {
+  ...ADMIN_ROUTES,
   'POST /auth/register': register,
   'POST /auth/login': login,
   'POST /auth/logout': logout,
   'GET /auth/me': me,
   'DELETE /account': deleteAccount,
   'POST /ai-reports': reportAi,
+  'POST /ai/chat': chat,
   'POST /auth/password/forgot': forgotPassword,
   'POST /auth/password/reset': resetPassword,
   'PUT /backups': uploadBackup,

@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { MACROS } from '@/components/calorie-summary';
@@ -21,7 +21,7 @@ import { adviseMacro, loadMacro, type StoredMacroTips } from '@/db/food';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { useToday } from '@/hooks/use-today';
 import { formatGrams, formatKcal } from '@/lib/food';
-import { getGroqKey, type MacroFood, type MacroKey } from '@/lib/groq';
+import { type MacroFood, type MacroKey } from '@/lib/groq';
 import { locale, tr } from '@/lib/i18n';
 import { MEAL_LABELS, mealAt, mealOf } from '@/lib/meals';
 import { colors, fontSize, radius, spacing } from '@/theme';
@@ -156,14 +156,8 @@ function TipsCard({
   signature: string;
   color: string;
 }) {
-  // Hidden without a Groq key.
-  const [hasKey, setHasKey] = useState(false);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
-
-  useEffect(() => {
-    getGroqKey().then((key) => setHasKey(!!key));
-  }, []);
 
   const fresh = tips?.signature === signature;
 
@@ -180,7 +174,6 @@ function TipsCard({
     }
   }, [macroKey, day]);
 
-  if (!hasKey) return null;
   const shown = tips?.tips;
 
   return (

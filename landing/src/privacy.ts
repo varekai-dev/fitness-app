@@ -39,7 +39,7 @@ const uk = (date: string, deletePage: string): Policy => ({
       title: 'Коротко',
       list: [
         'Майже всі дані зберігаються в базі на вашому телефоні.',
-        'На наш сервер потрапляють лише пошта й пароль акаунта, щоденна резервна копія даних і відповіді AI, на які ви поскаржились.',
+        'На наш сервер потрапляють лише пошта й пароль акаунта, щоденна резервна копія даних, облік запитів до AI (без їхнього змісту) і відповіді AI, на які ви поскаржились.',
         'Ми не показуємо рекламу, не використовуємо аналітику чи трекери і не продаємо дані.',
         `Акаунт і всі копії на сервері можна видалити будь-коли: у застосунку або на <a href="${deletePage}">цій сторінці</a>.`,
       ],
@@ -86,10 +86,10 @@ const uk = (date: string, deletePage: string): Policy => ({
     {
       title: 'AI-функції (Groq)',
       text: [
-        `AI-функції (калорії за фото чи описом страви, програми тренувань, поради щодо харчування) працюють тільки якщо ви самі введете свій API-ключ ${link('https://groq.com', 'Groq')}. Ключ зберігається в захищеному сховищі телефону.`,
-        'Коли ви користуєтеся цими функціями, застосунок надсилає напряму в Groq лише те, що потрібно для відповіді: опис страви, фото їжі чи етикетки, записи їжі за день, а для програми тренувань — стать, вік, зріст, вагу, рівень активності й ціль. Groq обробляє ці дані за своєю ' +
+        `AI-функції (калорії за фото чи описом страви, програми тренувань, поради щодо харчування) працюють на моделях ${link('https://groq.com', 'Groq')} через наш сервер.`,
+        'Коли ви користуєтеся цими функціями, застосунок надсилає на наш сервер, а той — у Groq, лише те, що потрібно для відповіді: опис страви, фото їжі чи етикетки, записи їжі за день, а для програми тренувань — стать, вік, зріст, вагу, рівень активності й ціль. Groq обробляє ці дані за своєю ' +
           link('https://groq.com/privacy-policy/', 'політикою конфіденційності') +
-          '. Наш сервер ці запити не бачить.',
+          '. Наш сервер не зберігає ні запитів, ні відповідей: він записує лише, яка функція й модель відповіла, скільки токенів це зайняло і коли, щоб рахувати витрати та денний ліміт.',
         'Біля кожної відповіді AI є кнопка «Поскаржитися». Якщо ви її натиснете, на наш сервер надійде сама відповідь, назва функції, версія застосунку та ваш акаунт, щоб ми могли переглянути образливий чи шкідливий вміст.',
       ],
     },
@@ -119,7 +119,7 @@ const uk = (date: string, deletePage: string): Policy => ({
     {
       title: 'Видалення даних',
       list: [
-        `Акаунт: Налаштування → Акаунт → Видалити акаунт або <a href="${deletePage}">сторінка видалення</a> на сайті. Пошта, пароль, сесії, усі резервні копії та скарги на відповіді AI видаляються з сервера одразу й назавжди.`,
+        `Акаунт: Налаштування → Акаунт → Видалити акаунт або <a href="${deletePage}">сторінка видалення</a> на сайті. Пошта, пароль, сесії, усі резервні копії, облік запитів до AI та скарги на відповіді AI видаляються з сервера одразу й назавжди.`,
         'Дані на телефоні: видаліть застосунок або очистіть його дані в налаштуваннях системи.',
         'Без видалення акаунта резервні копії старші за 7 днів видаляються автоматично.',
       ],
@@ -150,7 +150,7 @@ const en = (date: string, deletePage: string): Policy => ({
       title: 'In short',
       list: [
         'Almost all data stays in a database on your phone.',
-        'Our server only gets your account’s email and password, a daily backup of your data and AI answers you report.',
+        'Our server only gets your account’s email and password, a daily backup of your data, a tally of AI requests (without their content) and AI answers you report.',
         'No ads, no analytics or trackers, and we never sell data.',
         `Delete the account and every backup on the server at any time: in the app or on <a href="${deletePage}">this page</a>.`,
       ],
@@ -197,10 +197,10 @@ const en = (date: string, deletePage: string): Policy => ({
     {
       title: 'AI features (Groq)',
       text: [
-        `AI features (calories from a photo or a description of a dish, workout programs, food tips) work only if you enter your own ${link('https://groq.com', 'Groq')} API key. The key is kept in the phone’s secure storage.`,
-        'When you use them, the app sends straight to Groq only what the answer needs: the dish description, a photo of food or a label, the day’s food log, and for a workout program your sex, age, height, weight, activity level and goal. Groq handles this data under its ' +
+        `AI features (calories from a photo or a description of a dish, workout programs, food tips) run on ${link('https://groq.com', 'Groq')} models through our server.`,
+        'When you use them, the app sends to our server, and the server to Groq, only what the answer needs: the dish description, a photo of food or a label, the day’s food log, and for a workout program your sex, age, height, weight, activity level and goal. Groq handles this data under its ' +
           link('https://groq.com/privacy-policy/', 'privacy policy') +
-          '. Our server never sees these requests.',
+          '. Our server keeps neither the requests nor the answers: it records only which feature and model answered, how many tokens that took and when, to count costs and the daily limit.',
         'Every AI answer has a Report button. If you tap it, the answer itself, the feature’s name, the app version and your account reach our server, so we can review offensive or harmful content.',
       ],
     },
@@ -230,7 +230,7 @@ const en = (date: string, deletePage: string): Policy => ({
     {
       title: 'Deleting your data',
       list: [
-        `Account: Settings → Account → Delete account, or the <a href="${deletePage}">deletion page</a> on the website. Your email, password, sessions, every backup and your AI reports are deleted from the server at once and for good.`,
+        `Account: Settings → Account → Delete account, or the <a href="${deletePage}">deletion page</a> on the website. Your email, password, sessions, every backup, your AI request tally and your AI reports are deleted from the server at once and for good.`,
         'Data on the phone: uninstall the app or clear its data in the system settings.',
         'Without deleting the account, backups older than 7 days are deleted automatically.',
       ],

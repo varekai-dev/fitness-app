@@ -9,7 +9,7 @@ import { Button, Card, IconButton, Row, Text } from '@/components/ui';
 import { reviewChange, reviewDay, type ReviewState, type StoredReview } from '@/db/food';
 import type { Meal } from '@/db/schema';
 import { dishKey, formatGrams, formatKcal } from '@/lib/food';
-import { getGroqKey, type DayFood, type DayReview, type SuggestedFood } from '@/lib/groq';
+import { type DayFood, type DayReview, type SuggestedFood } from '@/lib/groq';
 import { tr } from '@/lib/i18n';
 import { colors, radius, spacing } from '@/theme';
 
@@ -67,8 +67,6 @@ export function DayReviewCard({
 }) {
   const { signature } = state;
   const [focused, setFocused] = useState(false);
-  // Hidden without a Groq key; checked again on focus, after a visit to settings.
-  const [hasKey, setHasKey] = useState(false);
   const [loading, setLoading] = useState(false);
   // An error with the signature it happened for: not retried by itself until the day changes.
   const [failed, setFailed] = useState<{ signature: string; message: string } | null>(null);
@@ -78,7 +76,6 @@ export function DayReviewCard({
   useFocusEffect(
     useCallback(() => {
       setFocused(true);
-      getGroqKey().then((key) => setHasKey(!!key));
       return () => setFocused(false);
     }, []),
   );
@@ -98,13 +95,12 @@ export function DayReviewCard({
   }, [day, signature]);
 
   useEffect(() => {
-    if (!focused || !hasKey || !isToday || change !== 'major' || loading) return;
+    if (!focused || !isToday || change !== 'major' || loading) return;
     if (failed?.signature === signature) return;
     const timer = setTimeout(run, SETTLE_MS);
     return () => clearTimeout(timer);
-  }, [focused, hasKey, isToday, change, loading, failed, signature, run]);
+  }, [focused, isToday, change, loading, failed, signature, run]);
 
-  if (!hasKey) return null;
   const review = stored?.review;
   const suggested = review ? suggestions(review) : [];
 

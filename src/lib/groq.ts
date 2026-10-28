@@ -1,25 +1,16 @@
-import * as SecureStore from 'expo-secure-store';
+import Constants from 'expo-constants';
 
 import { HEALTH_RATINGS, type HealthRating } from '@/db/schema';
+import { API_URL, sessionToken } from '@/lib/account';
 import { mergeDishes, splitAmount, sumMacros, type Macros } from '@/lib/food';
 import { locale, tr } from '@/lib/i18n';
 import { MEAL_LABELS, MEALS, type Meal } from '@/lib/meals';
 import { WEIGHT_GOAL, type WeightGoal } from '@/lib/profile';
 
-const KEY_NAME = 'groq_api_key';
-const API = 'https://api.groq.com/openai/v1';
 // Supports strict JSON Schema output on Groq; low reasoning keeps it fast and cheap.
 export const GROQ_MODEL = 'openai/gpt-oss-120b';
 // Reads images and also supports strict JSON Schema output.
 const GROQ_VISION_MODEL = 'qwen/qwen3.8-27b';
-
-export const getGroqKey = () => SecureStore.getItemAsync(KEY_NAME);
-export const setGroqKey = (key: string) => SecureStore.setItemAsync(KEY_NAME, key.trim());
-export const deleteGroqKey = () => SecureStore.deleteItemAsync(KEY_NAME);
-
-/** "gsk_ab…wxyz" so the user can tell which key is saved without exposing it. */
-export const maskKey = (key: string) =>
-  key.length <= 12 ? '••••' : `${key.slice(0, 6)}…${key.slice(-4)}`;
 
 export type Nutrition = {
   name: string;
@@ -39,7 +30,8 @@ export type Nutrition = {
 export class GroqError extends Error {
   constructor(
     message: string,
-    readonly kind: 'no-key' | 'auth' | 'not-food' | 'network' | 'bad-response',
+    /** `auth`: the account's session is gone and the user has to sign in again. */
+    readonly kind: 'auth' | 'not-food' | 'network' | 'bad-response',
   ) {
     super(message);
   }
@@ -157,45 +149,65 @@ export type GroqRequest<T> = {
   accept?: (reply: T) => boolean;
   /** Called before each try, 1-based, e.g. to show that AI is trying again. */
   onAttempt?: (attempt: number) => void;
-  apiKey?: string | null;
 };
 
 // AI that failed (a reply cut short, a server error, a weak answer) usually copes when asked again.
 export const GROQ_ATTEMPTS = 3;
 
-/** The key to call Groq with; throws `GroqError` when there is none. */
-async function requireKey(apiKey?: string | null) {
-  const key = apiKey ?? (await getGroqKey());
-  if (!key)
-    throw new GroqError(
-      tr('Додай ключ Groq API у налаштуваннях.', 'Add a Groq API key in settings.'),
-      'no-key',
-    );
-  return key;
-}
+const signInAgain = () =>
+  new GroqError(
+    tr(
+      'Сесія завершилась. Увійди в акаунт знову, щоб користуватися AI.',
+      'Your session has ended. Sign in again to use AI.',
+    ),
+    'auth',
+  );
 
-/** One chat completion request; throws `GroqError` when Groq can't be reached or rejects the key. */
-async function postCompletion(key: string, body: object) {
+/**
+ * One chat completion request through our server (`server/src/ai.ts`), which
+ * calls Groq with its own key and counts the tokens. Groq's answer comes back
+ * as is; throws `GroqError` when the server can't be reached or refuses.
+ */
+async function postCompletion(body: object) {
+  const token = await sessionToken();
+  if (!token) throw signInAgain();
   let res: Response;
   try {
-    res = await fetch(`${API}/chat/completions`, {
+    res = await fetch(`${API_URL}/ai/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        'x-app-version': Constants.expoConfig?.version ?? '',
+      },
       body: JSON.stringify(body),
     });
   } catch {
     throw new GroqError(
-      tr('Немає з’єднання з Groq. Перевір інтернет.', 'Can’t reach Groq. Check your internet.'),
+      tr(
+        'Немає з’єднання з сервером. Перевір інтернет.',
+        'Can’t reach the server. Check your internet.',
+      ),
       'network',
     );
   }
-  if (res.status === 401 || res.status === 403) {
+  if (res.status === 401) throw signInAgain();
+  if (res.status === 429) {
     throw new GroqError(
       tr(
-        'Groq відхилив ключ. Перевір його в налаштуваннях.',
-        'Groq rejected the key. Check it in settings.',
+        'На сьогодні запити до AI вичерпано. Спробуй завтра.',
+        'You’ve used up today’s AI requests. Try again tomorrow.',
       ),
-      'auth',
+      'network',
+    );
+  }
+  if (res.status === 503) {
+    throw new GroqError(
+      tr(
+        'AI тимчасово недоступний. Спробуй пізніше.',
+        'AI is unavailable right now. Try again later.',
+      ),
+      'network',
     );
   }
   return res;
@@ -213,10 +225,7 @@ export async function groqJson<T>({
   maxTokens,
   accept,
   onAttempt,
-  apiKey,
 }: GroqRequest<T>): Promise<T> {
-  const key = await requireKey(apiKey);
-
   const badResponse = new GroqError(
     tr(
       'AI повернув неповну відповідь. Спробуй ще раз.',
@@ -228,7 +237,7 @@ export async function groqJson<T>({
   for (let attempt = 1; ; attempt++) {
     const last = attempt === GROQ_ATTEMPTS;
     onAttempt?.(attempt);
-    const res = await postCompletion(key, {
+    const res = await postCompletion({
       model,
       temperature,
       reasoning_effort: reasoningEffort,
@@ -266,13 +275,12 @@ export async function groqJson<T>({
 }
 
 /** Asks Groq for the nutrition of `dish`; throws `GroqError` with a user-facing message. */
-export async function askGroqNutrition(dish: string, apiKey?: string | null): Promise<Nutrition> {
+export async function askGroqNutrition(dish: string): Promise<Nutrition> {
   const parsed = await groqJson<GroqNutrition>({
     system: SYSTEM_PROMPT,
     user: dish,
     schema: SCHEMA,
     schemaName: 'nutrition',
-    apiKey,
   });
   return toNutrition(parsed, dish);
 }
@@ -695,7 +703,6 @@ const FOUND_SCHEMA = {
 export async function searchProductNutrition(
   product: Pick<LabelProduct, 'name' | 'originalName' | 'brand' | 'barcode'>,
 ): Promise<(Per100 & { source: string | null }) | null> {
-  const key = await requireKey();
   const wanted = [
     product.brand && `${tr('Бренд', 'Brand')}: ${product.brand}`,
     `${tr('Назва на упаковці', 'Name on the package')}: ${product.originalName}`,
@@ -704,7 +711,7 @@ export async function searchProductNutrition(
   ]
     .filter(Boolean)
     .join('\n');
-  const res = await postCompletion(key, {
+  const res = await postCompletion({
     model: GROQ_MODEL,
     temperature: 0,
     // Higher effort makes the search browse much longer for little gain.
@@ -730,7 +737,6 @@ export async function searchProductNutrition(
     user: `${wanted}\n\n${answer}`,
     schema: FOUND_SCHEMA,
     schemaName: 'product_nutrition',
-    apiKey: key,
   });
   const per100 = parsed.found ? toPer100(parsed) : null;
   return per100 && { ...per100, source: parsed.source.trim() || null };
@@ -1041,18 +1047,6 @@ export async function askGroqMacroTips(input: MacroTipsInput): Promise<MacroTips
   if (foods.length === 0)
     throw new GroqError(tr('AI не підібрав продуктів.', 'AI suggested no foods.'), 'bad-response');
   return { comment: parsed.comment?.trim() ?? '', foods };
-}
-
-/** Cheapest call that proves the key works: lists the models it can use. */
-export async function checkGroqKey(apiKey: string) {
-  try {
-    const res = await fetch(`${API}/models`, {
-      headers: { Authorization: `Bearer ${apiKey.trim()}` },
-    });
-    return res.ok ? 'ok' : res.status === 401 || res.status === 403 ? 'invalid' : 'error';
-  } catch {
-    return 'error';
-  }
 }
 
 export type MealAdvice = { comment: string; dishes: SuggestedFood[] };

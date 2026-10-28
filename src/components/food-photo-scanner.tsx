@@ -223,7 +223,7 @@ function ScanContent({
             <View style={styles.buttons}>
               {scan.error!.settings && (
                 <Button
-                  title={tr('Налаштування', 'Settings')}
+                  title={tr('Акаунт', 'Account')}
                   variant="secondary"
                   onPress={onSettings}
                   style={styles.flex}

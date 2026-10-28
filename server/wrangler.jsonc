@@ -19,10 +19,17 @@
   "vars": {
     "SMTP_HOST": "smtp.gmail.com",
     "SMTP_PORT": "465",
-    "MAIL_FROM_NAME": "Fitness"
+    "MAIL_FROM_NAME": "Fitness",
+    // The admin page (/admin): an OAuth client ID of type "Web application" from
+    // console.cloud.google.com/apis/credentials, with this Worker's URL (and
+    // http://localhost:8787 for `wrangler dev`) as authorized JavaScript origins,
+    // and the Google accounts allowed in, comma-separated.
+    "GOOGLE_CLIENT_ID": "548785441149-iun2rahcarqttvacjvdihm1jhp7c9mbg.apps.googleusercontent.com",
+    "ADMIN_EMAILS": "serhijsav@gmail.com"
   }
   // Secrets, set with `npx wrangler secret put SMTP_USER` and `… SMTP_PASS`: the
   // Gmail address and an app password for it (myaccount.google.com/apppasswords).
   // Without them reset codes are only written to the log, which is enough for
   // `wrangler dev`.
+  // The Groq API key isn't a secret here: it's set on the admin page and kept in D1.
 }

@@ -122,17 +122,17 @@ export default function AiProgramScreen() {
   };
 
   const showError = (title: string, e: unknown) => {
-    const noKey = e instanceof GroqError && (e.kind === 'no-key' || e.kind === 'auth');
+    const signedOut = e instanceof GroqError && e.kind === 'auth';
     dialog.show({
       title,
       message: (e as Error).message,
       icon: 'alert-circle',
-      buttons: noKey
+      buttons: signedOut
         ? [
             { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
             {
-              text: tr('Налаштування', 'Settings'),
-              onPress: () => router.push('/settings/integrations'),
+              text: tr('Акаунт', 'Account'),
+              onPress: () => router.push('/settings/account'),
             },
           ]
         : undefined,

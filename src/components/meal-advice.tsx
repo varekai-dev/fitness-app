@@ -1,6 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AddFoodRow } from '@/components/day-review-card';
@@ -10,7 +9,6 @@ import { Button, IconButton, Row, Text } from '@/components/ui';
 import { adviseMeal, type StoredMealAdvice } from '@/db/food';
 import type { Meal } from '@/db/schema';
 import { formatKcal } from '@/lib/food';
-import { getGroqKey } from '@/lib/groq';
 import { tr } from '@/lib/i18n';
 import { colors, radius, spacing } from '@/theme';
 
@@ -24,7 +22,7 @@ const ASK: Record<Meal, string> = {
 /**
  * Today's meal card: a button that asks AI what to eat for `meal` to cover its
  * share of what's left of the day, and the dishes it suggested, each opened on
- * its card on tap. Asked only on tap; hidden without a Groq key.
+ * its card on tap. Asked only on tap.
  */
 export function MealAdvice({
   meal,
@@ -38,15 +36,8 @@ export function MealAdvice({
   /** The day's current state; the advice is behind when its signature differs. */
   signature: string;
 }) {
-  const [hasKey, setHasKey] = useState(false);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
-
-  useFocusEffect(
-    useCallback(() => {
-      getGroqKey().then((key) => setHasKey(!!key));
-    }, []),
-  );
 
   const run = async () => {
     setLoading(true);
@@ -60,7 +51,6 @@ export function MealAdvice({
     }
   };
 
-  if (!hasKey) return null;
   const advice = stored?.advice;
   const fresh = stored?.signature === signature;
 
