@@ -12,14 +12,14 @@ export function SettingsLink({
   title,
   hint,
   href,
+  onPress,
 }: {
   icon: IconName;
   title: string;
   hint: string;
-  href: Href;
-}) {
+} & ({ href: Href; onPress?: never } | { href?: never; onPress: () => void })) {
   return (
-    <Card onPress={() => router.push(href)}>
+    <Card onPress={onPress ?? (() => router.push(href))}>
       <Row style={styles.spaceBetween}>
         <Row>
           <Ionicons name={icon} size={20} color={colors.accent} />

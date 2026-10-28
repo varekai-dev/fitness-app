@@ -1,0 +1,83 @@
+---
+import { Image } from 'astro:assets';
+import icon from '../../../assets/images/icon.png';
+import { langOf, pathFor } from '../i18n';
+import Layout from '../layouts/Layout.astro';
+import { policyFor } from '../privacy';
+
+const lang = langOf(Astro);
+const t = policyFor(lang);
+---
+
+<Layout title={t.title} description={t.description} page="privacy/">
+  <main class="container page">
+    <a class="brand" href={pathFor(lang)} aria-label={t.back}>
+      <Image src={icon} alt="" width={36} height={36} />
+      <span>Fitness</span>
+    </a>
+    <h1>{t.heading}</h1>
+    <p class="updated">{t.updated}</p>
+    {
+      t.sections.map((s) => (
+        <section>
+          <h2>{s.title}</h2>
+          {s.text?.map((p) => <p set:html={p} />)}
+          {s.list && <ul>{s.list.map((li) => <li set:html={li} />)}</ul>}
+        </section>
+      ))
+    }
+  </main>
+</Layout>
+
+<style>
+  .page {
+    max-width: calc(720px + var(--gutter) * 2);
+    padding-block: 40px 96px;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .brand img {
+    border-radius: 10px;
+  }
+  h1 {
+    font-size: clamp(30px, 6vw, 42px);
+    margin-top: 40px;
+  }
+  .updated {
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-top: 12px;
+  }
+  section {
+    margin-top: 40px;
+  }
+  h2 {
+    font-size: 20px;
+  }
+  p,
+  ul {
+    color: var(--text-secondary);
+    line-height: 1.65;
+    margin-top: 12px;
+  }
+  ul {
+    display: grid;
+    gap: 8px;
+    padding-left: 20px;
+    margin-bottom: 0;
+  }
+  section :global(a) {
+    color: var(--text);
+    text-decoration-color: var(--accent);
+    text-underline-offset: 3px;
+  }
+  section :global(strong) {
+    color: var(--text);
+  }
+</style>

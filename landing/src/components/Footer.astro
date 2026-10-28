@@ -17,6 +17,7 @@ const t = dict[lang];
     <nav aria-label={t.footer.links}>
       <a href={APK_URL}>{t.download}</a>
       <a href={RELEASES_URL} target="_blank" rel="noopener">{t.footer.releases}</a>
+      <a href={pathFor(lang, 'privacy/')}>{t.footer.privacy}</a>
       <a href={pathFor(lang, 'delete-account/')}>{t.footer.deleteAccount}</a>
     </nav>
     <small>

@@ -9,6 +9,7 @@ import { useAccount } from '@/lib/account';
 import { achievementTotals, newLevels } from '@/lib/achievements';
 import { healthName } from '@/lib/health';
 import { tr } from '@/lib/i18n';
+import { openPrivacyPolicy } from '@/lib/legal';
 import { useEnabledModules } from '@/lib/modules';
 import { notificationsSupported } from '@/lib/notifications';
 
@@ -96,6 +97,12 @@ export default function SettingsScreen() {
           href="/settings/backup"
         />
       )}
+      <SettingsLink
+        icon="shield-checkmark-outline"
+        title={tr('Конфіденційність', 'Privacy')}
+        hint={tr('Які дані й куди', 'What data goes where')}
+        onPress={openPrivacyPolicy}
+      />
       {/* Fills the rest of the screen so the version sits at the bottom. */}
       <View style={styles.spacer} />
       {Platform.OS !== 'web' && <AppUpdateCard />}

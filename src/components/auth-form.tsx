@@ -13,6 +13,7 @@ import {
   resetPassword,
 } from '@/lib/account';
 import { tr } from '@/lib/i18n';
+import { openPrivacyPolicy } from '@/lib/legal';
 import { colors, spacing } from '@/theme';
 
 type Mode = 'login' | 'register' | 'forgot' | 'reset';
@@ -162,6 +163,15 @@ export function AuthForm() {
             variant="ghost"
             small
             onPress={() => switchTo('forgot')}
+          />
+        )}
+        {mode === 'register' && (
+          <Button
+            title={tr('Політика конфіденційності', 'Privacy policy')}
+            variant="ghost"
+            small
+            trailingIcon="open-outline"
+            onPress={openPrivacyPolicy}
           />
         )}
         {mode === 'reset' && (

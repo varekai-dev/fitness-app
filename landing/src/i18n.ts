@@ -18,7 +18,7 @@ const uk = {
   meta: {
     title: 'Fitness — трекер тренувань, їжі та води для Android',
     description:
-      'Безкоштовний фітнес-трекер без реклами й акаунтів: програми тренувань, підрахунок калорій за фото з AI, вода, вага й фото прогресу. Дані лишаються на телефоні.',
+      'Безкоштовний фітнес-трекер без реклами: програми тренувань, підрахунок калорій за фото з AI, вода, вага й фото прогресу. Дані на телефоні й у щоденній резервній копії.',
   },
   langSwitch: 'Мова',
   nav: {
@@ -36,7 +36,7 @@ const uk = {
   hero: {
     eyebrow: 'Безкоштовно для Android',
     title: ['Тренування, їжа й вода — ', 'в одній кишені'],
-    lead: 'Fitness веде програми й підходи, рахує калорії за фото тарілки, нагадує про воду й малює тренд ваги. Без акаунтів, без реклами — усі дані лишаються на вашому телефоні.',
+    lead: 'Fitness веде програми й підходи, рахує калорії за фото тарілки, нагадує про воду й малює тренд ваги. Без реклами й трекерів — дані на вашому телефоні, а щоденна резервна копія чекає на сервері.',
     seeScreens: 'Подивитись екрани',
     homeAlt: 'Головний екран: калорії, вода, наступне тренування й вага',
     chips: {
@@ -48,12 +48,12 @@ const uk = {
   benefits: {
     eyebrow: 'Переваги',
     title: 'Чому саме Fitness',
-    lead: 'Застосунок робився для себе: швидко записати підхід між вправами, не думати про підписки й не віддавати свої дані чужим серверам.',
+    lead: 'Застосунок робився для себе: швидко записати підхід між вправами, не думати про підписки й не віддавати свої дані рекламникам.',
     items: [
       {
         icon: 'shield',
         title: 'Дані лише у вас',
-        text: 'Без акаунтів і без хмари. Усе зберігається в базі на телефоні, фото прогресу теж.',
+        text: 'Без реклами, аналітики й трекерів. Усе зберігається в базі на телефоні, а на сервер іде лише ваша щоденна резервна копія.',
       },
       {
         icon: 'gift',
@@ -362,7 +362,7 @@ const uk = {
       },
       {
         q: 'Де зберігаються мої дані?',
-        a: 'Лише на телефоні, в локальній базі SQLite. Назовні йде тільки текст чи фото страви, коли ви просите AI оцінити калорії, — і лише на ваш ключ Groq.',
+        a: 'У локальній базі SQLite на телефоні. Раз на день застосунок зберігає резервну копію у вашому акаунті на сервері (7 останніх днів), а текст чи фото страви йде в Groq, лише коли ви просите AI оцінити калорії. Детальніше — у політиці конфіденційності.',
       },
       {
         q: 'Навіщо ключ Groq і скільки це коштує?',
@@ -382,6 +382,7 @@ const uk = {
     links: 'Посилання',
     releases: 'Релізи',
     deleteAccount: 'Видалення акаунта',
+    privacy: 'Конфіденційність',
     developer: 'Розробник — ',
     madeIn: 'Зроблено в Україні 💛💙',
   },
@@ -390,7 +391,7 @@ const uk = {
     description: 'Як видалити акаунт Fitness і резервні копії на сервері.',
     back: 'На головну',
     heading: 'Видалення акаунта',
-    lead: 'Акаунт потрібен лише для резервних копій на сервері. Видалити його можна в застосунку (Налаштування → Акаунт → Видалити акаунт) або тут.',
+    lead: 'В акаунті зберігаються ваші щоденні резервні копії на сервері. Видалити його можна в застосунку (Налаштування → Акаунт → Видалити акаунт) або тут.',
     deleted: 'Що видаляється: пошта, пароль, сесії на всіх пристроях і всі резервні копії на сервері. Видалення одразу й назавжди, відновити їх не вийде.',
     kept: 'Що залишається: дані на телефоні (тренування, їжа, вода, вага, фото). Їх можна стерти, видаливши застосунок або очистивши його дані.',
     email: 'Пошта',
@@ -415,7 +416,7 @@ const en: Dict = {
   meta: {
     title: 'Fitness — workout, food and water tracker for Android',
     description:
-      'A free fitness tracker with no ads and no accounts: workout programs, AI calorie counting from a photo, water, weight and progress photos. Your data stays on your phone.',
+      'A free fitness tracker with no ads: workout programs, AI calorie counting from a photo, water, weight and progress photos. Your data lives on your phone, with a daily backup.',
   },
   langSwitch: 'Language',
   nav: {
@@ -433,7 +434,7 @@ const en: Dict = {
   hero: {
     eyebrow: 'Free for Android',
     title: ['Workouts, food and water — ', 'in one pocket'],
-    lead: 'Fitness runs your programs and sets, counts calories from a photo of your plate, reminds you to drink and draws your weight trend. No accounts, no ads — all your data stays on your phone.',
+    lead: 'Fitness runs your programs and sets, counts calories from a photo of your plate, reminds you to drink and draws your weight trend. No ads, no trackers — your data lives on your phone, with a daily backup on the server.',
     seeScreens: 'See the screens',
     homeAlt: 'Home screen: calories, water, next workout and weight',
     chips: {
@@ -445,12 +446,12 @@ const en: Dict = {
   benefits: {
     eyebrow: 'Why Fitness',
     title: 'Built for the gym floor',
-    lead: 'Made for myself first: log a set in seconds between exercises, never think about subscriptions, and keep my data off other people’s servers.',
+    lead: 'Made for myself first: log a set in seconds between exercises, never think about subscriptions, and keep my data away from advertisers.',
     items: [
       {
         icon: 'shield',
         title: 'Your data stays yours',
-        text: 'No accounts, no cloud. Everything lives in a database on your phone, progress photos included.',
+        text: 'No ads, analytics or trackers. Everything lives in a database on your phone; only your daily backup goes to the server.',
       },
       {
         icon: 'gift',
@@ -759,7 +760,7 @@ const en: Dict = {
       },
       {
         q: 'Where is my data stored?',
-        a: 'Only on your phone, in a local SQLite database. The only thing that leaves it is the text or photo of a meal when you ask AI to estimate calories — and only to your own Groq key.',
+        a: 'In a local SQLite database on your phone. Once a day the app saves a backup to your account on the server (the last 7 days), and a meal’s text or photo goes to Groq only when you ask AI to estimate calories. See the privacy policy for details.',
       },
       {
         q: 'Why a Groq key, and what does it cost?',
@@ -779,6 +780,7 @@ const en: Dict = {
     links: 'Links',
     releases: 'Releases',
     deleteAccount: 'Delete account',
+    privacy: 'Privacy',
     developer: 'Developer — ',
     madeIn: 'Made in Ukraine 💛💙',
   },
@@ -787,7 +789,7 @@ const en: Dict = {
     description: 'How to delete your Fitness account and its backups on the server.',
     back: 'Home',
     heading: 'Delete your account',
-    lead: 'The account is only there for backups on the server. Delete it in the app (Settings → Account → Delete account) or here.',
+    lead: 'The account keeps your daily backups on the server. Delete it in the app (Settings → Account → Delete account) or here.',
     deleted: 'What’s deleted: your email, password, sessions on every device and all backups on the server. It happens at once and for good, they can’t be restored.',
     kept: 'What stays: the data on your phone (workouts, food, water, weight, photos). Uninstall the app or clear its data to erase it.',
     email: 'Email',
