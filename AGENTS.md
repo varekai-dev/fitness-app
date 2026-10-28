@@ -93,3 +93,13 @@ On iOS (iPhone 17 Pro Max simulator with the app open in Expo Go and the dev ser
 4. Reset the status bar: `xcrun simctl status_bar booted clear`.
 
 No Expo dev overlays may be visible: the floating dev tools button and the Element Inspector must be off (restarting Expo Go clears the inspector). Look at each screenshot before committing it.
+
+## Google Play screenshots
+
+The store listing (texts in `docs/play-store/`) uses full-size shots in `docs/play-store/screenshots/uk/` and `en/`: `01-home`, `02-workout` (player after pressing play), `03-food`, `04-water`, `05-body-weight`, `06-programs`, `07-history`, `08-exercise` (`/exercise/1`). Play wants at most a 2:1 aspect, so they're taken at 1080×1920 on the Pixel emulator in Expo Go, not shrunk:
+
+1. `adb shell wm size 1080x1920` and `adb shell wm density 405`; the System UI demo mode as above.
+2. Evening on the device clock, so today has meals and water: `adb shell settings put global auto_time 0`, then `adb shell cmd alarm set-time <ms since epoch>`.
+3. Expo Go's own notification icon ignores demo mode: `adb shell pm revoke host.exp.exponent android.permission.POST_NOTIFICATIONS` (this closes Expo Go).
+4. Open `/demo-data` (dev only, `src/db/demo-data.ts`): it **replaces** the emulator's logs with five weeks of demo workouts, weigh-ins, meals and water, then goes home. Dismiss the `expo-notifications` LogBox toast before shooting. Dish names follow the app language, so switch the language first, then reseed.
+5. Restore afterwards: `wm size reset`, `wm density reset`, `auto_time 1`, demo mode `exit`, `pm grant` the notification permission back.
