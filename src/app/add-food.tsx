@@ -44,7 +44,6 @@ import {
   rateFood,
   saveFood,
   searchFoods,
-  timeOnDay,
   type FailedFood,
   type FoundFood,
   type FoundProduct,
@@ -67,6 +66,7 @@ import { tr } from '@/lib/i18n';
 import { captureForAi, readForAi } from '@/lib/images';
 import { MEALS, mealAt, type Meal } from '@/lib/meals';
 import { parseDecimal } from '@/lib/metrics';
+import { timeOnDay } from '@/lib/water';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 // Drinks come in bigger round volumes, so they step faster.

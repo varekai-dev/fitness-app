@@ -34,17 +34,18 @@ export async function deleteWater(id: number) {
 }
 
 /**
- * Today's glasses (oldest first), the goal, the waking hours it is spread
- * over, and per-day totals for the last `HISTORY_DAYS` days ending today.
+ * Today's glasses and those of `day` (oldest first), the goal, the waking hours
+ * it is spread over, and per-day totals for the last `HISTORY_DAYS` days ending today.
  */
-export async function loadWater(now = Date.now()) {
+export async function loadWater(now = Date.now(), day = startOfDay(now)) {
   const today = startOfDay(now);
   const from = addDays(today, -(HISTORY_DAYS - 1));
+  const dayEnd = addDays(day, 1);
   const [goal, dayWindow, rows] = await Promise.all([
     getWaterGoal(),
     getDayWindow(),
     db.query.waterIntakes.findMany({
-      where: gte(waterIntakes.drankAt, from),
+      where: gte(waterIntakes.drankAt, Math.min(from, day)),
       orderBy: [asc(waterIntakes.drankAt)],
     }),
   ]);
@@ -53,14 +54,17 @@ export async function loadWater(now = Date.now()) {
     totalMl: 0,
   }));
   for (const r of rows) {
-    const day = days.findLast((d) => r.drankAt >= d.dayStart);
-    if (day) day.totalMl += r.amountMl;
+    const d = days.findLast((x) => r.drankAt >= x.dayStart);
+    if (d) d.totalMl += r.amountMl;
   }
   const todayEntries = rows.filter((r) => r.drankAt >= today);
+  const dayEntries = rows.filter((r) => r.drankAt >= day && r.drankAt < dayEnd);
   return {
     goal,
     todayEntries,
     todayMl: todayEntries.reduce((sum, r) => sum + r.amountMl, 0),
+    dayEntries,
+    dayMl: dayEntries.reduce((sum, r) => sum + r.amountMl, 0),
     days,
     today,
     dayWindow,

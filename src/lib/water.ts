@@ -51,3 +51,12 @@ export function addDays(ms: number, days: number) {
   d.setDate(d.getDate() + days);
   return d.getTime();
 }
+
+/**
+ * The time of day of `timeOf` (now by default) on `day`, a local midnight, but
+ * never in the future: logging into a past day or today keeps a sensible time.
+ */
+export function timeOnDay(day: number, timeOf = Date.now()) {
+  const now = Date.now();
+  return Math.min(day + (timeOf - startOfDay(timeOf)), addDays(day, 1) - 1, now);
+}

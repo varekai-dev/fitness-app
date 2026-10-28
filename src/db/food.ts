@@ -34,7 +34,7 @@ import {
 } from '@/lib/groq';
 import { lang, locale } from '@/lib/i18n';
 import { MAIN_MEALS, MEALS, mealOf } from '@/lib/meals';
-import { addDays, startOfDay } from '@/lib/water';
+import { addDays, startOfDay, timeOnDay } from '@/lib/water';
 import { db } from './client';
 import { loadProfile } from './profile';
 import {
@@ -53,15 +53,6 @@ const GOAL_KEY = 'kcal_goal';
 export const FOOD_HISTORY_DAYS = 7;
 /** How far back a meal is looked for to offer repeating it. */
 const REPEAT_LOOKBACK_DAYS = 14;
-
-/**
- * The time of day of `timeOf` (now by default) on `day`, a local midnight, but
- * never in the future: logging into a past day or today keeps a sensible time.
- */
-export function timeOnDay(day: number, timeOf = Date.now()) {
-  const now = Date.now();
-  return Math.min(day + (timeOf - startOfDay(timeOf)), addDays(day, 1) - 1, now);
-}
 
 export async function getKcalGoal() {
   const row = await db.query.settings.findFirst({ where: eq(settings.key, GOAL_KEY) });

@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { GoalPulse, GrowBar, GrowColumn, ListRow } from '@/components/motion';
 import { TAB_BAR_FAB_SPACE, TabBarFab, useTabBarSpace } from '@/components/floating-tab-bar';
@@ -27,10 +27,10 @@ import { useDbQuery } from '@/hooks/use-db-query';
 import { useNow } from '@/hooks/use-now';
 import { useToday } from '@/hooks/use-today';
 import { locale, tr } from '@/lib/i18n';
-import { WEEKDAY_SHORT, weekdayIndex } from '@/lib/labels';
+import { formatLongDate, WEEKDAY_SHORT, weekdayIndex } from '@/lib/labels';
 import { paceShare } from '@/lib/reminders';
 import { formatVolume, formatVolumeCompact, VOLUME_UNIT } from '@/lib/units';
-import { GLASS_PRESETS, glassForAmount, glassToHold } from '@/lib/water';
+import { addDays, GLASS_PRESETS, glassForAmount, glassToHold } from '@/lib/water';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 const timeFormatter = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' });
@@ -40,13 +40,18 @@ const QUICK_ML = 300;
 
 export default function WaterScreen() {
   const tabBarSpace = useTabBarSpace();
-  const day = useToday();
+  const today = useToday();
   const now = useNow();
-  const { data } = useDbQuery(() => loadWater(), [day]);
+  // Counted back from today, so the selection follows the day rolling over.
+  const [daysAgo, setDaysAgo] = useState(0);
+  const day = addDays(today, -daysAgo);
+  const isToday = daysAgo === 0;
+  const { data } = useDbQuery(() => loadWater(Date.now(), day), [day]);
   const [pouring, setPouring] = useState<(PourRequest & { editId?: number }) | null>(null);
 
   if (!data) return <Loading />;
-  const { goal, todayEntries, todayMl, days, today, dayWindow } = data;
+  const { goal, dayEntries, dayMl, days, dayWindow } = data;
+  const dayTitle = isToday ? tr('Сьогодні', 'Today') : formatLongDate(day);
 
   const chartMax = Math.max(goal, ...days.map((d) => d.totalMl));
 
@@ -63,16 +68,30 @@ export default function WaterScreen() {
           {/* The whole card opens the goal settings; the pencil says so. */}
           <Ionicons name="pencil" size={16} color={colors.textMuted} style={styles.edit} />
           <Row style={styles.hero}>
-            <GoalPulse reached={goal > 0 && todayMl >= goal}>
+            <GoalPulse reached={goal > 0 && dayMl >= goal}>
               <WaterBottle
-                progress={goal > 0 ? todayMl / goal : 0}
-                pace={paceShare(dayWindow, now)}
+                progress={goal > 0 ? dayMl / goal : 0}
+                // Where the level should be by now only means something today.
+                pace={isToday ? paceShare(dayWindow, now) : undefined}
                 height={170}
               />
             </GoalPulse>
-            <WaterSummary todayMl={todayMl} goal={goal} />
+            <WaterSummary dayMl={dayMl} goal={goal} isToday={isToday} />
           </Row>
         </Card>
+
+        <Row style={styles.dayNav}>
+          <CircleButton icon="chevron-back" size={36} onPress={() => setDaysAgo(daysAgo + 1)} />
+          <View style={styles.dayTitle}>
+            <Text variant="heading">{dayTitle}</Text>
+          </View>
+          <CircleButton
+            icon="chevron-forward"
+            size={36}
+            disabled={isToday}
+            onPress={() => setDaysAgo(daysAgo - 1)}
+          />
+        </Row>
 
         <SectionHeader title={tr('Додати', 'Add')} />
         <View style={styles.glasses}>
@@ -87,10 +106,12 @@ export default function WaterScreen() {
           <Text variant="caption">{tr('Останні 7 днів', 'Last 7 days')}</Text>
           <View style={styles.chart}>
             {days.map((d) => {
-              const isToday = d.dayStart === today;
               const reached = d.totalMl >= goal;
               return (
-                <View key={d.dayStart} style={styles.barColumn}>
+                <Pressable
+                  key={d.dayStart}
+                  style={styles.barColumn}
+                  onPress={() => setDaysAgo(Math.round((today - d.dayStart) / 86_400_000))}>
                   <Text variant="muted" style={styles.barValue} numberOfLines={1}>
                     {d.totalMl > 0 ? formatVolumeCompact(d.totalMl) : ''}
                   </Text>
@@ -101,24 +122,24 @@ export default function WaterScreen() {
                       style={[styles.bar, !reached && styles.barPartial]}
                     />
                   </View>
-                  <Text variant="caption" style={isToday && styles.today}>
+                  <Text variant="caption" style={d.dayStart === day && styles.today}>
                     {WEEKDAY_SHORT[weekdayIndex(d.dayStart)]}
                   </Text>
-                </View>
+                </Pressable>
               );
             })}
           </View>
         </Card>
 
-        <SectionHeader title={tr('Сьогодні', 'Today')} />
-        {todayEntries.length === 0 ? (
+        <SectionHeader title={dayTitle} />
+        {dayEntries.length === 0 ? (
           <EmptyState
             icon="water-outline"
             title={tr('Ще нічого не випито', 'Nothing drunk yet')}
             hint={tr('Обери склянку вище.', 'Pick a glass above.')}
           />
         ) : (
-          [...todayEntries].reverse().map((e) => {
+          [...dayEntries].reverse().map((e) => {
             const glass = glassForAmount(e.amountMl);
             const time = timeFormatter.format(new Date(e.drankAt));
             return (
@@ -165,7 +186,7 @@ export default function WaterScreen() {
           onAdd={(ml) => {
             setPouring(null);
             if (pouring?.editId != null) updateWater(pouring.editId, ml);
-            else drinkWater(ml);
+            else drinkWater(ml, day);
           }}
         />
       </Screen>
@@ -180,9 +201,9 @@ export default function WaterScreen() {
   );
 }
 
-/** Today's total, percent and what's left, counting up when a drink is added. */
-function WaterSummary({ todayMl, goal }: { todayMl: number; goal: number }) {
-  const ml = Math.round(useAnimatedNumber(todayMl));
+/** The day's total, percent and what's left, counting up when a drink is added. */
+function WaterSummary({ dayMl, goal, isToday }: { dayMl: number; goal: number; isToday: boolean }) {
+  const ml = Math.round(useAnimatedNumber(dayMl));
   const percent = goal > 0 ? Math.round((ml / goal) * 100) : 0;
 
   return (
@@ -192,12 +213,14 @@ function WaterSummary({ todayMl, goal }: { todayMl: number; goal: number }) {
         <Text style={styles.unit}> {VOLUME_UNIT}</Text>
       </Text>
       <Text variant="muted">
-        {todayMl >= goal && ml >= goal
-          ? tr('Ціль на сьогодні виконано!', 'Today’s goal reached!')
+        {dayMl >= goal && ml >= goal
+          ? isToday
+            ? tr('Ціль на сьогодні виконано!', 'Today’s goal reached!')
+            : tr('Ціль виконано!', 'Goal reached!')
           : tr(`${percent}% денної норми`, `${percent}% of daily goal`)}
       </Text>
       <GrowBar
-        progress={goal > 0 ? todayMl / goal : 0}
+        progress={goal > 0 ? dayMl / goal : 0}
         color={colors.accent}
         style={styles.progressTrack}
       />
@@ -250,6 +273,8 @@ const styles = StyleSheet.create({
   glasses: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   glassCell: { flexGrow: 1, flexBasis: '30%' },
   spaceBetween: { justifyContent: 'space-between' },
+  dayNav: { gap: spacing.md, justifyContent: 'space-between' },
+  dayTitle: { flex: 1, alignItems: 'center' },
   chart: {
     flexDirection: 'row',
     gap: spacing.sm,

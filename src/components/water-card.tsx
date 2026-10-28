@@ -5,12 +5,12 @@ import { Text } from '@/components/ui';
 import { addWater } from '@/db/water';
 import { tr } from '@/lib/i18n';
 import { formatVolume, VOLUME_UNIT } from '@/lib/units';
-import type { GlassPreset } from '@/lib/water';
+import { type GlassPreset, timeOnDay } from '@/lib/water';
 import { colors, radius, spacing } from '@/theme';
 
-/** Logs a glass of water. */
-export async function drinkWater(ml: number) {
-  await addWater(ml);
+/** Logs a glass of water, now or at this time of day on a past `day`. */
+export async function drinkWater(ml: number, day?: number) {
+  await addWater(ml, day == null ? Date.now() : timeOnDay(day));
 }
 
 /** Icon tile for one container size; `compact` drops the name for tight rows. */
