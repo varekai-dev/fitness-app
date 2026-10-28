@@ -52,7 +52,7 @@ const uk = {
     items: [
       {
         icon: 'shield',
-        title: 'Дані лише у вас',
+        title: 'Ваші дані — ваші',
         text: 'Без реклами, аналітики й трекерів. Усе зберігається в базі на телефоні, а на сервер іде лише ваша щоденна резервна копія.',
       },
       {
@@ -63,7 +63,7 @@ const uk = {
       {
         icon: 'offline',
         title: 'Працює в залі без мережі',
-        text: 'Тренування, вода й вага не потребують інтернету. Мережа потрібна лише AI для їжі.',
+        text: 'Після входу в акаунт тренування, вода й вага працюють без інтернету. Мережа потрібна для входу, резервної копії та AI для їжі.',
       },
       {
         icon: 'sparkles',
@@ -338,8 +338,8 @@ const uk = {
       ['Завантажте APK', 'Натисніть кнопку на телефоні або відскануйте QR-код з комп’ютера.'],
       ['Дозвольте встановлення', 'Android попросить дозволити браузеру встановлювати застосунки. Це разовий дозвіл.'],
       [
-        'Відкрийте й налаштуйте',
-        'Вкажіть зріст і вагу — Fitness порахує норму калорій і води. Ключ Groq для AI — за бажанням.',
+        'Створіть акаунт і налаштуйте',
+        'Зареєструйтеся поштою й паролем, вкажіть зріст і вагу — Fitness порахує норму калорій і води. Ключ Groq для AI — за бажанням.',
       ],
     ],
     whatsNew: 'Що нового в останній версії →',
@@ -363,6 +363,10 @@ const uk = {
       {
         q: 'Де зберігаються мої дані?',
         a: 'У локальній базі SQLite на телефоні. Раз на день застосунок зберігає резервну копію у вашому акаунті на сервері (7 останніх днів), а текст чи фото страви йде в Groq, лише коли ви просите AI оцінити калорії. Детальніше — у політиці конфіденційності.',
+      },
+      {
+        q: 'Навіщо потрібен акаунт?',
+        a: 'Для входу потрібні лише пошта й пароль. В акаунті щодня зберігається резервна копія, тож на новому телефоні достатньо увійти — і всі дані повернуться. Видалити акаунт разом із копіями можна будь-коли в налаштуваннях або на сайті.',
       },
       {
         q: 'Навіщо ключ Groq і скільки це коштує?',
@@ -461,7 +465,7 @@ const en: Dict = {
       {
         icon: 'offline',
         title: 'Works offline at the gym',
-        text: 'Workouts, water and weight need no internet. Only the food AI does.',
+        text: 'Once you’re signed in, workouts, water and weight need no internet. The network is only for signing in, backups and the food AI.',
       },
       {
         icon: 'sparkles',
@@ -736,8 +740,8 @@ const en: Dict = {
       ['Download the APK', 'Tap the button on your phone or scan the QR code from your computer.'],
       ['Allow the install', 'Android asks you to let the browser install apps. It’s a one-time permission.'],
       [
-        'Open and set up',
-        'Enter your height and weight and Fitness works out your calorie and water targets. A Groq key for AI is optional.',
+        'Create an account and set up',
+        'Sign up with an email and password, enter your height and weight and Fitness works out your calorie and water targets. A Groq key for AI is optional.',
       ],
     ],
     whatsNew: 'What’s new in the latest version →',
@@ -761,6 +765,10 @@ const en: Dict = {
       {
         q: 'Where is my data stored?',
         a: 'In a local SQLite database on your phone. Once a day the app saves a backup to your account on the server (the last 7 days), and a meal’s text or photo goes to Groq only when you ask AI to estimate calories. See the privacy policy for details.',
+      },
+      {
+        q: 'Why do I need an account?',
+        a: 'Signing in takes only an email and a password. The account keeps a daily backup, so on a new phone you just sign in and all your data comes back. Delete the account with its backups at any time in the settings or on the website.',
       },
       {
         q: 'Why a Groq key, and what does it cost?',
