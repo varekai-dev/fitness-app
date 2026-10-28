@@ -8,7 +8,7 @@ export const adminPage = (clientId: string) => `<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Fitness Admin</title>
+<title>FitKit Admin</title>
 <script src="https://accounts.google.com/gsi/client" async></script>
 <style>
   :root { --bg:#f6f7f9; --card:#fff; --text:#16181d; --muted:#6b7280; --line:#e5e7eb; --accent:#16a34a; --danger:#dc2626; }
@@ -59,7 +59,7 @@ export const adminPage = (clientId: string) => `<!doctype html>
 <main>
   <section id="login" hidden>
     <div class="card">
-      <h1>Fitness Admin</h1>
+      <h1>FitKit Admin</h1>
       <p class="muted">Увійди акаунтом Google, який є в ADMIN_EMAILS.</p>
       <div id="gbtn"></div>
       <div id="login-msg" class="msg err"></div>
@@ -68,7 +68,7 @@ export const adminPage = (clientId: string) => `<!doctype html>
 
   <section id="app" hidden>
     <header>
-      <h1>Fitness Admin</h1>
+      <h1>FitKit Admin</h1>
       <div class="row">
         <span id="who" class="muted"></span>
         <button class="ghost" id="logout">Вийти</button>

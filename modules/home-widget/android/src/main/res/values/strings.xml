@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="widget_today_name">Fitness: today</string>
+  <string name="widget_today_name">FitKit: today</string>
   <string name="widget_today_description">Water, calories and the next workout</string>
-  <string name="widget_water_name">Fitness: water</string>
+  <string name="widget_water_name">FitKit: water</string>
   <string name="widget_water_description">Water drunk today</string>
-  <string name="widget_calories_name">Fitness: calories</string>
+  <string name="widget_calories_name">FitKit: calories</string>
   <string name="widget_calories_description">Calories eaten today</string>
-  <string name="widget_workout_name">Fitness: next workout</string>
+  <string name="widget_workout_name">FitKit: next workout</string>
   <string name="widget_workout_description">The next program day, or the workout in progress</string>
-  <string name="widget_weight_name">Fitness: body weight</string>
+  <string name="widget_weight_name">FitKit: body weight</string>
   <string name="widget_weight_description">Your latest weigh-in and the change since the first one</string>
-  <string name="widget_week_name">Fitness: this week</string>
+  <string name="widget_week_name">FitKit: this week</string>
   <string name="widget_week_description">Workouts this week and weeks in a row</string>
   <string name="widget_water">Water</string>
   <string name="widget_calories">Calories</string>

@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="widget_today_name">Fitness: сьогодні</string>
+  <string name="widget_today_name">FitKit: сьогодні</string>
   <string name="widget_today_description">Вода, калорії й наступне тренування</string>
-  <string name="widget_water_name">Fitness: вода</string>
+  <string name="widget_water_name">FitKit: вода</string>
   <string name="widget_water_description">Скільки води випито сьогодні</string>
-  <string name="widget_calories_name">Fitness: калорії</string>
+  <string name="widget_calories_name">FitKit: калорії</string>
   <string name="widget_calories_description">Скільки калорій з’їдено сьогодні</string>
-  <string name="widget_workout_name">Fitness: наступне тренування</string>
+  <string name="widget_workout_name">FitKit: наступне тренування</string>
   <string name="widget_workout_description">Наступний день програми або тренування, що триває</string>
-  <string name="widget_weight_name">Fitness: вага</string>
+  <string name="widget_weight_name">FitKit: вага</string>
   <string name="widget_weight_description">Останнє зважування й зміна від першого</string>
-  <string name="widget_week_name">Fitness: цей тиждень</string>
+  <string name="widget_week_name">FitKit: цей тиждень</string>
   <string name="widget_week_description">Тренування за тиждень і тижні поспіль</string>
   <string name="widget_water">Вода</string>
   <string name="widget_calories">Калорії</string>

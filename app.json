@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Fitness",
+    "name": "FitKit",
     "slug": "fitness",
-    "version": "1.95.5",
+    "version": "1.96.0",
     "runtimeVersion": {
       "policy": "fingerprint"
     },
@@ -120,7 +120,7 @@
       [
         "@kingstinct/react-native-healthkit",
         {
-          "NSHealthShareUsageDescription": "Fitness читає вагу, щоб показувати її в журналі ваги.",
+          "NSHealthShareUsageDescription": "FitKit читає вагу, щоб показувати її в журналі ваги.",
           "NSHealthUpdateUsageDescription": false,
           "background": false
         }

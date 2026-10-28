@@ -104,4 +104,4 @@ jobs:
             echo "runtimeVersion: $HASH"
           } > notes.md
           gh release create "v$VERSION" fitness.apk --repo "$RELEASES_REPO" \
-            --title "Fitness $VERSION" --notes-file notes.md --latest
+            --title "FitKit $VERSION" --notes-file notes.md --latest

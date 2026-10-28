@@ -9,12 +9,12 @@ const RESET_TEXT = {
   uk: {
     subject: (code: string) => `${code} — код для нового пароля`,
     body: (code: string) =>
-      `Твій код для зміни пароля у Fitness: ${code}\n\nВін діє 15 хвилин. Якщо ти не просив змінити пароль, просто проігноруй цей лист.`,
+      `Твій код для зміни пароля у FitKit: ${code}\n\nВін діє 15 хвилин. Якщо ти не просив змінити пароль, просто проігноруй цей лист.`,
   },
   en: {
     subject: (code: string) => `${code} is your password reset code`,
     body: (code: string) =>
-      `Your code to reset the Fitness password: ${code}\n\nIt works for 15 minutes. If you didn’t ask to reset your password, just ignore this email.`,
+      `Your code to reset the FitKit password: ${code}\n\nIt works for 15 minutes. If you didn’t ask to reset your password, just ignore this email.`,
   },
 };
 

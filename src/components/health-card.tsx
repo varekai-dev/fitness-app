@@ -27,12 +27,12 @@ const syncedFormatter = new Intl.DateTimeFormat(locale, {
 const STORE_HINT =
   healthName === 'Apple Health'
     ? tr(
-        'Перевір доступ у застосунку Здоров’я: Профіль → Застосунки → Fitness.',
-        'Check access in the Health app: Profile → Apps → Fitness.',
+        'Перевір доступ у застосунку Здоров’я: Профіль → Застосунки → FitKit.',
+        'Check access in the Health app: Profile → Apps → FitKit.',
       )
     : tr(
-        'Дозволь читання для Fitness у налаштуваннях Health Connect.',
-        'Allow Fitness to read data in Health Connect settings.',
+        'Дозволь читання для FitKit у налаштуваннях Health Connect.',
+        'Allow FitKit to read data in Health Connect settings.',
       );
 
 function resultMessage(result: HealthSyncResult) {

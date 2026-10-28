@@ -16,13 +16,13 @@ type FeatureGroup = 'training' | 'food' | 'body' | 'more';
 const uk = {
   locale: 'uk-UA',
   meta: {
-    title: 'Fitness — трекер тренувань, їжі та води для Android',
+    title: 'FitKit — трекер тренувань, їжі та води для Android',
     description:
       'Безкоштовний фітнес-трекер без реклами: програми тренувань, підрахунок калорій за фото з AI, вода, вага й фото прогресу. Дані на телефоні й у щоденній резервній копії.',
   },
   langSwitch: 'Мова',
   nav: {
-    home: 'Fitness — на початок',
+    home: 'FitKit — на початок',
     sections: 'Розділи',
     links: [
       { href: '#benefits', label: 'Переваги' },
@@ -35,7 +35,7 @@ const uk = {
   hero: {
     eyebrow: 'Безкоштовно для Android',
     title: ['Тренування, їжа й вода — ', 'в одній кишені'],
-    lead: 'Fitness веде програми й підходи, рахує калорії за фото тарілки, нагадує про воду й малює тренд ваги. Без реклами й трекерів — дані на вашому телефоні, а щоденна резервна копія чекає на сервері.',
+    lead: 'FitKit веде програми й підходи, рахує калорії за фото тарілки, нагадує про воду й малює тренд ваги. Без реклами й трекерів — дані на вашому телефоні, а щоденна резервна копія чекає на сервері.',
     seeScreens: 'Подивитись екрани',
     homeAlt: 'Головний екран: калорії, вода, наступне тренування й вага',
     chips: {
@@ -46,7 +46,7 @@ const uk = {
   },
   benefits: {
     eyebrow: 'Переваги',
-    title: 'Чому саме Fitness',
+    title: 'Чому саме FitKit',
     lead: 'Застосунок робився для себе: швидко записати підхід між вправами, не думати про підписки й не віддавати свої дані рекламникам.',
     items: [
       {
@@ -249,7 +249,7 @@ const uk = {
   play: {
     eyebrow: 'Спробуйте',
     title: 'Шматочок застосунку прямо тут',
-    lead: 'Ці калькулятори рахують за тими самими формулами, що й Fitness. У застосунку вони підставляють вашу вагу з журналу самі.',
+    lead: 'Ці калькулятори рахують за тими самими формулами, що й FitKit. У застосунку вони підставляють вашу вагу з журналу самі.',
     tools: 'Інструменти',
     tabs: { kcal: 'Калорії', water: 'Вода', workout: 'Тренування' },
     sex: 'Стать',
@@ -360,8 +360,8 @@ const uk = {
     madeIn: 'Зроблено в Україні 💛💙',
   },
   deleteAccount: {
-    title: 'Видалення акаунта — Fitness',
-    description: 'Як видалити акаунт Fitness і резервні копії на сервері.',
+    title: 'Видалення акаунта — FitKit',
+    description: 'Як видалити акаунт FitKit і резервні копії на сервері.',
     back: 'На головну',
     heading: 'Видалення акаунта',
     lead: 'В акаунті зберігаються ваші щоденні резервні копії на сервері. Видалити його можна в застосунку (Налаштування → Акаунт → Видалити акаунт) або тут.',
@@ -387,13 +387,13 @@ export type Dict = typeof uk;
 const en: Dict = {
   locale: 'en-US',
   meta: {
-    title: 'Fitness — workout, food and water tracker for Android',
+    title: 'FitKit — workout, food and water tracker for Android',
     description:
       'A free fitness tracker with no ads: workout programs, AI calorie counting from a photo, water, weight and progress photos. Your data lives on your phone, with a daily backup.',
   },
   langSwitch: 'Language',
   nav: {
-    home: 'Fitness — back to top',
+    home: 'FitKit — back to top',
     sections: 'Sections',
     links: [
       { href: '#benefits', label: 'Why' },
@@ -406,7 +406,7 @@ const en: Dict = {
   hero: {
     eyebrow: 'Free for Android',
     title: ['Workouts, food and water — ', 'in one pocket'],
-    lead: 'Fitness runs your programs and sets, counts calories from a photo of your plate, reminds you to drink and draws your weight trend. No ads, no trackers — your data lives on your phone, with a daily backup on the server.',
+    lead: 'FitKit runs your programs and sets, counts calories from a photo of your plate, reminds you to drink and draws your weight trend. No ads, no trackers — your data lives on your phone, with a daily backup on the server.',
     seeScreens: 'See the screens',
     homeAlt: 'Home screen: calories, water, next workout and weight',
     chips: {
@@ -416,7 +416,7 @@ const en: Dict = {
     },
   },
   benefits: {
-    eyebrow: 'Why Fitness',
+    eyebrow: 'Why FitKit',
     title: 'Built for the gym floor',
     lead: 'Made for myself first: log a set in seconds between exercises, never think about subscriptions, and keep my data away from advertisers.',
     items: [
@@ -620,7 +620,7 @@ const en: Dict = {
   play: {
     eyebrow: 'Try it',
     title: 'A piece of the app, right here',
-    lead: 'These calculators use the same formulas as Fitness. In the app they fill in your weight from your log.',
+    lead: 'These calculators use the same formulas as FitKit. In the app they fill in your weight from your log.',
     tools: 'Tools',
     tabs: { kcal: 'Calories', water: 'Water', workout: 'Workout' },
     sex: 'Sex',
@@ -731,8 +731,8 @@ const en: Dict = {
     madeIn: 'Made in Ukraine 💛💙',
   },
   deleteAccount: {
-    title: 'Delete your account — Fitness',
-    description: 'How to delete your Fitness account and its backups on the server.',
+    title: 'Delete your account — FitKit',
+    description: 'How to delete your FitKit account and its backups on the server.',
     back: 'Home',
     heading: 'Delete your account',
     lead: 'The account keeps your daily backups on the server. Delete it in the app (Settings → Account → Delete account) or here.',
