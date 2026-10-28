@@ -8,6 +8,7 @@ import { useDialog } from '@/components/dialog';
 import { ExerciseThumb } from '@/components/exercise-thumb';
 import { PlanExerciseSheet } from '@/components/plan-exercise-sheet';
 import { ProgramAiLoader, type LoaderStage } from '@/components/program-ai-loader';
+import { ReportAiButton } from '@/components/report-ai';
 import { Spinner } from '@/components/spinner';
 import {
   Badge,
@@ -567,7 +568,10 @@ function PlanPreview({
         onClose={() => setOpen(null)}
       />
       <View style={styles.stepHeader}>
-        <Text variant="overline">{READY_LABEL[kind]}</Text>
+        <Row style={styles.readyRow}>
+          <Text variant="overline">{READY_LABEL[kind]}</Text>
+          <ReportAiButton feature="program_plan" content={plan} />
+        </Row>
         <Text variant="title">{plan.name}</Text>
         {plan.summary !== '' && <Text variant="secondary">{plan.summary}</Text>}
       </View>
@@ -674,6 +678,7 @@ const styles = StyleSheet.create({
   progressPartDone: { backgroundColor: colors.accent },
   step: { gap: spacing.lg },
   stepHeader: { gap: spacing.xs },
+  readyRow: { justifyContent: 'space-between' },
   list: { gap: spacing.sm },
   row: { flexDirection: 'row', gap: spacing.sm },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { MACROS } from '@/components/calorie-summary';
+import { ReportAiButton } from '@/components/report-ai';
 import { Spinner } from '@/components/spinner';
 import {
   Button,
@@ -195,13 +196,16 @@ function TipsCard({
           <Spinner color={colors.textSecondary} />
         ) : (
           shown && (
-            <IconButton
-              icon="refresh"
-              size={18}
-              onPress={run}
-              // Accent: picked for another day or before the latest dishes.
-              color={fresh ? colors.textSecondary : colors.accent}
-            />
+            <>
+              <ReportAiButton feature="macro_tips" content={shown} />
+              <IconButton
+                icon="refresh"
+                size={18}
+                onPress={run}
+                // Accent: picked for another day or before the latest dishes.
+                color={fresh ? colors.textSecondary : colors.accent}
+              />
+            </>
           )
         )}
       </Row>

@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
 import { useSyncExternalStore } from 'react';
 
@@ -74,6 +75,7 @@ async function request<T>(
       method: init.method ?? (init.body || path === '/auth/logout' ? 'POST' : 'GET'),
       headers: {
         'content-type': 'application/json',
+        'x-app-version': Constants.expoConfig?.version ?? '',
         ...(init.token && { authorization: `Bearer ${init.token}` }),
       },
       body: init.body && JSON.stringify(init.body),
@@ -178,6 +180,15 @@ export async function deleteAccount() {
     if (!(e instanceof UnauthorizedError)) throw e;
   }
   await setSession(null);
+}
+
+export type AiFeature = 'day_review' | 'meal_advice' | 'macro_tips' | 'program_plan';
+
+/** Sends an AI answer the user found offensive or harmful to the server for review. */
+export async function reportAiAnswer(feature: AiFeature, content: unknown) {
+  const token = await sessionToken();
+  if (!token) throw new AccountError('unknown');
+  await request('/ai-reports', { token, body: { feature, content } });
 }
 
 /** Emails a six-digit code. Succeeds whether or not the email has an account. */

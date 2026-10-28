@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Spinner } from '@/components/spinner';
+import { ReportAiButton } from '@/components/report-ai';
 import { Button, Card, IconButton, Row, Text } from '@/components/ui';
 import { reviewChange, reviewDay, type ReviewState, type StoredReview } from '@/db/food';
 import type { Meal } from '@/db/schema';
@@ -120,13 +121,16 @@ export function DayReviewCard({
           <Spinner color={colors.textSecondary} />
         ) : (
           review && (
-            <IconButton
-              icon="refresh"
-              size={18}
-              onPress={run}
-              // Accent: the log changed since the comment was written.
-              color={change === 'fresh' ? colors.textSecondary : colors.accent}
-            />
+            <>
+              <ReportAiButton feature="day_review" content={review} />
+              <IconButton
+                icon="refresh"
+                size={18}
+                onPress={run}
+                // Accent: the log changed since the comment was written.
+                color={change === 'fresh' ? colors.textSecondary : colors.accent}
+              />
+            </>
           )
         )}
       </Row>

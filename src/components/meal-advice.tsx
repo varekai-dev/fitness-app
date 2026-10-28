@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AddFoodRow } from '@/components/day-review-card';
 import { Spinner } from '@/components/spinner';
+import { ReportAiButton } from '@/components/report-ai';
 import { Button, IconButton, Row, Text } from '@/components/ui';
 import { adviseMeal, type StoredMealAdvice } from '@/db/food';
 import type { Meal } from '@/db/schema';
@@ -93,13 +94,16 @@ export function MealAdvice({
         {loading ? (
           <Spinner color={colors.textSecondary} />
         ) : (
-          <IconButton
-            icon="refresh"
-            size={18}
-            onPress={run}
-            // Accent: the log changed since the advice was given.
-            color={fresh ? colors.textSecondary : colors.accent}
-          />
+          <>
+            <ReportAiButton feature="meal_advice" content={advice} />
+            <IconButton
+              icon="refresh"
+              size={18}
+              onPress={run}
+              // Accent: the log changed since the advice was given.
+              color={fresh ? colors.textSecondary : colors.accent}
+            />
+          </>
         )}
       </Row>
       <View style={[styles.body, loading && styles.stale]}>

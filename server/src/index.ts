@@ -22,6 +22,9 @@ const MIN_PASSWORD = 8;
 const BACKUPS_KEPT = 7;
 /** Workers take request bodies up to 100 MB on the free plan. */
 const MAX_BACKUP = 100 * 1024 * 1024;
+/** An AI answer is a few KB; a program plan the most. */
+const MAX_REPORT = 64 * 1024;
+const AI_FEATURES = ['day_review', 'meal_advice', 'macro_tips', 'program_plan'];
 
 type User = { id: string; email: string; created_at: number };
 
@@ -51,7 +54,7 @@ class HttpError extends Error {
 const CORS = {
   'access-control-allow-origin': '*',
   'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'access-control-allow-headers': 'authorization, content-type',
+  'access-control-allow-headers': 'authorization, content-type, x-app-version',
 };
 
 const json = (data: unknown, status = 200) =>
@@ -232,7 +235,7 @@ async function resetPassword(req: Request, env: Env) {
 
 /**
  * Deletes the account with everything the server keeps for it: backups,
- * sessions and a pending reset code. The data on the phone isn't touched.
+ * sessions, a pending reset code and AI reports. The data on the phone isn't touched.
  */
 async function deleteAccount(req: Request, env: Env) {
   const { user } = await authenticate(req, env);
@@ -246,8 +249,28 @@ async function deleteAccount(req: Request, env: Env) {
   await env.DB.batch([
     env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(user.id),
     env.DB.prepare('DELETE FROM password_resets WHERE user_id = ?').bind(user.id),
+    env.DB.prepare('DELETE FROM ai_reports WHERE user_id = ?').bind(user.id),
     env.DB.prepare('DELETE FROM users WHERE id = ?').bind(user.id),
   ]);
+  return empty();
+}
+
+/**
+ * Keeps an AI answer the user flagged as offensive or harmful, for review.
+ * Required by Google Play for apps that show generated content.
+ */
+async function reportAi(req: Request, env: Env) {
+  const { user } = await authenticate(req, env);
+  const body = await readBody(req);
+  const feature = typeof body.feature === 'string' ? body.feature : '';
+  const content = JSON.stringify(body.content ?? null);
+  if (!AI_FEATURES.includes(feature) || content === 'null') throw new HttpError(400, 'bad_request');
+  if (content.length > MAX_REPORT) throw new HttpError(413, 'too_large');
+  await env.DB.prepare(
+    'INSERT INTO ai_reports (id, user_id, feature, content, app_version, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+  )
+    .bind(newId(), user.id, feature, content, req.headers.get('x-app-version') ?? '', Date.now())
+    .run();
   return empty();
 }
 
@@ -316,6 +339,7 @@ const ROUTES: Record<string, Handler> = {
   'POST /auth/logout': logout,
   'GET /auth/me': me,
   'DELETE /account': deleteAccount,
+  'POST /ai-reports': reportAi,
   'POST /auth/password/forgot': forgotPassword,
   'POST /auth/password/reset': resetPassword,
   'PUT /backups': uploadBackup,
