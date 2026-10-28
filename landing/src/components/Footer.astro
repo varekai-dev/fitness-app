@@ -1,7 +1,7 @@
 ---
 import { Image } from 'astro:assets';
 import icon from '../../../assets/images/icon.png';
-import { APK_URL, DEVELOPER_URL, RELEASES_URL } from '../data';
+import { DEVELOPER_URL } from '../data';
 import { dict, langOf, pathFor } from '../i18n';
 
 const lang = langOf(Astro);
@@ -15,8 +15,6 @@ const t = dict[lang];
       <span>Fitness</span>
     </div>
     <nav aria-label={t.footer.links}>
-      <a href={APK_URL}>{t.download}</a>
-      <a href={RELEASES_URL} target="_blank" rel="noopener">{t.footer.releases}</a>
       <a href={pathFor(lang, 'privacy/')}>{t.footer.privacy}</a>
       <a href={pathFor(lang, 'delete-account/')}>{t.footer.deleteAccount}</a>
     </nav>

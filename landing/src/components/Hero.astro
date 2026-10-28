@@ -1,6 +1,5 @@
 ---
 import { Image } from 'astro:assets';
-import { APK_URL } from '../data';
 import { dict, langOf } from '../i18n';
 import { screenshot } from '../screens';
 import Icon from './Icon.astro';
@@ -22,11 +21,7 @@ const h = t.hero;
         {h.lead}
       </p>
       <div class="actions">
-        <a class="btn btn-primary" href={APK_URL} data-download>
-          <Icon name="download" size={20} />
-          {t.download}
-        </a>
-        <a class="btn btn-ghost" href="#tour">{h.seeScreens}</a>
+        <a class="btn btn-primary" href="#tour">{h.seeScreens}</a>
       </div>
     </div>
 

@@ -32,7 +32,6 @@ const uk = {
       { href: '#faq', label: 'Питання' },
     ],
   },
-  download: 'Завантажити APK',
   hero: {
     eyebrow: 'Безкоштовно для Android',
     title: ['Тренування, їжа й вода — ', 'в одній кишені'],
@@ -73,7 +72,7 @@ const uk = {
       {
         icon: 'refresh',
         title: 'Оновлюється сам',
-        text: 'Дрібні оновлення приходять просто в застосунок, а про новий APK він підкаже в налаштуваннях.',
+        text: 'Дрібні оновлення приходять просто в застосунок, без перевстановлення.',
       },
       {
         icon: 'archive',
@@ -331,35 +330,10 @@ const uk = {
     extend: '+15 с',
     newPr: (kg: string) => `🏆 Новий рекорд: 1ПМ ≈ ${kg} кг`,
   },
-  install: {
-    eyebrow: 'Встановлення',
-    title: 'Готові почати? Це хвилина',
-    steps: [
-      ['Завантажте APK', 'Натисніть кнопку на телефоні або відскануйте QR-код з комп’ютера.'],
-      ['Дозвольте встановлення', 'Android попросить дозволити браузеру встановлювати застосунки. Це разовий дозвіл.'],
-      [
-        'Створіть акаунт і налаштуйте',
-        'Зареєструйтеся поштою й паролем, вкажіть зріст і вагу — Fitness порахує норму калорій і води. Ключ Groq для AI — за бажанням.',
-      ],
-    ],
-    whatsNew: 'Що нового в останній версії →',
-    qrAlt: 'QR-код для завантаження APK',
-    scan: 'Наведіть камеру телефону',
-    mb: 'МБ',
-    from: (date: string) => `від ${date}`,
-  },
   faq: {
     eyebrow: 'Питання',
     title: 'Часті запитання',
     items: [
-      {
-        q: 'Чому застосунку немає в Google Play?',
-        a: 'Це особистий проєкт, який поширюється напряму через GitHub. APK підписаний одним і тим самим ключем, тож нові версії ставляться поверх старої без втрати даних.',
-      },
-      {
-        q: 'Це безпечно — ставити APK не з магазину?',
-        a: 'Файл збирається автоматично з відкритого коду на GitHub Actions і публікується в релізах репозиторію. Android попросить дозволити встановлення з браузера чи файлового менеджера — це разовий дозвіл для цього джерела.',
-      },
       {
         q: 'Де зберігаються мої дані?',
         a: 'У локальній базі SQLite на телефоні. Раз на день застосунок зберігає резервну копію у вашому акаунті на сервері (7 останніх днів), а текст чи фото страви йде в Groq, лише коли ви просите AI оцінити калорії. Детальніше — у політиці конфіденційності.',
@@ -373,10 +347,6 @@ const uk = {
         a: 'Groq — сервіс AI-моделей з безкоштовним тарифом, якого для щоденного харчування вистачає з головою. Ключ створюється за хвилину на console.groq.com і вставляється в налаштуваннях. Без ключа працює все, крім AI-оцінки їжі.',
       },
       {
-        q: 'Як оновлювати застосунок?',
-        a: 'Дрібні оновлення завантажуються прямо в застосунок. Коли виходить новий APK, картка в налаштуваннях запропонує його завантажити — достатньо встановити поверх.',
-      },
-      {
         q: 'Яка потрібна версія Android?',
         a: 'Android 8.0 або новіша. Health Connect працює на Android 9+, на старших версіях його треба встановити з Google Play.',
       },
@@ -384,7 +354,6 @@ const uk = {
   },
   footer: {
     links: 'Посилання',
-    releases: 'Релізи',
     deleteAccount: 'Видалення акаунта',
     privacy: 'Конфіденційність',
     developer: 'Розробник — ',
@@ -434,7 +403,6 @@ const en: Dict = {
       { href: '#faq', label: 'FAQ' },
     ],
   },
-  download: 'Download APK',
   hero: {
     eyebrow: 'Free for Android',
     title: ['Workouts, food and water — ', 'in one pocket'],
@@ -475,7 +443,7 @@ const en: Dict = {
       {
         icon: 'refresh',
         title: 'Updates itself',
-        text: 'Small updates arrive right inside the app, and it tells you in settings when a new APK is out.',
+        text: 'Small updates arrive right inside the app, no reinstall needed.',
       },
       {
         icon: 'archive',
@@ -733,35 +701,10 @@ const en: Dict = {
     extend: '+15 s',
     newPr: (kg: string) => `🏆 New record: 1RM ≈ ${kg} kg`,
   },
-  install: {
-    eyebrow: 'Install',
-    title: 'Ready? It takes a minute',
-    steps: [
-      ['Download the APK', 'Tap the button on your phone or scan the QR code from your computer.'],
-      ['Allow the install', 'Android asks you to let the browser install apps. It’s a one-time permission.'],
-      [
-        'Create an account and set up',
-        'Sign up with an email and password, enter your height and weight and Fitness works out your calorie and water targets. A Groq key for AI is optional.',
-      ],
-    ],
-    whatsNew: 'What’s new in the latest version →',
-    qrAlt: 'QR code to download the APK',
-    scan: 'Point your phone’s camera here',
-    mb: 'MB',
-    from: (date: string) => `from ${date}`,
-  },
   faq: {
     eyebrow: 'FAQ',
     title: 'Questions',
     items: [
-      {
-        q: 'Why isn’t the app on Google Play?',
-        a: 'It’s a personal project distributed directly through GitHub. Every APK is signed with the same key, so new versions install over the old one without losing data.',
-      },
-      {
-        q: 'Is it safe to install an APK from outside the store?',
-        a: 'The file is built automatically from open source code on GitHub Actions and published in the repository’s releases. Android asks you to allow installs from your browser or file manager — a one-time permission for that source.',
-      },
       {
         q: 'Where is my data stored?',
         a: 'In a local SQLite database on your phone. Once a day the app saves a backup to your account on the server (the last 7 days), and a meal’s text or photo goes to Groq only when you ask AI to estimate calories. See the privacy policy for details.',
@@ -775,10 +718,6 @@ const en: Dict = {
         a: 'Groq is an AI model service with a free tier that’s more than enough for daily food logging. A key takes a minute to create at console.groq.com and goes into settings. Without one, everything works except the AI food estimates.',
       },
       {
-        q: 'How do I update the app?',
-        a: 'Small updates download right inside the app. When a new APK is out, a card in settings offers to download it — just install it over the old one.',
-      },
-      {
         q: 'Which Android version do I need?',
         a: 'Android 8.0 or newer. Health Connect works on Android 9+; on older versions it has to be installed from Google Play.',
       },
@@ -786,7 +725,6 @@ const en: Dict = {
   },
   footer: {
     links: 'Links',
-    releases: 'Releases',
     deleteAccount: 'Delete account',
     privacy: 'Privacy',
     developer: 'Developer — ',

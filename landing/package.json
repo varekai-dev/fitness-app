@@ -10,12 +10,10 @@
   },
   "dependencies": {
     "@mdi/js": "^7.4.47",
-    "astro": "^7.4.2",
-    "qrcode": "^1.5.4"
+    "astro": "^7.4.2"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
-    "@types/qrcode": "^1.5.6",
     "typescript": "^6.0.3"
   }
 }

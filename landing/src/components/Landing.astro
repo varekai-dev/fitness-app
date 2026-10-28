@@ -1,6 +1,5 @@
 ---
 import Benefits from './Benefits.astro';
-import Download from './Download.astro';
 import Faq from './Faq.astro';
 import Features from './Features.astro';
 import Footer from './Footer.astro';
@@ -23,18 +22,12 @@ const t = dict[langOf(Astro)];
     <Tour />
     <Features />
     <Playground />
-    <Download />
     <Faq />
   </main>
   <Footer />
 </Layout>
 
 <script>
-  import { LATEST_RELEASE_API } from '../data';
-  import { clientDict } from '../i18n';
-
-  const t = clientDict();
-
   // Header gets a backdrop once the page scrolls.
   const header = document.querySelector('[data-header]')!;
   const onScroll = () => header.classList.toggle('is-scrolled', scrollY > 8);
@@ -62,23 +55,4 @@ const t = dict[langOf(Astro)];
       card.style.setProperty('--y', `${e.clientY - r.top}px`);
     }),
   );
-
-  // Size and date of the latest APK. The links work without it.
-  type Release = {
-    published_at: string;
-    assets: { name: string; size: number }[];
-  };
-  fetch(LATEST_RELEASE_API, { headers: { Accept: 'application/vnd.github+json' } })
-    .then((r) => (r.ok ? (r.json() as Promise<Release>) : Promise.reject()))
-    .then((release) => {
-      const apk = release.assets.find((a) => a.name.endsWith('.apk'));
-      const set = (key: string, text: string) =>
-        document.querySelectorAll(`[data-release-${key}]`).forEach((el) => (el.textContent = text));
-      if (apk) set('size', `${Math.round(apk.size / 1024 / 1024)} ${t.install.mb}`);
-      set(
-        'date',
-        t.install.from(new Date(release.published_at).toLocaleDateString(t.locale, { day: 'numeric', month: 'long' })),
-      );
-    })
-    .catch(() => {});
 </script>
