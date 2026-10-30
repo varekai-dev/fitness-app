@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -13,7 +14,7 @@ import {
   restoreBackup,
   type PendingBackup,
 } from '@/lib/backup';
-import { locale, tr } from '@/lib/i18n';
+import { locale } from '@/lib/i18n';
 import {
   downloadServerBackup,
   listServerBackups,
@@ -25,8 +26,8 @@ import { colors, spacing } from '@/theme';
 
 const formatSize = (bytes: number) =>
   bytes < 1024 * 1024
-    ? `${Math.max(1, Math.round(bytes / 1024))} ${tr('КБ', 'KB')}`
-    : `${(bytes / 1024 / 1024).toFixed(1)} ${tr('МБ', 'MB')}`;
+    ? `${Math.max(1, Math.round(bytes / 1024))} ${t`КБ`}`
+    : `${(bytes / 1024 / 1024).toFixed(1)} ${t`МБ`}`;
 
 /** Export all data to a file and restore it, e.g. on a new phone. */
 export default function BackupSettingsScreen() {
@@ -59,7 +60,7 @@ export default function BackupSettingsScreen() {
       await uploadBackup();
       await loadServerBackups();
     } catch (e) {
-      fail(tr('Не вдалося зберегти копію', 'Couldn’t save the backup'), e);
+      fail(t`Не вдалося зберегти копію`, e);
     } finally {
       setBusy(null);
     }
@@ -71,7 +72,7 @@ export default function BackupSettingsScreen() {
     try {
       pending = await downloadServerBackup(backup.id);
     } catch (e) {
-      fail(tr('Не вдалося завантажити копію', 'Couldn’t download the backup'), e);
+      fail(t`Не вдалося завантажити копію`, e);
       return;
     } finally {
       setBusy(null);
@@ -84,7 +85,7 @@ export default function BackupSettingsScreen() {
     try {
       await exportBackup();
     } catch (e) {
-      fail(tr('Не вдалося створити копію', 'Couldn’t create the backup'), e);
+      fail(t`Не вдалося створити копію`, e);
     } finally {
       setBusy(null);
     }
@@ -97,7 +98,7 @@ export default function BackupSettingsScreen() {
       await reloadApp('Backup restored');
     } catch (e) {
       setBusy(null);
-      fail(tr('Не вдалося відновити дані', 'Couldn’t restore the data'), e);
+      fail(t`Не вдалося відновити дані`, e);
     }
   };
 
@@ -107,7 +108,7 @@ export default function BackupSettingsScreen() {
     try {
       pending = await pickBackup();
     } catch (e) {
-      fail(tr('Не вдалося відкрити файл', 'Couldn’t open the file'), e);
+      fail(t`Не вдалося відкрити файл`, e);
       return;
     } finally {
       setBusy(null);
@@ -118,49 +119,40 @@ export default function BackupSettingsScreen() {
   const confirmRestore = (pending: PendingBackup) => {
     const s = pending.summary;
     const lines = [
-      tr(
-        `Копія від ${new Date(s.exportedAt).toLocaleString(locale)}`,
-        `Backup from ${new Date(s.exportedAt).toLocaleString(locale)}`,
-      ) +
+      t`Копія від ${new Date(s.exportedAt).toLocaleString(locale)}` +
         (s.appVersion ? ` (v${s.appVersion})` : '') +
         ':',
-      `${tr('тренувань', 'workouts')}: ${s.workouts}`,
-      `${tr('записів їжі', 'food entries')}: ${s.foodEntries}`,
-      `${tr('зважувань', 'weigh-ins')}: ${s.bodyWeights}`,
-      `${tr('фото прогресу', 'progress photos')}: ${s.photos}`,
-      `${tr('фото вправ', 'exercise images')}: ${s.exerciseImages}`,
+      `${t`тренувань`}: ${s.workouts}`,
+      `${t`записів їжі`}: ${s.foodEntries}`,
+      `${t`зважувань`}: ${s.bodyWeights}`,
+      `${t`фото прогресу`}: ${s.photos}`,
+      `${t`фото вправ`}: ${s.exerciseImages}`,
       '',
-      tr(
-        'Усі поточні дані на цьому телефоні буде замінено. Це не можна скасувати.',
-        'All current data on this phone will be replaced. This can’t be undone.',
-      ),
+      t`Усі поточні дані на цьому телефоні буде замінено. Це не можна скасувати.`,
     ];
     dialog.show({
-      title: tr('Замінити всі дані?', 'Replace all data?'),
+      title: t`Замінити всі дані?`,
       message: lines.join('\n'),
       icon: 'warning-outline',
       buttons: [
-        { text: tr('Скасувати', 'Cancel'), style: 'cancel', onPress: () => discardBackup(pending) },
-        { text: tr('Замінити', 'Replace'), style: 'destructive', onPress: () => restore(pending) },
+        { text: t`Скасувати`, style: 'cancel', onPress: () => discardBackup(pending) },
+        { text: t`Замінити`, style: 'destructive', onPress: () => restore(pending) },
       ],
     });
   };
 
   return (
-    <Screen title={tr('Резервна копія', 'Backup')}>
+    <Screen title={t`Резервна копія`}>
       <Card>
         <Row>
           <Ionicons name="cloud-upload-outline" size={20} color={colors.accent} />
-          <Text variant="heading">{tr('Експорт', 'Export')}</Text>
+          <Text variant="heading">{t`Експорт`}</Text>
         </Row>
         <Text variant="muted">
-          {tr(
-            'Збережи копію у файл: у Google Drive, Telegram чи інше місце. Фото прогресу й вправ теж потрапляють у копію.',
-            'Save a backup to a file: to Google Drive, Telegram or elsewhere. Progress photos and exercise images are included.',
-          )}
+          {t`Збережи копію у файл: у Google Drive, Telegram чи інше місце. Фото прогресу й вправ теж потрапляють у копію.`}
         </Text>
         <Button
-          title={tr('Створити копію', 'Create backup')}
+          title={t`Створити копію`}
           icon="share-outline"
           onPress={startExport}
           loading={busy === 'export'}
@@ -170,21 +162,18 @@ export default function BackupSettingsScreen() {
       <Card>
         <Row>
           <Ionicons name="server-outline" size={20} color={colors.accent} />
-          <Text variant="heading">{tr('На сервері', 'On the server')}</Text>
+          <Text variant="heading">{t`На сервері`}</Text>
         </Row>
         <Text variant="muted">
-          {tr(
-            'Раз на добу, коли відкриваєш застосунок, копія сама зберігається у твоєму акаунті. Сервер тримає копії за останні 7 днів. Торкнись копії, щоб відновити з неї дані.',
-            'Once a day, when you open the app, a backup is saved to your account. The server keeps the last 7 days. Tap a backup to restore from it.',
-          )}
+          {t`Раз на добу, коли відкриваєш застосунок, копія сама зберігається у твоєму акаунті. Сервер тримає копії за останні 7 днів. Торкнись копії, щоб відновити з неї дані.`}
         </Text>
         {serverBackups === null && (
           <Text variant="secondary">
-            {tr('Не вдалося отримати список копій.', 'Couldn’t load the list of backups.')}
+            {t`Не вдалося отримати список копій.`}
           </Text>
         )}
         {serverBackups?.length === 0 && (
-          <Text variant="secondary">{tr('Копій ще немає.', 'No backups yet.')}</Text>
+          <Text variant="secondary">{t`Копій ще немає.`}</Text>
         )}
         {serverBackups?.map((b) => (
           <Pressable
@@ -203,7 +192,7 @@ export default function BackupSettingsScreen() {
           </Pressable>
         ))}
         <Button
-          title={tr('Зберегти зараз', 'Back up now')}
+          title={t`Зберегти зараз`}
           icon="cloud-upload-outline"
           variant="secondary"
           onPress={startUpload}
@@ -214,16 +203,13 @@ export default function BackupSettingsScreen() {
       <Card>
         <Row>
           <Ionicons name="cloud-download-outline" size={20} color={colors.accent} />
-          <Text variant="heading">{tr('Відновлення', 'Restore')}</Text>
+          <Text variant="heading">{t`Відновлення`}</Text>
         </Row>
         <Text variant="muted">
-          {tr(
-            'Вибери файл копії. Він замінить усі поточні дані, тож за потреби спершу створи копію поточних.',
-            'Pick a backup file. It replaces all current data, so back up the current data first if you need it.',
-          )}
+          {t`Вибери файл копії. Він замінить усі поточні дані, тож за потреби спершу створи копію поточних.`}
         </Text>
         <Button
-          title={tr('Відновити з файлу', 'Restore from file')}
+          title={t`Відновити з файлу`}
           icon="folder-open-outline"
           variant="secondary"
           onPress={startImport}

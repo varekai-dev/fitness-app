@@ -1,9 +1,9 @@
+import { t } from '@lingui/core/macro';
 import { useSyncExternalStore } from 'react';
 
 import type { IconName } from '@/components/ui';
 import { readSettingSync, writeSettingSync } from '@/lib/app-settings';
 import type { WidgetType } from '@/lib/dashboard';
-import { tr } from '@/lib/i18n';
 
 /** Parts of the app the user can switch off and reorder. Each one is a tab; this is the default order. */
 export const MODULES = ['home', 'training', 'food', 'water'] as const;
@@ -14,38 +14,26 @@ export const MODULE_INFO: Record<
   { title: string; description: string; icon: IconName; route: string }
 > = {
   home: {
-    title: tr('Головна', 'Home'),
-    description: tr(
-      'Дашборд з віджетами з усіх розділів.',
-      'A dashboard of widgets from every section.',
-    ),
+    title: t`Головна`,
+    description: t`Дашборд з віджетами з усіх розділів.`,
     icon: 'home',
     route: 'index',
   },
   training: {
-    title: tr('Тренування', 'Training'),
-    description: tr(
-      'Програми, вправи, плеєр тренувань та історія.',
-      'Programs, exercises, the workout player and history.',
-    ),
+    title: t`Тренування`,
+    description: t`Програми, вправи, плеєр тренувань та історія.`,
     icon: 'barbell',
     route: 'training',
   },
   food: {
-    title: tr('Харчування', 'Food'),
-    description: tr(
-      'Щоденник їжі, калорії, макроси та AI-поради.',
-      'Food diary, calories, macros and AI advice.',
-    ),
+    title: t`Харчування`,
+    description: t`Щоденник їжі, калорії, макроси та AI-поради.`,
     icon: 'restaurant',
     route: 'food',
   },
   water: {
-    title: tr('Вода', 'Water'),
-    description: tr(
-      'Облік випитого, денна ціль і нагадування пити.',
-      'Drink log, daily goal and reminders to drink.',
-    ),
+    title: t`Вода`,
+    description: t`Облік випитого, денна ціль і нагадування пити.`,
     icon: 'water',
     route: 'water',
   },

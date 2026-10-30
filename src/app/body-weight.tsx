@@ -1,3 +1,4 @@
+import { plural, t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
@@ -23,7 +24,6 @@ import { deleteBodyWeight, listBodyWeights, saveBodyWeight } from '@/db/body-wei
 import { getProfile, setProfileField } from '@/db/profile';
 import { listProgressPhotos } from '@/db/progress-photos';
 import { useDbQuery } from '@/hooks/use-db-query';
-import { tr } from '@/lib/i18n';
 import { formatDate, formatShortDate, formatWeightDelta } from '@/lib/labels';
 import { formatNumber, formatWeight } from '@/lib/metrics';
 import { photoUri } from '@/lib/progress-photos';
@@ -67,12 +67,12 @@ export default function BodyWeightScreen() {
 
   const remove = (id: number, label: string) =>
     dialog.show({
-      title: tr('Видалити запис?', 'Delete entry?'),
+      title: t`Видалити запис?`,
       message: label,
       buttons: [
-        { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
+        { text: t`Скасувати`, style: 'cancel' },
         {
-          text: tr('Видалити', 'Delete'),
+          text: t`Видалити`,
           style: 'destructive',
           onPress: () => deleteBodyWeight(id),
         },
@@ -82,17 +82,17 @@ export default function BodyWeightScreen() {
   const first = data[0];
 
   return (
-    <Screen title={tr('Вага тіла', 'Body weight')}>
+    <Screen title={t`Вага тіла`}>
       <Card>
         <Text variant="caption">
-          {tr('Поточна вага', 'Current weight')}, {WEIGHT_UNIT}
+          {t`Поточна вага`}, {WEIGHT_UNIT}
         </Text>
         <Row style={styles.entry}>
           <Text style={[styles.current, !latest && styles.currentEmpty]}>
             {latest ? formatWeight(latest.weightKg, 1) : '—'}
           </Text>
           <Button
-            title={tr('Ввести вагу', 'Enter weight')}
+            title={t`Ввести вагу`}
             icon="scale-outline"
             onPress={() =>
               setEditing(latest ? Number(formatWeight(latest.weightKg, 1)) : START_WEIGHT)
@@ -100,10 +100,7 @@ export default function BodyWeightScreen() {
           />
         </Row>
         <Text variant="muted">
-          {tr(
-            'Повторне зважування того ж дня замінить запис.',
-            'Weighing in again on the same day replaces the entry.',
-          )}
+          {t`Повторне зважування того ж дня замінить запис.`}
         </Text>
       </Card>
 
@@ -112,11 +109,8 @@ export default function BodyWeightScreen() {
       {data.length === 0 ? (
         <EmptyState
           icon="scale-outline"
-          title={tr('Ще немає записів', 'No entries yet')}
-          hint={tr(
-            'Додай вагу, і тут з’явиться графік.',
-            'Add your weight and a chart appears here.',
-          )}
+          title={t`Ще немає записів`}
+          hint={t`Додай вагу, і тут з’явиться графік.`}
         />
       ) : (
         <>
@@ -125,19 +119,19 @@ export default function BodyWeightScreen() {
               icon="analytics-outline"
               value={formatWeight(trendNow!, 1)}
               unit={WEIGHT_UNIT}
-              label={tr('Тренд', 'Trend')}
+              label={t`Тренд`}
             />
             <StatTile
               icon="speedometer-outline"
               value={rate === null ? '—' : formatWeightDelta(rate)}
               unit={rate === null ? undefined : WEIGHT_UNIT}
-              label={tr('За тиждень', 'Per week')}
+              label={t`За тиждень`}
             />
             <StatTile
               icon="trending-up"
               value={formatWeightDelta(trendNow! - first.weightKg)}
               unit={WEIGHT_UNIT}
-              label={tr('Від початку', 'Since start')}
+              label={t`Від початку`}
             />
           </Row>
 
@@ -154,25 +148,22 @@ export default function BodyWeightScreen() {
 
           {data.length === 1 ? (
             <Text variant="muted" style={styles.chartHint}>
-              {tr(
-                'Графік з’явиться після зважування в інший день.',
-                'The chart appears after a weigh-in on another day.',
-              )}
+              {t`Графік з’явиться після зважування в інший день.`}
             </Text>
           ) : (
             <Card>
               <Row style={styles.spaceBetween}>
                 <Text variant="caption">
-                  {tr('Вага', 'Weight')}, {WEIGHT_UNIT}
+                  {t`Вага`}, {WEIGHT_UNIT}
                 </Text>
                 <Row style={styles.legend}>
                   <Row style={styles.legendItem}>
                     <View style={styles.legendDot} />
-                    <Text variant="muted">{tr('зважування', 'weigh-ins')}</Text>
+                    <Text variant="muted">{t`зважування`}</Text>
                   </Row>
                   <Row style={styles.legendItem}>
                     <View style={styles.legendLine} />
-                    <Text variant="muted">{tr('тренд', 'trend')}</Text>
+                    <Text variant="muted">{t`тренд`}</Text>
                   </Row>
                 </Row>
               </Row>
@@ -183,15 +174,12 @@ export default function BodyWeightScreen() {
                 formatX={formatShortDate}
               />
               <Text variant="muted">
-                {tr(
-                  'Тренд згладжує денні коливання води й солі.',
-                  'The trend smooths out daily swings of water and salt.',
-                )}
+                {t`Тренд згладжує денні коливання води й солі.`}
               </Text>
             </Card>
           )}
 
-          <SectionHeader title={tr('Записи', 'Entries')} />
+          <SectionHeader title={t`Записи`} />
           {[...data].reverse().map((w, i, list) => {
             const prev = list[i + 1];
             const label = `${formatDate(w.measuredAt)} · ${formatWeight(w.weightKg, 1)} ${WEIGHT_UNIT}`;
@@ -218,7 +206,7 @@ export default function BodyWeightScreen() {
       <WeightRulerModal value={editing} onClose={() => setEditing(null)} onSave={save} />
       <WeightRulerModal
         value={editingTarget}
-        title={tr('Цільова вага', 'Target weight')}
+        title={t`Цільова вага`}
         onClose={() => setEditingTarget(null)}
         onSave={saveTarget}
       />
@@ -250,12 +238,9 @@ function GoalCard({
           <Row style={styles.flex}>
             <Ionicons name="flag-outline" size={22} color={colors.accent} />
             <View style={styles.flex}>
-              <Text variant="heading">{tr('Цільова вага', 'Target weight')}</Text>
+              <Text variant="heading">{t`Цільова вага`}</Text>
               <Text variant="muted">
-                {tr(
-                  'Задай ціль, і побачиш, коли досягнеш її за поточним темпом',
-                  'Set a target to see when you reach it at the current pace',
-                )}
+                {t`Задай ціль, і побачиш, коли досягнеш її за поточним темпом`}
               </Text>
             </View>
           </Row>
@@ -267,17 +252,11 @@ function GoalCard({
 
   const pace = rate === null ? '' : `${formatWeightDelta(rate)} ${WEIGHT_UNIT}`;
   const hint = {
-    reached: tr('Ціль досягнута, тепер утримуй вагу.', 'Target reached, now hold the weight.'),
-    unknown: tr(
-      'Прогноз з’явиться, коли зважування охоплять хоча б тиждень.',
-      'The forecast appears once your weigh-ins span at least a week.',
-    ),
-    stalled: tr(
-      `Темп ${pace}/тиж зараз не веде до цілі.`,
-      `At ${pace}/week the trend is not heading to the target.`,
-    ),
-    far: tr(`За темпу ${pace}/тиж — більше ніж 2 роки.`, `At ${pace}/week, over 2 years away.`),
-    date: tr(`За поточного темпу ${pace}/тиж`, `At the current pace of ${pace}/week`),
+    reached: t`Ціль досягнута, тепер утримуй вагу.`,
+    unknown: t`Прогноз з’явиться, коли зважування охоплять хоча б тиждень.`,
+    stalled: t`Темп ${pace}/тиж зараз не веде до цілі.`,
+    far: t`За темпу ${pace}/тиж — більше ніж 2 роки.`,
+    date: t`За поточного темпу ${pace}/тиж`,
   }[forecast.kind];
 
   return (
@@ -291,9 +270,9 @@ function GoalCard({
           />
           <View style={styles.flex}>
             <Text variant="caption">
-              {tr('Ціль', 'Target')} {formatWeight(target, 1)} {WEIGHT_UNIT}
+              {t({ message: 'Ціль', context: 'Target' })} {formatWeight(target, 1)} {WEIGHT_UNIT}
               {forecast.kind !== 'reached' &&
-                ` · ${tr('залишилось', 'to go')} ${formatWeightDelta(target - trendKg)} ${WEIGHT_UNIT}`}
+                ` · ${t`залишилось`} ${formatWeightDelta(target - trendKg)} ${WEIGHT_UNIT}`}
             </Text>
             {forecast.kind === 'date' && (
               <Text variant="heading">~ {formatDate(forecast.at)}</Text>
@@ -326,14 +305,11 @@ function PhotosCard({ photos }: { photos: { fileName: string; takenAt: number }[
             </View>
           )}
           <View style={styles.flex}>
-            <Text variant="heading">{tr('Фото прогресу', 'Progress photos')}</Text>
+            <Text variant="heading">{t`Фото прогресу`}</Text>
             <Text variant="muted">
               {latest
-                ? tr(
-                    `${photos.length} фото · останнє ${formatShortDate(latest.takenAt)}`,
-                    `${photos.length} ${photos.length === 1 ? 'photo' : 'photos'} · last ${formatShortDate(latest.takenAt)}`,
-                  )
-                : tr('Порівнюй «до / після» щотижня', 'Compare before / after every week')}
+                ? t`${plural(photos.length, { one: '# фото', other: '# фото' })} · останнє ${formatShortDate(latest.takenAt)}`
+                : t`Порівнюй «до / після» щотижня`}
             </Text>
           </View>
         </Row>

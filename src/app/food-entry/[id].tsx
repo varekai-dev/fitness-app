@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -25,7 +26,6 @@ import { deleteFoodEntry, getFoodEntry, updateFoodEntry } from '@/db/food';
 import type { FoodEntry } from '@/db/schema';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { formatGrams, formatKcal } from '@/lib/food';
-import { tr } from '@/lib/i18n';
 import { mealAt, type Meal } from '@/lib/meals';
 import { parseDecimal } from '@/lib/metrics';
 import { colors, fontSize, spacing } from '@/theme';
@@ -43,8 +43,8 @@ export default function FoodEntryScreen() {
   if (entry === undefined) return <Loading />;
   if (entry === null) {
     return (
-      <Screen title={tr('Страва', 'Dish')} mode="modal">
-        <Text variant="muted">{tr('Запис не знайдено', 'Entry not found')}</Text>
+      <Screen title={t`Страва`} mode="modal">
+        <Text variant="muted">{t`Запис не знайдено`}</Text>
       </Screen>
     );
   }
@@ -67,7 +67,7 @@ function EntryEditor({ entry }: { entry: FoodEntry }) {
   }));
   const [saving, setSaving] = useState(false);
   // Entries log the amount in their portion text: "250 мл" for drinks.
-  const unit = entry.portion?.match(/(мл|ml)$/) ? tr('мл', 'ml') : tr('г', 'g');
+  const unit = entry.portion?.match(/(мл|ml)$/) ? t`мл` : t`г`;
   const grams = parseDecimal(amount);
   const amountValid = !entry.grams || (grams !== null && grams > 0 && grams <= MAX_AMOUNT);
   const valid =
@@ -76,7 +76,7 @@ function EntryEditor({ entry }: { entry: FoodEntry }) {
     MACRO_KEYS.every((key) => parseDecimal(values[key]) !== null);
 
   const kcal = parseDecimal(values.kcal);
-  const stepSize = unit === tr('мл', 'ml') ? 50 : 10;
+  const stepSize = unit === t`мл` ? 50 : 10;
   const step = (delta: number) =>
     changeAmount(String(Math.round(Math.min(Math.max((grams ?? 0) + delta, stepSize), MAX_AMOUNT))));
 
@@ -124,7 +124,7 @@ function EntryEditor({ entry }: { entry: FoodEntry }) {
 
   return (
     <Screen
-      title={tr('Редагувати страву', 'Edit dish')}
+      title={t`Редагувати страву`}
       mode="modal"
       headerRight={<CircleButton icon="trash-outline" onPress={remove} />}>
       <MealPicker meal={meal} onChange={setMeal} />
@@ -133,7 +133,7 @@ function EntryEditor({ entry }: { entry: FoodEntry }) {
           <NameInput value={name} onChangeText={setName} />
           {!!entry.grams && grams !== null && grams > 0 && kcal !== null && (
             <Text variant="muted" style={styles.per100}>
-              {formatKcal((kcal / grams) * 100)} {tr('ккал', 'kcal')} / 100 {unit}
+              {formatKcal((kcal / grams) * 100)} {t`ккал`} / 100 {unit}
             </Text>
           )}
         </View>
@@ -141,7 +141,7 @@ function EntryEditor({ entry }: { entry: FoodEntry }) {
         <MacroInputRow values={values} onChange={(key, t) => setValues({ ...values, [key]: t })} />
         {!!entry.grams && (
           <>
-            <Text variant="body">{tr('Кількість', 'Amount')}</Text>
+            <Text variant="body">{t`Кількість`}</Text>
             <Row style={styles.amountRow}>
               <CircleButton
                 icon="remove"
@@ -172,13 +172,13 @@ function EntryEditor({ entry }: { entry: FoodEntry }) {
         )}
         <Row>
           <Button
-            title={tr('Скасувати', 'Cancel')}
+            title={t`Скасувати`}
             variant="secondary"
             onPress={goBack}
             style={styles.flex}
           />
           <Button
-            title={tr('Зберегти', 'Save')}
+            title={t`Зберегти`}
             icon="checkmark"
             onPress={save}
             loading={saving}

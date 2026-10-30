@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -9,7 +10,6 @@ import Animated, {
 import Svg, { Circle } from 'react-native-svg';
 
 import { Text } from '@/components/ui';
-import { tr } from '@/lib/i18n';
 import { formatDuration } from '@/lib/metrics';
 import { colors, fontSize } from '@/theme';
 
@@ -56,7 +56,7 @@ export function RestRing({ remainingSec, totalSec }: { remainingSec: number; tot
         {formatDuration(remainingSec)}
       </Text>
       <Text variant="caption" style={styles.label}>
-        {tr('ЗАЛИШИЛОСЬ', 'LEFT')}
+        {t`ЗАЛИШИЛОСЬ`}
       </Text>
     </View>
   );

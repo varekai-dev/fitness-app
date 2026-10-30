@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
@@ -7,7 +8,6 @@ import { Card, Row, Text } from '@/components/ui';
 import { useAnimatedNumber } from '@/hooks/use-animated-number';
 import { formatGrams, formatKcal, type Macros } from '@/lib/food';
 import type { MacroKey } from '@/lib/groq';
-import { tr } from '@/lib/i18n';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 const SIZE = 210;
@@ -18,9 +18,9 @@ const LENGTH = 2 * Math.PI * R;
 const ARC = LENGTH * 0.75;
 
 export const MACROS = [
-  { key: 'proteinG', label: tr('Білки', 'Protein'), kcalPerG: 4, color: colors.protein },
-  { key: 'fatG', label: tr('Жири', 'Fat'), kcalPerG: 9, color: colors.fat },
-  { key: 'carbsG', label: tr('Вуглеводи', 'Carbs'), kcalPerG: 4, color: colors.carbs },
+  { key: 'proteinG', label: t`Білки`, kcalPerG: 4, color: colors.protein },
+  { key: 'fatG', label: t`Жири`, kcalPerG: 9, color: colors.fat },
+  { key: 'carbsG', label: t`Вуглеводи`, kcalPerG: 4, color: colors.carbs },
 ] as const;
 
 /** Calories eaten against the goal, and protein / fat / carbs against their daily targets. */
@@ -75,7 +75,7 @@ export function CalorieSummary({
         />
         <Text style={[styles.amount, over && styles.over]}>{formatKcal(Math.abs(left))}</Text>
         <Text variant="caption">
-          {over ? tr('ккал понад ціль', 'kcal over goal') : tr('ккал залишилось', 'kcal left')}
+          {over ? t`ккал понад ціль` : t`ккал залишилось`}
         </Text>
         <View style={styles.eaten}>
           <Text variant="muted">
@@ -103,11 +103,11 @@ export function CalorieSummary({
               </Row>
               <Text variant="heading">
                 {formatGrams(totals[m.key])}
-                <Text variant="muted"> {tr('г', 'g')}</Text>
+                <Text variant="muted"> {t`г`}</Text>
               </Text>
               <GrowBar progress={progress} color={m.color} style={styles.track} />
               <Text variant="muted" numberOfLines={1} style={styles.share}>
-                {Math.round(progress * 100)}% {tr('з', 'of')} {formatGrams(target)} {tr('г', 'g')}
+                {Math.round(progress * 100)}% {t`з`} {formatGrams(target)} {t`г`}
               </Text>
             </Pressable>
           );

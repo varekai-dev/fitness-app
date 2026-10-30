@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -22,7 +23,7 @@ import { useDbQuery } from '@/hooks/use-db-query';
 import { useToday } from '@/hooks/use-today';
 import { formatGrams, formatKcal } from '@/lib/food';
 import { type MacroFood, type MacroKey } from '@/lib/groq';
-import { locale, tr } from '@/lib/i18n';
+import { locale } from '@/lib/i18n';
 import { MEAL_LABELS, mealAt, mealOf } from '@/lib/meals';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
@@ -30,9 +31,9 @@ const timeFormatter = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute:
 
 // "Rich in …" per macro.
 const RICH_IN = {
-  proteinG: tr('Багато білка', 'Rich in protein'),
-  fatG: tr('Багато жирів', 'Rich in fat'),
-  carbsG: tr('Багато вуглеводів', 'Rich in carbs'),
+  proteinG: t`Багато білка`,
+  fatG: t`Багато жирів`,
+  carbsG: t`Багато вуглеводів`,
 };
 
 /**
@@ -50,7 +51,7 @@ export default function MacroScreen() {
   if (!data) return <Loading />;
   const { entries, total, target, tips, signature } = data;
   const left = target - total;
-  const g = tr('г', 'g');
+  const g = t`г`;
 
   return (
     <Screen title={macro.label} mode="modal">
@@ -60,16 +61,10 @@ export default function MacroScreen() {
           <Text style={styles.unit}> {g}</Text>
         </Text>
         <Text variant="muted">
-          {tr('з', 'of')} {formatGrams(Math.round(target))} {g} ·{' '}
+          {t`з`} {formatGrams(Math.round(target))} {g} ·{' '}
           {left >= 0
-            ? tr(
-                `лишилось ${formatGrams(Math.round(left))} ${g}`,
-                `${formatGrams(Math.round(left))} ${g} left`,
-              )
-            : tr(
-                `понад ціль ${formatGrams(Math.round(-left))} ${g}`,
-                `${formatGrams(Math.round(-left))} ${g} over`,
-              )}
+            ? t`лишилось ${formatGrams(Math.round(left))} ${g}`
+            : t`понад ціль ${formatGrams(Math.round(-left))} ${g}`}
         </Text>
         <View style={styles.track}>
           <View
@@ -84,11 +79,11 @@ export default function MacroScreen() {
         </View>
       </Card>
 
-      <SectionHeader title={tr('Звідки за день', 'Where it came from')} />
+      <SectionHeader title={t`Звідки за день`} />
       {entries.length === 0 ? (
         <EmptyState
           icon="restaurant-outline"
-          title={tr('За цей день ще нічого', 'Nothing on this day yet')}
+          title={t`За цей день ще нічого`}
         />
       ) : (
         <Card style={styles.list}>
@@ -211,11 +206,11 @@ function TipsCard({
           ))}
         </View>
       ) : loading ? (
-        <Text variant="muted">{tr('Підбираю продукти…', 'Picking foods…')}</Text>
+        <Text variant="muted">{t`Підбираю продукти…`}</Text>
       ) : (
         !failed && (
           <Button
-            title={tr('Підказати продукти', 'Suggest foods')}
+            title={t`Підказати продукти`}
             variant="secondary"
             small
             onPress={run}
@@ -228,7 +223,7 @@ function TipsCard({
           <Text variant="muted" style={styles.flex}>
             {failed}
           </Text>
-          <Button title={tr('Ще раз', 'Retry')} variant="secondary" small onPress={run} />
+          <Button title={t`Ще раз`} variant="secondary" small onPress={run} />
         </Row>
       )}
     </Card>
@@ -257,10 +252,10 @@ function FoodRow({ food, day, color }: { food: MacroFood; day: number; color: st
       </Text>
       <View style={styles.entryValue}>
         <Text variant="body" style={{ color }}>
-          {formatGrams(Math.round(food.grams))} {tr('г', 'g')}
+          {formatGrams(Math.round(food.grams))} {t`г`}
         </Text>
         <Text variant="muted">
-          {formatKcal(food.kcal)} {tr('ккал', 'kcal')}
+          {formatKcal(food.kcal)} {t`ккал`}
         </Text>
       </View>
     </Pressable>

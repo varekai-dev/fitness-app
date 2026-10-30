@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useState } from 'react';
 import { BackHandler, Pressable, StyleSheet, View } from 'react-native';
@@ -20,7 +21,6 @@ import { Button, Text } from '@/components/ui';
 import { SwipeToDelete } from '@/components/swipe-to-delete';
 import { Wheel } from '@/components/wheel';
 import type { TrackingType, WorkoutSet } from '@/db/schema';
-import { tr } from '@/lib/i18n';
 import type { SetValues } from '@/lib/metrics';
 import {
   formatDistance,
@@ -60,8 +60,8 @@ export const toValues = (i: Inputs): SetValues => {
   };
 };
 
-const REPS = tr('повт', 'reps');
-const MIN_SEC = tr('хв:с', 'm:s');
+const REPS = t`повт`;
+const MIN_SEC = t`хв:с`;
 
 export const FIELDS: Record<TrackingType, { key: keyof Inputs; label: string }[]> = {
   weight_reps: [
@@ -147,7 +147,7 @@ export function SetRow({
   const edit = () =>
     onEdit({
       id: set.id,
-      title: `${tr('Підхід', 'Set')} ${index + 1}`,
+      title: `${t`Підхід`} ${index + 1}`,
       type,
       inputs,
       onSave: (next) => {
@@ -303,7 +303,7 @@ function SheetBody({ edit, onClose }: { edit: SetEdit; onClose: () => void }) {
             })}
           </View>
           <Button
-            title={tr('Готово', 'Done')}
+            title={t`Готово`}
             onPress={() => {
               edit.onSave(inputs);
               onClose();

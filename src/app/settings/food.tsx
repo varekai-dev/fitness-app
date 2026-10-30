@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -29,7 +30,7 @@ import {
   type MacroGoals,
   type Macros,
 } from '@/lib/food';
-import { locale, tr } from '@/lib/i18n';
+import { locale } from '@/lib/i18n';
 import { formatWeightDelta } from '@/lib/labels';
 import { formatNumber, formatWeight } from '@/lib/metrics';
 import {
@@ -51,7 +52,7 @@ import {
 import { cmToDisplay, HEIGHT_UNIT, WEIGHT_UNIT } from '@/lib/units';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
-const KCAL = tr('ккал', 'kcal');
+const KCAL = t`ккал`;
 
 /** Without a profile there is no maintenance to judge by, so the scale just spans common goals. */
 const PLAIN_SCALE: CalorieScale = {
@@ -80,7 +81,7 @@ export default function FoodSettingsScreen() {
     rec && weightKg && profile.sex ? calorieScale(rec.tdee, weightKg, profile.sex) : undefined;
 
   return (
-    <Screen title={tr('Харчування', 'Food')}>
+    <Screen title={t`Харчування`}>
       <GoalCard
         goal={goal}
         tdee={rec?.tdee}
@@ -101,41 +102,29 @@ export default function FoodSettingsScreen() {
       <Card style={styles.shortcuts}>
         <ShortcutRow
           icon="bookmark-outline"
-          title={tr('Шаблони', 'Templates')}
-          hint={tr(
-            'Зберігати прийом їжі закладкою й додавати його в один тап.',
-            'Save a meal with the bookmark and add it again in one tap.',
-          )}
+          title={t`Шаблони`}
+          hint={t`Зберігати прийом їжі закладкою й додавати його в один тап.`}
           value={shortcuts.templates}
           onChange={(on) => setFoodShortcut('templates', on)}
         />
         <ShortcutRow
           icon="repeat"
-          title={tr('Підказки', 'Suggestions')}
-          hint={tr(
-            'Пропонувати повторити прийом їжі, як минулого разу.',
-            'Offer to repeat a meal the way it was last time.',
-          )}
+          title={t`Підказки`}
+          hint={t`Пропонувати повторити прийом їжі, як минулого разу.`}
           value={shortcuts.repeats}
           onChange={(on) => setFoodShortcut('repeats', on)}
         />
         <ShortcutRow
           icon="chatbubble-ellipses-outline"
-          title={tr('AI коментар дня', 'AI day comment')}
-          hint={tr(
-            'Оцінка з’їденого за день і що варто додати.',
-            'A take on the day’s food and what is worth adding.',
-          )}
+          title={t`AI коментар дня`}
+          hint={t`Оцінка з’їденого за день і що варто додати.`}
           value={shortcuts.dayReview}
           onChange={(on) => setFoodShortcut('dayReview', on)}
         />
         <ShortcutRow
           icon="sparkles-outline"
-          title={tr('Що поїсти', 'What to eat')}
-          hint={tr(
-            'Порада AI для сніданку, обіду й вечері під залишок дня.',
-            'AI advice for breakfast, lunch and dinner to fit what’s left of the day.',
-          )}
+          title={t`Що поїсти`}
+          hint={t`Порада AI для сніданку, обіду й вечері під залишок дня.`}
           value={shortcuts.mealAdvice}
           onChange={(on) => setFoodShortcut('mealAdvice', on)}
         />
@@ -168,7 +157,7 @@ function BmiCard({ weightKg, heightCm }: { weightKg: number; heightCm: number })
       </BottomSheet>
       <Row style={styles.bmiHead}>
         <View style={styles.flex}>
-          <Text variant="overline">{tr('Індекс маси тіла', 'Body mass index')}</Text>
+          <Text variant="overline">{t`Індекс маси тіла`}</Text>
           <Text style={[styles.bmiValue, cls.zone !== 'ok' && { color }]}>
             {formatNumber(value, 1)}
           </Text>
@@ -201,16 +190,10 @@ function BmiCard({ weightKg, heightCm }: { weightKg: number; heightCm: number })
         />
       </View>
       <Text variant="muted">
-        {tr(
-          `Норма для ${formatNumber(cmToDisplay(heightCm), 0)} ${HEIGHT_UNIT}: `,
-          `Normal at ${formatNumber(cmToDisplay(heightCm), 0)} ${HEIGHT_UNIT}: `,
-        )}
+        {t`Норма для ${formatNumber(cmToDisplay(heightCm), 0)} ${HEIGHT_UNIT}: `}
         {formatWeight(minKg, 0)}–{formatWeight(maxKg, 0)} {WEIGHT_UNIT}
         {toNormal !== 0 &&
-          tr(
-            ` · до норми ${formatWeightDelta(toNormal)} ${WEIGHT_UNIT}`,
-            ` · ${formatWeightDelta(toNormal)} ${WEIGHT_UNIT} to normal`,
-          )}
+          t` · до норми ${formatWeightDelta(toNormal)} ${WEIGHT_UNIT}`}
       </Text>
     </Card>
   );
@@ -227,9 +210,9 @@ function BmiClasses({ weightKg, heightCm }: { weightKg: number; heightCm: number
   return (
     <View style={styles.bmiSheet}>
       <View style={styles.bmiSheetHead}>
-        <Text variant="title">{tr('Індекс маси тіла', 'Body mass index')}</Text>
+        <Text variant="title">{t`Індекс маси тіла`}</Text>
         <Text variant="muted">
-          {formatNumber(cmToDisplay(heightCm), 0)} {HEIGHT_UNIT} · {tr('зараз', 'now')}{' '}
+          {formatNumber(cmToDisplay(heightCm), 0)} {HEIGHT_UNIT} · {t`зараз`}{' '}
           {formatWeight(weightKg, 1)} {WEIGHT_UNIT}
         </Text>
       </View>
@@ -251,22 +234,22 @@ function BmiClasses({ weightKg, heightCm }: { weightKg: number; heightCm: number
               <Text variant="body">{c.label}</Text>
               <Text variant="muted">
                 {c.from === 0
-                  ? tr(`ІМТ до ${next}`, `BMI under ${next}`)
+                  ? t`ІМТ до ${next}`
                   : next === undefined
-                    ? tr(`ІМТ від ${c.from}`, `BMI ${c.from}+`)
-                    : `${tr('ІМТ', 'BMI')} ${c.from}–${next}`}
+                    ? t`ІМТ від ${c.from}`
+                    : `${t`ІМТ`} ${c.from}–${next}`}
                 {' · '}
                 {c.from === 0
-                  ? tr(`до ${kg(toKg!)}`, `under ${kg(toKg!)}`)
+                  ? t`до ${kg(toKg!)}`
                   : toKg === undefined
-                    ? tr(`від ${kg(fromKg)}`, `${kg(fromKg)}+`)
+                    ? t`від ${kg(fromKg)}`
                     : `${formatWeight(fromKg, 0)}–${kg(toKg)}`}
               </Text>
             </View>
             <Text
               variant="heading"
               style={{ color: here ? ZONE_COLOR[c.zone] : colors.textSecondary }}>
-              {here ? tr('ти тут', 'you') : `${formatWeightDelta(delta)} ${WEIGHT_UNIT}`}
+              {here ? t`ти тут` : `${formatWeightDelta(delta)} ${WEIGHT_UNIT}`}
             </Text>
           </Row>
         );
@@ -275,7 +258,7 @@ function BmiClasses({ weightKg, heightCm }: { weightKg: number; heightCm: number
   );
 }
 
-const G = tr('г', 'g');
+const G = t`г`;
 const formatGrams = (g: number) => String(g);
 
 type MacroKey = (typeof MACROS)[number]['key'];
@@ -321,7 +304,7 @@ function MacroGoalsCard({
           />
         )}
       </BottomSheet>
-      <Text variant="overline">{tr('БЖВ на день', 'Daily macros')}</Text>
+      <Text variant="overline">{t`БЖВ на день`}</Text>
       {MACROS.map((m) => (
         <MacroGoalRow
           key={m.key}
@@ -335,10 +318,7 @@ function MacroGoalsCard({
       ))}
       <Text variant="muted" style={[styles.macroTotal, off && { color: colors.warning }]}>
         {off
-          ? tr(
-              `Разом ${formatKcal(total)} ${KCAL}, а норма ${formatKcal(goal)} ${KCAL}`,
-              `${formatKcal(total)} ${KCAL} in all, the goal is ${formatKcal(goal)} ${KCAL}`,
-            )
+          ? t`Разом ${formatKcal(total)} ${KCAL}, а норма ${formatKcal(goal)} ${KCAL}`
           : autoHint(
               MACROS.filter((m) => custom[m.key] === undefined).map((m) => m.label),
               total,
@@ -351,12 +331,12 @@ function MacroGoalsCard({
 /** Which macros still follow the kcal goal, by name, or the kcal of all three set by hand. */
 function autoHint(auto: string[], total: number) {
   if (auto.length === 0)
-    return tr(`Разом ${formatKcal(total)} ${KCAL}`, `${formatKcal(total)} ${KCAL} in all`);
+    return t`Разом ${formatKcal(total)} ${KCAL}`;
   if (auto.length === MACROS.length)
-    return tr('Усе рахується з норми калорій.', 'All follow the kcal goal.');
+    return t`Усе рахується з норми калорій.`;
   const [first, ...rest] = auto;
-  const names = [first, ...rest.map((n) => n.toLocaleLowerCase(locale))].join(tr(' і ', ' and '));
-  return tr(`${names} рахуються з норми калорій.`, `${names} follow the kcal goal.`);
+  const names = [first, ...rest.map((n) => n.toLocaleLowerCase(locale))].join(t` і `);
+  return t`${names} рахуються з норми калорій.`;
 }
 
 /** One macro's daily grams; tapped, it opens the wheel. */
@@ -386,7 +366,7 @@ function MacroGoalRow({
         <Text variant="body">{label}</Text>
         <Text variant="muted">
           {formatKcal(grams * kcalPerG)} {KCAL}
-          {!custom && ` · ${tr('авто', 'auto')}`}
+          {!custom && ` · ${t`авто`}`}
         </Text>
       </View>
       <View style={[styles.macroInput, custom && { borderColor: color }]}>
@@ -428,7 +408,7 @@ function MacroSheet({
         </Row>
         <Text variant="muted">
           {formatKcal(value * kcalPerG)} {KCAL}
-          {!custom && value === grams && ` · ${tr('авто', 'auto')}`}
+          {!custom && value === grams && ` · ${t`авто`}`}
         </Text>
       </View>
       <View style={styles.macroWheel}>
@@ -447,7 +427,7 @@ function MacroSheet({
       <Row style={styles.macroSheetButtons}>
         {custom && (
           <Button
-            title={tr('Авто', 'Auto')}
+            title={t`Авто`}
             icon="refresh"
             variant="secondary"
             style={styles.flex}
@@ -455,7 +435,7 @@ function MacroSheet({
           />
         )}
         <Button
-          title={tr('Зберегти', 'Save')}
+          title={t`Зберегти`}
           icon="checkmark"
           style={styles.flex}
           onPress={() => onSave(value)}
@@ -520,11 +500,11 @@ const snapGoal = (kcal: number, scale: CalorieScale) =>
 /** What the goal does to the weight, in a word or two. */
 function zoneLabel(zone: CalorieZone, diff: number, stable: boolean) {
   if (zone === 'danger') {
-    return diff < 0 ? tr('Надто мало', 'Too little') : tr('Забагато', 'Too much');
+    return diff < 0 ? t`Надто мало` : t`Забагато`;
   }
-  if (zone === 'warning') return tr('Швидкий набір', 'Fast gain');
-  if (stable) return tr('Підтримка ваги', 'Maintenance');
-  return diff < 0 ? tr('Схуднення', 'Weight loss') : tr('Повільний набір', 'Lean gain');
+  if (zone === 'warning') return t`Швидкий набір`;
+  if (stable) return t`Підтримка ваги`;
+  return diff < 0 ? t`Схуднення` : t`Повільний набір`;
 }
 
 /**
@@ -562,12 +542,12 @@ function GoalCard({
   return (
     <Card style={styles.goalCard}>
       <View style={styles.goalValue}>
-        <Text variant="overline">{tr('Денна норма', 'Daily goal')}</Text>
+        <Text variant="overline">{t`Денна норма`}</Text>
         <Text variant="hero" style={{ color: textColor }}>
           {formatKcal(goal)}
           <Text style={styles.goalUnit}>
             {' '}
-            {KCAL}/{tr('день', 'day')}
+            {KCAL}/{t`день`}
           </Text>
         </Text>
         {zone && (
@@ -591,7 +571,7 @@ function GoalCard({
           onRelease={onRelease}
         />
         <Text variant="muted" style={styles.hint}>
-          {tr('Потягни повзунок, щоб змінити норму', 'Drag the slider to change the goal')}
+          {t`Потягни повзунок, щоб змінити норму`}
         </Text>
       </View>
 
@@ -601,20 +581,20 @@ function GoalCard({
             <PaceTile
               value={stable ? '0' : formatWeightDelta(week)}
               unit={WEIGHT_UNIT}
-              label={tr('за тиждень', 'a week')}
+              label={t`за тиждень`}
               color={textColor}
             />
             <PaceTile
               value={stable ? '0' : formatWeightDelta((week * 30) / 7)}
               unit={WEIGHT_UNIT}
-              label={tr('за місяць', 'a month')}
+              label={t`за місяць`}
               color={textColor}
             />
             <PaceTile
               value={diff === 0 ? '0' : `${diff > 0 ? '+' : '−'}${formatKcal(Math.abs(diff))}`}
               unit={KCAL}
               label={
-                diff < 0 ? tr('дефіцит/день', 'deficit/day') : tr('профіцит/день', 'surplus/day')
+                diff < 0 ? t`дефіцит/день` : t`профіцит/день`
               }
               color={textColor}
             />
@@ -625,13 +605,10 @@ function GoalCard({
               <Ionicons name="warning-outline" size={16} color={color} />
               <Text style={[styles.adviceText, { color }]}>
                 {zone === 'warning'
-                  ? tr('Частина набору піде в жир.', 'Part of the gain goes to fat.')
+                  ? t`Частина набору піде в жир.`
                   : diff < 0
-                    ? tr(
-                        'Швидше за 1% ваги на тиждень: разом із жиром підуть мʼязи.',
-                        'Faster than 1% of weight a week: muscle goes along with fat.',
-                      )
-                    : tr('Набір піде переважно в жир.', 'The gain goes mostly to fat.')}
+                    ? t`Швидше за 1% ваги на тиждень: разом із жиром підуть мʼязи.`
+                    : t`Набір піде переважно в жир.`}
               </Text>
             </Row>
           )}
@@ -716,7 +693,7 @@ function Scale({
           side="top"
           x={share(recommended) * width}
           width={width}
-          label={tr('Рекомендовано', 'Recommended')}
+          label={t`Рекомендовано`}
           value={formatKcal(recommended)}
           color={colors.accent}
           onPress={() => {
@@ -748,7 +725,7 @@ function Scale({
           side="bottom"
           x={share(tdee) * width}
           width={width}
-          label={tr('Підтримка', 'Maintenance')}
+          label={t`Підтримка`}
           value={formatKcal(Math.round(tdee / 10) * 10)}
           color={colors.textSecondary}
         />
@@ -870,11 +847,8 @@ function ProfileRow({
       ? [
           `${formatWeight(weightKg, 1)} ${WEIGHT_UNIT}`,
           `${formatNumber(cmToDisplay(profile.heightCm), 0)} ${HEIGHT_UNIT}`,
-          `${age} ${tr('р.', 'y.o.')}`,
-          tr(
-            `${ACTIVITY[profile.activity].label.toLowerCase()} активність`,
-            `${ACTIVITY[profile.activity].label.toLowerCase()} activity`,
-          ),
+          `${age} ${t`р.`}`,
+          t`${ACTIVITY[profile.activity].label.toLowerCase()} активність`,
         ].join(' · ')
       : null;
 
@@ -889,18 +863,15 @@ function ProfileRow({
         {facts ? (
           <>
             <Text variant="body">
-              {tr('Ціль', 'Goal')}: {WEIGHT_GOAL[profile.goal].label.toLowerCase()}
+              {t`Ціль`}: {WEIGHT_GOAL[profile.goal].label.toLowerCase()}
             </Text>
             <Text variant="muted">{facts}</Text>
           </>
         ) : (
           <>
-            <Text variant="body">{tr('Заповни профіль', 'Fill in the profile')}</Text>
+            <Text variant="body">{t`Заповни профіль`}</Text>
             <Text variant="muted">
-              {tr(
-                `Вкажи ${missing.join(', ')}, щоб бачити темп і безпечні межі.`,
-                `Enter your ${missing.join(', ')} to see the pace and safe limits.`,
-              )}
+              {t`Вкажи ${missing.join(', ')}, щоб бачити темп і безпечні межі.`}
             </Text>
           </>
         )}

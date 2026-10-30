@@ -1,14 +1,14 @@
+import { plural, t } from '@lingui/core/macro';
 import { Directory, File, Paths } from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import { Platform } from 'react-native';
 
 import type { PhotoPose } from '@/db/schema';
-import { plural, tr } from '@/lib/i18n';
 
 export const POSE_LABELS: Record<PhotoPose, string> = {
-  front: tr('Спереду', 'Front'),
-  side: tr('Збоку', 'Side'),
-  back: tr('Ззаду', 'Back'),
+  front: t`Спереду`,
+  side: t`Збоку`,
+  back: t`Ззаду`,
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -84,12 +84,12 @@ export function weightNear<T extends { measuredAt: number }>(weights: T[], at: n
 /** Time between two photos: "той самий день", "5 днів", "3 тижні", "4 місяці". */
 export function formatSpan(ms: number) {
   const days = Math.round(Math.abs(ms) / DAY_MS);
-  if (days === 0) return tr('той самий день', 'the same day');
-  if (days < 14) return `${days} ${plural(days, ['день', 'дні', 'днів'], ['day', 'days'])}`;
+  if (days === 0) return t`той самий день`;
+  if (days < 14) return `${days} ${plural(days, { one: 'день', few: 'дні', many: 'днів', other: 'дні' })}`;
   if (days < 60) {
     const weeks = Math.round(days / 7);
-    return `${weeks} ${plural(weeks, ['тиждень', 'тижні', 'тижнів'], ['week', 'weeks'])}`;
+    return `${weeks} ${plural(weeks, { one: 'тиждень', few: 'тижні', many: 'тижнів', other: 'тижні' })}`;
   }
   const months = Math.round(days / 30.44);
-  return `${months} ${plural(months, ['місяць', 'місяці', 'місяців'], ['month', 'months'])}`;
+  return `${months} ${plural(months, { one: 'місяць', few: 'місяці', many: 'місяців', other: 'місяці' })}`;
 }

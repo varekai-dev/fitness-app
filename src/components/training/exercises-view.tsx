@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
@@ -13,7 +14,6 @@ import { listExercises } from '@/db/exercises';
 import { MUSCLE_GROUPS, type Exercise, type MuscleGroup } from '@/db/schema';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { useScrollResetOnTabLeave } from '@/hooks/use-scroll-reset-on-tab-leave';
-import { tr } from '@/lib/i18n';
 import { MUSCLE_GROUP_LABELS, TRACKING_TYPE_LABELS } from '@/lib/labels';
 import { colors, spacing } from '@/theme';
 
@@ -43,14 +43,14 @@ export function ExercisesView({ bottomSpace }: { bottomSpace: number }) {
         ListHeaderComponent={
           <View style={styles.header}>
             <SearchField
-              placeholder={tr('Пошук вправ…', 'Search exercises…')}
+              placeholder={t`Пошук вправ…`}
               value={search}
               onChangeText={setSearch}
               clearButtonMode="while-editing"
             />
             <ChipScroller>
               <Chip
-                label={tr('Усі', 'All')}
+                label={t`Усі`}
                 selected={group === null}
                 onPress={() => setGroup(null)}
               />
@@ -64,7 +64,7 @@ export function ExercisesView({ bottomSpace }: { bottomSpace: number }) {
               ))}
             </ChipScroller>
             <Text variant="heading">
-              {group ? MUSCLE_GROUP_LABELS[group] : tr('Усі вправи', 'All exercises')} ·{' '}
+              {group ? MUSCLE_GROUP_LABELS[group] : t`Усі вправи`} ·{' '}
               {filtered.length}
             </Text>
           </View>
@@ -106,7 +106,7 @@ export function ExercisesView({ bottomSpace }: { bottomSpace: number }) {
           );
         }}
         ListEmptyComponent={
-          <EmptyState icon="barbell" title={tr('Нічого не знайдено', 'Nothing found')} />
+          <EmptyState icon="barbell" title={t`Нічого не знайдено`} />
         }
       />
       {dialog.element}

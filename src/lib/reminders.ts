@@ -1,4 +1,5 @@
-import { locale, tr } from '@/lib/i18n';
+import { t } from '@lingui/core/macro';
+import { locale } from '@/lib/i18n';
 import { PHOTO_EVERY_DAYS } from '@/lib/progress-photos';
 import { formatVolume, VOLUME_UNIT } from '@/lib/units';
 import { addDays, startOfDay } from '@/lib/water';
@@ -32,7 +33,7 @@ export const formatClock = (min: number) =>
 
 /** "2 год", "1,5 год". */
 export const formatInterval = (min: number) =>
-  `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(min / 60)} ${tr('год', 'h')}`;
+  `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(min / 60)} ${t`год`}`;
 
 /** Time of day `min` minutes after the local midnight `dayStart` (DST-safe). */
 const at = (dayStart: number, min: number) => {
@@ -107,17 +108,11 @@ export function planWaterReminders({
       reminders.push({
         at: time,
         title: isEnd
-          ? tr('Денна норма води ще не випита', 'Daily water goal not reached yet')
-          : tr('Час випити води', 'Time to drink some water'),
+          ? t`Денна норма води ще не випита`
+          : t`Час випити води`,
         body: isEnd
-          ? tr(
-              `Бракує ${formatVolume(deficit)} ${VOLUME_UNIT} до цілі ${formatVolume(goal)} ${VOLUME_UNIT}.`,
-              `${formatVolume(deficit)} ${VOLUME_UNIT} short of the ${formatVolume(goal)} ${VOLUME_UNIT} goal.`,
-            )
-          : tr(
-              `До ${formatClock(min)} варто випити ${formatVolume(roundUp(expected))} ${VOLUME_UNIT} — бракує ${formatVolume(deficit)} ${VOLUME_UNIT}.`,
-              `Aim for ${formatVolume(roundUp(expected))} ${VOLUME_UNIT} by ${formatClock(min)}: ${formatVolume(deficit)} ${VOLUME_UNIT} to go.`,
-            ),
+          ? t`Бракує ${formatVolume(deficit)} ${VOLUME_UNIT} до цілі ${formatVolume(goal)} ${VOLUME_UNIT}.`
+          : t`До ${formatClock(min)} варто випити ${formatVolume(roundUp(expected))} ${VOLUME_UNIT} — бракує ${formatVolume(deficit)} ${VOLUME_UNIT}.`,
       });
       if (reminders.length >= MAX_SCHEDULED) return reminders;
     }
@@ -149,16 +144,10 @@ export function planPhotoReminder({
   while (at(day, min) <= now) day = addDays(day, 1);
   return {
     at: at(day, min),
-    title: tr('Час для фото прогресу', 'Time for a progress photo'),
+    title: t`Час для фото прогресу`,
     body:
       lastPhotoAt === null
-        ? tr(
-            'Зроби перше фото, щоб потім бачити, як змінюється тіло.',
-            'Take your first photo to see how your body changes over time.',
-          )
-        : tr(
-            'Минув тиждень від останнього фото. Зроби нове в тій самій позі й при тому ж світлі.',
-            'A week has passed since the last photo. Take a new one in the same pose and light.',
-          ),
+        ? t`Зроби перше фото, щоб потім бачити, як змінюється тіло.`
+        : t`Минув тиждень від останнього фото. Зроби нове в тій самій позі й при тому ж світлі.`,
   };
 }

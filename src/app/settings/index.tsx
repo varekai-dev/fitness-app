@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { AppUpdateCard } from '@/components/app-update';
@@ -8,7 +9,6 @@ import { useAchievements } from '@/hooks/use-achievements';
 import { useAccount } from '@/lib/account';
 import { achievementTotals, newLevels } from '@/lib/achievements';
 import { healthName } from '@/lib/health';
-import { tr } from '@/lib/i18n';
 import { openPrivacyPolicy } from '@/lib/legal';
 import { useEnabledModules } from '@/lib/modules';
 import { notificationsSupported } from '@/lib/notifications';
@@ -18,61 +18,55 @@ export default function SettingsScreen() {
   const achievements = useAchievements();
   const user = useAccount();
   return (
-    <Screen title={tr('Налаштування', 'Settings')}>
+    <Screen title={t`Налаштування`}>
       <SettingsLink
         icon="person-circle-outline"
-        title={tr('Акаунт', 'Account')}
-        hint={user ? user.email : tr('Вхід, реєстрація', 'Sign in, sign up')}
+        title={t`Акаунт`}
+        hint={user ? user.email : t`Вхід, реєстрація`}
         href="/settings/account"
       />
       <SettingsLink
         icon="person-outline"
-        title={tr('Профіль', 'Profile')}
-        hint={tr('Вага, зріст, вік', 'Weight, height, age')}
+        title={t`Профіль`}
+        hint={t`Вага, зріст, вік`}
         href="/profile"
       />
       {enabled.includes('food') && (
         <SettingsLink
           icon="restaurant-outline"
-          title={tr('Харчування', 'Food')}
-          hint={tr(
-            'Норма калорій, шаблони, підказки й AI',
-            'Calorie goal, templates, suggestions and AI',
-          )}
+          title={t`Харчування`}
+          hint={t`Норма калорій, шаблони, підказки й AI`}
           href="/settings/food"
         />
       )}
       {enabled.includes('water') && (
         <SettingsLink
           icon="water-outline"
-          title={tr('Вода', 'Water')}
-          hint={tr('Денна ціль', 'Daily goal')}
+          title={t`Вода`}
+          hint={t`Денна ціль`}
           href="/settings/water"
         />
       )}
       <SettingsLink
         icon="ribbon-outline"
-        title={tr('Підсумки', 'Recap')}
-        hint={tr(
-          'Місяць і рік у цифрах, щоб поділитися',
-          'Your month and year in numbers, to share',
-        )}
+        title={t`Підсумки`}
+        hint={t`Місяць і рік у цифрах, щоб поділитися`}
         href="/recap"
       />
       <SettingsLink
         icon="medal-outline"
-        title={tr('Досягнення', 'Achievements')}
+        title={t`Досягнення`}
         hint={achievementsHint(achievements)}
         href="/achievements"
       />
       {notificationsSupported && (
         <SettingsLink
           icon="notifications-outline"
-          title={tr('Сповіщення', 'Notifications')}
+          title={t`Сповіщення`}
           hint={
             enabled.includes('water')
-              ? tr('Вода, мій день', 'Water, my day')
-              : tr('Мій день, фото', 'My day, photos')
+              ? t`Вода, мій день`
+              : t`Мій день, фото`
           }
           href="/settings/notifications"
         />
@@ -80,29 +74,29 @@ export default function SettingsScreen() {
       {Platform.OS !== 'web' && (
         <SettingsLink
           icon="link-outline"
-          title={tr('Інтеграції', 'Integrations')}
+          title={t`Інтеграції`}
           hint={healthName}
           href="/settings/integrations"
         />
       )}
       <SettingsLink
         icon="options-outline"
-        title={tr('Застосунок', 'App')}
-        hint={tr('Мова, одиниці, розділи', 'Language, units, sections')}
+        title={t`Застосунок`}
+        hint={t`Мова, одиниці, розділи`}
         href="/settings/app"
       />
       {Platform.OS !== 'web' && (
         <SettingsLink
           icon="cloud-upload-outline"
-          title={tr('Резервна копія', 'Backup')}
-          hint={tr('Сервер, експорт, імпорт', 'Server, export, import')}
+          title={t`Резервна копія`}
+          hint={t`Сервер, експорт, імпорт`}
           href="/settings/backup"
         />
       )}
       <SettingsLink
         icon="shield-checkmark-outline"
-        title={tr('Конфіденційність', 'Privacy')}
-        hint={tr('Які дані й куди', 'What data goes where')}
+        title={t`Конфіденційність`}
+        hint={t`Які дані й куди`}
         onPress={openPrivacyPolicy}
       />
       {/* Fills the rest of the screen so the version sits at the bottom. */}
@@ -113,11 +107,11 @@ export default function SettingsScreen() {
 }
 
 function achievementsHint(list: ReturnType<typeof useAchievements>) {
-  if (!list) return tr('Рівні за тренування, їжу й воду', 'Levels for training, food and water');
+  if (!list) return t`Рівні за тренування, їжу й воду`;
   const { unlocked, total } = achievementTotals(list);
   const fresh = newLevels(list, readSeenLevels());
   return fresh > 0
-    ? `${tr('Нових', 'New')}: ${fresh} · ${unlocked} / ${total}`
+    ? `${t`Нових`}: ${fresh} · ${unlocked} / ${total}`
     : `${unlocked} / ${total}`;
 }
 

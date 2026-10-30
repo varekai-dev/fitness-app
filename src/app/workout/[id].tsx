@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -32,7 +33,6 @@ import {
 import { listBodyWeights } from '@/db/body-weight';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { bodyWeightAt, exerciseKcal, formatKcal, workoutKcal } from '@/lib/calories';
-import { tr } from '@/lib/i18n';
 import { formatDate, formatTargets } from '@/lib/labels';
 import { formatDuration, formatSet, isBetter, setMetric, workoutDurationMs } from '@/lib/metrics';
 import { computeProgress, recordBefore } from '@/lib/progress';
@@ -66,8 +66,8 @@ export default function WorkoutScreen() {
   if (data === null) {
     return (
       <View style={styles.screen}>
-        <ScreenHeader title={tr('Тренування', 'Workout')} />
-        <EmptyState icon="alert-circle" title={tr('Тренування не знайдено', 'Workout not found')} />
+        <ScreenHeader title={t({ message: 'Тренування', context: 'Workout' })} />
+        <EmptyState icon="alert-circle" title={t`Тренування не знайдено`} />
       </View>
     );
   }
@@ -94,12 +94,12 @@ function FinishedWorkout({
 
   const remove = () =>
     dialog.show({
-      title: tr('Видалити тренування?', 'Delete workout?'),
-      message: tr('Усі записані підходи буде видалено.', 'All logged sets will be deleted.'),
+      title: t`Видалити тренування?`,
+      message: t`Усі записані підходи буде видалено.`,
       buttons: [
-        { text: tr('Ні', 'No'), style: 'cancel' },
+        { text: t`Ні`, style: 'cancel' },
         {
-          text: tr('Видалити', 'Delete'),
+          text: t`Видалити`,
           style: 'destructive',
           onPress: async () => {
             await deleteWorkout(workout.id);
@@ -114,8 +114,8 @@ function FinishedWorkout({
       style={styles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScreenHeader
-        title={tr('Тренування', 'Workout')}
-        right={<Button title={tr('Видалити', 'Delete')} small variant="danger" onPress={remove} />}
+        title={t({ message: 'Тренування', context: 'Workout' })}
+        right={<Button title={t`Видалити`} small variant="danger" onPress={remove} />}
       />
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 48 }]}
@@ -129,7 +129,7 @@ function FinishedWorkout({
         <Row style={styles.stats}>
           <View style={styles.stat}>
             <Text variant="muted" style={styles.statLabel}>
-              {tr('ТРИВАЛІСТЬ', 'DURATION')}
+              {t`ТРИВАЛІСТЬ`}
             </Text>
             <Text variant="heading" style={styles.statValue}>
               {formatDuration(workoutDurationMs(workout, workout.startedAt) / 1000)}
@@ -137,7 +137,7 @@ function FinishedWorkout({
           </View>
           <View style={styles.stat}>
             <Text variant="muted" style={styles.statLabel}>
-              {tr('ПІДХОДИ', 'SETS')}
+              {t`ПІДХОДИ`}
             </Text>
             <Text variant="heading" style={[styles.statValue, styles.accent]}>
               {String(doneSets)}
@@ -145,7 +145,7 @@ function FinishedWorkout({
           </View>
           <View style={styles.stat}>
             <Text variant="muted" style={styles.statLabel}>
-              {tr('ККАЛ', 'KCAL')}
+              {t`ККАЛ`}
             </Text>
             <Text variant="heading" style={styles.statValue}>
               {bodyKg !== null ? `~${Math.round(workoutKcal(workout.exercises, bodyKg))}` : '—'}
@@ -154,10 +154,7 @@ function FinishedWorkout({
         </Row>
         {bodyKg === null && (
           <Text variant="muted" style={styles.hint}>
-            {tr(
-              'Додай вагу тіла, щоб рахувати калорії.',
-              'Add your body weight to count calories.',
-            )}
+            {t`Додай вагу тіла, щоб рахувати калорії.`}
           </Text>
         )}
 
@@ -180,10 +177,7 @@ function FinishedWorkout({
         ))}
 
         <Text variant="muted" style={styles.hint}>
-          {tr(
-            'Торкнись підходу, щоб змінити його, або свайпни вліво, щоб видалити.',
-            'Tap a set to change it, or swipe it left to delete it.',
-          )}
+          {t`Торкнись підходу, щоб змінити його, або свайпни вліво, щоб видалити.`}
         </Text>
       </ScrollView>
       <SetSheet edit={edit} onClose={() => setEdit(null)} />
@@ -249,7 +243,7 @@ function ExerciseBlock({
           <View style={styles.skippedBadge}>
             <Ionicons name="play-forward" size={12} color={colors.textSecondary} />
             <Text variant="caption" style={styles.skippedText}>
-              {tr('Пропущено', 'Skipped')}
+              {t`Пропущено`}
             </Text>
           </View>
         )}
@@ -259,8 +253,8 @@ function ExerciseBlock({
         <Ionicons name="time-outline" size={14} color={colors.textMuted} />
         <Text variant="muted" style={styles.flex} numberOfLines={2}>
           {last
-            ? `${tr('Минулого разу', 'Last time')}: ${last.sets.map((s) => formatSet(type, s)).join(', ')}`
-            : `${tr('Минулого разу', 'Last time')}: —`}
+            ? `${t`Минулого разу`}: ${last.sets.map((s) => formatSet(type, s)).join(', ')}`
+            : `${t`Минулого разу`}: —`}
         </Text>
       </View>
       {we.sets.map((s, i) => (
@@ -283,7 +277,7 @@ function ExerciseBlock({
         />
       ))}
       <Button
-        title={tr('Додати підхід', 'Add set')}
+        title={t`Додати підхід`}
         icon="add"
         variant="ghost"
         small

@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -10,7 +11,6 @@ import { reviewChange, reviewDay, type ReviewState, type StoredReview } from '@/
 import type { Meal } from '@/db/schema';
 import { dishKey, formatGrams, formatKcal } from '@/lib/food';
 import { type DayFood, type DayReview, type SuggestedFood } from '@/lib/groq';
-import { tr } from '@/lib/i18n';
 import { colors, radius, spacing } from '@/theme';
 
 // Logging a few dishes in a row asks AI once, for the last of them.
@@ -35,14 +35,14 @@ function suggestions({ snacks, fill = [] }: DayReview) {
 
 /** Kcal and the macro the day is short of; protein when that isn't known. */
 function suggestionMeta(food: SuggestedFood, lacking: DayReview['lacking']) {
-  const kcal = `${formatKcal(food.kcal)} ${tr('ккал', 'kcal')}`;
-  const g = tr('г', 'g');
+  const kcal = `${formatKcal(food.kcal)} ${t`ккал`}`;
+  const g = t`г`;
   if (lacking === 'kcal') return kcal;
   if (lacking === 'fat' && food.fatG != null)
-    return `${kcal} · ${tr('Ж', 'F')} ${Math.round(food.fatG)} ${g}`;
+    return `${kcal} · ${t`Ж`} ${Math.round(food.fatG)} ${g}`;
   if (lacking === 'carbs' && food.carbsG != null)
-    return `${kcal} · ${tr('В', 'C')} ${Math.round(food.carbsG)} ${g}`;
-  return `${kcal} · ${tr('Б', 'P')} ${formatGrams(Math.round(food.proteinG))} ${g}`;
+    return `${kcal} · ${t`В`} ${Math.round(food.carbsG)} ${g}`;
+  return `${kcal} · ${t`Б`} ${formatGrams(Math.round(food.proteinG))} ${g}`;
 }
 
 /**
@@ -111,7 +111,7 @@ export function DayReviewCard({
           <Ionicons name="sparkles" size={16} color={colors.accent} />
         </View>
         <Text variant="caption" style={styles.flex}>
-          {tr('AI-коментар до дня', 'AI on your day')}
+          {t`AI-коментар до дня`}
         </Text>
         {loading ? (
           <Spinner color={colors.textSecondary} />
@@ -139,8 +139,8 @@ export function DayReviewCard({
             <View style={styles.suggestions}>
               <Text variant="caption">
                 {isToday
-                  ? tr('Що додати', 'What to add')
-                  : tr('Чим можна було добрати', 'What could have closed the gap')}
+                  ? t`Що додати`
+                  : t`Чим можна було добрати`}
               </Text>
               {suggested.map((food) => (
                 <AddFoodRow
@@ -162,11 +162,11 @@ export function DayReviewCard({
           )}
         </View>
       ) : loading ? (
-        <Text variant="muted">{tr('Дивлюся, як минає день…', 'Looking at your day…')}</Text>
+        <Text variant="muted">{t`Дивлюся, як минає день…`}</Text>
       ) : (
         !failed && (
           <Button
-            title={tr('Прокоментувати день', 'Comment on the day')}
+            title={t`Прокоментувати день`}
             variant="secondary"
             small
             onPress={run}
@@ -179,7 +179,7 @@ export function DayReviewCard({
           <Text variant="muted" style={styles.flex}>
             {failed.message}
           </Text>
-          <Button title={tr('Ще раз', 'Retry')} variant="secondary" small onPress={run} />
+          <Button title={t`Ще раз`} variant="secondary" small onPress={run} />
         </Row>
       )}
     </Card>
@@ -206,7 +206,7 @@ function FoodVerdicts({
         onPress={onToggle}
         style={({ pressed }) => [styles.verdicts, pressed && styles.pressed]}>
         <Text variant="caption" style={styles.flex}>
-          {tr('Оцінка страв', 'Your dishes')}
+          {t`Оцінка страв`}
         </Text>
         {good > 0 && (
           <Row style={styles.count}>

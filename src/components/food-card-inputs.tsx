@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRef, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, type TextInputProps } from 'react-native';
@@ -6,7 +7,6 @@ import { MACROS } from '@/components/calorie-summary';
 import { Row, Text } from '@/components/ui';
 import { selectOnFocus } from '@/hooks/select-on-focus';
 import { useDeferredFocus } from '@/hooks/use-deferred-focus';
-import { tr } from '@/lib/i18n';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 // The fields of a dish typed in or fixed by hand, laid out like the card of a
@@ -77,7 +77,7 @@ export function KcalInput({
         maxLength={6}
         style={styles.kcalInput}
       />
-      <Text style={styles.kcalUnit}>{tr('ккал', 'kcal')}</Text>
+      <Text style={styles.kcalUnit}>{t`ккал`}</Text>
     </Pressable>
   );
 }
@@ -141,7 +141,7 @@ function MacroTile({
           style={[styles.macroInput, { color }]}
         />
         <Text variant="heading" style={{ color }}>
-          {tr('г', 'g')}
+          {t`г`}
         </Text>
       </Row>
       <Text variant="muted">{label}</Text>

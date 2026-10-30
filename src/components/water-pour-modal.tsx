@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useEffect, useId, useState } from 'react';
@@ -16,7 +17,6 @@ import Svg, { ClipPath, Defs, G, LinearGradient, Path, Rect, Stop } from 'react-
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { Button, CircleButton, Text } from '@/components/ui';
-import { tr } from '@/lib/i18n';
 import { displayToMl, flOz, formatVolume, mlToDisplay, unitSystem, VOLUME_UNIT } from '@/lib/units';
 import { GLASS_PRESETS, type GlassPreset } from '@/lib/water';
 import { colors, fontSize, radius, spacing } from '@/theme';
@@ -230,7 +230,7 @@ function PourContent({
           <View
             style={{ width: drawW, height: drawH }}
             accessibilityRole="adjustable"
-            accessibilityLabel={tr('Скільки налити', 'How much to pour')}
+            accessibilityLabel={t`Скільки налити`}
             accessibilityValue={{ text: `${formatVolume(ml)} ${VOLUME_UNIT}` }}>
             {/* Remounted per container: Android keeps a clip path's old outline otherwise. */}
             <Svg key={shapeIndex} width={drawW} height={drawH} viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}>
@@ -285,7 +285,7 @@ function PourContent({
           <Text style={styles.unit}> {VOLUME_UNIT}</Text>
         </Text>
         <Text variant="muted">
-          {glass.label} · {tr('до', 'up to')} {formatVolume(capacity)} {VOLUME_UNIT}
+          {glass.label} · {t({ message: 'до', context: 'up to' })} {formatVolume(capacity)} {VOLUME_UNIT}
         </Text>
 
         <View style={styles.chips}>
@@ -322,14 +322,8 @@ function PourContent({
         <Button
           title={
             editMl != null
-              ? tr(
-                  `Зберегти ${formatVolume(ml)} ${VOLUME_UNIT}`,
-                  `Save ${formatVolume(ml)} ${VOLUME_UNIT}`,
-                )
-              : tr(
-                  `Додати ${formatVolume(ml)} ${VOLUME_UNIT}`,
-                  `Add ${formatVolume(ml)} ${VOLUME_UNIT}`,
-                )
+              ? t`Зберегти ${formatVolume(ml)} ${VOLUME_UNIT}`
+              : t`Додати ${formatVolume(ml)} ${VOLUME_UNIT}`
           }
           icon={editMl != null ? 'checkmark' : 'water'}
           disabled={ml <= 0}

@@ -1,7 +1,7 @@
+import { t } from '@lingui/core/macro';
 import type MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { ComponentProps } from 'react';
 
-import { tr } from '@/lib/i18n';
 import { flOz, unitSystem } from '@/lib/units';
 
 export type GlassIconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
@@ -15,9 +15,9 @@ const PRESET_ML = imperial ? [7, 10, 16].map(flOz) : [200, 300, 500];
 
 /** Containers offered for logging water, smallest first. */
 export const GLASS_PRESETS: GlassPreset[] = [
-  { ml: PRESET_ML[0], label: tr('Чашка', 'Cup'), icon: 'cup-outline' },
-  { ml: PRESET_ML[1], label: tr('Склянка', 'Glass'), icon: 'cup-water' },
-  { ml: PRESET_ML[2], label: tr('Пляшка', 'Bottle'), icon: 'bottle-soda-classic-outline' },
+  { ml: PRESET_ML[0], label: t`Чашка`, icon: 'cup-outline' },
+  { ml: PRESET_ML[1], label: t`Склянка`, icon: 'cup-water' },
+  { ml: PRESET_ML[2], label: t`Пляшка`, icon: 'bottle-soda-classic-outline' },
 ];
 
 export const DEFAULT_WATER_GOAL_ML = 2500;
@@ -30,7 +30,7 @@ export const MAX_WATER_GOAL = imperial ? 200 : 6000;
 export const glassForAmount = (ml: number) =>
   GLASS_PRESETS.find((g) => g.ml === ml) ?? {
     ml,
-    label: tr('Вода', 'Water'),
+    label: t`Вода`,
     icon: 'water-outline' as const,
   };
 

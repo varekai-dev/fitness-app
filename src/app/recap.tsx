@@ -1,3 +1,4 @@
+import { plural, t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Sharing from 'expo-sharing';
 import { useRef, useState } from 'react';
@@ -20,7 +21,6 @@ import {
 import { loadRecapData, type RecapData } from '@/db/recap';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { formatGrams, formatKcal } from '@/lib/food';
-import { plural, tr } from '@/lib/i18n';
 import { formatShortDate } from '@/lib/labels';
 import { formatMetric, formatTonnage } from '@/lib/metrics';
 import { MODULE_INFO, useEnabledModules, useModuleOrder, type AppModule } from '@/lib/modules';
@@ -40,8 +40,8 @@ import { formatVolumeCompact } from '@/lib/units';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 const PERIOD_LABELS: Record<RecapPeriod, string> = {
-  month: tr('Місяць', 'Month'),
-  year: tr('Рік', 'Year'),
+  month: t`Місяць`,
+  year: t`Рік`,
 };
 
 /** Records shown on the card; the rest are listed under it. */
@@ -76,13 +76,13 @@ function oldestEntry(data: RecapData, modules: RecapModule[]) {
   return times.length ? Math.min(...times) : undefined;
 }
 
-const pluralDays = (n: number) => plural(n, ['день', 'дні', 'днів'], ['day', 'days']);
+const pluralDays = (n: number) => plural(n, { one: 'день', few: 'дні', many: 'днів', other: 'дні' });
 
 function formatHours(ms: number) {
   const min = Math.round(ms / 60_000);
   return min < 60
-    ? { value: String(min), unit: tr('хв', 'min') }
-    : { value: String(Math.round(min / 6) / 10), unit: tr('год', 'h') };
+    ? { value: String(min), unit: t`хв` }
+    : { value: String(Math.round(min / 6) / 10), unit: t`год` };
 }
 
 /**
@@ -117,11 +117,11 @@ export default function RecapScreen() {
       const uri = await captureRef(cardRef, { format: 'png', quality: 1, result: 'tmpfile' });
       await Sharing.shareAsync(uri, {
         mimeType: 'image/png',
-        dialogTitle: tr('Поділитися підсумками', 'Share the recap'),
+        dialogTitle: t`Поділитися підсумками`,
       });
     } catch (e) {
       dialog.show({
-        title: tr('Не вдалося поділитися', 'Could not share'),
+        title: t`Не вдалося поділитися`,
         message: (e as Error).message,
         icon: 'alert-circle',
       });
@@ -131,7 +131,7 @@ export default function RecapScreen() {
   };
 
   return (
-    <Screen title={tr('Підсумки', 'Recap')}>
+    <Screen title={t`Підсумки`}>
       <ChipGroup
         options={RECAP_PERIODS}
         value={period}
@@ -158,11 +158,8 @@ export default function RecapScreen() {
       {shown.length === 0 ? (
         <EmptyState
           icon="calendar-outline"
-          title={tr('Нічого не записано', 'Nothing logged')}
-          hint={tr(
-            'Підсумки з’являться, щойно за цей період буде тренування, їжа чи вода.',
-            'The recap appears once this period has a workout, a meal or a drink.',
-          )}
+          title={t`Нічого не записано`}
+          hint={t`Підсумки з’являться, щойно за цей період буде тренування, їжа чи вода.`}
         />
       ) : (
         <>
@@ -171,7 +168,7 @@ export default function RecapScreen() {
             <RecapCard label={range.label} modules={shown} recaps={recaps} />
           </View>
           <Button
-            title={tr('Поділитися', 'Share')}
+            title={t`Поділитися`}
             icon="share-outline"
             loading={sharing}
             onPress={share}
@@ -179,7 +176,7 @@ export default function RecapScreen() {
 
           {records.length > CARD_RECORDS && (
             <>
-              <SectionHeader title={tr('Усі рекорди', 'All records')} />
+              <SectionHeader title={t`Усі рекорди`} />
               {records.map((r) => (
                 <Card key={r.exerciseId}>
                   <Row style={styles.spaceBetween}>
@@ -217,7 +214,7 @@ function RecapCard({
       <View style={styles.glow} />
       <Row style={styles.brand}>
         <Ionicons name="barbell" size={16} color={colors.accent} />
-        <RNText style={styles.brandText}>FitKit · {tr('підсумки', 'recap')}</RNText>
+        <RNText style={styles.brandText}>FitKit · {t`підсумки`}</RNText>
       </Row>
       <RNText style={styles.period}>{label}</RNText>
       {modules.map((m) => (
@@ -248,50 +245,38 @@ function TrainingSection({ recap }: { recap: Recap }) {
       <View style={styles.grid}>
         <BigStat
           value={String(recap.workouts)}
-          label={plural(
-            recap.workouts,
-            ['тренування', 'тренування', 'тренувань'],
-            ['workout', 'workouts'],
-          )}
+          label={plural(recap.workouts, { one: 'тренування', few: 'тренування', many: 'тренувань', other: 'тренування' })}
         />
-        <BigStat value={tonnage.value} unit={tonnage.unit} label={tr('тоннаж', 'volume')} />
-        <BigStat value={time.value} unit={time.unit} label={tr('у залі', 'training')} />
+        <BigStat value={tonnage.value} unit={tonnage.unit} label={t`тоннаж`} />
+        <BigStat value={time.value} unit={time.unit} label={t`у залі`} />
         <BigStat
           value={String(recap.activeDays)}
-          label={plural(
-            recap.activeDays,
-            ['активний день', 'активні дні', 'активних днів'],
-            ['active day', 'active days'],
-          )}
+          label={plural(recap.activeDays, { one: 'активний день', few: 'активні дні', many: 'активних днів', other: 'активні дні' })}
         />
       </View>
 
       {recap.favorite && (
         <View style={styles.block}>
-          <RNText style={styles.blockTitle}>{tr('Улюблена вправа', 'Favorite exercise')}</RNText>
+          <RNText style={styles.blockTitle}>{t`Улюблена вправа`}</RNText>
           <RNText style={styles.favorite} numberOfLines={1}>
             {recap.favorite.name}
           </RNText>
           <RNText style={styles.muted}>
             {recap.favorite.workouts}{' '}
-            {plural(
-              recap.favorite.workouts,
-              ['тренування', 'тренування', 'тренувань'],
-              ['workout', 'workouts'],
-            )}{' '}
+            {plural(recap.favorite.workouts, { one: 'тренування', few: 'тренування', many: 'тренувань', other: 'тренування' })}{' '}
             · {recap.favorite.sets}{' '}
-            {plural(recap.favorite.sets, ['підхід', 'підходи', 'підходів'], ['set', 'sets'])}
+            {plural(recap.favorite.sets, { one: 'підхід', few: 'підходи', many: 'підходів', other: 'підходи' })}
           </RNText>
         </View>
       )}
 
       <View style={styles.block}>
         <RNText style={styles.blockTitle}>
-          {tr('Особисті рекорди', 'Personal records')}: {recap.records.length}
+          {t`Особисті рекорди`}: {recap.records.length}
         </RNText>
         {records.length === 0 ? (
           <RNText style={styles.muted}>
-            {tr('Цього разу без нових рекордів', 'No new records this time')}
+            {t`Цього разу без нових рекордів`}
           </RNText>
         ) : (
           records.map((r) => (
@@ -301,7 +286,7 @@ function TrainingSection({ recap }: { recap: Recap }) {
                 {r.name}
               </RNText>
               {(r.type === 'weight_reps' || r.type === 'weighted_reps') && (
-                <RNText style={styles.muted}>{tr('1ПМ', '1RM')}</RNText>
+                <RNText style={styles.muted}>{t`1ПМ`}</RNText>
               )}
               <RNText style={styles.recordValue}>{formatMetric(r.type, r.value)}</RNText>
             </Row>
@@ -318,33 +303,33 @@ function FoodSection({ recap }: { recap: FoodRecap }) {
       <View style={styles.grid}>
         <BigStat
           value={formatKcal(recap.avgKcal)}
-          unit={tr('ккал', 'kcal')}
-          label={tr('у середньому за день', 'a day on average')}
+          unit={t`ккал`}
+          label={t`у середньому за день`}
         />
         <BigStat
           value={formatGrams(Math.round(recap.avgProteinG))}
-          unit={tr('г', 'g')}
-          label={tr('білка за день', 'protein a day')}
+          unit={t`г`}
+          label={t`білка за день`}
         />
         <BigStat
           value={String(recap.daysWithinGoal)}
           unit={`/ ${recap.loggedDays}`}
-          label={tr('днів у межах цілі', 'days within goal')}
+          label={t`днів у межах цілі`}
         />
         <BigStat
           value={String(recap.loggedDays)}
-          label={`${pluralDays(recap.loggedDays)} ${tr('із записами', 'logged')}`}
+          label={`${pluralDays(recap.loggedDays)} ${t`із записами`}`}
         />
       </View>
       {recap.favorite && (
         <View style={styles.block}>
-          <RNText style={styles.blockTitle}>{tr('Найчастіша страва', 'Most logged dish')}</RNText>
+          <RNText style={styles.blockTitle}>{t`Найчастіша страва`}</RNText>
           <RNText style={styles.favorite} numberOfLines={1}>
             {recap.favorite.name}
           </RNText>
           <RNText style={styles.muted}>
             {recap.favorite.times}{' '}
-            {plural(recap.favorite.times, ['раз', 'рази', 'разів'], ['time', 'times'])}
+            {plural(recap.favorite.times, { one: 'раз', few: 'рази', many: 'разів', other: 'рази' })}
           </RNText>
         </View>
       )}
@@ -355,19 +340,19 @@ function FoodSection({ recap }: { recap: FoodRecap }) {
 function WaterSection({ recap }: { recap: WaterRecap }) {
   return (
     <View style={styles.grid}>
-      <BigStat value={formatVolumeCompact(recap.totalMl)} label={tr('випито', 'drunk')} />
+      <BigStat value={formatVolumeCompact(recap.totalMl)} label={t`випито`} />
       <BigStat
         value={formatVolumeCompact(recap.avgMl)}
-        label={tr('у середньому за день', 'a day on average')}
+        label={t`у середньому за день`}
       />
       <BigStat
         value={String(recap.daysAtGoal)}
         unit={`/ ${recap.loggedDays}`}
-        label={tr('днів з нормою', 'days at goal')}
+        label={t`днів з нормою`}
       />
       <BigStat
         value={formatVolumeCompact(recap.bestDayMl)}
-        label={tr('найбільше за день', 'best day')}
+        label={t`найбільше за день`}
       />
     </View>
   );

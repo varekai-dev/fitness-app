@@ -1,10 +1,10 @@
+import { t } from '@lingui/core/macro';
 import { useRef, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Text } from '@/components/ui';
 import type { Targets, TrackingType } from '@/db/schema';
 import { selectOnFocus } from '@/hooks/select-on-focus';
-import { tr } from '@/lib/i18n';
 import { formatDistance, parseDecimal } from '@/lib/metrics';
 import { DISTANCE_UNIT, displayToKm } from '@/lib/units';
 import { colors, fontSize, radius, spacing } from '@/theme';
@@ -57,21 +57,21 @@ export function TargetsEditor({
 
   return (
     <View style={styles.row}>
-      <Cell label={tr('Підходи', 'Sets')} value={sets} onChange={setSets} onSave={save} />
+      <Cell label={t`Підходи`} value={sets} onChange={setSets} onSave={save} />
       {hasReps && (
         <>
           <Cell
-            label={tr('Повт. від', 'Reps from')}
+            label={t`Повт. від`}
             value={repsMin}
             onChange={setRepsMin}
             onSave={save}
           />
-          <Cell label={tr('до', 'to')} value={repsMax} onChange={setRepsMax} onSave={save} />
+          <Cell label={t`до`} value={repsMax} onChange={setRepsMax} onSave={save} />
         </>
       )}
       {type === 'duration' && (
         <Cell
-          label={tr('Час, с', 'Time, s')}
+          label={t`Час, с`}
           value={duration}
           onChange={setDuration}
           onSave={save}
@@ -86,7 +86,7 @@ export function TargetsEditor({
           decimal
         />
       )}
-      <Cell label={tr('Відпоч., с', 'Rest, s')} value={rest} onChange={setRest} onSave={save} />
+      <Cell label={t`Відпоч., с`} value={rest} onChange={setRest} onSave={save} />
     </View>
   );
 }

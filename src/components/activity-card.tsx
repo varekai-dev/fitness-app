@@ -1,9 +1,9 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { StyleSheet, View } from 'react-native';
 
 import { Card, Text, type IconName } from '@/components/ui';
 import type { Activity, ActivityKind, ActivitySource } from '@/db/schema';
-import { tr } from '@/lib/i18n';
 import { ACTIVITY_KIND_LABELS, formatShortDate } from '@/lib/labels';
 import { formatDistance, formatDuration } from '@/lib/metrics';
 import { DISTANCE_UNIT } from '@/lib/units';
@@ -31,7 +31,7 @@ export function ActivityCard({ activity }: { activity: Activity }) {
   const details = [
     formatDuration((activity.finishedAt - activity.startedAt) / 1000),
     activity.distanceKm ? `${formatDistance(activity.distanceKm)} ${DISTANCE_UNIT}` : null,
-    activity.kcal ? `${Math.round(activity.kcal)} ${tr('ккал', 'kcal')}` : null,
+    activity.kcal ? `${Math.round(activity.kcal)} ${t`ккал`}` : null,
   ].filter(Boolean);
   return (
     <Card style={styles.card}>

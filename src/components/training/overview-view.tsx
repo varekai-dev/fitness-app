@@ -1,3 +1,4 @@
+import { plural, t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useRef, useState, type ReactNode } from 'react';
@@ -31,7 +32,6 @@ import { useDbQuery } from '@/hooks/use-db-query';
 import { useScrollResetOnTabLeave } from '@/hooks/use-scroll-reset-on-tab-leave';
 import { useToday } from '@/hooks/use-today';
 import { estimateKcal } from '@/lib/calories';
-import { plural, tr } from '@/lib/i18n';
 import { startOfWeek } from '@/lib/labels';
 import { notStarted } from '@/lib/metrics';
 import { colors, fontSize, radius, spacing } from '@/theme';
@@ -106,7 +106,7 @@ export function OverviewView({
       openWorkout(id);
     } catch (e) {
       dialog.show({
-        title: tr('Помилка', 'Error'),
+        title: t`Помилка`,
         message: (e as Error).message,
         icon: 'alert-circle',
       });
@@ -123,25 +123,25 @@ export function OverviewView({
         <StatTile
           icon="flame"
           value={String(thisWeek.length)}
-          label={tr('За тиждень', 'This week')}
+          label={t({ message: 'За тиждень', context: 'This week' })}
         />
         <StatTile
           icon="bonfire"
           value={weekKcal !== null ? String(Math.round(weekKcal)) : '—'}
-          unit={weekKcal !== null ? tr('ккал', 'kcal') : undefined}
-          label={tr('Спалено', 'Burned')}
+          unit={weekKcal !== null ? t`ккал` : undefined}
+          label={t`Спалено`}
         />
-        <StatTile icon="trophy" value={String(finished.length)} label={tr('Усього', 'Total')} />
+        <StatTile icon="trophy" value={String(finished.length)} label={t`Усього`} />
       </Row>
 
       {activeWorkout && !draft ? (
         <HeroCard
           overline={
             notStarted(activeWorkout)
-              ? tr('Тренування не розпочато', 'Workout not started')
+              ? t`Тренування не розпочато`
               : activeWorkout.pausedAt
-                ? tr('Тренування на паузі', 'Workout paused')
-                : tr('Тренування триває', 'Workout in progress')
+                ? t`Тренування на паузі`
+                : t`Тренування триває`
           }
           title={activeWorkout.dayName}
           subtitle={activeWorkout.programName}
@@ -153,14 +153,11 @@ export function OverviewView({
         <Card>
           <EmptyState
             icon="calendar"
-            title={tr('Немає активної програми', 'No active program')}
-            hint={tr(
-              'Створи програму з днями тренувань, щоб почати.',
-              'Create a program with workout days to get started.',
-            )}
+            title={t`Немає активної програми`}
+            hint={t`Створи програму з днями тренувань, щоб почати.`}
           />
           <Button
-            title={tr('До програм', 'Go to programs')}
+            title={t`До програм`}
             trailingIcon="arrow-forward"
             onPress={() => onSection('programs')}
           />
@@ -169,13 +166,10 @@ export function OverviewView({
         <Card>
           <EmptyState
             icon="calendar"
-            title={tr(
-              `У програмі «${program.name}» ще немає днів`,
-              `The program “${program.name}” has no days yet`,
-            )}
+            title={t`У програмі «${program.name}» ще немає днів`}
           />
           <Button
-            title={tr('Редагувати програму', 'Edit program')}
+            title={t`Редагувати програму`}
             trailingIcon="arrow-forward"
             onPress={() =>
               router.push({
@@ -202,10 +196,10 @@ export function OverviewView({
           <HeroCard
             overline={
               isDraftDay
-                ? tr('Тренування не розпочато', 'Workout not started')
+                ? t`Тренування не розпочато`
                 : selectedDay.id === nextDayId
-                  ? tr('Наступне тренування', 'Next workout')
-                  : tr('Обраний день', 'Selected day')
+                  ? t`Наступне тренування`
+                  : t`Обраний день`
             }
             title={selectedDay.name}
             subtitle={program.name}
@@ -214,12 +208,8 @@ export function OverviewView({
                 <Ionicons name="barbell-outline" size={14} color={colors.accentText} />
                 <Text variant="caption" style={styles.heroText}>
                   {selectedDay.exercises.length}{' '}
-                  {plural(
-                    selectedDay.exercises.length,
-                    ['вправа', 'вправи', 'вправ'],
-                    ['exercise', 'exercises'],
-                  )}{' '}
-                  · {daySets} {plural(daySets, ['підхід', 'підходи', 'підходів'], ['set', 'sets'])}
+                  {plural(selectedDay.exercises.length, { one: 'вправа', few: 'вправи', many: 'вправ', other: 'вправи' })}{' '}
+                  · {daySets} {plural(daySets, { one: 'підхід', few: 'підходи', many: 'підходів', other: 'підходи' })}
                 </Text>
               </Row>
             }
@@ -233,11 +223,11 @@ export function OverviewView({
       )}
 
       <SectionHeader
-        title={tr('Останні тренування', 'Recent workouts')}
+        title={t`Останні тренування`}
         action={
           finished.length > 0 ? (
             <Button
-              title={tr('Усі', 'All')}
+              title={t`Усі`}
               variant="ghost"
               small
               onPress={() => onSection('history')}
@@ -248,7 +238,7 @@ export function OverviewView({
       {finished.length === 0 ? (
         <EmptyState
           icon="time"
-          title={tr('Ще немає завершених тренувань', 'No finished workouts yet')}
+          title={t`Ще немає завершених тренувань`}
         />
       ) : (
         finished
@@ -313,7 +303,7 @@ function HeroCard({
           ))}
           {moreCount > 0 && (
             <Text variant="caption" style={styles.heroSubtle}>
-              + {tr('ще', 'more')} {moreCount}
+              + {t`ще`} {moreCount}
             </Text>
           )}
         </View>

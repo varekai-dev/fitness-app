@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import { Image } from 'expo-image';
 import * as WebBrowser from 'expo-web-browser';
 import { Modal, ScrollView, StyleSheet, View } from 'react-native';
@@ -8,7 +9,6 @@ import { YoutubePlayer, youtubeVideoId } from '@/components/youtube-player';
 import { Badge, Button, Card, CircleButton, Row, Text } from '@/components/ui';
 import { exerciseImageSource } from '@/lib/exercise-images';
 import { defaultYoutubeUrl } from '@/lib/exercise-videos';
-import { tr } from '@/lib/i18n';
 import { formatTargets, MUSCLE_GROUP_LABELS } from '@/lib/labels';
 import type { PlanExercise } from '@/lib/program-ai';
 import { colors, spacing } from '@/theme';
@@ -64,7 +64,7 @@ export function PlanExerciseSheet({
                     <Text variant="title" style={styles.shrink}>
                       {exercise.name}
                     </Text>
-                    {exercise.exerciseId === null && <Badge label={tr('Нова', 'New')} />}
+                    {exercise.exerciseId === null && <Badge label={t`Нова`} />}
                   </Row>
                   <Text variant="secondary">{formatTargets(exercise.targets)}</Text>
                 </View>
@@ -72,27 +72,27 @@ export function PlanExerciseSheet({
                   <Row style={styles.muscles}>
                     <MuscleIcon group={exercise.muscleGroup} size={56} />
                     <View>
-                      <Text variant="overline">{tr('Що качає', 'Works')}</Text>
+                      <Text variant="overline">{t`Що качає`}</Text>
                       <Text variant="heading">{MUSCLE_GROUP_LABELS[exercise.muscleGroup]}</Text>
                     </View>
                   </Row>
                 </Card>
                 {notes && (
                   <Card>
-                    <Text variant="overline">{tr('Техніка', 'Technique')}</Text>
+                    <Text variant="overline">{t`Техніка`}</Text>
                     <Text variant="secondary">{notes}</Text>
                   </Card>
                 )}
                 {!videoId && url && (
                   <Button
-                    title={tr('Знайти техніку на YouTube', 'Find technique on YouTube')}
+                    title={t`Знайти техніку на YouTube`}
                     icon="logo-youtube"
                     variant="secondary"
                     onPress={() => WebBrowser.openBrowserAsync(url)}
                   />
                 )}
                 <Button
-                  title={tr('Замінити вправу', 'Replace exercise')}
+                  title={t`Замінити вправу`}
                   icon="swap-horizontal"
                   variant="secondary"
                   onPress={onReplace}

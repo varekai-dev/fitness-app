@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
@@ -17,7 +18,6 @@ import {
 import { listExercises } from '@/db/exercises';
 import { addDayExercise } from '@/db/programs';
 import { useDbQuery } from '@/hooks/use-db-query';
-import { tr } from '@/lib/i18n';
 import { MUSCLE_GROUP_LABELS } from '@/lib/labels';
 import { colors, spacing } from '@/theme';
 
@@ -37,7 +37,7 @@ export default function PickExerciseScreen() {
 
   return (
     <View style={styles.list}>
-      <ScreenHeader mode="modal" title={tr('Додати вправу', 'Add exercise')} />
+      <ScreenHeader mode="modal" title={t`Додати вправу`} />
       <FlatList
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
@@ -46,12 +46,12 @@ export default function PickExerciseScreen() {
         ListHeaderComponent={
           <View style={styles.header}>
             <SearchField
-              placeholder={tr('Пошук вправ…', 'Search exercises…')}
+              placeholder={t`Пошук вправ…`}
               value={search}
               onChangeText={setSearch}
             />
             <Button
-              title={tr('Створити нову вправу', 'Create new exercise')}
+              title={t`Створити нову вправу`}
               icon="add"
               variant="ghost"
               onPress={() => router.push('/exercise/edit')}
@@ -69,7 +69,7 @@ export default function PickExerciseScreen() {
           </Card>
         )}
         ListEmptyComponent={
-          <EmptyState icon="search" title={tr('Нічого не знайдено', 'Nothing found')} />
+          <EmptyState icon="search" title={t`Нічого не знайдено`} />
         }
       />
     </View>

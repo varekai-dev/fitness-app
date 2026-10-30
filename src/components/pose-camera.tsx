@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import { CameraView, useCameraPermissions, type CameraType } from 'expo-camera';
 import { useEffect, useRef, useState } from 'react';
 import { Linking, Modal, Pressable, StyleSheet, View } from 'react-native';
@@ -18,7 +19,6 @@ import { OUTLINES } from '@/components/pose-outlines';
 import { Button, CircleButton, Text } from '@/components/ui';
 import type { PhotoPose } from '@/db/schema';
 import { readSettingSync, writeSettingSync } from '@/lib/app-settings';
-import { tr } from '@/lib/i18n';
 import { SEXES, type Sex } from '@/lib/profile';
 import { POSE_LABELS } from '@/lib/progress-photos';
 import { colors, radius, spacing } from '@/theme';
@@ -62,18 +62,9 @@ const clamp = (v: number, min: number, max: number) => {
 };
 
 const poseHints = (): Record<PhotoPose, string> => ({
-  front: tr(
-    'Стань обличчям до камери в силует: ноги на ширині плечей, руки трохи від тіла.',
-    'Face the camera inside the outline: feet shoulder-width apart, arms slightly out.',
-  ),
-  side: tr(
-    'Стань боком у силует, руки вздовж тіла, дивись прямо.',
-    'Stand side-on inside the outline, arms down, looking straight ahead.',
-  ),
-  back: tr(
-    'Стань спиною до камери в силует: ноги на ширині плечей, руки трохи від тіла.',
-    'Turn your back to the camera inside the outline: feet shoulder-width apart, arms slightly out.',
-  ),
+  front: t`Стань обличчям до камери в силует: ноги на ширині плечей, руки трохи від тіла.`,
+  side: t`Стань боком у силует, руки вздовж тіла, дивись прямо.`,
+  back: t`Стань спиною до камери в силует: ноги на ширині плечей, руки трохи від тіла.`,
 });
 
 /**
@@ -181,19 +172,16 @@ function CameraContent({
     return (
       <View style={[styles.root, styles.denied, { paddingTop: insets.top }]}>
         <Text variant="title" style={styles.center}>
-          {tr('Немає доступу до камери', 'No access to the camera')}
+          {t`Немає доступу до камери`}
         </Text>
         <Text variant="muted" style={styles.center}>
-          {tr(
-            'Дозволь доступ до камери, щоб фотографувати прогрес.',
-            'Allow camera access to take progress photos.',
-          )}
+          {t`Дозволь доступ до камери, щоб фотографувати прогрес.`}
         </Text>
         <Button
-          title={tr('Дозволити', 'Allow')}
+          title={t`Дозволити`}
           onPress={() => (permission.canAskAgain ? requestPermission() : Linking.openSettings())}
         />
-        <Button title={tr('Закрити', 'Close')} variant="secondary" onPress={onClose} />
+        <Button title={t`Закрити`} variant="secondary" onPress={onClose} />
       </View>
     );
   }
@@ -254,10 +242,7 @@ function CameraContent({
           </Text>
           {guide.visible && (
             <Text variant="muted" style={styles.center}>
-              {tr(
-                'Зведи чи розведи пальці, щоб змінити розмір силуету, тягни, щоб зсунути. Подвійний дотик скидає.',
-                'Pinch to resize the outline, drag to move it. Double-tap to reset.',
-              )}
+              {t`Зведи чи розведи пальці, щоб змінити розмір силуету, тягни, щоб зсунути. Подвійний дотик скидає.`}
             </Text>
           )}
         </Animated.View>
@@ -271,14 +256,14 @@ function CameraContent({
             style={styles.side}>
             <View style={[styles.timer, timer > 0 && styles.timerOn]}>
               <Text variant="secondary" style={[styles.timerText, timer > 0 && styles.timerTextOn]}>
-                {timer > 0 ? `${timer} ${tr('с', 's')}` : tr('Таймер', 'Timer')}
+                {timer > 0 ? `${timer} ${t`с`}` : t`Таймер`}
               </Text>
             </View>
           </Pressable>
           <Pressable
             onPress={press}
             disabled={!ready || busy}
-            accessibilityLabel={tr('Зробити фото', 'Take photo')}
+            accessibilityLabel={t`Зробити фото`}
             style={({ pressed }) => [styles.shutter, (pressed || !ready || busy) && styles.dim]}>
             <View style={[styles.shutterInner, countdown !== null && styles.shutterStop]} />
           </Pressable>

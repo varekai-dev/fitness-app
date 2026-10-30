@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Constants from 'expo-constants';
 
 import { HEALTH_RATINGS, type HealthRating } from '@/db/schema';
@@ -156,10 +157,7 @@ export const GROQ_ATTEMPTS = 3;
 
 const signInAgain = () =>
   new GroqError(
-    tr(
-      'Сесія завершилась. Увійди в акаунт знову, щоб користуватися AI.',
-      'Your session has ended. Sign in again to use AI.',
-    ),
+    t`Сесія завершилась. Увійди в акаунт знову, щоб користуватися AI.`,
     'auth',
   );
 
@@ -184,29 +182,20 @@ async function postCompletion(body: object) {
     });
   } catch {
     throw new GroqError(
-      tr(
-        'Немає з’єднання з сервером. Перевір інтернет.',
-        'Can’t reach the server. Check your internet.',
-      ),
+      t({ message: 'Немає з’єднання з сервером. Перевір інтернет.', context: 'Can’t reach the server. Check your internet.' }),
       'network',
     );
   }
   if (res.status === 401) throw signInAgain();
   if (res.status === 429) {
     throw new GroqError(
-      tr(
-        'На сьогодні запити до AI вичерпано. Спробуй завтра.',
-        'You’ve used up today’s AI requests. Try again tomorrow.',
-      ),
+      t`На сьогодні запити до AI вичерпано. Спробуй завтра.`,
       'network',
     );
   }
   if (res.status === 503) {
     throw new GroqError(
-      tr(
-        'AI тимчасово недоступний. Спробуй пізніше.',
-        'AI is unavailable right now. Try again later.',
-      ),
+      t`AI тимчасово недоступний. Спробуй пізніше.`,
       'network',
     );
   }
@@ -227,10 +216,7 @@ export async function groqJson<T>({
   onAttempt,
 }: GroqRequest<T>): Promise<T> {
   const badResponse = new GroqError(
-    tr(
-      'AI повернув неповну відповідь. Спробуй ще раз.',
-      'AI returned an incomplete answer. Try again.',
-    ),
+    t`AI повернув неповну відповідь. Спробуй ще раз.`,
     'bad-response',
   );
 
@@ -257,7 +243,7 @@ export async function groqJson<T>({
       if ((failedSchema || res.status >= 500) && !last) continue;
       if (failedSchema) throw badResponse;
       throw new GroqError(
-        `${tr('Groq повернув помилку', 'Groq returned error')} ${res.status}. ${body.slice(0, 200)}`,
+        `${t`Groq повернув помилку`} ${res.status}. ${body.slice(0, 200)}`,
         'network',
       );
     }
@@ -314,10 +300,7 @@ export async function askGroqNutritionList(dishes: string[]): Promise<(Nutrition
   });
   if (parsed.items.length !== dishes.length) {
     throw new GroqError(
-      tr(
-        'AI повернув неповну відповідь. Спробуй ще раз.',
-        'AI returned an incomplete answer. Try again.',
-      ),
+      t`AI повернув неповну відповідь. Спробуй ще раз.`,
       'bad-response',
     );
   }
@@ -334,19 +317,13 @@ export async function askGroqNutritionList(dishes: string[]): Promise<(Nutrition
 function toNutrition(parsed: GroqNutrition, dish: string): Nutrition {
   if (parsed.is_food && !(num(parsed.portion_g) > 0)) {
     throw new GroqError(
-      tr(
-        'Groq не визначив вагу чи об’єм порції. Уточни опис.',
-        'Groq couldn’t tell the portion size. Add more detail.',
-      ),
+      t`Groq не визначив вагу чи об’єм порції. Уточни опис.`,
       'bad-response',
     );
   }
   if (!parsed.is_food) {
     throw new GroqError(
-      tr(
-        'Схоже, це не страва. Опиши, що саме ти з’їв.',
-        'That doesn’t look like food. Describe what you ate.',
-      ),
+      t`Схоже, це не страва. Опиши, що саме ти з’їв.`,
       'not-food',
     );
   }
@@ -397,11 +374,11 @@ export async function askGroqHealth(dish: {
 }): Promise<Pick<Nutrition, 'health' | 'healthNote'>> {
   const r = (v: number) => Math.round(v * 10) / 10;
   const facts = [
-    `${tr('ккал', 'kcal')} ${r(dish.kcal)}`,
-    `${tr('білки', 'protein')} ${r(dish.proteinG)}`,
-    `${tr('жири', 'fat')} ${r(dish.fatG)}`,
-    `${tr('вуглеводи', 'carbs')} ${r(dish.carbsG)}`,
-    dish.sugarG !== null ? `${tr('цукор', 'sugar')} ${r(dish.sugarG)}` : null,
+    `${t`ккал`} ${r(dish.kcal)}`,
+    `${t`білки`} ${r(dish.proteinG)}`,
+    `${t`жири`} ${r(dish.fatG)}`,
+    `${t`вуглеводи`} ${r(dish.carbsG)}`,
+    dish.sugarG !== null ? `${t`цукор`} ${r(dish.sugarG)}` : null,
   ].filter(Boolean);
   const parsed = await groqJson<{ health: string; health_note: string }>({
     system: HEALTH_PROMPT,
@@ -412,14 +389,16 @@ export async function askGroqHealth(dish: {
   return { health: healthRating(parsed.health), healthNote: healthNote(parsed.health_note) };
 }
 
-const PHOTO_PROMPT = tr(
-  `Ти нутриціолог. На фото або їжа чи напій (найчастіше тарілка зверху або збоку), або упаковка продукту чи її етикетка.
+const PHOTO_PROMPT = t`Ти нутриціолог. На фото може бути їжа чи напій, упаковка/етикетка, меню, чек або скриншот з харчовою цінністю.
 Спершу визнач kind:
 - "label" — упаковка, етикетка чи таблиця харчової цінності продукту з магазину;
-- "dish" — приготована їжа, тарілка, фрукти чи напій без етикетки;
+- "dish" — приготована їжа, тарілка, фрукти чи напій, меню, ресторанний чек або зображення страв;
 - "none" — на фото немає їжі.
-Для "dish" заповни items, а product залиш порожнім (рядки "", числа 0, false):
+Для "dish" заповни items, context та visible_restaurant, а product залиш порожнім (рядки "", числа 0, false):
+- зчитай назву ресторану/закладу, якщо її видно, та інші корисні підказки з меню чи чека в context;
+- для кожної страви зчитай КБЖВ, якщо вони надруковані поруч або на зображенні; nutrition_visible=true лише коли дані чітко видно. Числа в kcal, protein_g, fat_g, carbs_g мають бути для вказаної порції; якщо позначено "на 100 г", переведи до кількості amount;
 - назви все, що видно, і оціни кількість кожного за розміром тарілки, приборів, рук і упаковок;
+- у меню чи чеку кожна окрема позиція — окрема страва, її кількість/вага — з тексту, якщо вказано, інакше звичайна порція;
 - страву з кількох інгредієнтів (борщ, салат, піца, бутерброд) називай однією позицією;
 - окремі страви на тарілці (гарнір, м'ясо, овочі, хліб, соус) — окремими позиціями;
 - напиши, як приготовано, якщо це видно: смажене, варене, запечене;
@@ -434,30 +413,7 @@ const PHOTO_PROMPT = tr(
 - serving_amount — порція, вказана на етикетці, в г чи мл, 0 якщо не вказано;
 - nutrition_visible — true, лише якщо на фото чітко видно калорійність або білки, жири й вуглеводи;
 - kcal, protein_g, fat_g, carbs_g, fiber_g, sugar_g — саме з етикетки, на 100 г (чи 100 мл). Якщо вказано лише на порцію, перерахуй на 100 г. Калорії — в ккал, не в кДж. Чого не видно — 0.
-Не вигадуй цифр: переписуй лише ті, що видно на фото.`,
-  `You are a nutritionist. The photo shows either food or a drink (usually a plate from above or the side), or a product's packaging or its label.
-First pick kind:
-- "label": a shop product's packaging, label or nutrition facts table;
-- "dish": cooked food, a plate, fruit or a drink without a label;
-- "none": there is no food in the photo.
-For "dish" fill items and leave product empty ("" strings, 0 numbers, false):
-- name everything you can see and estimate the amount of each by the size of the plate, cutlery, hands and packaging;
-- a dish made of several ingredients (soup, salad, pizza, sandwich) is one item;
-- separate dishes on a plate (side, meat, vegetables, bread, sauce) are separate items;
-- say how it is cooked if you can see it: fried, boiled, baked;
-- name: short, in English, lowercase, without the amount; amount: a number greater than 0; unit: "g" for food, "ml" for drinks and liquids in a glass.
-For "label" fill product and leave items empty:
-- name: the product's name in English, capitalized, without the brand or weight (e.g. "Strawberry yogurt 2.5%");
-- original_name: the name as printed on the package, without the brand;
-- brand: the brand, "" if not visible;
-- barcode: the barcode digits if all of them are visible, otherwise "";
-- is_drink: true for drinks;
-- net_amount: the net weight or volume of the whole package in g or ml, 0 if not visible;
-- serving_amount: the serving the label states, in g or ml, 0 if none;
-- nutrition_visible: true only if the calories, or protein, fat and carbs, are clearly visible in the photo;
-- kcal, protein_g, fat_g, carbs_g, fiber_g, sugar_g: exactly from the label, per 100 g (or 100 ml). If it only gives them per serving, convert to per 100 g. Calories in kcal, not kJ. Anything not visible is 0.
-Don't make numbers up: copy only those visible in the photo.`,
-);
+Не вигадуй цифр з фото: переписуй лише ті, що видно. Якщо даних немає, залиш nutrition_visible=false і числа 0.`;
 
 const PHOTO_SCHEMA = {
   type: 'object',
@@ -471,11 +427,18 @@ const PHOTO_SCHEMA = {
           name: { type: 'string' },
           amount: { type: 'number' },
           unit: { type: 'string', enum: ['g', 'ml'] },
+          nutrition_visible: { type: 'boolean' },
+          kcal: { type: 'number' },
+          protein_g: { type: 'number' },
+          fat_g: { type: 'number' },
+          carbs_g: { type: 'number' },
         },
-        required: ['name', 'amount', 'unit'],
+        required: ['name', 'amount', 'unit', 'nutrition_visible', 'kcal', 'protein_g', 'fat_g', 'carbs_g'],
         additionalProperties: false,
       },
     },
+    context: { type: 'string' },
+    visible_restaurant: { type: 'string' },
     product: {
       type: 'object',
       properties: {
@@ -513,13 +476,15 @@ const PHOTO_SCHEMA = {
       additionalProperties: false,
     },
   },
-  required: ['kind', 'items', 'product'],
+  required: ['kind', 'items', 'context', 'visible_restaurant', 'product'],
   additionalProperties: false,
 };
 
 type GroqPhoto = {
   kind: 'dish' | 'label' | 'none';
-  items: { name: string; amount: number; unit: string }[];
+  items: { name: string; amount: number; unit: string; nutrition_visible: boolean; kcal: number; protein_g: number; fat_g: number; carbs_g: number }[];
+  context: string;
+  visible_restaurant: string;
   product: {
     name: string;
     original_name: string;
@@ -555,7 +520,8 @@ export type LabelProduct = {
   nutrition: Per100 | null;
 };
 
-export type FoodPhoto = { kind: 'dish'; text: string } | { kind: 'label'; product: LabelProduct };
+export type PhotoDish = { name: string; amount: number; unit: 'g' | 'ml'; nutrition: Macros | null };
+export type FoodPhoto = { kind: 'dish'; text: string; restaurant: string; context: string; dishes: PhotoDish[] } | { kind: 'label'; product: LabelProduct };
 
 /** Amounts guessed from a photo are rough, so round numbers read more honestly. */
 const roundAmount = (v: number) => Math.max(10, Math.round(v / 10) * 10);
@@ -630,7 +596,7 @@ export async function readFoodPhoto(image: {
     model: GROQ_VISION_MODEL,
     system: PHOTO_PROMPT,
     user: [
-      { type: 'text', text: tr('Що на фото?', 'What is in the photo?') },
+      { type: 'text', text: t`Що на фото?` },
       { type: 'image_url', image_url: { url: `data:${image.mimeType};base64,${image.base64}` } },
     ],
     schema: PHOTO_SCHEMA,
@@ -645,39 +611,83 @@ export async function readFoodPhoto(image: {
     parsed.kind === 'dish' ? parsed.items.filter((i) => i.name.trim() && num(i.amount) > 0) : [];
   if (items.length === 0) {
     throw new GroqError(
-      tr(
-        'Не бачу на фото їжі. Спробуй інше фото або опиши страву текстом.',
-        'I can’t see any food in the photo. Try another one or describe the dish.',
-      ),
+      t`Не бачу на фото їжі. Спробуй інше фото або опиши страву текстом.`,
       'not-food',
     );
   }
-  const text = items
+  const dishes = items.map((i) => {
+    const proteinG = num(i.protein_g);
+    const fatG = num(i.fat_g);
+    const carbsG = num(i.carbs_g);
+    const kcal = num(i.kcal) || proteinG * 4 + fatG * 9 + carbsG * 4;
+    return {
+      name: i.name.trim(),
+      amount: roundAmount(num(i.amount)),
+      unit: i.unit === 'ml' ? 'ml' as const : 'g' as const,
+      nutrition: i.nutrition_visible && kcal > 0
+        ? { kcal, proteinG, fatG, carbsG }
+        : null,
+    };
+  });
+  const text = dishes
     .map(
       (i) =>
-        `${i.name.trim()} ${roundAmount(i.amount)} ${i.unit === 'ml' ? tr('мл', 'ml') : tr('г', 'g')}`,
+        `${i.name} ${i.amount} ${i.unit === 'ml' ? t`мл` : t`г`}`,
     )
     .join(', ');
-  return { kind: 'dish', text };
+  return { kind: 'dish', text, restaurant: parsed.visible_restaurant.trim(), context: parsed.context.trim(), dishes };
 }
 
-const SEARCH_PROMPT = tr(
-  `Користувач сфотографував упаковку продукту з магазину, але харчової цінності на фото не видно. Знайди в інтернеті харчову цінність саме цього продукту: той самий бренд і вид, а також смак і жирність, якщо вони відомі. Найкраще — сайт виробника чи магазину.
-Відповідай коротко: ккал, білки, жири, вуглеводи, клітковина й цукор на 100 г (чи 100 мл) і сайт, де це знайдено. Якщо саме цього продукту не знайшов, так і напиши, не підставляй схожий.`,
-  `The user photographed a shop product's package, but its nutrition isn't in the photo. Find this exact product's nutrition on the web: the same brand and kind, and the flavor and fat content when known. The maker's or a shop's site is best.
-Answer briefly: kcal, protein, fat, carbs, fiber and sugar per 100 g (or 100 ml), and the site it's from. If you can't find this exact product, say so; don't substitute a similar one.`,
-);
+/** Searches a photographed restaurant menu for all its named dishes. A miss is left null for an AI estimate. */
+export async function searchRestaurantDishes(
+  restaurant: string,
+  context: string,
+  dishes: PhotoDish[],
+): Promise<(Macros | null)[]> {
+  if (!restaurant && !context) return dishes.map(() => null);
+  const query = dishes.map((d, i) => `${i + 1}. ${d.name}, ${d.amount} ${d.unit}`).join('\n');
+  const searchPrompt = t`Знайди харчову цінність кожної позиції з меню ресторану. Спершу шукай на сайті/меню саме цього закладу. Якщо даних там немає, шукай цю саму страву в інтернеті; коли точних даних немає, поверни found=false, не вигадуй. Потрібні ккал, білки, жири та вуглеводи для зазначеної порції. Відповідай стислими фактами й посиланнями.`;
+  const answer = await postCompletion({
+    model: GROQ_MODEL,
+    temperature: 0,
+    reasoning_effort: 'low',
+    tool_choice: 'required',
+    tools: [{ type: 'browser_search' }],
+    messages: [
+      { role: 'system', content: searchPrompt },
+      { role: 'user', content: `Restaurant: ${restaurant || 'unknown'}\nMenu/receipt text: ${context}\nDishes:\n${query}` },
+    ],
+  });
+  if (!answer.ok) return dishes.map(() => null);
+  const source = (await answer.json().catch(() => null))?.choices?.[0]?.message?.content;
+  if (typeof source !== 'string' || !source.trim()) return dishes.map(() => null);
+  const schema = {
+    type: 'object',
+    properties: { items: { type: 'array', items: { type: 'object', properties: {
+      found: { type: 'boolean' }, kcal: { type: 'number' }, protein_g: { type: 'number' }, fat_g: { type: 'number' }, carbs_g: { type: 'number' },
+    }, required: ['found', 'kcal', 'protein_g', 'fat_g', 'carbs_g'], additionalProperties: false } } },
+    required: ['items'], additionalProperties: false,
+  };
+  const parsed = await groqJson<{ items: { found: boolean; kcal: number; protein_g: number; fat_g: number; carbs_g: number }[] }>({
+    system: t`Витягни з результатів пошуку КБЖВ для страв у тому самому порядку. Значення мають бути для вказаної порції. found=true лише коли дані чітко стосуються ресторану/цієї страви. Якщо не знайшлося — false та нулі.`,
+    user: `${query}\n\n${source}`,
+    schema,
+    schemaName: 'restaurant_food_search',
+    accept: (r) => r.items.length === dishes.length,
+  });
+  if (parsed.items.length !== dishes.length) return dishes.map(() => null);
+  return parsed.items.map((i) => i.found && num(i.kcal) > 0 ? {
+    kcal: num(i.kcal), proteinG: num(i.protein_g), fatG: num(i.fat_g), carbsG: num(i.carbs_g),
+  } : null);
+}
 
-const FOUND_PROMPT = tr(
-  `Ось результат пошуку харчової цінності продукту в інтернеті. Перепиши числа на 100 г (чи 100 мл):
+const SEARCH_PROMPT = t`Користувач сфотографував упаковку продукту з магазину, але харчової цінності на фото не видно. Знайди в інтернеті харчову цінність саме цього продукту: той самий бренд і вид, а також смак і жирність, якщо вони відомі. Найкраще — сайт виробника чи магазину.
+Відповідай коротко: ккал, білки, жири, вуглеводи, клітковина й цукор на 100 г (чи 100 мл) і сайт, де це знайдено. Якщо саме цього продукту не знайшов, так і напиши, не підставляй схожий.`;
+
+const FOUND_PROMPT = t`Ось результат пошуку харчової цінності продукту в інтернеті. Перепиши числа на 100 г (чи 100 мл):
 - found: true, лише якщо знайдено калорійність або білки, жири й вуглеводи саме цього продукту;
 - kcal — у ккал (кДж поділи на 4,184); protein_g, fat_g, carbs_g, fiber_g, sugar_g — у грамах; чого немає — 0;
-- source: домен сайту, звідки числа (напр. "silpo.ua"), "" якщо невідомо.`,
-  `Here is the result of a web search for a product's nutrition. Copy the numbers per 100 g (or 100 ml):
-- found: true only if the calories, or protein, fat and carbs, of this exact product were found;
-- kcal in kcal (divide kJ by 4.184); protein_g, fat_g, carbs_g, fiber_g, sugar_g in grams; anything missing is 0;
-- source: the domain of the site the numbers are from (e.g. "tesco.com"), "" if unknown.`,
-);
+- source: домен сайту, звідки числа (напр. "silpo.ua"), "" якщо невідомо.`;
 
 const FOUND_SCHEMA = {
   type: 'object',
@@ -704,10 +714,10 @@ export async function searchProductNutrition(
   product: Pick<LabelProduct, 'name' | 'originalName' | 'brand' | 'barcode'>,
 ): Promise<(Per100 & { source: string | null }) | null> {
   const wanted = [
-    product.brand && `${tr('Бренд', 'Brand')}: ${product.brand}`,
-    `${tr('Назва на упаковці', 'Name on the package')}: ${product.originalName}`,
-    product.name !== product.originalName && `${tr('Переклад', 'Translation')}: ${product.name}`,
-    product.barcode && `${tr('Штрихкод', 'Barcode')}: ${product.barcode}`,
+    product.brand && `${t`Бренд`}: ${product.brand}`,
+    `${t`Назва на упаковці`}: ${product.originalName}`,
+    product.name !== product.originalName && `${t`Переклад`}: ${product.name}`,
+    product.barcode && `${t`Штрихкод`}: ${product.barcode}`,
   ]
     .filter(Boolean)
     .join('\n');
@@ -726,7 +736,7 @@ export async function searchProductNutrition(
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     throw new GroqError(
-      `${tr('Groq повернув помилку', 'Groq returned error')} ${res.status}. ${body.slice(0, 200)}`,
+      `${t`Groq повернув помилку`} ${res.status}. ${body.slice(0, 200)}`,
       'network',
     );
   }
@@ -792,8 +802,7 @@ export type DayReviewInput = {
   })[];
 };
 
-const DAY_REVIEW_PROMPT = tr(
-  `Ти уважний нутриціолог у застосунку для тренувань. Користувач дає підсумок харчування за день: ціль, що з'їв і скільки лишилось. Напиши короткий коментар до дня.
+const DAY_REVIEW_PROMPT = t`Ти уважний нутриціолог у застосунку для тренувань. Користувач дає підсумок харчування за день: ціль, що з'їв і скільки лишилось. Напиши короткий коментар до дня.
 - Бери числа лише з підсумку, не рахуй їх заново. «Лишилось» додатне — ще треба добрати, від'ємне — перебір.
 - Знайди головне: найбільший недобір чи перебір відносно цілі (білок важливіший за жири й вуглеводи) або похвали, якщо все в межах 10% від цілі.
 - Якщо це сьогодні, зважай на час: зранку чи вдень недобір нормальний, тож підкажи, на що звернути увагу далі, а не дорікай.
@@ -803,19 +812,7 @@ const DAY_REVIEW_PROMPT = tr(
 - comment: одне речення до 140 символів, дружньо й конкретно, без моралізування; не повторюй числа з headline, не називай поточний час і не перелічуй продуктів, які радиш у snacks — краще скажи, що змінити, згадавши страви з журналу;
 - foods: до 4 найпомітніших страв із журналу — і корисні, і ні; name — назва страви так, як у журналі; good — true, якщо страва пішла на користь меті, false, якщо варто обмежити; note — чому, до 60 символів, напр. «багато білка й мало жиру» чи «майже весь цукор за день». Спершу корисні. Порожній список, якщо журнал порожній;
 - lacking: чого найбільше бракує до цілі: "protein", "fat", "carbs" чи "kcal"; "none", якщо нічого помітно не бракує;
-- snacks: якщо лишилось щонайменше 150 ккал і є помітний недобір — до 3 різних простих продуктів, які найкраще закривають головну нестачу (при недоборі білка — щонайменше 15 г білка на продукт) і разом не перевищують залишку ккал; для сьогодні — що з'їсти далі, для минулого дня — що можна було б з'їсти; прості продукти, які легко купити в Україні; text — рівно один продукт, як користувач написав би сам, з малої літери і з кількістю в грамах чи мл (не в штуках), без ком і переліків, напр. «грецький йогурт 200 г» чи «яйця варені 120 г»; kcal, protein_g, fat_g, carbs_g — для цієї кількості; is_drink — true для напоїв; health — наскільки продукт корисний: "healthy", "moderate" чи "unhealthy". Інакше порожній список.`,
-  `You are an attentive nutritionist in a training app. The user gives a summary of a day of eating: the goal, what they ate and how much is left. Write a short comment on the day.
-- Take the numbers from the summary only, don't recalculate them. A positive "left" means still to eat, a negative one is over the goal.
-- Find the main point: the biggest shortfall or excess against the goal (protein matters more than fat and carbs), or praise if everything is within 10% of the goal.
-- If it is today, mind the time: a shortfall in the morning or afternoon is normal, so suggest what to focus on next rather than scold.
-- Judge the quality of the food in the log against the goal: what helped (protein, fiber, vegetables, whole foods) and what didn't (a lot of sugar, fried food, fast food, sweets, sugary drinks, empty calories).
-Fields:
-- headline: one sentence up to 70 characters with the key number, e.g. "Low on protein: 40 g to go"; the word "today" only if it is today;
-- comment: one sentence up to 140 characters, friendly and specific, no moralizing; don't repeat the headline's numbers, name the current time or list the foods you suggest in snacks; rather say what to change, mentioning dishes from the log;
-- foods: up to 4 of the most notable dishes from the log, both good and bad; name: the dish as named in the log; good: true if it helped the goal, false if it is worth cutting back; note: why, up to 60 characters, e.g. "lots of protein, little fat" or "almost all of the day's sugar". Good ones first. An empty list if the log is empty;
-- lacking: what is most missing from the goal: "protein", "fat", "carbs" or "kcal"; "none" if nothing is clearly missing;
-- snacks: if at least 150 kcal are left and there is a clear shortfall, up to 3 different simple foods that best close the main gap (when short on protein, at least 15 g of protein each) and together fit the kcal left; for today, what to eat next; for a past day, what could have been eaten; simple foods that are easy to buy; text: exactly one food, the way the user would type it, lowercase, with the amount in grams or ml (not in pieces), no commas or lists, e.g. "greek yogurt 200 g" or "boiled eggs 120 g"; kcal, protein_g, fat_g, carbs_g for that amount; is_drink: true for drinks; health: how good the food is, "healthy", "moderate" or "unhealthy". Otherwise an empty list.`,
-);
+- snacks: якщо лишилось щонайменше 150 ккал і є помітний недобір — до 3 різних простих продуктів, які найкраще закривають головну нестачу (при недоборі білка — щонайменше 15 г білка на продукт) і разом не перевищують залишку ккал; для сьогодні — що з'їсти далі, для минулого дня — що можна було б з'їсти; прості продукти, які легко купити в Україні; text — рівно один продукт, як користувач написав би сам, з малої літери і з кількістю в грамах чи мл (не в штуках), без ком і переліків, напр. «грецький йогурт 200 г» чи «яйця варені 120 г»; kcal, protein_g, fat_g, carbs_g — для цієї кількості; is_drink — true для напоїв; health — наскільки продукт корисний: "healthy", "moderate" чи "unhealthy". Інакше порожній список.`;
 
 const SUGGESTED_FOOD_SCHEMA = {
   type: 'object',
@@ -889,14 +886,14 @@ type GroqDayReview = {
 
 /** A dish's numbers: macros, plus fiber and sugar when the food has them. */
 function describeDish(e: DayReviewInput['entries'][number]) {
-  const g = tr('г', 'g');
+  const g = t`г`;
   return [
-    `${Math.round(e.kcal)} ${tr('ккал', 'kcal')}`,
-    `${tr('Б', 'P')} ${Math.round(e.proteinG)} ${g}`,
-    `${tr('Ж', 'F')} ${Math.round(e.fatG)} ${g}`,
-    `${tr('В', 'C')} ${Math.round(e.carbsG)} ${g}`,
-    e.fiberG != null && `${tr('клітковина', 'fiber')} ${Math.round(e.fiberG)} ${g}`,
-    e.sugarG != null && `${tr('цукор', 'sugar')} ${Math.round(e.sugarG)} ${g}`,
+    `${Math.round(e.kcal)} ${t`ккал`}`,
+    `${t`Б`} ${Math.round(e.proteinG)} ${g}`,
+    `${t`Ж`} ${Math.round(e.fatG)} ${g}`,
+    `${t`В`} ${Math.round(e.carbsG)} ${g}`,
+    e.fiberG != null && `${t`клітковина`} ${Math.round(e.fiberG)} ${g}`,
+    e.sugarG != null && `${t`цукор`} ${Math.round(e.sugarG)} ${g}`,
   ]
     .filter(Boolean)
     .join(', ');
@@ -904,31 +901,28 @@ function describeDish(e: DayReviewInput['entries'][number]) {
 
 /** The day's numbers as text, already subtracted, so the model doesn't do the arithmetic. */
 function describeDay({ isToday, now, goal, targets, entries }: DayReviewInput) {
-  const g = tr('г', 'g');
-  const kcal = tr('ккал', 'kcal');
+  const g = t`г`;
+  const kcal = t`ккал`;
   const eaten = sumMacros(entries);
   const macros = [
-    { label: tr('Калорії', 'Calories'), key: 'kcal', unit: kcal },
-    { label: tr('Білки', 'Protein'), key: 'proteinG', unit: g },
-    { label: tr('Жири', 'Fat'), key: 'fatG', unit: g },
-    { label: tr('Вуглеводи', 'Carbs'), key: 'carbsG', unit: g },
+    { label: t`Калорії`, key: 'kcal', unit: kcal },
+    { label: t`Білки`, key: 'proteinG', unit: g },
+    { label: t`Жири`, key: 'fatG', unit: g },
+    { label: t`Вуглеводи`, key: 'carbsG', unit: g },
   ] as const;
   const time = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(now);
   const lines = [
     isToday
-      ? tr(`День: сьогодні, зараз ${time}.`, `Day: today, now ${time}.`)
-      : tr('День: минулий, вже завершений.', 'Day: a past one, already over.'),
-    `${tr('Мета', 'Goal')}: ${WEIGHT_GOAL[goal].label}.`,
+      ? t`День: сьогодні, зараз ${time}.`
+      : t`День: минулий, вже завершений.`,
+    `${t`Мета`}: ${WEIGHT_GOAL[goal].label}.`,
     '',
     ...macros.map((m) => {
       const left = Math.round(targets[m.key] - eaten[m.key]);
-      return `${m.label}: ${tr('ціль', 'goal')} ${Math.round(targets[m.key])} ${m.unit}, ${tr('з’їдено', 'eaten')} ${Math.round(eaten[m.key])} ${m.unit}, ${tr('лишилось', 'left')} ${left} ${m.unit}.`;
+      return `${m.label}: ${t({ message: 'ціль', context: 'goal' })} ${Math.round(targets[m.key])} ${m.unit}, ${t`з’їдено`} ${Math.round(eaten[m.key])} ${m.unit}, ${t`лишилось`} ${left} ${m.unit}.`;
     }),
     '',
-    tr(
-      'Журнал (однакові страви за день об’єднані, кількість і поживність підсумовані):',
-      'Log (the same dishes of the day merged, amounts and nutrition summed):',
-    ),
+    t`Журнал (однакові страви за день об’єднані, кількість і поживність підсумовані):`,
     ...mergeDishes(entries).map((e) => {
       const meals = MEALS.filter((meal) => e.parts.some((p) => p.meal === meal))
         .map((meal) => MEAL_LABELS[meal].toLocaleLowerCase(locale))
@@ -951,7 +945,7 @@ export async function askGroqDayReview(input: DayReviewInput): Promise<DayReview
   });
   const headline = parsed.headline?.trim();
   if (!headline)
-    throw new GroqError(tr('AI не написав коментар.', 'AI wrote no comment.'), 'bad-response');
+    throw new GroqError(t`AI не написав коментар.`, 'bad-response');
   return {
     headline,
     comment: parsed.comment?.trim() ?? '',
@@ -981,23 +975,16 @@ export type MacroTipsInput = {
 
 // Genitive, as in "rich in …".
 const MACRO_NAMES: Record<MacroKey, string> = {
-  proteinG: tr('білка', 'protein'),
-  fatG: tr('жирів', 'fat'),
-  carbsG: tr('вуглеводів', 'carbs'),
+  proteinG: t`білка`,
+  fatG: t`жирів`,
+  carbsG: t`вуглеводів`,
 };
 
-const MACRO_TIPS_PROMPT = tr(
-  `Ти нутриціолог у застосунку для тренувань. Користувач дивиться, звідки за день у нього береться один макронутрієнт, і хоче знати, у чому його багато. Дано: макронутрієнт, ціль, з'їдено, лишилось і страви дня з його вмістом.
+const MACRO_TIPS_PROMPT = t`Ти нутриціолог у застосунку для тренувань. Користувач дивиться, звідки за день у нього береться один макронутрієнт, і хоче знати, у чому його багато. Дано: макронутрієнт, ціль, з'їдено, лишилось і страви дня з його вмістом.
 - Бери числа лише з підсумку, не рахуй їх заново.
 Поля:
 - comment: 1–2 речення до 180 символів, дружньо й конкретно: що з журналу дало найбільше і що з цим робити далі (добрати чи притримати); без моралізування;
-- foods: рівно 6 різних простих продуктів чи страв, у яких цього макронутрієнту найбільше на звичайну порцію і які легко купити в Україні; не повторюй страви з журналу; text — як користувач написав би сам, з малої літери і з кількістю звичайної порції в грамах чи мл (не в штуках), напр. «куряче філе 150 г»; kcal, protein_g, fat_g, carbs_g — для цієї порції; is_drink — true для напоїв; health — наскільки продукт корисний: "healthy", "moderate" чи "unhealthy". Від найбагатшого до найбіднішого.`,
-  `You are a nutritionist in a training app. The user is looking at where one macronutrient comes from in their day and wants to know what is rich in it. Given: the macronutrient, the goal, eaten, left and the day's dishes with their content of it.
-- Take the numbers from the summary only, don't recalculate them.
-Fields:
-- comment: 1–2 sentences up to 180 characters, friendly and specific: what in the log gave the most and what to do next (eat more or hold back); no moralizing;
-- foods: exactly 6 different simple foods or dishes with the most of this macronutrient per usual serving, easy to buy; don't repeat dishes from the log; text: the way the user would type it, lowercase, with the usual serving in grams or ml (not in pieces), e.g. "chicken breast 150 g"; kcal, protein_g, fat_g, carbs_g for that serving; is_drink: true for drinks; health: how good the food is, "healthy", "moderate" or "unhealthy". Richest first.`,
-);
+- foods: рівно 6 різних простих продуктів чи страв, у яких цього макронутрієнту найбільше на звичайну порцію і які легко купити в Україні; не повторюй страви з журналу; text — як користувач написав би сам, з малої літери і з кількістю звичайної порції в грамах чи мл (не в штуках), напр. «куряче філе 150 г»; kcal, protein_g, fat_g, carbs_g — для цієї порції; is_drink — true для напоїв; health — наскільки продукт корисний: "healthy", "moderate" чи "unhealthy". Від найбагатшого до найбіднішого.`;
 
 const MACRO_TIPS_SCHEMA = {
   type: 'object',
@@ -1010,19 +997,19 @@ const MACRO_TIPS_SCHEMA = {
 };
 
 function describeMacroDay({ macro, target, entries }: MacroTipsInput) {
-  const g = tr('г', 'g');
+  const g = t`г`;
   const eaten = entries.reduce((s, e) => s + e.grams, 0);
   return [
-    `${tr('Макронутрієнт', 'Macronutrient')}: ${MACRO_NAMES[macro]}.`,
-    `${tr('Ціль', 'Goal')} ${Math.round(target)} ${g}, ${tr('з’їдено', 'eaten')} ${Math.round(eaten)} ${g}, ${tr('лишилось', 'left')} ${Math.round(target - eaten)} ${g}.`,
+    `${t`Макронутрієнт`}: ${MACRO_NAMES[macro]}.`,
+    `${t`Ціль`} ${Math.round(target)} ${g}, ${t`з’їдено`} ${Math.round(eaten)} ${g}, ${t`лишилось`} ${Math.round(target - eaten)} ${g}.`,
     '',
-    tr('Страви дня:', 'The day’s dishes:'),
+    t`Страви дня:`,
     ...(entries.length
       ? entries.map(
           (e) =>
             `${e.name}${e.portion ? ` ${e.portion}` : ''}: ${Math.round(e.grams * 10) / 10} ${g}`,
         )
-      : [tr('нічого', 'nothing')]),
+      : [t`нічого`]),
   ].join('\n');
 }
 
@@ -1045,7 +1032,7 @@ export async function askGroqMacroTips(input: MacroTipsInput): Promise<MacroTips
     .slice(0, 6)
     .sort((a, b) => b.grams - a.grams);
   if (foods.length === 0)
-    throw new GroqError(tr('AI не підібрав продуктів.', 'AI suggested no foods.'), 'bad-response');
+    throw new GroqError(t`AI не підібрав продуктів.`, 'bad-response');
   return { comment: parsed.comment?.trim() ?? '', foods };
 }
 
@@ -1057,8 +1044,7 @@ export type MealAdviceInput = Omit<DayReviewInput, 'isToday'> & {
   later: Meal[];
 };
 
-const MEAL_ADVICE_PROMPT = tr(
-  `Ти нутриціолог у застосунку для тренувань. Користувач хоче знати, що з'їсти на конкретний прийом їжі, щоб добрати решту денної норми. Дано: ціль, з'їдено, лишилось за день, журнал і частка залишку на цей прийом.
+const MEAL_ADVICE_PROMPT = t`Ти нутриціолог у застосунку для тренувань. Користувач хоче знати, що з'їсти на конкретний прийом їжі, щоб добрати решту денної норми. Дано: ціль, з'їдено, лишилось за день, журнал і частка залишку на цей прийом.
 - Бери числа лише з підсумку, не рахуй їх заново.
 - Не повторюй страви, які вже були сьогодні в журналі: день має бути різноманітним.
 - Запропонуй 1–3 готові страви, які зазвичай їдять саме на цей прийом (сніданок, обід чи вечеря), напр. омлет з овочами, сирники, вівсянка з ягодами, гречка з курячим філе, борщ, салат з тунцем, запечена риба з картоплею. Це справжні страви з рецептом, які легко приготувати вдома, а не окремі інгредієнти: не пропонуй олію, спеції, окремі овочі чи сирі продукти. Можна додати гарнір, салат чи напій окремою стравою, але не склеюй різні страви в одну (не «шейк з рисом і салатом»).
@@ -1066,17 +1052,7 @@ const MEAL_ADVICE_PROMPT = tr(
 - Якщо частка залишку на цей прийом невелика чи від'ємна, запропонуй легкий варіант, багатий на те, чого бракує, з мінімумом калорій.
 Поля:
 - comment: одне речення до 140 символів: чому саме такі страви, з огляду на те, чого бракує; без чисел з підсумку;
-- dishes: 1–3 страви, кожна — окремий елемент: text — рівно одна страва з малої літери і лише одна вага — всієї порції, в кінці, в грамах чи мл (не в штуках); інгредієнти — через «з» і без ваги, без ком і «+», напр. «гречка з курячим філе 350 г», а не «гречка 200 г з філе 150 г»; kcal, protein_g, fat_g, carbs_g — для цієї порції; is_drink — true для напоїв; health — наскільки продукт корисний: "healthy", "moderate" чи "unhealthy".`,
-  `You are a nutritionist in a training app. The user wants to know what to eat for a particular meal to cover the rest of the day's goal. Given: the goal, eaten, left for the day, the log and this meal's share of what is left.
-- Take the numbers from the summary only, don't recalculate them.
-- Don't repeat dishes already in today's log: the day should be varied.
-- Suggest 1–3 ready dishes usually eaten for exactly this meal (breakfast, lunch or dinner), e.g. an omelette with vegetables, oatmeal with berries, buckwheat with chicken breast, a tuna salad, baked fish with potatoes. These are real dishes with a recipe, easy to cook at home, not separate ingredients: don't suggest oil, spices, single vegetables or raw foods. A side, salad or drink may be added as its own dish, but don't glue different dishes into one (not "a shake with rice and salad").
-- Together the dishes cover this meal's share of what is left: the kcal sum within ±10% of the share (not less!), protein as close to the share as possible, then fat and carbs. Pick portions so the sum adds up. Prefer healthy dishes of whole foods that are easy to buy; mind the goal.
-- If this meal's share is small or negative, suggest a light option rich in what is missing, with minimal calories.
-Fields:
-- comment: one sentence up to 140 characters on why this meal, given what is missing; no numbers from the summary;
-- dishes: 1–3 dishes, each its own item: text is exactly one dish, lowercase, with only one weight, of the whole portion, at the end, in grams or ml (not in pieces); ingredients joined with "with" and without weights, no commas or "+", e.g. "buckwheat with chicken breast 350 g", not "buckwheat 200 g with chicken 150 g"; kcal, protein_g, fat_g, carbs_g for that portion; is_drink: true for drinks; health: how good the food is, "healthy", "moderate" or "unhealthy".`,
-);
+- dishes: 1–3 страви, кожна — окремий елемент: text — рівно одна страва з малої літери і лише одна вага — всієї порції, в кінці, в грамах чи мл (не в штуках); інгредієнти — через «з» і без ваги, без ком і «+», напр. «гречка з курячим філе 350 г», а не «гречка 200 г з філе 150 г»; kcal, protein_g, fat_g, carbs_g — для цієї порції; is_drink — true для напоїв; health — наскільки продукт корисний: "healthy", "moderate" чи "unhealthy".`;
 
 const MEAL_ADVICE_SCHEMA = {
   type: 'object',
@@ -1099,29 +1075,20 @@ function mealShare({ later, targets, entries }: MealAdviceInput) {
 /** The day so far, plus how much of what's left this meal should take. */
 function describeMeal(input: MealAdviceInput) {
   const { meal, later, ...day } = input;
-  const g = tr('г', 'g');
+  const g = t`г`;
   const { share, part } = mealShare(input);
   const name = (m: Meal) => MEAL_LABELS[m].toLocaleLowerCase(locale);
   return [
     describeDay({ ...day, isToday: true }),
     '',
-    `${tr('Прийом їжі', 'Meal')}: ${name(meal)}.`,
+    `${t`Прийом їжі`}: ${name(meal)}.`,
     later.length
-      ? tr(
-          `Далі ще ${later.map(name).join(', ')}, тож на цей прийом — ${Math.round(share * 100)}% залишку.`,
-          `Still to come: ${later.map(name).join(', ')}, so this meal takes ${Math.round(share * 100)}% of what is left.`,
-        )
-      : tr(
-          'Це останній прийом за день: на нього — весь залишок.',
-          'This is the last meal of the day: it takes all that is left.',
-        ),
+      ? t`Далі ще ${later.map(name).join(', ')}, тож на цей прийом — ${Math.round(share * 100)}% залишку.`
+      : t`Це останній прийом за день: на нього — весь залишок.`,
     part('kcal') > 0
-      ? tr(
-          `Сума ккал усіх страв має бути від ${Math.round(part('kcal') * 0.9)} до ${Math.round(part('kcal') * 1.1)} ккал.`,
-          `The kcal sum of all dishes must be ${Math.round(part('kcal') * 0.9)} to ${Math.round(part('kcal') * 1.1)} kcal.`,
-        )
+      ? t`Сума ккал усіх страв має бути від ${Math.round(part('kcal') * 0.9)} до ${Math.round(part('kcal') * 1.1)} ккал.`
       : '',
-    `${tr('Частка на цей прийом', 'This meal’s share')}: ${part('kcal')} ${tr('ккал', 'kcal')}, ${tr('Б', 'P')} ${part('proteinG')} ${g}, ${tr('Ж', 'F')} ${part('fatG')} ${g}, ${tr('В', 'C')} ${part('carbsG')} ${g}.`,
+    `${t`Частка на цей прийом`}: ${part('kcal')} ${t`ккал`}, ${t`Б`} ${part('proteinG')} ${g}, ${t`Ж`} ${part('fatG')} ${g}, ${t`В`} ${part('carbsG')} ${g}.`,
   ].join('\n');
 }
 
@@ -1151,7 +1118,7 @@ export async function askGroqMealAdvice(input: MealAdviceInput): Promise<MealAdv
     .slice(0, 3)
     .map(suggestedFood);
   if (dishes.length === 0)
-    throw new GroqError(tr('AI не підібрав страву.', 'AI suggested no meal.'), 'bad-response');
+    throw new GroqError(t`AI не підібрав страву.`, 'bad-response');
   const comment = parsed.comment?.trim() ?? '';
   return {
     comment: comment.charAt(0).toLocaleUpperCase(locale) + comment.slice(1),
@@ -1180,7 +1147,7 @@ function fitPortions(dishes: SuggestedFood[], kcal: number): SuggestedFood[] {
     const r = grams / split.grams;
     return {
       ...d,
-      text: `${split.dish} ${grams} ${d.isDrink ? tr('мл', 'ml') : tr('г', 'g')}`,
+      text: `${split.dish} ${grams} ${d.isDrink ? t`мл` : t`г`}`,
       kcal: d.kcal * r,
       proteinG: d.proteinG * r,
       fatG: d.fatG === undefined ? undefined : d.fatG * r,

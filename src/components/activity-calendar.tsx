@@ -1,43 +1,27 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 import { Card, IconButton, Row, Text } from '@/components/ui';
-import { tr } from '@/lib/i18n';
 import { startOfWeek, WEEKDAY_SHORT, weekdayIndex } from '@/lib/labels';
 import { colors, radius, spacing } from '@/theme';
 
-const MONTHS = tr(
-  [
-    'Січень',
-    'Лютий',
-    'Березень',
-    'Квітень',
-    'Травень',
-    'Червень',
-    'Липень',
-    'Серпень',
-    'Вересень',
-    'Жовтень',
-    'Листопад',
-    'Грудень',
-  ],
-  [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ],
-);
+const MONTHS = [
+  t`Січень`,
+  t`Лютий`,
+  t`Березень`,
+  t`Квітень`,
+  t`Травень`,
+  t`Червень`,
+  t`Липень`,
+  t`Серпень`,
+  t`Вересень`,
+  t`Жовтень`,
+  t`Листопад`,
+  t`Грудень`,
+];
 
 const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 
@@ -67,11 +51,11 @@ export function ActivityCalendar({ workoutDates, now }: { workoutDates: number[]
       <Pressable onPress={toggle} hitSlop={8}>
         <Row style={styles.spaceBetween}>
           <Text variant="heading">
-            {expanded ? tr('Активність', 'Activity') : tr('Цей тиждень', 'This week')}
+            {expanded ? t`Активність` : t`Цей тиждень`}
           </Text>
           <Row style={styles.streak}>
             <Text variant="caption" style={styles.accent}>
-              {trainedThisWeek.size} {tr('дн.', 'd')}
+              {trainedThisWeek.size} {t`дн.`}
             </Text>
             <Ionicons name="flame" size={14} color={colors.accent} />
             <Ionicons
@@ -158,7 +142,7 @@ function Month({
             {MONTHS[first.getMonth()]} {first.getFullYear()}
           </Text>
           <Text variant="muted">
-            {tr('Тренувальних днів', 'Training days')}: {count}
+            {t`Тренувальних днів`}: {count}
           </Text>
         </View>
         <IconButton icon="chevron-forward" onPress={onNext} disabled={offset === 0} />

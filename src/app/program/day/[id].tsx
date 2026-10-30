@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet } from 'react-native';
@@ -30,7 +31,6 @@ import {
   updateDayExercise,
 } from '@/db/programs';
 import { useDbQuery } from '@/hooks/use-db-query';
-import { tr } from '@/lib/i18n';
 import { colors, spacing } from '@/theme';
 
 export default function ProgramDayScreen() {
@@ -41,23 +41,20 @@ export default function ProgramDayScreen() {
   if (day === undefined) return <Loading />;
   if (day === null) {
     return (
-      <Screen title={tr('День', 'Day')}>
-        <EmptyState icon="alert-circle" title={tr('День не знайдено', 'Day not found')} />
+      <Screen title={t`День`}>
+        <EmptyState icon="alert-circle" title={t`День не знайдено`} />
       </Screen>
     );
   }
 
   const remove = () =>
     dialog.show({
-      title: tr('Видалити день?', 'Delete day?'),
-      message: tr(
-        'Минулі тренування цього дня залишаться в історії.',
-        'Past workouts of this day stay in the history.',
-      ),
+      title: t`Видалити день?`,
+      message: t`Минулі тренування цього дня залишаться в історії.`,
       buttons: [
-        { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
+        { text: t`Скасувати`, style: 'cancel' },
         {
-          text: tr('Видалити', 'Delete'),
+          text: t`Видалити`,
           style: 'destructive',
           onPress: async () => {
             await deleteDay(id);
@@ -75,12 +72,12 @@ export default function ProgramDayScreen() {
       <DayNameField key={day.name} id={id} name={day.name} />
 
       <SectionHeader
-        title={`${tr('Послідовність вправ', 'Exercise order')} · ${day.exercises.length}`}
+        title={`${t`Послідовність вправ`} · ${day.exercises.length}`}
       />
       {day.exercises.length === 0 && (
         <EmptyState
           icon="barbell"
-          title={tr('Додай вправи в цей день', 'Add exercises to this day')}
+          title={t`Додай вправи в цей день`}
         />
       )}
       {day.exercises.map((e, i) => (
@@ -120,7 +117,7 @@ export default function ProgramDayScreen() {
       ))}
 
       <Button
-        title={tr('Додати вправу', 'Add exercise')}
+        title={t`Додати вправу`}
         icon="add"
         onPress={() => router.push({ pathname: '/pick-exercise', params: { dayId: id } })}
       />
@@ -138,7 +135,7 @@ function DayNameField({ id, name }: { id: number; name: string }) {
   };
   return (
     <Field
-      label={tr('Назва дня', 'Day name')}
+      label={t`Назва дня`}
       value={value}
       onChangeText={setValue}
       onEndEditing={save}

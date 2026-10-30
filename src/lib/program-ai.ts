@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import {
   MUSCLE_GROUPS,
   TRACKING_TYPES,
@@ -9,7 +10,6 @@ import {
 import { EXERCISE_CATALOG } from '@/lib/exercise-catalog';
 import { bundledImageUri, DEFAULT_EXERCISE_IMAGES } from '@/lib/exercise-images';
 import { groqJson } from '@/lib/groq';
-import { tr } from '@/lib/i18n';
 import { downloadImage } from '@/lib/images';
 import { formatTargets } from '@/lib/labels';
 import { ACTIVITY, ageOn, WEIGHT_GOAL, type Profile } from '@/lib/profile';
@@ -46,13 +46,13 @@ export const programKind = (answers: ProgramAnswers): ProgramKind =>
   answers.kind[0] === 'warmup' || answers.kind[0] === 'cooldown' ? answers.kind[0] : 'training';
 
 const MUSCLE_OPTIONS: Option[] = [
-  { value: 'chest', label: tr('Груди', 'Chest'), prompt: 'chest' },
-  { value: 'back', label: tr('Спина', 'Back'), prompt: 'back' },
-  { value: 'legs', label: tr('Ноги', 'Legs'), prompt: 'legs' },
-  { value: 'glutes', label: tr('Сідниці', 'Glutes'), prompt: 'glutes' },
-  { value: 'shoulders', label: tr('Плечі', 'Shoulders'), prompt: 'shoulders' },
-  { value: 'arms', label: tr('Руки', 'Arms'), prompt: 'arms (biceps and triceps)' },
-  { value: 'abs', label: tr('Прес', 'Abs'), prompt: 'abs and core' },
+  { value: 'chest', label: t`Груди`, prompt: 'chest' },
+  { value: 'back', label: t`Спина`, prompt: 'back' },
+  { value: 'legs', label: t`Ноги`, prompt: 'legs' },
+  { value: 'glutes', label: t`Сідниці`, prompt: 'glutes' },
+  { value: 'shoulders', label: t`Плечі`, prompt: 'shoulders' },
+  { value: 'arms', label: t`Руки`, prompt: 'arms (biceps and triceps)' },
+  { value: 'abs', label: t`Прес`, prompt: 'abs and core' },
 ];
 
 /**
@@ -62,25 +62,25 @@ const MUSCLE_OPTIONS: Option[] = [
 export const PROGRAM_QUESTIONS: ProgramQuestion[] = [
   {
     key: 'kind',
-    title: tr('Що складаємо?', 'What are we building?'),
+    title: t`Що складаємо?`,
     prompt: 'Program type',
     options: [
       {
         value: 'training',
-        label: tr('Тренування', 'Training'),
-        hint: tr('Програма на тиждень під твою мету', 'A weekly program for your goal'),
+        label: t`Тренування`,
+        hint: t`Програма на тиждень під твою мету`,
         prompt: 'training program',
       },
       {
         value: 'warmup',
-        label: tr('Розминка', 'Warm-up'),
-        hint: tr('Розігріти тіло й суглоби перед тренуванням', 'Get the body and joints ready'),
+        label: t`Розминка`,
+        hint: t`Розігріти тіло й суглоби перед тренуванням`,
         prompt: 'warm-up before a workout',
       },
       {
         value: 'cooldown',
-        label: tr('Заминка', 'Cool-down'),
-        hint: tr('Заспокоїти пульс і розтягнутися після', 'Bring the pulse down and stretch'),
+        label: t`Заминка`,
+        hint: t`Заспокоїти пульс і розтягнутися після`,
         prompt: 'cool-down after a workout',
       },
     ],
@@ -88,37 +88,37 @@ export const PROGRAM_QUESTIONS: ProgramQuestion[] = [
   {
     key: 'goal',
     kinds: ['training'],
-    title: tr('Яка головна мета?', 'What is your main goal?'),
+    title: t`Яка головна мета?`,
     prompt: 'Main goal',
     options: [
       {
         value: 'tone',
-        label: tr('Тримати себе в тонусі', 'Stay fit and toned'),
-        hint: tr('Загальна форма, сила й витривалість', 'General fitness, strength and stamina'),
+        label: t`Тримати себе в тонусі`,
+        hint: t`Загальна форма, сила й витривалість`,
         prompt: 'stay fit and toned, general fitness',
       },
       {
         value: 'strength',
-        label: tr('Сила', 'Strength'),
-        hint: tr('Важкі базові вправи, менше повторень', 'Heavy compound lifts, fewer reps'),
+        label: t`Сила`,
+        hint: t`Важкі базові вправи, менше повторень`,
         prompt: 'get stronger, emphasis on heavy compound strength training',
       },
       {
         value: 'muscle',
-        label: tr('Набір м’язів', 'Build muscle'),
-        hint: tr('Об’єм і форма м’язів', 'Muscle size and shape'),
+        label: t`Набір м’язів`,
+        hint: t`Об’єм і форма м’язів`,
         prompt: 'build muscle (hypertrophy)',
       },
       {
         value: 'fat_loss',
-        label: tr('Схуднення', 'Lose fat'),
-        hint: tr('Більше руху, короткий відпочинок', 'More movement, short rests'),
+        label: t({ message: 'Схуднення', context: 'Lose fat' }),
+        hint: t`Більше руху, короткий відпочинок`,
         prompt: 'lose fat while keeping muscle',
       },
       {
         value: 'endurance',
-        label: tr('Витривалість', 'Endurance'),
-        hint: tr('Кардіо й робота в багатьох повтореннях', 'Cardio and high-rep work'),
+        label: t`Витривалість`,
+        hint: t`Кардіо й робота в багатьох повтореннях`,
         prompt: 'improve endurance and conditioning',
       },
     ],
@@ -126,31 +126,31 @@ export const PROGRAM_QUESTIONS: ProgramQuestion[] = [
   {
     key: 'goal',
     kinds: ['warmup'],
-    title: tr('Перед чим розминка?', 'What is the warm-up for?'),
+    title: t`Перед чим розминка?`,
     prompt: 'Warm-up before',
     options: [
       {
         value: 'strength',
-        label: tr('Силове тренування', 'Strength training'),
-        hint: tr('Штанга, гантелі, тренажери', 'Barbell, dumbbells, machines'),
+        label: t`Силове тренування`,
+        hint: t`Штанга, гантелі, тренажери`,
         prompt: 'strength training with weights',
       },
       {
         value: 'cardio',
-        label: tr('Біг чи кардіо', 'Running or cardio'),
-        hint: tr('Біг, велосипед, скакалка', 'Running, cycling, jump rope'),
+        label: t`Біг чи кардіо`,
+        hint: t`Біг, велосипед, скакалка`,
         prompt: 'running or other cardio',
       },
       {
         value: 'intense',
-        label: tr('Інтенсивне тренування', 'Intense workout'),
-        hint: tr('HIIT, кросфіт, ігрові види спорту', 'HIIT, CrossFit, team sports'),
+        label: t`Інтенсивне тренування`,
+        hint: t`HIIT, кросфіт, ігрові види спорту`,
         prompt: 'intense workout: HIIT, CrossFit or team sports',
       },
       {
         value: 'morning',
-        label: tr('Ранкова зарядка', 'Morning routine'),
-        hint: tr('Просто прокинутися й розім’ятися', 'Just wake up and loosen up'),
+        label: t`Ранкова зарядка`,
+        hint: t`Просто прокинутися й розім’ятися`,
         prompt: 'a morning routine on its own, no workout after it',
       },
     ],
@@ -158,31 +158,31 @@ export const PROGRAM_QUESTIONS: ProgramQuestion[] = [
   {
     key: 'goal',
     kinds: ['cooldown'],
-    title: tr('Після чого заминка?', 'What is the cool-down after?'),
+    title: t`Після чого заминка?`,
     prompt: 'Cool-down after',
     options: [
       {
         value: 'strength',
-        label: tr('Силове тренування', 'Strength training'),
-        hint: tr('Штанга, гантелі, тренажери', 'Barbell, dumbbells, machines'),
+        label: t`Силове тренування`,
+        hint: t`Штанга, гантелі, тренажери`,
         prompt: 'strength training with weights',
       },
       {
         value: 'cardio',
-        label: tr('Біг чи кардіо', 'Running or cardio'),
-        hint: tr('Біг, велосипед, скакалка', 'Running, cycling, jump rope'),
+        label: t`Біг чи кардіо`,
+        hint: t`Біг, велосипед, скакалка`,
         prompt: 'running or other cardio',
       },
       {
         value: 'intense',
-        label: tr('Інтенсивне тренування', 'Intense workout'),
-        hint: tr('HIIT, кросфіт, ігрові види спорту', 'HIIT, CrossFit, team sports'),
+        label: t`Інтенсивне тренування`,
+        hint: t`HIIT, кросфіт, ігрові види спорту`,
         prompt: 'intense workout: HIIT, CrossFit or team sports',
       },
       {
         value: 'relax',
-        label: tr('Просто розтягнутися', 'Just stretch'),
-        hint: tr('Увечері чи після дня за столом', 'In the evening or after a day at a desk'),
+        label: t`Просто розтягнутися`,
+        hint: t`Увечері чи після дня за столом`,
         prompt: 'a relaxing stretch on its own, after a day of sitting',
       },
     ],
@@ -190,8 +190,8 @@ export const PROGRAM_QUESTIONS: ProgramQuestion[] = [
   {
     key: 'focus',
     kinds: ['warmup'],
-    title: tr('Що працюватиме найбільше?', 'What will work the most?'),
-    hint: tr('Можна пропустити — тоді все тіло', 'Skip it for the whole body'),
+    title: t`Що працюватиме найбільше?`,
+    hint: t`Можна пропустити — тоді все тіло`,
     multi: true,
     optional: true,
     prompt: 'Muscles the workout trains',
@@ -200,8 +200,8 @@ export const PROGRAM_QUESTIONS: ProgramQuestion[] = [
   {
     key: 'focus',
     kinds: ['cooldown'],
-    title: tr('Що найбільше втомилося?', 'What is the most tired?'),
-    hint: tr('Можна пропустити — тоді все тіло', 'Skip it for the whole body'),
+    title: t`Що найбільше втомилося?`,
+    hint: t`Можна пропустити — тоді все тіло`,
     multi: true,
     optional: true,
     prompt: 'Muscles the workout trained',
@@ -210,25 +210,25 @@ export const PROGRAM_QUESTIONS: ProgramQuestion[] = [
   {
     key: 'level',
     kinds: ['warmup', 'cooldown'],
-    title: tr('Яка в тебе гнучкість?', 'How flexible are you?'),
+    title: t`Яка в тебе гнучкість?`,
     prompt: 'Flexibility',
     options: [
       {
         value: 'stiff',
-        label: tr('Скутий', 'Stiff'),
-        hint: tr('Важко дотягнутися до пальців ніг', 'Hard to reach your toes'),
+        label: t`Скутий`,
+        hint: t`Важко дотягнутися до пальців ніг`,
         prompt: 'stiff, keep the range of motion small and easy',
       },
       {
         value: 'average',
-        label: tr('Середня', 'Average'),
-        hint: tr('Дотягуюся до пальців з прямими ногами', 'Reach your toes with straight legs'),
+        label: t`Середня`,
+        hint: t`Дотягуюся до пальців з прямими ногами`,
         prompt: 'average',
       },
       {
         value: 'flexible',
-        label: tr('Гнучкий', 'Flexible'),
-        hint: tr('Долоні легко лягають на підлогу', 'Palms rest on the floor easily'),
+        label: t`Гнучкий`,
+        hint: t`Долоні легко лягають на підлогу`,
         prompt: 'flexible, deeper positions are fine',
       },
     ],
@@ -236,25 +236,25 @@ export const PROGRAM_QUESTIONS: ProgramQuestion[] = [
   {
     key: 'level',
     kinds: ['training'],
-    title: tr('Який у тебе досвід?', 'How experienced are you?'),
+    title: t`Який у тебе досвід?`,
     prompt: 'Training experience',
     options: [
       {
         value: 'beginner',
-        label: tr('Новачок', 'Beginner'),
-        hint: tr('Менше пів року або давно не тренувався', 'Under 6 months, or a long break'),
+        label: t`Новачок`,
+        hint: t`Менше пів року або давно не тренувався`,
         prompt: 'beginner (under 6 months)',
       },
       {
         value: 'intermediate',
-        label: tr('Середній', 'Intermediate'),
-        hint: tr('Від пів року до 2 років', '6 months to 2 years'),
+        label: t({ message: 'Середній', context: 'Intermediate' }),
+        hint: t`Від пів року до 2 років`,
         prompt: 'intermediate (6 months to 2 years)',
       },
       {
         value: 'advanced',
-        label: tr('Досвідчений', 'Advanced'),
-        hint: tr('Понад 2 роки регулярних тренувань', 'Over 2 years of regular training'),
+        label: t`Досвідчений`,
+        hint: t`Понад 2 роки регулярних тренувань`,
         prompt: 'advanced (over 2 years)',
       },
     ],
@@ -262,7 +262,7 @@ export const PROGRAM_QUESTIONS: ProgramQuestion[] = [
   {
     key: 'days',
     kinds: ['training'],
-    title: tr('Скільки разів на тиждень?', 'How many times a week?'),
+    title: t`Скільки разів на тиждень?`,
     prompt: 'Workouts per week',
     options: [2, 3, 4, 5, 6].map((n) => ({
       value: String(n),
@@ -273,16 +273,16 @@ export const PROGRAM_QUESTIONS: ProgramQuestion[] = [
   {
     key: 'duration',
     kinds: ['training'],
-    title: tr('Скільки триває тренування?', 'How long is a workout?'),
+    title: t`Скільки триває тренування?`,
     prompt: 'Workout length',
     options: [
-      { value: '15', label: tr('15 хв', '15 min'), prompt: '15 minutes (about 3 exercises)' },
-      { value: '30', label: tr('30 хв', '30 min'), prompt: '30 minutes (about 3–4 exercises)' },
-      { value: '45', label: tr('45 хв', '45 min'), prompt: '45 minutes (about 4–5 exercises)' },
-      { value: '60', label: tr('1 год', '1 hour'), prompt: '60 minutes (about 5–6 exercises)' },
+      { value: '15', label: t`15 хв`, prompt: '15 minutes (about 3 exercises)' },
+      { value: '30', label: t`30 хв`, prompt: '30 minutes (about 3–4 exercises)' },
+      { value: '45', label: t`45 хв`, prompt: '45 minutes (about 4–5 exercises)' },
+      { value: '60', label: t`1 год`, prompt: '60 minutes (about 5–6 exercises)' },
       {
         value: '90',
-        label: tr('1,5 год', '1.5 hours'),
+        label: t`1,5 год`,
         prompt: '90 minutes (about 6–8 exercises)',
       },
     ],
@@ -290,38 +290,38 @@ export const PROGRAM_QUESTIONS: ProgramQuestion[] = [
   {
     key: 'duration',
     kinds: ['warmup', 'cooldown'],
-    title: tr('Скільки часу є?', 'How much time do you have?'),
+    title: t`Скільки часу є?`,
     prompt: 'Routine length',
     options: [5, 10, 15].map((n) => ({
       value: String(n),
-      label: tr(`${n} хв`, `${n} min`),
+      label: t`${n} хв`,
       prompt: `${n} minutes`,
     })),
   },
   {
     key: 'equipment',
     kinds: ['warmup', 'cooldown'],
-    title: tr('Що є під рукою?', 'What do you have at hand?'),
-    hint: tr('Познач усе, що маєш', 'Pick everything you have'),
+    title: t`Що є під рукою?`,
+    hint: t`Познач усе, що маєш`,
     multi: true,
     prompt: 'Available equipment (use nothing else)',
     options: [
       {
         value: 'bodyweight',
-        label: tr('Нічого, лише килимок', 'Nothing, just a mat'),
+        label: t`Нічого, лише килимок`,
         prompt: 'bodyweight only, a wall or a chair',
       },
-      { value: 'bands', label: tr('Резинки', 'Resistance bands'), prompt: 'resistance bands' },
+      { value: 'bands', label: t`Резинки`, prompt: 'resistance bands' },
       {
         value: 'foam_roller',
-        label: tr('Масажний ролик', 'Foam roller'),
+        label: t`Масажний ролик`,
         prompt: 'foam roller',
       },
-      { value: 'dumbbells', label: tr('Легкі гантелі', 'Light dumbbells'), prompt: 'dumbbells' },
-      { value: 'kettlebell', label: tr('Гиря', 'Kettlebell'), prompt: 'kettlebell' },
+      { value: 'dumbbells', label: t`Легкі гантелі`, prompt: 'dumbbells' },
+      { value: 'kettlebell', label: t`Гиря`, prompt: 'kettlebell' },
       {
         value: 'gym',
-        label: tr('Спортзал', 'Gym'),
+        label: t`Спортзал`,
         prompt: 'full gym: cardio machines, cables, balls, foam rollers, bars',
       },
     ],
@@ -329,26 +329,26 @@ export const PROGRAM_QUESTIONS: ProgramQuestion[] = [
   {
     key: 'equipment',
     kinds: ['training'],
-    title: tr('Що є з обладнання?', 'What equipment do you have?'),
-    hint: tr('Познач усе, що маєш', 'Pick everything you have'),
+    title: t`Що є з обладнання?`,
+    hint: t`Познач усе, що маєш`,
     multi: true,
     prompt: 'Available equipment (use nothing else)',
     options: [
       {
         value: 'gym',
-        label: tr('Повний спортзал', 'Full gym'),
+        label: t`Повний спортзал`,
         prompt: 'full gym: barbells, dumbbells, machines, cables, benches, pull-up bar',
       },
-      { value: 'dumbbells', label: tr('Гантелі', 'Dumbbells'), prompt: 'dumbbells' },
-      { value: 'barbell', label: tr('Штанга', 'Barbell'), prompt: 'barbell with plates and rack' },
-      { value: 'bench', label: tr('Лава', 'Bench'), prompt: 'adjustable bench' },
-      { value: 'pullup_bar', label: tr('Турнік', 'Pull-up bar'), prompt: 'pull-up bar' },
-      { value: 'dip_bars', label: tr('Бруси', 'Dip bars'), prompt: 'dip bars' },
-      { value: 'kettlebell', label: tr('Гиря', 'Kettlebell'), prompt: 'kettlebell' },
-      { value: 'bands', label: tr('Резинки', 'Resistance bands'), prompt: 'resistance bands' },
+      { value: 'dumbbells', label: t`Гантелі`, prompt: 'dumbbells' },
+      { value: 'barbell', label: t`Штанга`, prompt: 'barbell with plates and rack' },
+      { value: 'bench', label: t`Лава`, prompt: 'adjustable bench' },
+      { value: 'pullup_bar', label: t`Турнік`, prompt: 'pull-up bar' },
+      { value: 'dip_bars', label: t`Бруси`, prompt: 'dip bars' },
+      { value: 'kettlebell', label: t`Гиря`, prompt: 'kettlebell' },
+      { value: 'bands', label: t`Резинки`, prompt: 'resistance bands' },
       {
         value: 'bodyweight',
-        label: tr('Нічого, власна вага', 'None, bodyweight'),
+        label: t`Нічого, власна вага`,
         prompt: 'bodyweight only',
       },
     ],
@@ -356,33 +356,30 @@ export const PROGRAM_QUESTIONS: ProgramQuestion[] = [
   {
     key: 'focus',
     kinds: ['training'],
-    title: tr('На що зробити акцент?', 'What should it focus on?'),
-    hint: tr('Можна пропустити — тоді все рівномірно', 'Skip it for an even split'),
+    title: t`На що зробити акцент?`,
+    hint: t`Можна пропустити — тоді все рівномірно`,
     multi: true,
     optional: true,
     prompt: 'Extra focus',
     options: [
       ...MUSCLE_OPTIONS,
-      { value: 'cardio', label: tr('Кардіо', 'Cardio'), prompt: 'cardio' },
+      { value: 'cardio', label: t`Кардіо`, prompt: 'cardio' },
     ],
   },
   {
     key: 'limits',
-    title: tr('Щось обмежує?', 'Anything to be careful with?'),
-    hint: tr(
-      'AI не дасть вправ, що навантажують ці місця. Пропусти, якщо нічого не турбує',
-      'AI will avoid exercises that load these. Skip it if nothing bothers you',
-    ),
+    title: t`Щось обмежує?`,
+    hint: t`AI не дасть вправ, що навантажують ці місця. Пропусти, якщо нічого не турбує`,
     multi: true,
     optional: true,
     prompt: 'Limitations, avoid loading them',
     options: [
-      { value: 'knees', label: tr('Коліна', 'Knees'), prompt: 'knees' },
-      { value: 'lower_back', label: tr('Поперек', 'Lower back'), prompt: 'lower back' },
-      { value: 'shoulders', label: tr('Плечі', 'Shoulders'), prompt: 'shoulders' },
-      { value: 'wrists', label: tr('Зап’ястя', 'Wrists'), prompt: 'wrists' },
-      { value: 'neck', label: tr('Шия', 'Neck'), prompt: 'neck' },
-      { value: 'no_jumps', label: tr('Без стрибків', 'No jumping'), prompt: 'no jumping' },
+      { value: 'knees', label: t`Коліна`, prompt: 'knees' },
+      { value: 'lower_back', label: t`Поперек`, prompt: 'lower back' },
+      { value: 'shoulders', label: t`Плечі`, prompt: 'shoulders' },
+      { value: 'wrists', label: t`Зап’ястя`, prompt: 'wrists' },
+      { value: 'neck', label: t`Шия`, prompt: 'neck' },
+      { value: 'no_jumps', label: t`Без стрибків`, prompt: 'no jumping' },
     ],
   },
 ];
@@ -405,23 +402,23 @@ export const EMPTY_ANSWERS: ProgramAnswers = {
 /** Ready-made wishes the user can tap into the text field. */
 export const WISH_SUGGESTIONS: Record<ProgramKind, string[]> = {
   training: [
-    tr('Тримати себе в тонусі', 'Stay in shape'),
-    tr('Уклон на силові', 'Lean towards strength'),
-    tr('Більше кардіо', 'More cardio'),
-    tr('Тренуюся вдома', 'I train at home'),
-    tr('Хочу більше підтягуватися', 'Want to do more pull-ups'),
+    t({ message: 'Тримати себе в тонусі', context: 'Stay in shape' }),
+    t`Уклон на силові`,
+    t`Більше кардіо`,
+    t`Тренуюся вдома`,
+    t`Хочу більше підтягуватися`,
   ],
   warmup: [
-    tr('Усе стоячи, без підлоги', 'All standing, no floor work'),
-    tr('Суглоби скуті зранку', 'Stiff joints in the morning'),
-    tr('Тихо, щоб не заважати сусідам', 'Quiet, not to bother the neighbours'),
-    tr('Більше на плечі', 'More for the shoulders'),
+    t`Усе стоячи, без підлоги`,
+    t`Суглоби скуті зранку`,
+    t`Тихо, щоб не заважати сусідам`,
+    t`Більше на плечі`,
   ],
   cooldown: [
-    tr('Хочу стати гнучкішим', 'Want to get more flexible'),
-    tr('Затерплі спина й шия', 'Tight back and neck'),
-    tr('Спокійно, щоб розслабитися', 'Calm, to relax'),
-    tr('Більше на ноги', 'More for the legs'),
+    t`Хочу стати гнучкішим`,
+    t`Затерплі спина й шия`,
+    t`Спокійно, щоб розслабитися`,
+    t`Більше на ноги`,
   ],
 };
 
@@ -463,7 +460,7 @@ ${TARGET_RULES[kind]}
 - Use only exercises from the two lists below, copying their names exactly; never invent others. Prefer the library where it suits the goal and equipment; when the equipment allows better choices the library lacks (barbell, machines, cables, kettlebell, bands…) or the focus needs them, add exercises from the list of more exercises.
 - muscle_group: the main muscle worked; tracking_type: weight_reps for exercises with external load, reps for bodyweight reps, weighted_reps for bodyweight exercises that can take added weight (pull-ups, dips), duration for holds and timed work, distance_duration for running, cycling, rowing and similar.
 - Targets: sets; reps_min and reps_max for rep exercises, else 0; duration_sec for timed exercises (and optionally for distance ones), else 0; distance_km for distance exercises when it makes sense, else 0; rest_sec between sets.
-- notes: for an exercise from the list of more exercises, 1–2 sentences on technique in ${tr('Ukrainian', 'English')}; empty for library exercises.`;
+- notes: for an exercise from the list of more exercises, 1–2 sentences on technique in ${t`Ukrainian`}; empty for library exercises.`;
 
 const TRAINING_PROMPT = `You are an experienced strength and conditioning coach. Design a training program for the user.
 A program is a cycle of workout days that repeat in order (e.g. Push / Pull / Legs); one day is one workout.
@@ -475,8 +472,8 @@ Rules:
 ${exerciseRules('training')}
 - summary: 1–2 sentences on how the program is built and why it suits the user.
 - name: a short program name of 2–4 words, without numbers of days or minutes.
-- Day names: a few words on what the day trains (e.g. ${tr('"Груди й трицепс", "Верх тіла"', '"Chest and triceps", "Upper body"')}), without "Day 1" numbering.
-- Write the program name, day names, summary and notes in natural, grammatical ${tr('Ukrainian', 'English')}.`;
+- Day names: a few words on what the day trains (e.g. ${t`"Груди й трицепс", "Верх тіла"`}), without "Day 1" numbering.
+- Write the program name, day names, summary and notes in natural, grammatical ${t`Ukrainian`}.`;
 
 /** What a warm-up and a cool-down are made of, in order. */
 const ROUTINE_STEPS = {
@@ -496,9 +493,9 @@ Rules:
 ${ROUTINE_STEPS[kind]}
 ${exerciseRules(kind)}
 - summary: 1–2 sentences on what the routine does and why it suits the user.
-- name: a short name of 2–4 words (e.g. ${warmup ? tr('"Розминка для ніг"', '"Leg day warm-up"') : tr('"Заминка після верху тіла"', '"Upper body cool-down"')}), without minutes.
-- Day name: a few words on what it is for (e.g. ${warmup ? tr('"Перед тренуванням ніг"', '"Before leg day"') : tr('"Розтяжка всього тіла"', '"Full body stretch"')}).
-- Write the name, day name, summary and notes in natural, grammatical ${tr('Ukrainian', 'English')}.`;
+- name: a short name of 2–4 words (e.g. ${warmup ? t`"Розминка для ніг"` : t`"Заминка після верху тіла"`}), without minutes.
+- Day name: a few words on what it is for (e.g. ${warmup ? t`"Перед тренуванням ніг"` : t`"Розтяжка всього тіла"`}).
+- Write the name, day name, summary and notes in natural, grammatical ${t`Ukrainian`}.`;
 };
 
 const systemPrompt = (kind: ProgramKind) =>
@@ -774,7 +771,7 @@ export async function askProgramPlan(request: ProgramRequest): Promise<ProgramPl
 
   const days = (raw.days ?? [])
     .map((d, i) => ({
-      name: d.name?.trim() || `${tr('День', 'Day')} ${i + 1}`,
+      name: d.name?.trim() || `${t`День`} ${i + 1}`,
       // An exercise without a photo is left out even on the last try.
       exercises: (d.exercises ?? []).flatMap((e) => toPlanExercise(e, choices) ?? []),
     }))
@@ -782,14 +779,11 @@ export async function askProgramPlan(request: ProgramRequest): Promise<ProgramPl
 
   if (days.length === 0) {
     throw new Error(
-      tr(
-        'AI не склав жодного дня. Спробуй ще раз або зміни відповіді.',
-        'AI didn’t come up with any days. Try again or change the answers.',
-      ),
+      t`AI не склав жодного дня. Спробуй ще раз або зміни відповіді.`,
     );
   }
   return {
-    name: raw.name?.trim() || tr('Програма від AI', 'AI program'),
+    name: raw.name?.trim() || t`Програма від AI`,
     summary: raw.summary?.trim() ?? '',
     days,
   };
@@ -837,10 +831,7 @@ export async function askReplacement({
   const next = pick(raw);
   if (!next) {
     throw new Error(
-      tr(
-        'AI не знайшов іншої схожої вправи. Спробуй ще раз.',
-        'AI couldn’t find another similar exercise. Try again.',
-      ),
+      t`AI не знайшов іншої схожої вправи. Спробуй ще раз.`,
     );
   }
   return next;

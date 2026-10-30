@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -61,8 +62,7 @@ import {
   splitDishes,
   sumMacros,
 } from '@/lib/food';
-import { GroqError, readFoodPhoto, type SuggestedFood } from '@/lib/groq';
-import { tr } from '@/lib/i18n';
+import { GroqError, readFoodPhoto, searchRestaurantDishes, type PhotoDish, type SuggestedFood } from '@/lib/groq';
 import { captureForAi, readForAi } from '@/lib/images';
 import { MEALS, mealAt, type Meal } from '@/lib/meals';
 import { parseDecimal } from '@/lib/metrics';
@@ -101,31 +101,34 @@ const startPending = (
 });
 
 /** What a photo turned into: dishes to check in the field, or a product to log. */
-type Scanned = { kind: 'dish'; text: string } | { kind: 'product'; found: FoundProduct };
+type Scanned = { kind: 'dish'; text: string; dishes: PhotoDish[]; restaurant: string; context: string; webNutrition: (SuggestedFood | null)[] } | { kind: 'product'; found: FoundProduct };
 
 const SOURCE_LABELS: Record<ProductSource, () => string> = {
-  label: () => tr('З етикетки', 'From the label'),
-  web: () => tr('Знайдено в інтернеті', 'Found on the web'),
-  ai: () => tr('Оцінка AI за назвою', 'AI estimate by name'),
+  label: () => t`З етикетки`,
+  web: () => t`Знайдено в інтернеті`,
+  ai: () => t`Оцінка AI за назвою`,
 };
 
 /** The chips the scanner shows for what it found. */
 function scannedResult(scanned: Scanned): PhotoResult {
   if (scanned.kind === 'dish') {
     return {
-      title: tr('Ось що на тарілці', 'Here’s what’s on the plate'),
-      items: scanned.text.split(', '),
+      title: t`Знайшов страви`,
+      items: scanned.dishes.map((d, i) => {
+        const kcal = d.nutrition?.kcal ?? scanned.webNutrition[i]?.kcal;
+        return kcal ? `${d.name} · ${formatKcal(kcal)} ${t`ккал`}` : d.name;
+      }),
     };
   }
   const { food, source, site } = scanned.found;
   const per100 = scaleNutrition(food, 100);
   const unit = amountUnit(food);
-  const g = tr('г', 'g');
+  const g = t`г`;
   return {
     title: food.name,
     items: [
-      `${formatKcal(per100.kcal)} ${tr('ккал', 'kcal')} / 100 ${unit}`,
-      `${tr('Б', 'P')} ${formatGrams(per100.proteinG)} ${g} · ${tr('Ж', 'F')} ${formatGrams(per100.fatG)} ${g} · ${tr('В', 'C')} ${formatGrams(per100.carbsG)} ${g}`,
+      `${formatKcal(per100.kcal)} ${t`ккал`} / 100 ${unit}`,
+      `${t`Б`} ${formatGrams(per100.proteinG)} ${g} · ${t`Ж`} ${formatGrams(per100.fatG)} ${g} · ${t`В`} ${formatGrams(per100.carbsG)} ${g}`,
       site ? `${SOURCE_LABELS[source]()}: ${site}` : SOURCE_LABELS[source](),
     ],
   };
@@ -201,9 +204,9 @@ export default function AddFoodScreen() {
       icon: 'alert-circle',
       buttons: signedOut
         ? [
-            { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
+            { text: t`Скасувати`, style: 'cancel' },
             {
-              text: tr('Акаунт', 'Account'),
+              text: t`Акаунт`,
               onPress: () => router.push('/settings/account'),
             },
           ]
@@ -232,13 +235,13 @@ export default function AddFoodScreen() {
         setPhoto(null);
         if (failed.length > 0) {
           dialog.show({
-            title: tr('Не все пораховано', 'Not everything was counted'),
+            title: t`Не все пораховано`,
             message: failed.map((f) => `«${f.text}»: ${f.error.message}`).join('\n'),
             icon: 'alert-circle',
           });
         }
       })
-      .catch((e) => showError(tr('Не вдалося порахувати', 'Couldn’t calculate'), e))
+      .catch((e) => showError(t`Не вдалося порахувати`, e))
       .finally(() => setLooking(false));
 
   const lookup = (text: string) => {
@@ -260,7 +263,7 @@ export default function AddFoodScreen() {
     try {
       image = await captureForAi(source);
     } catch (e) {
-      showError(tr('Не вдалося зробити фото', 'Couldn’t take the photo'), e);
+      showError(t`Не вдалося зробити фото`, e);
       return;
     }
     if (!image) return;
@@ -277,10 +280,19 @@ export default function AddFoodScreen() {
         mode = 'label';
         if (run === scanRun.current) setScan({ uri, mode });
       }
-      const result: Scanned =
-        photo.kind === 'dish'
-          ? photo
-          : { kind: 'product', found: await lookupProduct(photo.product) };
+      let result: Scanned;
+      if (photo.kind === 'dish') {
+        const searched = await searchRestaurantDishes(photo.restaurant, photo.context, photo.dishes).catch(() => photo.dishes.map(() => null));
+        result = {
+          ...photo,
+          webNutrition: photo.dishes.map((dish, i) => {
+            const m = dish.nutrition ?? searched[i];
+            return m ? { text: `${dish.name} ${dish.amount} ${dish.unit}`, ...m, isDrink: dish.unit === 'ml' } : null;
+          }),
+        };
+      } else {
+        result = { kind: 'product', found: await lookupProduct(photo.product) };
+      }
       if (run === scanRun.current) {
         scanned.current = result;
         setScan({ uri, mode, result: scannedResult(result) });
@@ -296,13 +308,24 @@ export default function AddFoodScreen() {
   };
 
   // The found dishes land in the field, under the photo they came from; a product on its card.
-  const finishScan = () => {
+  const finishScan = async () => {
     const result = scanned.current;
     if (!scan || !result) return;
     scanned.current = null;
     if (result.kind === 'dish') {
-      setInput(result.text);
+      setLooking(true);
       setPhoto(scan.uri);
+      const pendingFoods = await Promise.all(result.dishes.map(async (dish, i) => {
+        const suggestion = result.webNutrition[i];
+        if (suggestion) return (await cacheSuggestion(suggestion, true)) ?? lookupFood(suggestion.text);
+        return lookupFood(`${dish.name} ${dish.amount} ${dish.unit === 'ml' ? t`мл` : t`г`}`);
+      }).map((p) => p.catch((error) => ({ error } as const))));
+      const found = pendingFoods.filter((r): r is FoundFood => 'food' in r);
+      const failed = pendingFoods.filter((r): r is { error: Error } => 'error' in r);
+      setPending(found.map((r) => startPending(r.food, r.cached, r.amount)));
+      setInput(failed.map((r) => r.error.message).join(', '));
+      setLooking(false);
+      if (failed.length) dialog.show({ title: t`Не всі страви пораховано`, message: failed.map((r) => r.error.message).join('\n'), icon: 'alert-circle' });
     } else {
       const { food, cached, amount, source } = result.found;
       setInput('');
@@ -320,16 +343,13 @@ export default function AddFoodScreen() {
 
   const choosePhotoSource = () =>
     dialog.show({
-      title: tr('Фото їжі чи етикетки', 'Photo of food or a label'),
-      message: tr(
-        'AI розпізнає страви й оцінить порції або прочитає КБЖВ з етикетки. Тарілку знімай згори, цілком; етикетку — так, щоб було видно назву й таблицю харчової цінності.',
-        'AI recognizes the dishes and estimates the portions, or reads the nutrition off a label. Shoot the whole plate from above; a label so its name and nutrition table show.',
-      ),
+      title: t`Фото їжі, меню чи етикетки`,
+      message: t`AI розпізнає страви й порції, читає назви та КБЖВ з меню, чека або фото етикетки. Для тарілки знімай її згори й цілком; текст фотографуй чітко.`,
       icon: 'camera-outline',
       buttons: [
-        { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
-        { text: tr('Камера', 'Camera'), onPress: () => recognize('camera') },
-        { text: tr('Галерея', 'Gallery'), onPress: () => recognize('library') },
+        { text: t`Скасувати`, style: 'cancel' },
+        { text: t`Камера`, onPress: () => recognize('camera') },
+        { text: t`Галерея`, onPress: () => recognize('library') },
       ],
     });
 
@@ -358,15 +378,12 @@ export default function AddFoodScreen() {
 
   const forgetTemplate = (template: MealTemplate) =>
     dialog.show({
-      title: tr('Видалити шаблон?', 'Delete template?'),
-      message: tr(
-        `«${template.name}» зникне зі списку шаблонів. Записи в журналі залишаться.`,
-        `“${template.name}” will disappear from templates. Log entries stay.`,
-      ),
+      title: t`Видалити шаблон?`,
+      message: t`«${template.name}» зникне зі списку шаблонів. Записи в журналі залишаться.`,
       buttons: [
-        { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
+        { text: t`Скасувати`, style: 'cancel' },
         {
-          text: tr('Видалити', 'Delete'),
+          text: t`Видалити`,
           style: 'destructive',
           onPress: () => deleteMealTemplate(template.id),
         },
@@ -376,15 +393,12 @@ export default function AddFoodScreen() {
   // Removes the dish from the cache only; meals already logged keep their values.
   const forget = (food: Food) =>
     dialog.show({
-      title: tr('Прибрати з нещодавніх?', 'Remove from recent?'),
-      message: tr(
-        `«${food.name}» зникне зі списку й підказок. Записи в журналі залишаться, а наступного разу страву порахує AI.`,
-        `“${food.name}” will disappear from the list and suggestions. Log entries stay, and next time AI will calculate the dish.`,
-      ),
+      title: t`Прибрати з нещодавніх?`,
+      message: t`«${food.name}» зникне зі списку й підказок. Записи в журналі залишаться, а наступного разу страву порахує AI.`,
       buttons: [
-        { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
+        { text: t`Скасувати`, style: 'cancel' },
         {
-          text: tr('Прибрати', 'Remove'),
+          text: t`Прибрати`,
           style: 'destructive',
           onPress: () => deleteFood(food.id),
         },
@@ -398,7 +412,7 @@ export default function AddFoodScreen() {
   const templates = data?.templates ?? [];
 
   return (
-    <Screen title={tr('Додати їжу', 'Add food')} mode="modal">
+    <Screen title={t`Додати їжу`} mode="modal">
       <FoodPhotoScanner
         scan={scan}
         onFinish={finishScan}
@@ -429,11 +443,8 @@ export default function AddFoodScreen() {
                 <Image source={{ uri: photo }} style={styles.photo} contentFit="cover" />
                 <Text variant="muted" style={styles.flex}>
                   {recognizing
-                    ? tr('Розпізнаю, що на фото…', 'Recognizing the photo…')
-                    : tr(
-                        'Ось що я бачу. Виправ назви чи вагу, якщо треба, і порахуй.',
-                        'Here’s what I see. Fix the names or amounts if needed, then calculate.',
-                      )}
+                    ? t`Розпізнаю, що на фото…`
+                    : t`Ось що я бачу. Виправ назви чи вагу, якщо треба, і порахуй.`}
                 </Text>
                 {!busy && <CircleButton icon="close" size={32} onPress={() => setPhoto(null)} />}
               </Row>
@@ -441,10 +452,7 @@ export default function AddFoodScreen() {
             <Field
               value={input}
               onChangeText={setInput}
-              placeholder={tr(
-                'Що з’їв чи випив? Напр. «2 яйця і тост з маслом»',
-                'What did you eat or drink? E.g. “2 eggs and buttered toast”',
-              )}
+              placeholder={t`Що з’їв чи випив? Напр. «2 яйця і тост з маслом»`}
               multiline
               autoFocus
               editable={!busy}
@@ -459,12 +467,12 @@ export default function AddFoodScreen() {
                   {f.name}
                 </Text>
                 <Text variant="muted">
-                  {formatKcal(f.kcal)} {tr('ккал', 'kcal')}
+                  {formatKcal(f.kcal)} {t`ккал`}
                 </Text>
               </Pressable>
             ))}
             <Button
-              title={looking ? tr('Рахую…', 'Calculating…') : tr('Порахувати', 'Calculate')}
+              title={looking ? t`Рахую…` : t`Порахувати`}
               icon="sparkles"
               onPress={() => lookup(input)}
               loading={looking}
@@ -472,7 +480,7 @@ export default function AddFoodScreen() {
             />
             <Row>
               <Button
-                title={tr('Фото', 'Photo')}
+                title={t`Фото`}
                 icon="camera-outline"
                 variant="secondary"
                 onPress={choosePhotoSource}
@@ -481,7 +489,7 @@ export default function AddFoodScreen() {
                 style={styles.flex}
               />
               <Button
-                title={tr('Вручну', 'Manually')}
+                title={t`Вручну`}
                 icon="create-outline"
                 variant="secondary"
                 onPress={() => setManual(input.trim())}
@@ -492,7 +500,7 @@ export default function AddFoodScreen() {
           </Card>
           {templates.length > 0 && (
             <>
-              <Text variant="caption">{tr('Шаблони', 'Templates')}</Text>
+              <Text variant="caption">{t`Шаблони`}</Text>
               <Card style={styles.templates}>
                 {templates.map((t) => (
                   <TemplateRow
@@ -507,7 +515,7 @@ export default function AddFoodScreen() {
           )}
           {recent.length > 0 && (
             <>
-              <Text variant="caption">{tr('Нещодавні', 'Recent')}</Text>
+              <Text variant="caption">{t`Нещодавні`}</Text>
               <View style={styles.recentList}>
                 {recent.map((f) => (
                   <RecentChip
@@ -576,7 +584,7 @@ function PendingList({
   const actions = editing === null && (
     <Row>
       <Button
-        title={tr('Скасувати', 'Cancel')}
+        title={t`Скасувати`}
         variant="secondary"
         onPress={onCancel}
         style={styles.flex}
@@ -584,8 +592,8 @@ function PendingList({
       <Button
         title={
           many
-            ? tr(`Додати все (${pending.length})`, `Add all (${pending.length})`)
-            : tr('Додати', 'Add')
+            ? t`Додати все (${pending.length})`
+            : t`Додати`
         }
         icon="add"
         onPress={onAdd}
@@ -600,10 +608,10 @@ function PendingList({
     <>
       {pending.map((p, i) => card(p, i))}
       <Card>
-        <Text variant="caption">{tr('Разом', 'Total')}</Text>
+        <Text variant="caption">{t`Разом`}</Text>
         <Text style={styles.pendingKcal}>
           {formatKcal(total.kcal)}
-          <Text style={styles.unit}> {tr('ккал', 'kcal')}</Text>
+          <Text style={styles.unit}> {t`ккал`}</Text>
         </Text>
         <MacroRow macros={total} />
         {actions}
@@ -645,47 +653,47 @@ function PendingCard({
           <Text variant="muted">
             {source && source !== 'ai' ? (
               <>
-                {SOURCE_LABELS[source]()}: {formatKcal(per100.kcal)} {tr('ккал', 'kcal')} / 100{' '}
+                {SOURCE_LABELS[source]()}: {formatKcal(per100.kcal)} {t`ккал`} / 100{' '}
                 {unit}
               </>
             ) : (
               <>
-                {cached ? tr('Зазвичай', 'Usually') : tr('Оцінка AI', 'AI estimate')}:{' '}
+                {cached ? t`Зазвичай` : t`Оцінка AI`}:{' '}
                 {formatGrams(food.portionG ?? 100)} {unit} · {formatKcal(per100.kcal)}{' '}
-                {tr('ккал', 'kcal')} / 100 {unit}
+                {t`ккал`} / 100 {unit}
               </>
             )}
           </Text>
         </View>
         {source === 'label' ? (
-          <Badge label={tr('Етикетка', 'Label')} tone="accent" />
+          <Badge label={t`Етикетка`} tone="accent" />
         ) : source === 'web' ? (
-          <Badge label={tr('Інтернет', 'Web')} tone="muted" />
+          <Badge label={t`Інтернет`} tone="muted" />
         ) : (
-          <Badge label={cached ? tr('З бази', 'Saved') : 'AI'} tone={cached ? 'muted' : 'accent'} />
+          <Badge label={cached ? t`З бази` : 'AI'} tone={cached ? 'muted' : 'accent'} />
         )}
         {onEdit && <CircleButton icon="pencil" size={32} onPress={onEdit} />}
         {onRemove && <CircleButton icon="close" size={32} onPress={onRemove} />}
       </Row>
       <Text style={styles.pendingKcal}>
         {formatKcal(scaled.kcal)}
-        <Text style={styles.unit}> {tr('ккал', 'kcal')}</Text>
+        <Text style={styles.unit}> {t`ккал`}</Text>
       </Text>
       <MacroRow macros={scaled} />
       {(scaled.fiberG !== null || scaled.sugarG !== null) && (
         <Text variant="muted">
           {scaled.fiberG !== null
-            ? `${tr('Клітковина', 'Fiber')} ${formatGrams(scaled.fiberG)} ${tr('г', 'g')}`
+            ? `${t`Клітковина`} ${formatGrams(scaled.fiberG)} ${t`г`}`
             : ''}
           {scaled.fiberG !== null && scaled.sugarG !== null ? ' · ' : ''}
           {scaled.sugarG !== null
-            ? `${tr('Цукор', 'Sugar')} ${formatGrams(scaled.sugarG)} ${tr('г', 'g')}`
+            ? `${t`Цукор`} ${formatGrams(scaled.sugarG)} ${t`г`}`
             : ''}
         </Text>
       )}
       <HealthNote key={food.id} food={food} />
       <Row style={styles.spaceBetween}>
-        <Text variant="body">{tr('Кількість', 'Amount')}</Text>
+        <Text variant="body">{t`Кількість`}</Text>
         <UnitSwitch isDrink={isDrink} onChange={setUnit} />
       </Row>
       <Row style={styles.amountRow}>
@@ -720,14 +728,14 @@ function PendingCard({
 }
 
 const HEALTH: Record<HealthRating, { label: () => string; icon: IconName; color: string }> = {
-  healthy: { label: () => tr('Корисно', 'Healthy'), icon: 'leaf', color: colors.success },
+  healthy: { label: () => t`Корисно`, icon: 'leaf', color: colors.success },
   moderate: {
-    label: () => tr('У міру', 'In moderation'),
+    label: () => t`У міру`,
     icon: 'alert-circle',
     color: colors.warning,
   },
   unhealthy: {
-    label: () => tr('Не дуже корисно', 'Not so healthy'),
+    label: () => t`Не дуже корисно`,
     icon: 'warning',
     color: colors.danger,
   },
@@ -757,7 +765,7 @@ function HealthNote({ food }: { food: Food }) {
     return (
       <Row style={styles.health}>
         <Ionicons name="sparkles" size={18} color={colors.textMuted} />
-        <Text variant="muted">{tr('Оцінюю корисність…', 'Rating how healthy it is…')}</Text>
+        <Text variant="muted">{t`Оцінюю корисність…`}</Text>
       </Row>
     );
   }
@@ -874,15 +882,15 @@ function ManualCard({
           <NameInput
             value={name}
             onChangeText={setName}
-            placeholder={tr('Напр. «Сирники»', 'E.g. “Pancakes”')}
+            placeholder={t`Напр. «Сирники»`}
             autoFocus={!initial && !initialName}
           />
         </View>
-        <Badge label={initial ? tr('Редагую', 'Editing') : tr('Вручну', 'Manual')} tone="muted" />
+        <Badge label={initial ? t`Редагую` : t({ message: 'Вручну', context: 'Manual' })} tone="muted" />
       </Row>
       <Row style={styles.spaceBetween}>
         <Text variant="muted">
-          {tr('На', 'Per')} 100 {unit}
+          {t`На`} 100 {unit}
         </Text>
         <UnitSwitch isDrink={isDrink} onChange={setIsDrink} />
       </Row>
@@ -894,13 +902,13 @@ function ManualCard({
       <MacroInputRow values={values} onChange={(key, t) => setValues({ ...values, [key]: t })} />
       <Row>
         <Button
-          title={tr('Скасувати', 'Cancel')}
+          title={t`Скасувати`}
           variant="secondary"
           onPress={onCancel}
           style={styles.flex}
         />
         <Button
-          title={tr('Зберегти', 'Save')}
+          title={t`Зберегти`}
           icon="checkmark"
           onPress={save}
           loading={saving}
@@ -935,16 +943,13 @@ function TemplateRow({
           {template.name}
         </Text>
         <Text variant="muted">
-          {formatKcal(kcal)} {tr('ккал', 'kcal')}
+          {formatKcal(kcal)} {t`ккал`}
         </Text>
       </Pressable>
       <Pressable
         onPress={onRemove}
         hitSlop={8}
-        accessibilityLabel={tr(
-          `Видалити шаблон «${template.name}»`,
-          `Delete template “${template.name}”`,
-        )}
+        accessibilityLabel={t`Видалити шаблон «${template.name}»`}
         style={({ pressed }) => pressed && styles.pressed}>
         <Ionicons name="close" size={16} color={colors.textMuted} />
       </Pressable>
@@ -975,10 +980,7 @@ function RecentChip({
       <Pressable
         onPress={onRemove}
         hitSlop={8}
-        accessibilityLabel={tr(
-          `Прибрати «${food.name}» з нещодавніх`,
-          `Remove “${food.name}” from recent`,
-        )}
+        accessibilityLabel={t`Прибрати «${food.name}» з нещодавніх`}
         style={({ pressed }) => [styles.recentRemove, pressed && styles.pressed]}>
         <Ionicons name="close" size={14} color={colors.textMuted} />
       </Pressable>

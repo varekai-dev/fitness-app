@@ -1,7 +1,7 @@
+import { t } from '@lingui/core/macro';
 import { and, asc, desc, eq, isNotNull, isNull, max, ne } from 'drizzle-orm';
 
 import { defaultYoutubeUrl } from '@/lib/exercise-videos';
-import { tr } from '@/lib/i18n';
 import type { ProgramPlan } from '@/lib/program-ai';
 
 import { db, type Tx } from './client';
@@ -68,7 +68,7 @@ export const getProgramDay = (id: number) =>
   });
 
 /** Name a new program starts with until the user retypes it. */
-export const NEW_PROGRAM_NAME = tr('Нова програма', 'New program');
+export const NEW_PROGRAM_NAME = t`Нова програма`;
 
 export async function createProgram(name: string) {
   const active = await getActiveProgram();

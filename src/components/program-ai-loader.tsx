@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -14,7 +15,6 @@ import Animated, {
 
 import { Spinner } from '@/components/spinner';
 import { Text } from '@/components/ui';
-import { tr } from '@/lib/i18n';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 export type LoaderStage = { title: string; detail?: string };
@@ -98,7 +98,7 @@ export function ProgramAiLoader({
             style={styles.slide}>
             <Text variant="title" style={styles.center} numberOfLines={2}>
               {finished
-                ? tr('Програма готова!', 'Your program is ready!')
+                ? t`Програма готова!`
                 : `${stages[stage].title}…`}
             </Text>
           </Animated.View>
@@ -106,10 +106,7 @@ export function ProgramAiLoader({
         {attempt > 1 && !done && (
           <Animated.View key={`attempt-${attempt}`} entering={FadeInDown}>
             <Text variant="muted" style={[styles.center, styles.retry]}>
-              {tr(
-                `План вийшов неповним, AI складає ще раз · спроба ${attempt} з ${attempts}`,
-                `The plan came out incomplete, AI is trying again · attempt ${attempt} of ${attempts}`,
-              )}
+              {t`План вийшов неповним, AI складає ще раз · спроба ${attempt} з ${attempts}`}
             </Text>
           </Animated.View>
         )}

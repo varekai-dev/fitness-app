@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import { useState } from 'react';
@@ -30,7 +31,6 @@ import {
 import { PHOTO_POSES, type PhotoPose } from '@/db/schema';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { useToday } from '@/hooks/use-today';
-import { tr } from '@/lib/i18n';
 import { formatDate, formatShortDate, formatWeightDelta } from '@/lib/labels';
 import { formatWeight } from '@/lib/metrics';
 import {
@@ -94,7 +94,7 @@ export default function ProgressPhotosScreen() {
       setAfterId(null);
     } catch (e) {
       dialog.show({
-        title: tr('Не вдалося додати фото', 'Couldn’t add the photo'),
+        title: t`Не вдалося додати фото`,
         message: e instanceof Error ? e.message : String(e),
         icon: 'alert-circle-outline',
       });
@@ -118,23 +118,20 @@ export default function ProgressPhotosScreen() {
   const tile = gridWidth > 0 ? (gridWidth - spacing.sm * (COLUMNS - 1)) / COLUMNS : 0;
 
   return (
-    <Screen title={tr('Фото прогресу', 'Progress photos')}>
+    <Screen title={t`Фото прогресу`}>
       <ChipGroup options={PHOTO_POSES} value={pose} onChange={changePose} labels={POSE_LABELS} />
 
       {comparing ? (
         <Card>
           <PhotoCompare
-            before={side(before, tr('До', 'Before'))}
-            after={side(after, tr('Після', 'After'))}
+            before={side(before, t`До`)}
+            after={side(after, t`Після`)}
           />
           <CompareSummary before={before} after={after} weights={weights} />
         </Card>
       ) : posed.length === 1 ? (
         <Text variant="muted" style={styles.center}>
-          {tr(
-            'Додай ще одне фото в цій позі, і тут з’явиться порівняння «до / після».',
-            'Add one more photo in this pose to get a before / after comparison.',
-          )}
+          {t`Додай ще одне фото в цій позі, і тут з’явиться порівняння «до / після».`}
         </Text>
       ) : null}
 
@@ -143,39 +140,30 @@ export default function ProgressPhotosScreen() {
           <Row style={styles.flex}>
             <Ionicons name="camera-outline" size={20} color={colors.accent} />
             <Text variant="heading">
-              {tr('Нове фото', 'New photo')} · {POSE_LABELS[pose].toLowerCase()}
+              {t`Нове фото`} · {POSE_LABELS[pose].toLowerCase()}
             </Text>
           </Row>
           {daysSince !== null && daysSince >= PHOTO_EVERY_DAYS && (
-            <Badge label={tr('Час', 'Due')} tone="warning" />
+            <Badge label={t`Час`} tone="warning" />
           )}
         </Row>
         <Text variant="muted">
           {daysSince === null
-            ? tr(
-                'Фотографуйся раз на тиждень: те саме місце, світло й час доби, наприклад зранку натщесерце.',
-                'Take a photo once a week in the same spot, light and time of day, e.g. in the morning before eating.',
-              )
+            ? t`Фотографуйся раз на тиждень: те саме місце, світло й час доби, наприклад зранку натщесерце.`
             : daysSince >= PHOTO_EVERY_DAYS
-              ? tr(
-                  `Останнє фото було ${formatSpan(daysSince * DAY_MS)} тому — час для нового.`,
-                  `The last photo was ${formatSpan(daysSince * DAY_MS)} ago: time for a new one.`,
-                )
-              : tr(
-                  `Наступне фото — через ${formatSpan((PHOTO_EVERY_DAYS - daysSince) * DAY_MS)}.`,
-                  `Next photo in ${formatSpan((PHOTO_EVERY_DAYS - daysSince) * DAY_MS)}.`,
-                )}
+              ? t`Останнє фото було ${formatSpan(daysSince * DAY_MS)} тому — час для нового.`
+              : t`Наступне фото — через ${formatSpan((PHOTO_EVERY_DAYS - daysSince) * DAY_MS)}.`}
         </Text>
         <Row style={styles.actions}>
           <Button
-            title={tr('Камера', 'Camera')}
+            title={t`Камера`}
             icon="camera"
             onPress={() => setShooting(true)}
             disabled={adding}
             style={styles.flex}
           />
           <Button
-            title={tr('Галерея', 'Gallery')}
+            title={t`Галерея`}
             icon="images-outline"
             variant="secondary"
             onPress={() => save(pickProgressPhoto)}
@@ -188,23 +176,20 @@ export default function ProgressPhotosScreen() {
       {posed.length === 0 ? (
         <EmptyState
           icon="body-outline"
-          title={tr('Ще немає фото', 'No photos yet')}
-          hint={tr(
-            'Зроби перше фото, щоб потім бачити, як змінюється тіло.',
-            'Take your first photo to see how your body changes over time.',
-          )}
+          title={t`Ще немає фото`}
+          hint={t`Зроби перше фото, щоб потім бачити, як змінюється тіло.`}
         />
       ) : (
         <>
-          <SectionHeader title={tr('Усі фото', 'All photos')} />
+          <SectionHeader title={t`Усі фото`} />
           <View style={styles.grid} onLayout={(e) => setGridWidth(e.nativeEvent.layout.width)}>
             {tile > 0 &&
               [...posed].reverse().map((p) => {
                 const mark =
                   comparing && p.id === before.id
-                    ? tr('До', 'Before')
+                    ? t`До`
                     : comparing && p.id === after.id
-                      ? tr('Після', 'After')
+                      ? t`Після`
                       : null;
                 return (
                   <Pressable
@@ -285,12 +270,12 @@ function CompareSummary({
   return (
     <Row style={styles.spaceBetween}>
       <View>
-        <Text variant="caption">{tr('Між фото', 'Between photos')}</Text>
+        <Text variant="caption">{t`Між фото`}</Text>
         <Text variant="heading">{capitalize(formatSpan(after.takenAt - before.takenAt))}</Text>
       </View>
       {w1 && w2 && (
         <View style={styles.right}>
-          <Text variant="caption">{tr('Вага', 'Weight')}</Text>
+          <Text variant="caption">{t`Вага`}</Text>
           <Text variant="heading">
             {formatWeightDelta(w2.weightKg - w1.weightKg)} {WEIGHT_UNIT}
           </Text>
@@ -351,14 +336,14 @@ function PhotoViewer({
               {canCompare && !confirming && (
                 <Row style={styles.actions}>
                   <Button
-                    title={tr('Як «до»', 'As before')}
+                    title={t`Як «до»`}
                     variant="secondary"
                     small
                     onPress={() => onBefore(shown)}
                     style={styles.flex}
                   />
                   <Button
-                    title={tr('Як «після»', 'As after')}
+                    title={t`Як «після»`}
                     variant="secondary"
                     small
                     onPress={() => onAfter(shown)}
@@ -369,13 +354,13 @@ function PhotoViewer({
               {confirming ? (
                 <Row style={styles.actions}>
                   <Button
-                    title={tr('Скасувати', 'Cancel')}
+                    title={t`Скасувати`}
                     variant="secondary"
                     onPress={() => setConfirming(false)}
                     style={styles.flex}
                   />
                   <Button
-                    title={tr('Видалити', 'Delete')}
+                    title={t`Видалити`}
                     variant="destructive"
                     icon="trash-outline"
                     onPress={() => onDelete(shown)}
@@ -384,7 +369,7 @@ function PhotoViewer({
                 </Row>
               ) : (
                 <Button
-                  title={tr('Видалити фото', 'Delete photo')}
+                  title={t`Видалити фото`}
                   variant="danger"
                   icon="trash-outline"
                   small

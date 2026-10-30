@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -8,7 +9,6 @@ import { Card, ChipGroup, Field, Loading, Row, Screen, Text } from '@/components
 import { loadProfile, setProfileField } from '@/db/profile';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { formatKcal } from '@/lib/food';
-import { tr } from '@/lib/i18n';
 import { formatShortDate } from '@/lib/labels';
 import { formatNumber, formatWeight, parseDecimal } from '@/lib/metrics';
 import {
@@ -76,12 +76,12 @@ export default function ProfileScreen() {
   const missing = missingForRecommendation(profile, weightKg);
 
   return (
-    <Screen title={tr('Профіль', 'Profile')}>
+    <Screen title={t`Профіль`}>
       <Card onPress={() => router.push('/body-weight')}>
         <Row style={styles.spaceBetween}>
           <Row>
             <Ionicons name="scale-outline" size={20} color={colors.accent} />
-            <Text variant="heading">{tr('Поточна вага', 'Current weight')}</Text>
+            <Text variant="heading">{t`Поточна вага`}</Text>
           </Row>
           <Row>
             {latestWeight ? (
@@ -92,7 +92,7 @@ export default function ProfileScreen() {
                 <Text variant="muted">{formatShortDate(latestWeight.measuredAt)}</Text>
               </View>
             ) : (
-              <Text variant="muted">{tr('Додати', 'Add')}</Text>
+              <Text variant="muted">{t`Додати`}</Text>
             )}
             <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           </Row>
@@ -101,7 +101,7 @@ export default function ProfileScreen() {
 
       <Card>
         <Field
-          label={`${tr('Зріст', 'Height')}, ${HEIGHT_UNIT}`}
+          label={`${t`Зріст`}, ${HEIGHT_UNIT}`}
           value={heightValue}
           onChangeText={changeHeight}
           keyboardType="decimal-pad"
@@ -110,32 +110,29 @@ export default function ProfileScreen() {
         />
         {heightValue !== '' && !heightValid && (
           <Text variant="muted" style={styles.error}>
-            {tr(
-              `Вкажи зріст від ${HEIGHT_RANGE[0]} до ${HEIGHT_RANGE[1]} ${HEIGHT_UNIT}.`,
-              `Enter a height from ${HEIGHT_RANGE[0]} to ${HEIGHT_RANGE[1]} ${HEIGHT_UNIT}.`,
-            )}
+            {t`Вкажи зріст від ${HEIGHT_RANGE[0]} до ${HEIGHT_RANGE[1]} ${HEIGHT_UNIT}.`}
           </Text>
         )}
         <Field
-          label={tr('Дата народження', 'Date of birth')}
+          label={t`Дата народження`}
           value={birthValue}
           onChangeText={changeBirth}
           keyboardType="number-pad"
-          placeholder={tr('ДД.ММ.РРРР', 'DD.MM.YYYY')}
+          placeholder={t`ДД.ММ.РРРР`}
           maxLength={10}
         />
         {birthValue.length === 10 && !parsedBirth ? (
           <Text variant="muted" style={styles.error}>
-            {tr('Перевір дату: формат ДД.ММ.РРРР.', 'Check the date: the format is DD.MM.YYYY.')}
+            {t`Перевір дату: формат ДД.ММ.РРРР.`}
           </Text>
         ) : parsedBirth ? (
           <Text variant="muted">
-            {tr('Вік', 'Age')}: {ageOn(parsedBirth)}
+            {t`Вік`}: {ageOn(parsedBirth)}
           </Text>
         ) : null}
       </Card>
 
-      <Text variant="caption">{tr('Стать', 'Sex')}</Text>
+      <Text variant="caption">{t`Стать`}</Text>
       <ChipGroup
         options={SEXES}
         value={profile.sex}
@@ -143,10 +140,10 @@ export default function ProfileScreen() {
         labels={SEX_LABELS}
       />
 
-      <Text variant="caption">{tr('Активність', 'Activity')}</Text>
+      <Text variant="caption">{t`Активність`}</Text>
       <ActivityPicker value={profile.activity} onChange={(level) => pick('activity', level)} />
 
-      <Text variant="caption">{tr('Мета', 'Goal')}</Text>
+      <Text variant="caption">{t`Мета`}</Text>
       <ChipGroup
         options={WEIGHT_GOALS}
         value={profile.goal}
@@ -155,32 +152,23 @@ export default function ProfileScreen() {
       />
 
       <Card>
-        <Text variant="overline">{tr('Рекомендована калорійність', 'Recommended calories')}</Text>
+        <Text variant="overline">{t`Рекомендована калорійність`}</Text>
         {rec ? (
           <>
             <Text style={styles.kcal}>
               {formatKcal(rec.kcal)}
-              <Text style={styles.unit}> {tr('ккал/день', 'kcal/day')}</Text>
+              <Text style={styles.unit}> {t`ккал/день`}</Text>
             </Text>
             <Text variant="muted">
-              {tr(
-                `Базовий обмін ${formatKcal(rec.bmr)} ккал · підтримка ${formatKcal(rec.tdee)} ккал`,
-                `BMR ${formatKcal(rec.bmr)} kcal · maintenance ${formatKcal(rec.tdee)} kcal`,
-              )}
+              {t`Базовий обмін ${formatKcal(rec.bmr)} ккал · підтримка ${formatKcal(rec.tdee)} ккал`}
             </Text>
             <Text variant="muted">
-              {tr(
-                'Формула Міффліна — Сан-Жеора, орієнтовне значення.',
-                'Mifflin–St Jeor formula, an estimate.',
-              )}
+              {t`Формула Міффліна — Сан-Жеора, орієнтовне значення.`}
             </Text>
           </>
         ) : (
           <Text variant="muted">
-            {tr(
-              `Щоб порахувати, вкажи ${missing.join(', ')}.`,
-              `To calculate, enter your ${missing.join(', ')}.`,
-            )}
+            {t`Щоб порахувати, вкажи ${missing.join(', ')}.`}
           </Text>
         )}
       </Card>

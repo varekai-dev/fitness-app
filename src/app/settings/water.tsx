@@ -1,9 +1,9 @@
+import { t } from '@lingui/core/macro';
 import { GoalStepper, RecommendationCard } from '@/components/settings';
 import { Loading, Screen } from '@/components/ui';
 import { loadProfile } from '@/db/profile';
 import { getWaterGoal, setWaterGoal } from '@/db/water';
 import { useDbQuery } from '@/hooks/use-db-query';
-import { tr } from '@/lib/i18n';
 import { formatWeight } from '@/lib/metrics';
 import { ACTIVITY, recommendWater } from '@/lib/profile';
 import { displayToMl, formatVolume, mlToDisplay, VOLUME_UNIT, WEIGHT_UNIT } from '@/lib/units';
@@ -16,15 +16,12 @@ export default function WaterSettingsScreen() {
   const [waterGoal, { profile, latestWeight }] = data;
   const weightKg = latestWeight?.weightKg;
   const water = recommendWater(profile, weightKg);
-  const activity = tr(
-    `${ACTIVITY[profile.activity].label.toLowerCase()} активність`,
-    `${ACTIVITY[profile.activity].label.toLowerCase()} activity`,
-  );
+  const activity = t`${ACTIVITY[profile.activity].label.toLowerCase()} активність`;
 
   return (
-    <Screen title={tr('Вода', 'Water')}>
+    <Screen title={t`Вода`}>
       <GoalStepper
-        title={tr('Денна ціль', 'Daily goal')}
+        title={t`Денна ціль`}
         unit={VOLUME_UNIT}
         // The stepper works in the chosen unit; the goal is saved in ml.
         value={Math.round(mlToDisplay(waterGoal))}
@@ -40,7 +37,7 @@ export default function WaterSettingsScreen() {
         unit={VOLUME_UNIT}
         format={formatVolume}
         details={weightKg ? `${formatWeight(weightKg, 0)} ${WEIGHT_UNIT} · ${activity}` : ''}
-        missing={tr('вагу', 'weight')}
+        missing={t`вагу`}
         onAdopt={setWaterGoal}
       />
     </Screen>

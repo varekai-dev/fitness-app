@@ -1,9 +1,9 @@
+import { t } from '@lingui/core/macro';
 import { useState } from 'react';
 
 import { useDialog } from '@/components/dialog';
 import { IconButton } from '@/components/ui';
 import { reportAiAnswer, type AiFeature } from '@/lib/account';
-import { tr } from '@/lib/i18n';
 
 /**
  * A flag beside an AI answer: sends it to the server for review when the user
@@ -19,20 +19,17 @@ export function ReportAiButton({ feature, content }: { feature: AiFeature; conte
     try {
       await reportAiAnswer(feature, content);
       dialog.show({
-        title: tr('Дякуємо', 'Thanks'),
-        message: tr(
-          'Скаргу надіслано. Ми переглянемо цю відповідь.',
-          'The report is sent. We’ll review this answer.',
-        ),
+        title: t`Дякуємо`,
+        message: t`Скаргу надіслано. Ми переглянемо цю відповідь.`,
         icon: 'checkmark-circle-outline',
-        buttons: [{ text: tr('Зрозуміло', 'OK') }],
+        buttons: [{ text: t`Зрозуміло` }],
       });
     } catch (e) {
       dialog.show({
-        title: tr('Не вдалося надіслати', 'Couldn’t send'),
+        title: t`Не вдалося надіслати`,
         message: e instanceof Error ? e.message : undefined,
         icon: 'alert-circle-outline',
-        buttons: [{ text: tr('Зрозуміло', 'OK') }],
+        buttons: [{ text: t`Зрозуміло` }],
       });
     } finally {
       setSending(false);
@@ -41,15 +38,12 @@ export function ReportAiButton({ feature, content }: { feature: AiFeature; conte
 
   const confirm = () =>
     dialog.show({
-      title: tr('Поскаржитися на відповідь AI?', 'Report this AI answer?'),
-      message: tr(
-        'Якщо відповідь образлива, небезпечна чи недоречна, надішли її нам, і ми її переглянемо.',
-        'If the answer is offensive, harmful or inappropriate, send it to us and we’ll review it.',
-      ),
+      title: t`Поскаржитися на відповідь AI?`,
+      message: t`Якщо відповідь образлива, небезпечна чи недоречна, надішли її нам, і ми її переглянемо.`,
       icon: 'flag-outline',
       buttons: [
-        { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
-        { text: tr('Поскаржитися', 'Report'), style: 'destructive', onPress: send },
+        { text: t`Скасувати`, style: 'cancel' },
+        { text: t`Поскаржитися`, style: 'destructive', onPress: send },
       ],
     });
 

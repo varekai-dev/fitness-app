@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -31,7 +32,7 @@ import type { FoodEntry, Meal } from '@/db/schema';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { useToday } from '@/hooks/use-today';
 import { describeDishes, formatGrams, formatKcal } from '@/lib/food';
-import { locale, tr } from '@/lib/i18n';
+import { lang, locale } from '@/lib/i18n';
 import { formatLongDate, formatShortDate, WEEKDAY_SHORT, weekdayIndex } from '@/lib/labels';
 import { MAIN_MEALS, MEAL_ICONS, MEAL_LABELS, MEALS, mealAt, mealOf } from '@/lib/meals';
 import { addDays } from '@/lib/water';
@@ -75,11 +76,8 @@ export default function FoodScreen() {
   const saveTemplate = async (entries: FoodEntry[]) => {
     const name = await saveMealTemplate(entries);
     dialog.show({
-      title: tr('Збережено як шаблон', 'Saved as a template'),
-      message: tr(
-        `«${name}» тепер можна додати в один тап з екрана додавання їжі.`,
-        `“${name}” can now be added in one tap from the add food screen.`,
-      ),
+      title: t`Збережено як шаблон`,
+      message: t`«${name}» тепер можна додати в один тап з екрана додавання їжі.`,
       icon: 'bookmark',
     });
   };
@@ -93,7 +91,7 @@ export default function FoodScreen() {
   return (
     <View style={styles.root}>
       <Screen
-        title={tr('Харчування', 'Food')}
+        title={t`Харчування`}
         mode="root"
         bottomSpace={tabBarSpace + TAB_BAR_FAB_SPACE}
         headerRight={
@@ -113,7 +111,7 @@ export default function FoodScreen() {
           <CircleButton icon="chevron-back" size={36} onPress={() => setDaysAgo(daysAgo + 1)} />
           <View style={styles.dayTitle}>
             <Text variant="heading">
-              {daysAgo === 0 ? tr('Сьогодні', 'Today') : formatLongDate(day)}
+              {daysAgo === 0 ? t`Сьогодні` : formatLongDate(day)}
             </Text>
           </View>
           <CircleButton
@@ -152,8 +150,8 @@ export default function FoodScreen() {
                   <Text variant="heading">{MEAL_LABELS[meal]}</Text>
                   <Text variant="muted">
                     {entries.length > 0
-                      ? `${formatKcal(kcal)} ${tr('ккал', 'kcal')}`
-                      : tr('Ще нічого', 'Nothing yet')}
+                      ? `${formatKcal(kcal)} ${t`ккал`}`
+                      : t`Ще нічого`}
                   </Text>
                 </View>
                 {entries.length > 0 && shortcuts.templates && (
@@ -164,7 +162,7 @@ export default function FoodScreen() {
                   />
                 )}
                 <Button
-                  title={tr('Додати', 'Add')}
+                  title={t`Додати`}
                   icon="add"
                   variant="primary"
                   small
@@ -212,14 +210,14 @@ export default function FoodScreen() {
                               </Text>
                             </View>
                             <Text variant="heading">
-                              {formatKcal(e.kcal)} {tr('ккал', 'kcal')}
+                              {formatKcal(e.kcal)} {t`ккал`}
                             </Text>
                             <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
                           </Row>
                           <Text variant="caption">
-                            {tr('Б', 'P')} {formatGrams(e.proteinG)} · {tr('Ж', 'F')}{' '}
-                            {formatGrams(e.fatG)} · {tr('В', 'C')} {formatGrams(e.carbsG)}{' '}
-                            {tr('г', 'g')}
+                            {t`Б`} {formatGrams(e.proteinG)} · {t`Ж`}{' '}
+                            {formatGrams(e.fatG)} · {t`В`} {formatGrams(e.carbsG)}{' '}
+                            {t`г`}
                           </Text>
                         </Pressable>
                       </SwipeToDelete>
@@ -232,7 +230,7 @@ export default function FoodScreen() {
         })}
 
         <Card>
-          <Text variant="caption">{tr('Останні 7 днів', 'Last 7 days')}</Text>
+          <Text variant="caption">{t`Останні 7 днів`}</Text>
           <View style={styles.chart}>
             {days.map((d) => (
               <Pressable
@@ -259,7 +257,7 @@ export default function FoodScreen() {
         {dialog.element}
       </Screen>
       <TabBarFab
-        label={tr('Додати їжу', 'Add food')}
+        label={t`Додати їжу`}
         // Breakfast, lunch or dinner by the hour, on the day shown.
         onPress={() =>
           router.push({
@@ -275,12 +273,14 @@ export default function FoodScreen() {
 /** "Як учора", "Як у середу" or "Як 3 жовт." for the day a meal is repeated from. */
 function sameMealLabel(from: number, day: number) {
   const daysBack = Math.round((day - from) / 86_400_000);
-  if (daysBack === 1) return tr('Як учора', 'Same as yesterday');
+  if (daysBack === 1) return t`Як учора`;
   if (daysBack < 7) {
     const weekday = new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(new Date(from));
-    return tr(`Як ${weekdayAccusative(weekday)}`, `Same as ${weekday}`);
+    // Ukrainian puts the weekday in the accusative: "Як у середу".
+    const when = lang === 'uk' ? weekdayAccusative(weekday) : weekday;
+    return t`Як ${when}`;
   }
-  return tr(`Як ${formatShortDate(from)}`, `Same as ${formatShortDate(from)}`);
+  return t`Як ${formatShortDate(from)}`;
 }
 
 /** "у понеділок", "у середу", "у п’ятницю": the weekday after "як". */
@@ -313,7 +313,7 @@ function RepeatRow({
         </Text>
       </View>
       <Text variant="body" style={styles.repeatKcal}>
-        +{formatKcal(kcal)} {tr('ккал', 'kcal')}
+        +{formatKcal(kcal)} {t`ккал`}
       </Text>
     </Pressable>
   );

@@ -1,14 +1,14 @@
+import { t } from '@lingui/core/macro';
 import type { IconName } from '@/components/ui';
 import { MEALS, type Meal } from '@/db/schema';
-import { tr } from '@/lib/i18n';
 
 export { MEALS, type Meal };
 
 export const MEAL_LABELS: Record<Meal, string> = {
-  breakfast: tr('Сніданок', 'Breakfast'),
-  lunch: tr('Обід', 'Lunch'),
-  dinner: tr('Вечеря', 'Dinner'),
-  snack: tr('Перекуси', 'Snacks'),
+  breakfast: t`Сніданок`,
+  lunch: t`Обід`,
+  dinner: t`Вечеря`,
+  snack: t`Перекуси`,
 };
 
 /** Meals of a day's plan, in order; snacks go in between. */

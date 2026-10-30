@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Constants from 'expo-constants';
 import { fetch } from 'expo/fetch';
 import { Directory, File, Paths, UploadType } from 'expo-file-system';
@@ -5,7 +6,6 @@ import { Directory, File, Paths, UploadType } from 'expo-file-system';
 import { API_URL, sessionToken } from '@/lib/account';
 import { readSettingSync, writeSettingSync } from '@/lib/app-settings';
 import { createBackupFile, openBackup } from '@/lib/backup';
-import { tr } from '@/lib/i18n';
 
 /**
  * Backups in the signed-in user's account on the server (`server/`, an R2
@@ -25,10 +25,7 @@ async function authHeaders() {
   const token = await sessionToken();
   if (!token) {
     throw new ServerBackupError(
-      tr(
-        'Увійди в акаунт, щоб зберігати копії на сервері.',
-        'Sign in to keep backups on the server.',
-      ),
+      t`Увійди в акаунт, щоб зберігати копії на сервері.`,
     );
   }
   return { authorization: `Bearer ${token}` };
@@ -36,10 +33,7 @@ async function authHeaders() {
 
 const networkError = () =>
   new ServerBackupError(
-    tr(
-      'Немає з’єднання з сервером. Перевір інтернет.',
-      'Can’t reach the server. Check your connection.',
-    ),
+    t`Немає з’єднання з сервером. Перевір інтернет.`,
   );
 
 /** When this phone last uploaded a backup, 0 if never. */
@@ -72,11 +66,8 @@ async function upload() {
     if (status < 200 || status >= 300) {
       throw new ServerBackupError(
         status === 413
-          ? tr('Копія завелика для сервера.', 'The backup is too large for the server.')
-          : tr(
-              'Сервер не прийняв копію. Спробуй пізніше.',
-              'The server didn’t accept the backup. Try later.',
-            ),
+          ? t`Копія завелика для сервера.`
+          : t`Сервер не прийняв копію. Спробуй пізніше.`,
       );
     }
     writeSettingSync(LAST_UPLOAD_KEY, String(Date.now()));
@@ -103,7 +94,7 @@ export async function listServerBackups(): Promise<ServerBackup[]> {
   }
   if (!res.ok) {
     throw new ServerBackupError(
-      tr('Не вдалося отримати список копій.', 'Couldn’t load the list of backups.'),
+      t`Не вдалося отримати список копій.`,
     );
   }
   return ((await res.json()) as { backups: ServerBackup[] }).backups;

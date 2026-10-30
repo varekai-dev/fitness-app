@@ -1,9 +1,9 @@
+import { t } from '@lingui/core/macro';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Pressable, StyleSheet } from 'react-native';
 
 import { Text } from '@/components/ui';
 import { addWater } from '@/db/water';
-import { tr } from '@/lib/i18n';
 import { formatVolume, VOLUME_UNIT } from '@/lib/units';
 import { type GlassPreset, timeOnDay } from '@/lib/water';
 import { colors, radius, spacing } from '@/theme';
@@ -26,10 +26,7 @@ export function GlassButton({
   return (
     <Pressable
       onPress={onPress}
-      accessibilityLabel={tr(
-        `Додати ${glass.label.toLowerCase()}, ${formatVolume(glass.ml)} ${VOLUME_UNIT}`,
-        `Add ${glass.label.toLowerCase()}, ${formatVolume(glass.ml)} ${VOLUME_UNIT}`,
-      )}
+      accessibilityLabel={t`Додати ${glass.label.toLowerCase()}, ${formatVolume(glass.ml)} ${VOLUME_UNIT}`}
       style={({ pressed }) => [
         styles.glass,
         compact && styles.glassCompact,

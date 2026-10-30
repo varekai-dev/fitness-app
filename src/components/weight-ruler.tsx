@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import { memo, useCallback, useRef, useState } from 'react';
 import { type FlatList, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
@@ -9,7 +10,6 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { BottomSheet } from '@/components/bottom-sheet';
 import { Button, Text } from '@/components/ui';
-import { tr } from '@/lib/i18n';
 import { formatNumber } from '@/lib/metrics';
 import { unitSystem, WEIGHT_UNIT } from '@/lib/units';
 import { colors, fontSize, spacing } from '@/theme';
@@ -84,7 +84,7 @@ export function WeightRuler({
       style={[styles.ruler, { width }]}
       accessible
       accessibilityRole="adjustable"
-      accessibilityLabel={tr('Вага', 'Weight')}
+      accessibilityLabel={t`Вага`}
       accessibilityValue={{ text: `${formatNumber(toValue(current), 1)} ${WEIGHT_UNIT}` }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
       onAccessibilityAction={(e) => nudge(e.nativeEvent.actionName === 'increment' ? 1 : -1)}>
@@ -149,7 +149,7 @@ const Segment = memo(function Segment({ unit, last }: { unit: number; last: bool
  */
 export function WeightRulerModal({
   value,
-  title = tr('Вага', 'Weight'),
+  title = t`Вага`,
   onClose,
   onSave,
 }: {
@@ -195,7 +195,7 @@ function SheetContent({
         </Text>
         <Text variant="muted">
           {delta === 0
-            ? tr('Гортай лінійку', 'Scroll the ruler')
+            ? t`Гортай лінійку`
             : `${delta > 0 ? '+' : '−'}${Math.abs(delta).toFixed(1)} ${WEIGHT_UNIT}`}
         </Text>
       </View>
@@ -203,7 +203,7 @@ function SheetContent({
       <WeightRuler value={initial} onChange={setCurrent} />
 
       <View style={styles.footer}>
-        <Button title={tr('Зберегти', 'Save')} icon="checkmark" onPress={() => onSave(current)} />
+        <Button title={t`Зберегти`} icon="checkmark" onPress={() => onSave(current)} />
       </View>
     </View>
   );

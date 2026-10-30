@@ -219,12 +219,12 @@ async function storeNutrition(
  * AI nothing. Null when those aren't enough (no weight in the text, or a
  * suggestion stored before it had all macros): then it's looked up as typed.
  */
-export async function cacheSuggestion(suggestion: SuggestedFood): Promise<FoundFood | null> {
+export async function cacheSuggestion(suggestion: SuggestedFood, replace = false): Promise<FoundFood | null> {
   const split = splitAmount(suggestion.text);
   const { kcal, proteinG, fatG, carbsG } = suggestion;
   if (!split || !(kcal > 0) || fatG == null || carbsG == null) return null;
   const existing = await db.query.foods.findFirst({ where: eq(foods.query, split.dish) });
-  if (existing?.portionG) return { food: existing, cached: true, amount: split.grams };
+  if (existing?.portionG && !replace) return { food: existing, cached: true, amount: split.grams };
 
   const values = {
     name: split.dish.charAt(0).toLocaleUpperCase(locale) + split.dish.slice(1),

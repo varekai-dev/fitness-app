@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Switch, View } from 'react-native';
@@ -16,7 +17,6 @@ import Sortable from 'react-native-sortables';
 import { Glass } from '@/components/glass';
 import { PressScale } from '@/components/motion';
 import { Text, type IconName } from '@/components/ui';
-import { tr } from '@/lib/i18n';
 import {
   MODULE_INFO,
   setModuleEnabled,
@@ -55,7 +55,7 @@ export function ModuleSettings() {
 
   return (
     <View style={styles.root}>
-      <Text variant="overline">{tr('Розділи', 'Sections')}</Text>
+      <Text variant="overline">{t`Розділи`}</Text>
       <View style={styles.preview}>
         {/* With one section left the app has no tab bar, so its copy fades. */}
         <Glass style={[styles.bar, single && styles.faded]}>
@@ -82,11 +82,8 @@ export function ModuleSettings() {
         </Glass>
         <Text variant="muted" style={styles.center}>
           {single
-            ? tr(
-                'Лишився один розділ, тож меню внизу не буде',
-                'Only one section is left, so there’s no tab bar',
-              )
-            : tr('Так виглядатиме меню навігації', 'This is how the tab bar will look')}
+            ? t`Лишився один розділ, тож меню внизу не буде`
+            : t`Так виглядатиме меню навігації`}
         </Text>
       </View>
 
@@ -110,10 +107,7 @@ export function ModuleSettings() {
       />
 
       <Text variant="muted">
-        {tr(
-          'Тягни за ручку праворуч, щоб змінити порядок у меню. Вимкнений розділ зникає з меню, головної, налаштувань і сповіщень. Дані нікуди не діваються: увімкни його знову, і все повернеться.',
-          'Drag a card by the handle on the right to reorder the tab bar. A switched-off section leaves the tab bar, the home screen, settings and notifications. Its data stays: switch it back on and everything returns.',
-        )}
+        {t`Тягни за ручку праворуч, щоб змінити порядок у меню. Вимкнений розділ зникає з меню, головної, налаштувань і сповіщень. Дані нікуди не діваються: увімкни його знову, і все повернеться.`}
       </Text>
     </View>
   );
@@ -155,7 +149,7 @@ function ModuleCard({ module, on, locked }: { module: AppModule; on: boolean; lo
           <Text variant="heading">{info.title}</Text>
           <Text variant="muted">
             {locked
-              ? tr('Хоча б один розділ має лишитися.', 'At least one section has to stay.')
+              ? t`Хоча б один розділ має лишитися.`
               : info.description}
           </Text>
         </View>
@@ -171,7 +165,7 @@ function ModuleCard({ module, on, locked }: { module: AppModule; on: boolean; lo
         <Sortable.Handle>
           <View
             style={styles.handle}
-            accessibilityLabel={tr(`Перемістити «${info.title}»`, `Move “${info.title}”`)}>
+            accessibilityLabel={t`Перемістити «${info.title}»`}>
             <Ionicons name="reorder-three" size={24} color={colors.textSecondary} />
           </View>
         </Sortable.Handle>

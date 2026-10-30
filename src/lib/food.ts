@@ -1,4 +1,5 @@
-import { locale, tr } from '@/lib/i18n';
+import { t } from '@lingui/core/macro';
+import { locale } from '@/lib/i18n';
 import type { WeightGoal } from '@/lib/profile';
 
 export const DEFAULT_KCAL_GOAL = 2000;
@@ -198,4 +199,4 @@ export function describeDishes(names: string[]) {
 
 /** Drinks are logged in millilitres, everything else in grams. */
 export const amountUnit = (food: { isDrink: boolean }) =>
-  food.isDrink ? tr('мл', 'ml') : tr('г', 'g');
+  food.isDrink ? t`мл` : t`г`;

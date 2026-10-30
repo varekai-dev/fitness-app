@@ -1,3 +1,4 @@
+import { plural, t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -23,7 +24,6 @@ import { addDay, getProgram, moveDay, renameProgram, setActiveProgram } from '@/
 import { useDialog } from '@/components/dialog';
 import { confirmRemoveProgram } from '@/components/remove-dialogs';
 import { useDbQuery } from '@/hooks/use-db-query';
-import { plural, tr } from '@/lib/i18n';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 export default function ProgramScreen() {
@@ -36,8 +36,8 @@ export default function ProgramScreen() {
   if (program === undefined) return <Loading />;
   if (program === null) {
     return (
-      <Screen title={tr('Програма', 'Program')}>
-        <EmptyState icon="alert-circle" title={tr('Програму не знайдено', 'Program not found')} />
+      <Screen title={t`Програма`}>
+        <EmptyState icon="alert-circle" title={t`Програму не знайдено`} />
       </Screen>
     );
   }
@@ -45,7 +45,7 @@ export default function ProgramScreen() {
   const totalExercises = program.days.reduce((n, d) => n + d.exercises.length, 0);
 
   const createDay = async () => {
-    const trimmed = dayName.trim() || `${tr('День', 'Day')} ${program.days.length + 1}`;
+    const trimmed = dayName.trim() || `${t`День`} ${program.days.length + 1}`;
     await addDay(id, trimmed);
     setDayName('');
   };
@@ -64,31 +64,31 @@ export default function ProgramScreen() {
       />
 
       <Row style={styles.badges}>
-        {program.isActive && <Badge label={tr('Активна', 'Active')} />}
+        {program.isActive && <Badge label={t`Активна`} />}
         <Badge
-          label={`${program.days.length} ${tr('дн.', program.days.length === 1 ? 'day' : 'days')}`}
+          label={`${program.days.length} ${plural(program.days.length, { one: 'дн.', other: 'дн.' })}`}
           tone="muted"
         />
         <Badge
-          label={`${totalExercises} ${plural(totalExercises, ['вправа', 'вправи', 'вправ'], ['exercise', 'exercises'])}`}
+          label={`${totalExercises} ${plural(totalExercises, { one: 'вправа', few: 'вправи', many: 'вправ', other: 'вправи' })}`}
           tone="muted"
         />
       </Row>
 
       {!program.isActive && (
         <Button
-          title={tr('Зробити активною', 'Make active')}
+          title={t`Зробити активною`}
           icon="checkmark-circle"
           onPress={() => setActiveProgram(id)}
         />
       )}
 
-      <SectionHeader title={tr('Послідовність днів', 'Day order')} />
+      <SectionHeader title={t`Послідовність днів`} />
       {program.days.length === 0 && (
         <>
-          <EmptyState icon="calendar" title={tr('Додай перший день', 'Add the first day')} />
+          <EmptyState icon="calendar" title={t`Додай перший день`} />
           <Button
-            title={tr('Скласти з AI', 'Build with AI')}
+            title={t`Скласти з AI`}
             icon="sparkles"
             variant="secondary"
             onPress={() =>
@@ -107,8 +107,8 @@ export default function ProgramScreen() {
             <Text variant="body">{d.name}</Text>
             <Text variant="muted" numberOfLines={1}>
               {d.exercises.length === 0
-                ? tr('Без вправ', 'No exercises')
-                : `${d.exercises.length} ${plural(d.exercises.length, ['вправа', 'вправи', 'вправ'], ['exercise', 'exercises'])} · ${d.exercises.map((e) => e.exercise.name).join(', ')}`}
+                ? t`Без вправ`
+                : `${d.exercises.length} ${plural(d.exercises.length, { one: 'вправа', few: 'вправи', many: 'вправ', other: 'вправи' })} · ${d.exercises.map((e) => e.exercise.name).join(', ')}`}
             </Text>
           </View>
           <View style={styles.reorder}>
@@ -134,10 +134,7 @@ export default function ProgramScreen() {
           style={styles.addDayInput}
           value={dayName}
           onChangeText={setDayName}
-          placeholder={tr(
-            `Новий день: День ${program.days.length + 1}`,
-            `New day: Day ${program.days.length + 1}`,
-          )}
+          placeholder={t`Новий день: День ${program.days.length + 1}`}
           placeholderTextColor={colors.textMuted}
           onSubmitEditing={createDay}
           returnKeyType="done"
@@ -164,7 +161,7 @@ function ProgramNameField({ id, name, focus }: { id: number; name: string; focus
   };
   return (
     <Field
-      label={tr('Назва програми', 'Program name')}
+      label={t`Назва програми`}
       value={value}
       onChangeText={setValue}
       onEndEditing={save}

@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -14,7 +15,7 @@ import {
   syncHealth,
   type HealthSyncResult,
 } from '@/lib/health';
-import { locale, tr } from '@/lib/i18n';
+import { locale } from '@/lib/i18n';
 import { colors, spacing } from '@/theme';
 
 const syncedFormatter = new Intl.DateTimeFormat(locale, {
@@ -26,56 +27,35 @@ const syncedFormatter = new Intl.DateTimeFormat(locale, {
 
 const STORE_HINT =
   healthName === 'Apple Health'
-    ? tr(
-        'Перевір доступ у застосунку Здоров’я: Профіль → Застосунки → FitKit.',
-        'Check access in the Health app: Profile → Apps → FitKit.',
-      )
-    : tr(
-        'Дозволь читання для FitKit у налаштуваннях Health Connect.',
-        'Allow FitKit to read data in Health Connect settings.',
-      );
+    ? t`Перевір доступ у застосунку Здоров’я: Профіль → Застосунки → FitKit.`
+    : t`Дозволь читання для FitKit у налаштуваннях Health Connect.`;
 
 function resultMessage(result: HealthSyncResult) {
   switch (result.status) {
     case 'ok':
       return result.weights > 0
         ? {
-            title: tr('Синхронізовано', 'Synced'),
-            message: tr(
-              `Днів з вагою: ${result.weights}.`,
-              `Days with weight: ${result.weights}.`,
-            ),
+            title: t`Синхронізовано`,
+            message: t`Днів з вагою: ${result.weights}.`,
           }
         : {
-            title: tr('Нових даних немає', 'No new data'),
-            message: tr(
-              `Усе з ${healthName} уже тут. ${STORE_HINT}`,
-              `Everything from ${healthName} is already here. ${STORE_HINT}`,
-            ),
+            title: t`Нових даних немає`,
+            message: t`Усе з ${healthName} уже тут. ${STORE_HINT}`,
           };
     case 'denied':
-      return { title: tr('Немає доступу', 'No access'), message: STORE_HINT };
+      return { title: t`Немає доступу`, message: STORE_HINT };
     case 'update-required':
       return {
-        title: tr('Потрібне оновлення', 'Update required'),
-        message: tr(
-          `Онови ${healthName} у Google Play і спробуй ще раз.`,
-          `Update ${healthName} in Google Play and try again.`,
-        ),
+        title: t`Потрібне оновлення`,
+        message: t`Онови ${healthName} у Google Play і спробуй ще раз.`,
       };
     case 'unavailable':
       return {
-        title: tr(`${healthName} недоступний`, `${healthName} unavailable`),
+        title: t`${healthName} недоступний`,
         message:
           healthName === 'Apple Health'
-            ? tr(
-                'Цей пристрій не підтримує Apple Health.',
-                'This device doesn’t support Apple Health.',
-              )
-            : tr(
-                'Встанови Health Connect з Google Play.',
-                'Install Health Connect from Google Play.',
-              ),
+            ? t`Цей пристрій не підтримує Apple Health.`
+            : t`Встанови Health Connect з Google Play.`,
       };
   }
 }
@@ -98,7 +78,7 @@ export function HealthCard() {
       dialog.show(resultMessage(result));
     } catch (e) {
       dialog.show({
-        title: tr('Не вдалося синхронізувати', 'Sync failed'),
+        title: t`Не вдалося синхронізувати`,
         message: String(e),
         icon: 'alert-circle',
       });
@@ -109,15 +89,12 @@ export function HealthCard() {
 
   const disconnect = () =>
     dialog.show({
-      title: tr(`Відключити ${healthName}?`, `Disconnect ${healthName}?`),
-      message: tr(
-        'Вага більше не підтягуватиметься. Уже імпортовані записи залишаться.',
-        'Weight will no longer sync. Records already imported will stay.',
-      ),
+      title: t`Відключити ${healthName}?`,
+      message: t`Вага більше не підтягуватиметься. Уже імпортовані записи залишаться.`,
       buttons: [
-        { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
+        { text: t`Скасувати`, style: 'cancel' },
         {
-          text: tr('Відключити', 'Disconnect'),
+          text: t`Відключити`,
           style: 'destructive',
           onPress: () => disconnectHealth(),
         },
@@ -131,40 +108,34 @@ export function HealthCard() {
         <Text variant="heading">{healthName}</Text>
       </Row>
       <Text variant="muted">
-        {tr(
-          'Підтягує вагу з розумних ваг у журнал ваги. Оновлюється щоразу, коли відкриваєш застосунок.',
-          'Brings weight from smart scales into the weight log. Updates every time you open the app.',
-        )}
+        {t`Підтягує вагу з розумних ваг у журнал ваги. Оновлюється щоразу, коли відкриваєш застосунок.`}
       </Text>
       {!healthSupported ? (
         <Text variant="caption">
-          {tr(
-            'Працює лише в зібраному застосунку, не в Expo Go.',
-            'Works only in a built app, not in Expo Go.',
-          )}
+          {t`Працює лише в зібраному застосунку, не в Expo Go.`}
         </Text>
       ) : data?.connected ? (
         <>
           <Row style={styles.status}>
             <Ionicons name="checkmark-circle" size={18} color={colors.accent} />
             <View style={styles.flex}>
-              <Text variant="body">{tr('Підключено', 'Connected')}</Text>
+              <Text variant="body">{t`Підключено`}</Text>
               {data.syncedAt && (
                 <Text variant="caption">
-                  {tr('Остання синхронізація', 'Last sync')}:{' '}
+                  {t`Остання синхронізація`}:{' '}
                   {syncedFormatter.format(data.syncedAt)}
                 </Text>
               )}
             </View>
             <Button
-              title={tr('Відключити', 'Disconnect')}
+              title={t`Відключити`}
               variant="danger"
               small
               onPress={disconnect}
             />
           </Row>
           <Button
-            title={tr('Синхронізувати зараз', 'Sync now')}
+            title={t`Синхронізувати зараз`}
             icon="sync"
             variant="secondary"
             loading={syncing}
@@ -173,7 +144,7 @@ export function HealthCard() {
         </>
       ) : data ? (
         <Button
-          title={tr(`Підключити ${healthName}`, `Connect ${healthName}`)}
+          title={t`Підключити ${healthName}`}
           icon="link"
           loading={syncing}
           onPress={sync}

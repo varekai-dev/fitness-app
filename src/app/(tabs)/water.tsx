@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
@@ -26,7 +27,7 @@ import { useAnimatedNumber } from '@/hooks/use-animated-number';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { useNow } from '@/hooks/use-now';
 import { useToday } from '@/hooks/use-today';
-import { locale, tr } from '@/lib/i18n';
+import { locale } from '@/lib/i18n';
 import { formatLongDate, WEEKDAY_SHORT, weekdayIndex } from '@/lib/labels';
 import { paceShare } from '@/lib/reminders';
 import { formatVolume, formatVolumeCompact, VOLUME_UNIT } from '@/lib/units';
@@ -51,14 +52,14 @@ export default function WaterScreen() {
 
   if (!data) return <Loading />;
   const { goal, dayEntries, dayMl, days, dayWindow } = data;
-  const dayTitle = isToday ? tr('Сьогодні', 'Today') : formatLongDate(day);
+  const dayTitle = isToday ? t`Сьогодні` : formatLongDate(day);
 
   const chartMax = Math.max(goal, ...days.map((d) => d.totalMl));
 
   return (
     <View style={styles.root}>
       <Screen
-        title={tr('Вода', 'Water')}
+        title={t`Вода`}
         mode="root"
         bottomSpace={tabBarSpace + TAB_BAR_FAB_SPACE}
         headerRight={
@@ -93,7 +94,7 @@ export default function WaterScreen() {
           />
         </Row>
 
-        <SectionHeader title={tr('Додати', 'Add')} />
+        <SectionHeader title={t`Додати`} />
         <View style={styles.glasses}>
           {GLASS_PRESETS.map((g) => (
             <View key={g.ml} style={styles.glassCell}>
@@ -103,7 +104,7 @@ export default function WaterScreen() {
         </View>
 
         <Card>
-          <Text variant="caption">{tr('Останні 7 днів', 'Last 7 days')}</Text>
+          <Text variant="caption">{t`Останні 7 днів`}</Text>
           <View style={styles.chart}>
             {days.map((d) => {
               const reached = d.totalMl >= goal;
@@ -135,8 +136,8 @@ export default function WaterScreen() {
         {dayEntries.length === 0 ? (
           <EmptyState
             icon="water-outline"
-            title={tr('Ще нічого не випито', 'Nothing drunk yet')}
-            hint={tr('Обери склянку вище.', 'Pick a glass above.')}
+            title={t`Ще нічого не випито`}
+            hint={t`Обери склянку вище.`}
           />
         ) : (
           [...dayEntries].reverse().map((e) => {
@@ -191,10 +192,7 @@ export default function WaterScreen() {
         />
       </Screen>
       <TabBarFab
-        label={tr(
-          `Додати склянку ${formatVolume(QUICK_ML)} ${VOLUME_UNIT}`,
-          `Add a ${formatVolume(QUICK_ML)} ${VOLUME_UNIT} glass`,
-        )}
+        label={t`Додати склянку ${formatVolume(QUICK_ML)} ${VOLUME_UNIT}`}
         onPress={() => setPouring({ glass: glassToHold(QUICK_ML) })}
       />
     </View>
@@ -215,9 +213,9 @@ function WaterSummary({ dayMl, goal, isToday }: { dayMl: number; goal: number; i
       <Text variant="muted">
         {dayMl >= goal && ml >= goal
           ? isToday
-            ? tr('Ціль на сьогодні виконано!', 'Today’s goal reached!')
-            : tr('Ціль виконано!', 'Goal reached!')
-          : tr(`${percent}% денної норми`, `${percent}% of daily goal`)}
+            ? t`Ціль на сьогодні виконано!`
+            : t`Ціль виконано!`
+          : t`${percent}% денної норми`}
       </Text>
       <GrowBar
         progress={goal > 0 ? dayMl / goal : 0}
@@ -227,7 +225,7 @@ function WaterSummary({ dayMl, goal, isToday }: { dayMl: number; goal: number; i
       <Row style={styles.heroStats}>
         <View style={styles.heroStat}>
           <Text variant="caption" style={styles.goalLabel} numberOfLines={1}>
-            {tr('ЦІЛЬ', 'GOAL')}
+            {t`ЦІЛЬ`}
           </Text>
           <Text variant="heading">
             {formatVolume(goal)} {VOLUME_UNIT}
@@ -235,7 +233,7 @@ function WaterSummary({ dayMl, goal, isToday }: { dayMl: number; goal: number; i
         </View>
         <View style={styles.heroStat}>
           <Text variant="caption" style={styles.goalLabel} numberOfLines={1}>
-            {tr('ЗАЛИШИЛОСЬ', 'LEFT')}
+            {t`ЗАЛИШИЛОСЬ`}
           </Text>
           <Text variant="heading" style={styles.tabular}>
             {formatVolume(Math.max(goal - ml, 0))} {VOLUME_UNIT}

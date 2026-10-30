@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -17,7 +18,7 @@ import { WeightRuler } from '@/components/weight-ruler';
 import { Wheel } from '@/components/wheel';
 import { saveBodyWeight } from '@/db/body-weight';
 import { loadProfile, setProfileField } from '@/db/profile';
-import { locale, tr } from '@/lib/i18n';
+import { locale } from '@/lib/i18n';
 import {
   ageOn,
   GOAL_LABELS,
@@ -45,48 +46,33 @@ type Step = 'sex' | 'birthDate' | 'height' | 'weight' | 'activity';
 const STEPS: Record<Step, { icon: IconName; title: () => string; why: () => string }> = {
   sex: {
     icon: 'person-outline',
-    title: () => tr('Стать', 'Sex'),
+    title: () => t`Стать`,
     why: () =>
-      tr(
-        'У чоловіків і жінок різний базовий обмін, тож від статі залежить норма калорій.',
-        'Men and women burn energy at rest differently, so your calorie goal depends on it.',
-      ),
+      t`У чоловіків і жінок різний базовий обмін, тож від статі залежить норма калорій.`,
   },
   birthDate: {
     icon: 'calendar-outline',
-    title: () => tr('Дата народження', 'Date of birth'),
+    title: () => t`Дата народження`,
     why: () =>
-      tr(
-        'З віком базовий обмін сповільнюється, тож вік потрібен для норми калорій.',
-        'Your resting metabolism slows with age, so it’s needed for the calorie goal.',
-      ),
+      t`З віком базовий обмін сповільнюється, тож вік потрібен для норми калорій.`,
   },
   height: {
     icon: 'resize-outline',
-    title: () => tr('Зріст', 'Height'),
+    title: () => t`Зріст`,
     why: () =>
-      tr(
-        'Зріст потрібен для норми калорій та індексу маси тіла.',
-        'Your height is needed for the calorie goal and body mass index.',
-      ),
+      t`Зріст потрібен для норми калорій та індексу маси тіла.`,
   },
   weight: {
     icon: 'scale-outline',
-    title: () => tr('Вага', 'Weight'),
+    title: () => t`Вага`,
     why: () =>
-      tr(
-        'Від ваги залежать норми калорій і води та індекс маси тіла. Вона стане першим записом у журналі ваги.',
-        'Your calorie and water goals and body mass index depend on it. It becomes the first entry in your weight log.',
-      ),
+      t`Від ваги залежать норми калорій і води та індекс маси тіла. Вона стане першим записом у журналі ваги.`,
   },
   activity: {
     icon: 'flame-outline',
-    title: () => tr('Активність і мета', 'Activity and goal'),
+    title: () => t`Активність і мета`,
     why: () =>
-      tr(
-        'Активність показує, скільки ти витрачаєш за день, а мета — чи їсти менше, чи більше за це.',
-        'Activity shows how much you burn in a day, and the goal whether to eat less or more than that.',
-      ),
+      t`Активність показує, скільки ти витрачаєш за день, а мета — чи їсти менше, чи більше за це.`,
   },
 };
 
@@ -163,12 +149,9 @@ export default function OnboardingScreen() {
 
   const { icon, title, why } = STEPS[step];
   return (
-    <Screen title={tr('Кілька даних про тебе', 'A few things about you')} mode="root">
+    <Screen title={t`Кілька даних про тебе`} mode="root">
       <Text variant="secondary">
-        {tr(
-          'Без них застосунок не порахує твою норму калорій, води та індекс маси тіла. Змінити все це можна будь-коли в профілі.',
-          'Without them the app can’t work out your calorie and water goals or body mass index. You can change any of it later in your profile.',
-        )}
+        {t`Без них застосунок не порахує твою норму калорій, води та індекс маси тіла. Змінити все це можна будь-коли в профілі.`}
       </Text>
 
       <Row style={styles.dots}>
@@ -223,11 +206,8 @@ export default function OnboardingScreen() {
             </Row>
             <Text variant="muted" style={[styles.center, !ageValid && styles.error]}>
               {ageValid
-                ? `${tr('Вік', 'Age')}: ${age}`
-                : tr(
-                    `Вік має бути від ${MIN_AGE} до ${MAX_AGE} років.`,
-                    `Age must be from ${MIN_AGE} to ${MAX_AGE}.`,
-                  )}
+                ? `${t`Вік`}: ${age}`
+                : t`Вік має бути від ${MIN_AGE} до ${MAX_AGE} років.`}
             </Text>
           </>
         )}
@@ -265,13 +245,13 @@ export default function OnboardingScreen() {
       {step === 'activity' && (
         <>
           <ActivityPicker value={activity} onChange={setActivity} />
-          <Text variant="caption">{tr('Мета', 'Goal')}</Text>
+          <Text variant="caption">{t`Мета`}</Text>
           <ChipGroup options={WEIGHT_GOALS} value={goal} onChange={setGoal} labels={GOAL_LABELS} />
         </>
       )}
 
       <Button
-        title={last ? tr('Готово', 'Done') : tr('Далі', 'Next')}
+        title={last ? t`Готово` : t`Далі`}
         trailingIcon={last ? 'checkmark' : 'arrow-forward'}
         onPress={last ? finish : () => setIndex(index + 1)}
         loading={saving}
@@ -279,7 +259,7 @@ export default function OnboardingScreen() {
       />
       {index > 0 && (
         <Button
-          title={tr('Назад', 'Back')}
+          title={t`Назад`}
           variant="ghost"
           icon="arrow-back"
           onPress={() => setIndex(index - 1)}

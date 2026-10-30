@@ -1,6 +1,6 @@
+import { t } from '@lingui/core/macro';
 import { and, asc, desc, eq, isNotNull, isNull, lt, max } from 'drizzle-orm';
 
-import { tr } from '@/lib/i18n';
 import { db } from './client';
 import { getProgramDay } from './programs';
 import { workoutExercises, workouts, workoutSets, type Targets } from './schema';
@@ -129,7 +129,7 @@ function prefillSet(targets: Targets, prev: SetValues | undefined): SetValues {
 export async function startWorkout(programDayId: number) {
   const active = await getActiveWorkout();
   if (active)
-    throw new Error(tr('Вже є незавершене тренування', 'A workout is already in progress'));
+    throw new Error(t`Вже є незавершене тренування`);
 
   const day = await getProgramDay(programDayId);
   if (!day) throw new Error(`Program day ${programDayId} not found`);

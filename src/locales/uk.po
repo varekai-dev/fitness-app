@@ -1,0 +1,4793 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-29 02:25+0200\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: uk\n"
+
+#: src/app/exercise/edit.tsx:133
+msgid " — не можна змінити, бо вправа вже використовується в програмі чи історії."
+msgstr " — не можна змінити, бо вправа вже використовується в програмі чи історії."
+
+#. placeholder {0}: formatWeightDelta(toNormal)
+#: src/app/settings/food.tsx:196
+msgid " · до норми {0} {WEIGHT_UNIT}"
+msgstr " · до норми {0} {WEIGHT_UNIT}"
+
+#: src/app/settings/food.tsx:338
+msgid " і "
+msgstr " і "
+
+#: src/lib/program-ai.ts:475
+msgid "\"Груди й трицепс\", \"Верх тіла\""
+msgstr "\"Груди й трицепс\", \"Верх тіла\""
+
+#: src/lib/program-ai.ts:496
+msgid "\"Заминка після верху тіла\""
+msgstr "\"Заминка після верху тіла\""
+
+#: src/lib/program-ai.ts:497
+msgid "\"Перед тренуванням ніг\""
+msgstr "\"Перед тренуванням ніг\""
+
+#: src/lib/program-ai.ts:496
+msgid "\"Розминка для ніг\""
+msgstr "\"Розминка для ніг\""
+
+#: src/lib/program-ai.ts:497
+msgid "\"Розтяжка всього тіла\""
+msgstr "\"Розтяжка всього тіла\""
+
+#. placeholder {0}: food.name
+#: src/app/add-food.tsx:397
+msgid "«{0}» зникне зі списку й підказок. Записи в журналі залишаться, а наступного разу страву порахує AI."
+msgstr "«{0}» зникне зі списку й підказок. Записи в журналі залишаться, а наступного разу страву порахує AI."
+
+#. placeholder {0}: template.name
+#: src/app/add-food.tsx:382
+msgid "«{0}» зникне зі списку шаблонів. Записи в журналі залишаться."
+msgstr "«{0}» зникне зі списку шаблонів. Записи в журналі залишаться."
+
+#: src/app/(tabs)/food.tsx:80
+msgid "«{name}» тепер можна додати в один тап з екрана додавання їжі."
+msgstr "«{name}» тепер можна додати в один тап з екрана додавання їжі."
+
+#. placeholder {0}: photos.length
+#. placeholder {1}: formatShortDate(latest.takenAt)
+#: src/app/body-weight.tsx:311
+msgid "{0, plural, one {# фото} other {# фото}} · останнє {1}"
+msgstr "{0, plural, one {# фото} other {# фото}} · останнє {1}"
+
+#. placeholder {0}: recap.activeDays
+#: src/app/recap.tsx:254
+msgid "{0, plural, one {активний день} few {активні дні} many {активних днів} other {активні дні}}"
+msgstr "{0, plural, one {активний день} few {активні дні} many {активних днів} other {активні дні}}"
+
+#. placeholder {0}: d.exercises.length
+#. placeholder {0}: nextDay.exercises.length
+#. placeholder {0}: selectedDay.exercises.length
+#: src/app/program/[id].tsx:111
+#: src/components/dashboard/widgets.tsx:336
+#: src/components/training/overview-view.tsx:211
+msgid "{0, plural, one {вправа} few {вправи} many {вправ} other {вправи}}"
+msgstr "{0, plural, one {вправа} few {вправи} many {вправ} other {вправи}}"
+
+#. placeholder {0}: plan.days.length
+#. placeholder {0}: program.days.length
+#: src/app/program/[id].tsx:69
+#: src/app/program/ai.tsx:557
+msgid "{0, plural, one {дн.} other {дн.}}"
+msgstr "{0, plural, one {дн.} other {дн.}}"
+
+#. placeholder {0}: recap.favorite.sets
+#: src/app/recap.tsx:268
+msgid "{0, plural, one {підхід} few {підходи} many {підходів} other {підходи}}"
+msgstr "{0, plural, one {підхід} few {підходи} many {підходів} other {підходи}}"
+
+#. placeholder {0}: recap.favorite.times
+#: src/app/recap.tsx:332
+msgid "{0, plural, one {раз} few {рази} many {разів} other {рази}}"
+msgstr "{0, plural, one {раз} few {рази} many {разів} other {рази}}"
+
+#. placeholder {0}: totals.unlocked
+#: src/app/achievements.tsx:58
+msgid "{0, plural, one {рівень відкрито} few {рівні відкрито} many {рівнів відкрито} other {рівні відкрито}}"
+msgstr "{0, plural, one {рівень відкрито} few {рівні відкрито} many {рівнів відкрито} other {рівні відкрито}}"
+
+#. placeholder {0}: ageOn(profile.birthDate)
+#: src/app/program/ai.tsx:309
+msgid "{0, plural, one {рік} few {роки} many {років} other {роки}}"
+msgstr "{0, plural, one {рік} few {роки} many {років} other {роки}}"
+
+#. placeholder {0}: recap.favorite.workouts
+#. placeholder {0}: recap.workouts
+#. placeholder {0}: thisWeek.length
+#: src/app/recap.tsx:248
+#: src/app/recap.tsx:266
+#: src/components/dashboard/widgets.tsx:390
+msgid "{0, plural, one {тренування} few {тренування} many {тренувань} other {тренування}}"
+msgstr "{0, plural, one {тренування} few {тренування} many {тренувань} other {тренування}}"
+
+#. placeholder {0}: ACTIVITY[profile.activity].label.toLowerCase()
+#: src/app/settings/food.tsx:851
+#: src/app/settings/water.tsx:19
+msgid "{0} активність"
+msgstr "{0} активність"
+
+#. placeholder {0}: p.days.length
+#: src/components/training/programs-view.tsx:71
+msgid "{0} дн. по колу"
+msgstr "{0} дн. по колу"
+
+#. placeholder {0}: current.exercise.name
+#: src/components/workout-player.tsx:267
+msgid "{0}: можна виконати пізніше або пропустити зовсім."
+msgstr "{0}: можна виконати пізніше або пропустити зовсім."
+
+#: src/db/home-widget.ts:64
+msgid "{count, plural, one {вправа} few {вправи} many {вправ} other {вправи}}"
+msgstr "{count, plural, one {вправа} few {вправи} many {вправ} other {вправи}}"
+
+#: src/lib/progress-photos.ts:88
+msgid "{days, plural, one {день} few {дні} many {днів} other {дні}}"
+msgstr "{days, plural, one {день} few {дні} many {днів} other {дні}}"
+
+#: src/app/program/ai.tsx:346
+msgid "{days, plural, one {тренування} few {тренування} many {тренувань} other {тренування}}"
+msgstr "{days, plural, one {тренування} few {тренування} many {тренувань} other {тренування}}"
+
+#: src/components/training/overview-view.tsx:212
+msgid "{daySets, plural, one {підхід} few {підходи} many {підходів} other {підходи}}"
+msgstr "{daySets, plural, one {підхід} few {підходи} many {підходів} other {підходи}}"
+
+#: src/components/health-card.tsx:54
+msgid "{healthName} недоступний"
+msgstr "{healthName} недоступний"
+
+#: src/components/workout-player.tsx:382
+msgid "{label} — знову стане невиконаним."
+msgstr "{label} — знову стане невиконаним."
+
+#. placeholder {0}: picked(answers, 'equipment')
+#: src/app/program/ai.tsx:353
+msgid "{libraryCount} у бібліотеці · {0}"
+msgstr "{libraryCount} у бібліотеці · {0}"
+
+#: src/lib/progress-photos.ts:94
+msgid "{months, plural, one {місяць} few {місяці} many {місяців} other {місяці}}"
+msgstr "{months, plural, one {місяць} few {місяці} many {місяців} other {місяці}}"
+
+#: src/app/recap.tsx:79
+#: src/components/dashboard/widgets.tsx:829
+#: src/lib/achievements.ts:127
+msgid "{n, plural, one {день} few {дні} many {днів} other {дні}}"
+msgstr "{n, plural, one {день} few {дні} many {днів} other {дні}}"
+
+#: src/lib/achievements.ts:271
+msgid "{n, plural, one {зважування} few {зважування} many {зважувань} other {зважування}}"
+msgstr "{n, plural, one {зважування} few {зважування} many {зважувань} other {зважування}}"
+
+#: src/lib/achievements.ts:186
+msgid "{n, plural, one {особистий рекорд} few {особисті рекорди} many {особистих рекордів} other {особисті рекорди}}"
+msgstr "{n, plural, one {особистий рекорд} few {особисті рекорди} many {особистих рекордів} other {особисті рекорди}}"
+
+#: src/components/dashboard/widgets.tsx:880
+msgid "{n, plural, one {тиж.} other {тиж.}}"
+msgstr "{n, plural, one {тиж.} other {тиж.}}"
+
+#: src/lib/achievements.ts:150
+msgid "{n, plural, one {тиждень} few {тижні} many {тижнів} other {тижні}}"
+msgstr "{n, plural, one {тиждень} few {тижні} many {тижнів} other {тижні}}"
+
+#: src/lib/achievements.ts:126
+msgid "{n, plural, one {тренування} few {тренування} many {тренувань} other {тренування}}"
+msgstr "{n, plural, one {тренування} few {тренування} many {тренувань} other {тренування}}"
+
+#: src/lib/achievements.ts:281
+msgid "{n, plural, one {фото} few {фото} many {фото} other {фото}}"
+msgstr "{n, plural, one {фото} few {фото} many {фото} other {фото}}"
+
+#: src/lib/program-ai.ts:297
+msgid "{n} хв"
+msgstr "{n} хв"
+
+#: src/app/settings/food.tsx:339
+msgid "{names} рахуються з норми калорій."
+msgstr "{names} рахуються з норми калорій."
+
+#: src/app/program/ai.tsx:567
+msgid "{newCount, plural, one {нова} few {нові} many {нових} other {нові}}"
+msgstr "{newCount, plural, one {нова} few {нові} many {нових} other {нові}}"
+
+#: src/components/dashboard/widgets.tsx:960
+msgid "{pct}% норми"
+msgstr "{pct}% норми"
+
+#: src/app/(tabs)/water.tsx:218
+msgid "{percent}% денної норми"
+msgstr "{percent}% денної норми"
+
+#: src/components/dashboard/widgets.tsx:337
+msgid "{sets, plural, one {підхід} few {підходи} many {підходів} other {підходи}}"
+msgstr "{sets, plural, one {підхід} few {підходи} many {підходів} other {підходи}}"
+
+#: src/app/program/ai.tsx:562
+msgid "{total, plural, one {вправа} few {вправи} many {вправ} other {вправи}}"
+msgstr "{total, plural, one {вправа} few {вправи} many {вправ} other {вправи}}"
+
+#: src/app/program/[id].tsx:73
+msgid "{totalExercises, plural, one {вправа} few {вправи} many {вправ} other {вправи}}"
+msgstr "{totalExercises, plural, one {вправа} few {вправи} many {вправ} other {вправи}}"
+
+#: src/lib/progress-photos.ts:91
+msgid "{weeks, plural, one {тиждень} few {тижні} many {тижнів} other {тижні}}"
+msgstr "{weeks, plural, one {тиждень} few {тижні} many {тижнів} other {тижні}}"
+
+#: src/lib/program-ai.ts:282
+msgid "1 год"
+msgstr "1 год"
+
+#: src/lib/profile.ts:30
+msgid "1–3 тренування на тиждень"
+msgstr "1–3 тренування на тиждень"
+
+#: src/lib/program-ai.ts:285
+msgid "1,5 год"
+msgstr "1,5 год"
+
+#: src/lib/program-ai.ts:279
+msgid "15 хв"
+msgstr "15 хв"
+
+#: src/app/recap.tsx:289
+msgid "1ПМ"
+msgstr "1ПМ"
+
+#: src/lib/metrics.ts:29
+msgid "1ПМ додаткової ваги"
+msgstr "1ПМ додаткової ваги"
+
+#: src/lib/profile.ts:36
+msgid "3–5 тренувань на тиждень"
+msgstr "3–5 тренувань на тиждень"
+
+#: src/lib/program-ai.ts:280
+msgid "30 хв"
+msgstr "30 хв"
+
+#: src/lib/program-ai.ts:281
+msgid "45 хв"
+msgstr "45 хв"
+
+#: src/lib/profile.ts:42
+msgid "6–7 тренувань на тиждень"
+msgstr "6–7 тренувань на тиждень"
+
+#: src/app/program/ai.tsx:489
+msgid "AI врахує профіль"
+msgstr "AI врахує профіль"
+
+#: src/app/settings/food.tsx:119
+msgid "AI коментар дня"
+msgstr "AI коментар дня"
+
+#: src/lib/program-ai.ts:372
+msgid "AI не дасть вправ, що навантажують ці місця. Пропусти, якщо нічого не турбує"
+msgstr "AI не дасть вправ, що навантажують ці місця. Пропусти, якщо нічого не турбує"
+
+#: src/lib/program-ai.ts:834
+msgid "AI не знайшов іншої схожої вправи. Спробуй ще раз."
+msgstr "AI не знайшов іншої схожої вправи. Спробуй ще раз."
+
+#: src/lib/groq.ts:948
+msgid "AI не написав коментар."
+msgstr "AI не написав коментар."
+
+#: src/lib/groq.ts:1035
+msgid "AI не підібрав продуктів."
+msgstr "AI не підібрав продуктів."
+
+#: src/lib/groq.ts:1121
+msgid "AI не підібрав страву."
+msgstr "AI не підібрав страву."
+
+#: src/lib/program-ai.ts:782
+msgid "AI не склав жодного дня. Спробуй ще раз або зміни відповіді."
+msgstr "AI не склав жодного дня. Спробуй ще раз або зміни відповіді."
+
+#: src/lib/groq.ts:219
+#: src/lib/groq.ts:303
+msgid "AI повернув неповну відповідь. Спробуй ще раз."
+msgstr "AI повернув неповну відповідь. Спробуй ще раз."
+
+#: src/app/add-food.tsx:347
+#~ msgid "AI розпізнає страви й оцінить порції або прочитає КБЖВ з етикетки. Тарілку знімай згори, цілком; етикетку — так, щоб було видно назву й таблицю харчової цінності."
+#~ msgstr "AI розпізнає страви й оцінить порції або прочитає КБЖВ з етикетки. Тарілку знімай згори, цілком; етикетку — так, щоб було видно назву й таблицю харчової цінності."
+
+#: src/app/add-food.tsx:347
+msgid "AI розпізнає страви й порції, читає назви та КБЖВ з меню, чека або фото етикетки. Для тарілки знімай її згори й цілком; текст фотографуй чітко."
+msgstr "AI розпізнає страви й порції, читає назви та КБЖВ з меню, чека або фото етикетки. Для тарілки знімай її згори й цілком; текст фотографуй чітко."
+
+#: src/components/food-photo-scanner.tsx:209
+msgid "AI сканує"
+msgstr "AI сканує"
+
+#: src/lib/groq.ts:198
+msgid "AI тимчасово недоступний. Спробуй пізніше."
+msgstr "AI тимчасово недоступний. Спробуй пізніше."
+
+#: src/components/day-review-card.tsx:114
+msgid "AI-коментар до дня"
+msgstr "AI-коментар до дня"
+
+#: src/lib/groq.ts:320
+msgid "Groq не визначив вагу чи об’єм порції. Уточни опис."
+msgstr "Groq не визначив вагу чи об’єм порції. Уточни опис."
+
+#: src/lib/groq.ts:246
+#: src/lib/groq.ts:739
+msgid "Groq повернув помилку"
+msgstr "Groq повернув помилку"
+
+#: src/lib/program-ai.ts:147
+#: src/lib/program-ai.ts:179
+msgid "HIIT, кросфіт, ігрові види спорту"
+msgstr "HIIT, кросфіт, ігрові види спорту"
+
+#: src/lib/program-ai.ts:463
+#: src/lib/program-ai.ts:476
+#: src/lib/program-ai.ts:498
+msgid "Ukrainian"
+msgstr "Ukrainian"
+
+#: src/app/exercise/edit.tsx:92
+msgid "YouTube-посилання має починатися з https://"
+msgstr "YouTube-посилання має починатися з https://"
+
+#: src/app/exercise/edit.tsx:181
+msgid "або URL картинки"
+msgstr "або URL картинки"
+
+#: src/app/settings/food.tsx:369
+#: src/app/settings/food.tsx:411
+msgid "авто"
+msgstr "авто"
+
+#: src/app/settings/food.tsx:430
+msgid "Авто"
+msgstr "Авто"
+
+#: src/app/add-food.tsx:209
+#: src/app/program/ai.tsx:116
+#: src/app/settings/account.tsx:17
+#: src/app/settings/index.tsx:24
+#: src/components/food-photo-scanner.tsx:226
+msgid "Акаунт"
+msgstr "Акаунт"
+
+#: src/app/settings/account.tsx:69
+msgid "Акаунт від"
+msgstr "Акаунт від"
+
+#: src/app/settings/account.tsx:52
+msgid "Акаунт і всі його резервні копії на сервері зникнуть назавжди. Дані на цьому телефоні залишаться."
+msgstr "Акаунт і всі його резервні копії на сервері зникнуть назавжди. Дані на цьому телефоні залишаться."
+
+#: src/lib/account.ts:43
+msgid "Акаунт із цією поштою вже є. Увійди або віднови пароль."
+msgstr "Акаунт із цією поштою вже є. Увійди або віднови пароль."
+
+#: src/app/program/[id].tsx:67
+#: src/components/training/programs-view.tsx:73
+msgid "Активна"
+msgstr "Активна"
+
+#: src/app/program/ai.tsx:312
+msgid "активність"
+msgstr "активність"
+
+#: src/app/profile.tsx:143
+#: src/components/activity-calendar.tsx:54
+msgid "Активність"
+msgstr "Активність"
+
+#: src/app/onboarding.tsx:73
+msgid "Активність і мета"
+msgstr "Активність і мета"
+
+#: src/app/onboarding.tsx:75
+msgid "Активність показує, скільки ти витрачаєш за день, а мета — чи їсти менше, чи більше за це."
+msgstr "Активність показує, скільки ти витрачаєш за день, а мета — чи їсти менше, чи більше за це."
+
+#: src/app/program/ai.tsx:336
+msgid "Аналізую профіль"
+msgstr "Аналізую профіль"
+
+#: src/app/(tabs)/food.tsx:218
+#: src/app/add-food.tsx:131
+#: src/components/dashboard/widgets.tsx:469
+#: src/components/day-review-card.tsx:45
+#: src/components/meal-advice.tsx:107
+#: src/lib/groq.ts:892
+#: src/lib/groq.ts:1091
+msgid "Б"
+msgstr "Б"
+
+#: src/app/macro.tsx:34
+msgid "Багато білка"
+msgstr "Багато білка"
+
+#: src/app/macro.tsx:36
+msgid "Багато вуглеводів"
+msgstr "Багато вуглеводів"
+
+#: src/app/macro.tsx:35
+msgid "Багато жирів"
+msgstr "Багато жирів"
+
+#. placeholder {0}: formatKcal(rec.bmr)
+#. placeholder {1}: formatKcal(rec.tdee)
+#: src/app/profile.tsx:163
+msgid "Базовий обмін {0} ккал · підтримка {1} ккал"
+msgstr "Базовий обмін {0} ккал · підтримка {1} ккал"
+
+#: src/components/dashboard/widgets.tsx:951
+msgid "Баланс"
+msgstr "Баланс"
+
+#: src/lib/dashboard.ts:70
+msgid "Баланс калорій"
+msgstr "Баланс калорій"
+
+#: src/app/program/[id].tsx:110
+msgid "Без вправ"
+msgstr "Без вправ"
+
+#: src/app/onboarding.tsx:154
+msgid "Без них застосунок не порахує твою норму калорій, води та індекс маси тіла. Змінити все це можна будь-коли в профілі."
+msgstr "Без них застосунок не порахує твою норму калорій, води та індекс маси тіла. Змінити все це можна будь-коли в профілі."
+
+#: src/lib/achievements.ts:147
+msgid "Без пропусків"
+msgstr "Без пропусків"
+
+#: src/lib/program-ai.ts:382
+msgid "Без стрибків"
+msgstr "Без стрибків"
+
+#: src/components/activity-calendar.tsx:14
+msgid "Березень"
+msgstr "Березень"
+
+#: src/app/settings/food.tsx:307
+msgid "БЖВ на день"
+msgstr "БЖВ на день"
+
+#: src/lib/labels.ts:29
+msgid "Біг"
+msgstr "Біг"
+
+#: src/lib/program-ai.ts:140
+#: src/lib/program-ai.ts:172
+msgid "Біг чи кардіо"
+msgstr "Біг чи кардіо"
+
+#: src/lib/program-ai.ts:141
+#: src/lib/program-ai.ts:173
+msgid "Біг, велосипед, скакалка"
+msgstr "Біг, велосипед, скакалка"
+
+#: src/lib/groq.ts:978
+msgid "білка"
+msgstr "білка"
+
+#: src/app/recap.tsx:312
+msgid "білка за день"
+msgstr "білка за день"
+
+#: src/lib/groq.ts:378
+msgid "білки"
+msgstr "білки"
+
+#: src/components/calorie-summary.tsx:21
+#: src/components/dashboard/widgets.tsx:516
+#: src/lib/groq.ts:909
+msgid "Білки"
+msgstr "Білки"
+
+#: src/components/dashboard/widgets.tsx:920
+msgid "Білок"
+msgstr "Білок"
+
+#: src/lib/dashboard.ts:67
+msgid "Білок сьогодні"
+msgstr "Білок сьогодні"
+
+#: src/lib/program-ai.ts:407
+msgid "Більше кардіо"
+msgstr "Більше кардіо"
+
+#: src/lib/program-ai.ts:421
+msgid "Більше на ноги"
+msgstr "Більше на ноги"
+
+#: src/lib/program-ai.ts:415
+msgid "Більше на плечі"
+msgstr "Більше на плечі"
+
+#: src/lib/program-ai.ts:115
+msgid "Більше руху, короткий відпочинок"
+msgstr "Більше руху, короткий відпочинок"
+
+#: src/lib/labels.ts:13
+msgid "Біцепс"
+msgstr "Біцепс"
+
+#. placeholder {0}: formatVolume(deficit)
+#. placeholder {1}: formatVolume(goal)
+#: src/lib/reminders.ts:114
+msgid "Бракує {0} {VOLUME_UNIT} до цілі {1} {VOLUME_UNIT}."
+msgstr "Бракує {0} {VOLUME_UNIT} до цілі {1} {VOLUME_UNIT}."
+
+#: src/components/food-photo-scanner.tsx:86
+msgid "бренд"
+msgstr "бренд"
+
+#: src/lib/groq.ts:717
+msgid "Бренд"
+msgstr "Бренд"
+
+#: src/lib/program-ai.ts:346
+msgid "Бруси"
+msgstr "Бруси"
+
+#: src/app/(tabs)/food.tsx:219
+#: src/app/add-food.tsx:131
+#: src/components/dashboard/widgets.tsx:471
+#: src/components/day-review-card.tsx:44
+#: src/components/meal-advice.tsx:107
+#: src/lib/groq.ts:894
+#: src/lib/groq.ts:1091
+msgid "В"
+msgstr "В"
+
+#: src/app/exercise/[id].tsx:96
+msgid "В архіві"
+msgstr "В архіві"
+
+#: src/app/body-weight.tsx:157
+#: src/app/onboarding.tsx:67
+#: src/app/progress-photos.tsx:278
+#: src/components/weight-ruler.tsx:87
+#: src/components/weight-ruler.tsx:152
+msgid "Вага"
+msgstr "Вага"
+
+#: src/lib/labels.ts:20
+msgid "Вага × повторення"
+msgstr "Вага × повторення"
+
+#: src/components/health-card.tsx:93
+msgid "Вага більше не підтягуватиметься. Уже імпортовані записи залишаться."
+msgstr "Вага більше не підтягуватиметься. Уже імпортовані записи залишаться."
+
+#: src/components/food-photo-scanner.tsx:89
+msgid "вага нетто"
+msgstr "вага нетто"
+
+#: src/app/body-weight.tsx:85
+#: src/components/dashboard/widgets.tsx:1024
+#: src/components/dashboard/widgets.tsx:1049
+#: src/components/dashboard/widgets.tsx:1083
+#: src/db/home-widget.ts:73
+#: src/lib/dashboard.ts:120
+msgid "Вага тіла"
+msgstr "Вага тіла"
+
+#: src/app/settings/index.tsx:31
+msgid "Вага, зріст, вік"
+msgstr "Вага, зріст, вік"
+
+#: src/app/settings/water.tsx:40
+#: src/lib/profile.ts:228
+msgid "вагу"
+msgstr "вагу"
+
+#: src/lib/program-ai.ts:103
+msgid "Важкі базові вправи, менше повторень"
+msgstr "Важкі базові вправи, менше повторень"
+
+#: src/lib/program-ai.ts:219
+msgid "Важко дотягнутися до пальців ніг"
+msgstr "Важко дотягнутися до пальців ніг"
+
+#: src/lib/achievements.ts:157
+msgid "Важкоатлет"
+msgstr "Важкоатлет"
+
+#: src/app/body-weight.tsx:95
+msgid "Ввести вагу"
+msgstr "Ввести вагу"
+
+#: src/lib/dashboard.ts:10
+msgid "Великий"
+msgstr "Великий"
+
+#: src/lib/labels.ts:30
+msgid "Велосипед"
+msgstr "Велосипед"
+
+#: src/components/activity-calendar.tsx:20
+msgid "Вересень"
+msgstr "Вересень"
+
+#: src/components/app-update.tsx:126
+msgid "Версія"
+msgstr "Версія"
+
+#: src/lib/meals.ts:10
+msgid "Вечеря"
+msgstr "Вечеря"
+
+#: src/app/widgets.tsx:68
+msgid "вже є"
+msgstr "вже є"
+
+#: src/db/workouts.ts:132
+msgid "Вже є незавершене тренування"
+msgstr "Вже є незавершене тренування"
+
+#: src/app/settings/backup.tsx:209
+msgid "Вибери файл копії. Він замінить усі поточні дані, тож за потреби спершу створи копію поточних."
+msgstr "Вибери файл копії. Він замінить усі поточні дані, тож за потреби спершу створи копію поточних."
+
+#: src/app/add-food.tsx:386
+#: src/app/body-weight.tsx:75
+#: src/app/program/day/[id].tsx:57
+#: src/app/progress-photos.tsx:363
+#: src/app/settings/account.tsx:56
+#: src/app/workout/[id].tsx:102
+#: src/app/workout/[id].tsx:118
+#: src/components/remove-dialogs.ts:24
+#: src/components/remove-dialogs.ts:56
+#: src/components/training/history-view.tsx:61
+msgid "Видалити"
+msgstr "Видалити"
+
+#: src/app/settings/account.tsx:85
+msgid "Видалити акаунт"
+msgstr "Видалити акаунт"
+
+#: src/app/settings/account.tsx:51
+msgid "Видалити акаунт?"
+msgstr "Видалити акаунт?"
+
+#: src/app/exercise/[id].tsx:194
+msgid "Видалити вправу"
+msgstr "Видалити вправу"
+
+#: src/components/remove-dialogs.ts:51
+msgid "Видалити вправу?"
+msgstr "Видалити вправу?"
+
+#: src/app/program/day/[id].tsx:52
+msgid "Видалити день?"
+msgstr "Видалити день?"
+
+#: src/app/body-weight.tsx:70
+msgid "Видалити запис?"
+msgstr "Видалити запис?"
+
+#: src/components/remove-dialogs.ts:19
+msgid "Видалити програму?"
+msgstr "Видалити програму?"
+
+#: src/app/workout/[id].tsx:97
+#: src/components/training/history-view.tsx:56
+msgid "Видалити тренування?"
+msgstr "Видалити тренування?"
+
+#: src/app/progress-photos.tsx:372
+msgid "Видалити фото"
+msgstr "Видалити фото"
+
+#. placeholder {0}: template.name
+#: src/app/add-food.tsx:952
+msgid "Видалити шаблон «{0}»"
+msgstr "Видалити шаблон «{0}»"
+
+#: src/app/add-food.tsx:381
+msgid "Видалити шаблон?"
+msgstr "Видалити шаблон?"
+
+#: src/app/settings/account.tsx:82
+msgid "Видаляє акаунт і резервні копії на сервері. Тренування, їжа й інші дані на телефоні залишаться."
+msgstr "Видаляє акаунт і резервні копії на сервері. Тренування, їжа й інші дані на телефоні залишаться."
+
+#: src/app/settings/account.tsx:31
+#: src/app/settings/account.tsx:73
+msgid "Вийти"
+msgstr "Вийти"
+
+#: src/app/settings/account.tsx:26
+msgid "Вийти з акаунта?"
+msgstr "Вийти з акаунта?"
+
+#: src/components/workout-player.tsx:665
+#: src/components/workout-player.tsx:666
+msgid "Виконано"
+msgstr "Виконано"
+
+#: src/components/workout-player.tsx:270
+msgid "Виконати пізніше"
+msgstr "Виконати пізніше"
+
+#: src/app/recap.tsx:343
+#: src/lib/achievements.ts:260
+msgid "випито"
+msgstr "випито"
+
+#: src/lib/dashboard.ts:111
+msgid "Випито за день і швидке додавання склянок."
+msgstr "Випито за день і швидке додавання склянок."
+
+#: src/lib/profile.ts:41
+msgid "Висока"
+msgstr "Висока"
+
+#: src/lib/program-ai.ts:120
+msgid "Витривалість"
+msgstr "Витривалість"
+
+#: src/lib/groq.ts:672
+msgid "Витягни з результатів пошуку КБЖВ для страв у тому самому порядку. Значення мають бути для вказаної порції. found=true лише коли дані чітко стосуються ресторану/цієї страви. Якщо не знайшлося — false та нулі."
+msgstr "Витягни з результатів пошуку КБЖВ для страв у тому самому порядку. Значення мають бути для вказаної порції. found=true лише коли дані чітко стосуються ресторану/цієї страви. Якщо не знайшлося — false та нулі."
+
+#: src/components/dashboard/widgets.tsx:1098
+msgid "від"
+msgstr "від"
+
+#. placeholder {0}: kg(fromKg)
+#: src/app/settings/food.tsx:245
+msgid "від {0}"
+msgstr "від {0}"
+
+#: src/app/onboarding.tsx:69
+msgid "Від ваги залежать норми калорій і води та індекс маси тіла. Вона стане першим записом у журналі ваги."
+msgstr "Від ваги залежать норми калорій і води та індекс маси тіла. Вона стане першим записом у журналі ваги."
+
+#: src/lib/dashboard.ts:63
+msgid "Від останнього тренування"
+msgstr "Від останнього тренування"
+
+#: src/lib/program-ai.ts:251
+msgid "Від пів року до 2 років"
+msgstr "Від пів року до 2 років"
+
+#: src/app/body-weight.tsx:134
+msgid "Від початку"
+msgstr "Від початку"
+
+#: src/app/settings/notifications.tsx:166
+msgid "Відбій"
+msgstr "Відбій"
+
+#: src/components/health-card.tsx:97
+#: src/components/health-card.tsx:131
+msgid "Відключити"
+msgstr "Відключити"
+
+#: src/components/health-card.tsx:92
+msgid "Відключити {healthName}?"
+msgstr "Відключити {healthName}?"
+
+#: src/app/settings/notifications.tsx:136
+msgid "Відкрити налаштування"
+msgstr "Відкрити налаштування"
+
+#: src/app/settings/backup.tsx:212
+msgid "Відновити з файлу"
+msgstr "Відновити з файлу"
+
+#: src/app/settings/backup.tsx:206
+msgid "Відновлення"
+msgstr "Відновлення"
+
+#: src/components/targets-editor.tsx:89
+msgid "Відпоч., с"
+msgstr "Відпоч., с"
+
+#: src/lib/labels.ts:104
+msgid "відпочинок"
+msgstr "відпочинок"
+
+#: src/components/workout-player.tsx:432
+msgid "ВІДПОЧИНОК"
+msgstr "ВІДПОЧИНОК"
+
+#: src/app/onboarding.tsx:209
+#: src/app/profile.tsx:130
+msgid "Вік"
+msgstr "Вік"
+
+#: src/app/onboarding.tsx:210
+msgid "Вік має бути від {MIN_AGE} до {MAX_AGE} років."
+msgstr "Вік має бути від {MIN_AGE} до {MAX_AGE} років."
+
+#. placeholder {0}: missing.join(', ')
+#: src/app/settings/food.tsx:874
+msgid "Вкажи {0}, щоб бачити темп і безпечні межі."
+msgstr "Вкажи {0}, щоб бачити темп і безпечні межі."
+
+#: src/components/settings.tsx:145
+msgid "Вкажи в профілі {missing}, щоб отримати рекомендацію."
+msgstr "Вкажи в профілі {missing}, щоб отримати рекомендацію."
+
+#. placeholder {0}: HEIGHT_RANGE[0]
+#. placeholder {1}: HEIGHT_RANGE[1]
+#: src/app/profile.tsx:113
+msgid "Вкажи зріст від {0} до {1} {HEIGHT_UNIT}."
+msgstr "Вкажи зріст від {0} до {1} {HEIGHT_UNIT}."
+
+#: src/app/exercise/edit.tsx:87
+msgid "Вкажи назву"
+msgstr "Вкажи назву"
+
+#: src/app/program/ai.tsx:345
+msgid "Вкладаю в"
+msgstr "Вкладаю в"
+
+#: src/app/(tabs)/water.tsx:62
+#: src/app/settings/index.tsx:45
+#: src/app/settings/water.tsx:22
+#: src/components/dashboard/widgets.tsx:662
+#: src/db/home-widget.ts:149
+#: src/lib/achievements.ts:289
+#: src/lib/dashboard.ts:143
+#: src/lib/modules.ts:35
+#: src/lib/water.ts:33
+msgid "Вода"
+msgstr "Вода"
+
+#: src/lib/dashboard.ts:72
+msgid "Вода в середньому"
+msgstr "Вода в середньому"
+
+#: src/components/dashboard/widgets.tsx:762
+#: src/lib/dashboard.ts:115
+msgid "Вода за тиждень"
+msgstr "Вода за тиждень"
+
+#: src/components/dashboard/widgets.tsx:780
+msgid "Вода за тиждень · ціль"
+msgstr "Вода за тиждень · ціль"
+
+#: src/components/dashboard/widgets.tsx:699
+#: src/components/dashboard/widgets.tsx:726
+#: src/lib/dashboard.ts:71
+#: src/lib/dashboard.ts:110
+msgid "Вода сьогодні"
+msgstr "Вода сьогодні"
+
+#: src/app/settings/index.tsx:68
+msgid "Вода, мій день"
+msgstr "Вода, мій день"
+
+#: src/lib/achievements.ts:240
+msgid "Водний баланс"
+msgstr "Водний баланс"
+
+#: src/app/exercise/[id].tsx:60
+#: src/components/workout-player.tsx:464
+msgid "Вправа"
+msgstr "Вправа"
+
+#: src/components/remove-dialogs.ts:63
+msgid "Вправа використовується"
+msgstr "Вправа використовується"
+
+#: src/app/(tabs)/training.tsx:23
+msgid "Вправи"
+msgstr "Вправи"
+
+#: src/components/workout-player.tsx:462
+msgid "Вправу виконано"
+msgstr "Вправу виконано"
+
+#: src/app/exercise/[id].tsx:61
+msgid "Вправу не знайдено"
+msgstr "Вправу не знайдено"
+
+#: src/components/workout-player.tsx:463
+msgid "Вправу пропущено"
+msgstr "Вправу пропущено"
+
+#: src/app/program/ai.tsx:340
+msgid "Враховую мету й побажання"
+msgstr "Враховую мету й побажання"
+
+#: src/app/program/ai.tsx:339
+msgid "Враховую побажання"
+msgstr "Враховую побажання"
+
+#: src/app/add-food.tsx:492
+msgid "Вручну"
+msgstr "Вручну"
+
+#: src/app/add-food.tsx:889
+msgctxt "Manual"
+msgid "Вручну"
+msgstr "Вручну"
+
+#: src/components/health-card.tsx:58
+msgid "Встанови Health Connect з Google Play."
+msgstr "Встанови Health Connect з Google Play."
+
+#: src/lib/labels.ts:62
+msgid "Вт"
+msgstr "Вт"
+
+#: src/lib/groq.ts:380
+msgid "вуглеводи"
+msgstr "вуглеводи"
+
+#: src/components/calorie-summary.tsx:23
+#: src/components/dashboard/widgets.tsx:518
+#: src/lib/groq.ts:911
+msgid "Вуглеводи"
+msgstr "Вуглеводи"
+
+#: src/lib/groq.ts:980
+msgid "вуглеводів"
+msgstr "вуглеводів"
+
+#: src/components/auth-form.tsx:22
+msgid "Вхід"
+msgstr "Вхід"
+
+#: src/app/settings/index.tsx:25
+msgid "Вхід, реєстрація"
+msgstr "Вхід, реєстрація"
+
+#: src/app/(tabs)/food.tsx:220
+#: src/app/add-food.tsx:126
+#: src/app/add-food.tsx:321
+#: src/app/add-food.tsx:686
+#: src/app/add-food.tsx:690
+#: src/app/food-entry/[id].tsx:70
+#: src/app/macro.tsx:54
+#: src/app/macro.tsx:255
+#: src/app/recap.tsx:311
+#: src/app/settings/food.tsx:261
+#: src/components/calorie-summary.tsx:106
+#: src/components/calorie-summary.tsx:110
+#: src/components/dashboard/widgets.tsx:55
+#: src/components/day-review-card.tsx:39
+#: src/components/food-card-inputs.tsx:144
+#: src/components/macro-row.tsx:17
+#: src/lib/food.ts:202
+#: src/lib/groq.ts:635
+#: src/lib/groq.ts:889
+#: src/lib/groq.ts:904
+#: src/lib/groq.ts:1000
+#: src/lib/groq.ts:1078
+#: src/lib/groq.ts:1150
+msgid "г"
+msgstr "г"
+
+#: src/app/add-food.tsx:352
+#: src/app/exercise/edit.tsx:150
+#: src/app/progress-photos.tsx:166
+msgid "Галерея"
+msgstr "Галерея"
+
+#: src/lib/program-ai.ts:342
+msgid "Гантелі"
+msgstr "Гантелі"
+
+#: src/lib/program-ai.ts:321
+#: src/lib/program-ai.ts:347
+msgid "Гиря"
+msgstr "Гиря"
+
+#: src/lib/program-ai.ts:230
+msgid "Гнучкий"
+msgstr "Гнучкий"
+
+#: src/app/recap.tsx:85
+#: src/components/dashboard/widgets.tsx:826
+#: src/lib/achievements.ts:170
+#: src/lib/reminders.ts:36
+msgid "год"
+msgstr "год"
+
+#: src/lib/achievements.ts:169
+msgid "год тренувань"
+msgstr "год тренувань"
+
+#: src/lib/modules.ts:17
+msgid "Головна"
+msgstr "Головна"
+
+#: src/components/weight-ruler.tsx:198
+msgid "Гортай лінійку"
+msgstr "Гортай лінійку"
+
+#: src/app/(tabs)/index.tsx:75
+#: src/app/onboarding.tsx:254
+#: src/components/food-photo-scanner.tsx:208
+#: src/components/set-row.tsx:306
+msgid "Готово"
+msgstr "Готово"
+
+#: src/components/dashboard/widgets.tsx:1058
+msgid "Графік — після наступного зважування"
+msgstr "Графік — після наступного зважування"
+
+#: src/app/body-weight.tsx:151
+#: src/components/dashboard/widgets.tsx:1093
+msgid "Графік з’явиться після зважування в інший день."
+msgstr "Графік з’явиться після зважування в інший день."
+
+#: src/app/exercise/[id].tsx:132
+msgid "Графік з’явиться після першого тренування з цією вправою."
+msgstr "Графік з’явиться після першого тренування з цією вправою."
+
+#: src/components/activity-calendar.tsx:23
+msgid "Грудень"
+msgstr "Грудень"
+
+#: src/lib/labels.ts:9
+#: src/lib/program-ai.ts:49
+msgid "Груди"
+msgstr "Груди"
+
+#: src/app/exercise/edit.tsx:121
+msgid "Група м’язів"
+msgstr "Група м’язів"
+
+#: src/app/onboarding.tsx:254
+#: src/app/program/ai.tsx:278
+msgid "Далі"
+msgstr "Далі"
+
+#: src/components/workout-player.tsx:638
+msgctxt "Up next"
+msgid "Далі"
+msgstr "Далі"
+
+#. placeholder {0}: later.map(name).join(', ')
+#. placeholder {1}: Math.round(share * 100)
+#: src/lib/groq.ts:1086
+msgid "Далі ще {0}, тож на цей прийом — {1}% залишку."
+msgstr "Далі ще {0}, тож на цей прийом — {1}% залишку."
+
+#: src/app/settings/account.tsx:27
+msgid "Дані на цьому телефоні залишаться."
+msgstr "Дані на цьому телефоні залишаться."
+
+#: src/app/onboarding.tsx:55
+#: src/app/profile.tsx:117
+msgid "Дата народження"
+msgstr "Дата народження"
+
+#: src/lib/profile.ts:230
+msgid "дату народження"
+msgstr "дату народження"
+
+#: src/lib/modules.ts:18
+msgid "Дашборд з віджетами з усіх розділів."
+msgstr "Дашборд з віджетами з усіх розділів."
+
+#: src/app/profile.tsx:121
+msgid "ДД.ММ.РРРР"
+msgstr "ДД.ММ.РРРР"
+
+#: src/app/settings/food.tsx:545
+msgid "Денна норма"
+msgstr "Денна норма"
+
+#: src/lib/reminders.ts:111
+msgid "Денна норма води ще не випита"
+msgstr "Денна норма води ще не випита"
+
+#: src/app/settings/index.tsx:46
+#: src/app/settings/water.tsx:24
+msgid "Денна ціль"
+msgstr "Денна ціль"
+
+#: src/components/dashboard/widgets.tsx:711
+msgid "денної норми"
+msgstr "денної норми"
+
+#: src/app/settings/food.tsx:550
+#: src/components/settings.tsx:128
+msgid "день"
+msgstr "день"
+
+#: src/app/program/[id].tsx:48
+#: src/app/program/day/[id].tsx:44
+#: src/lib/program-ai.ts:774
+msgid "День"
+msgstr "День"
+
+#: src/app/program/day/[id].tsx:45
+msgid "День не знайдено"
+msgstr "День не знайдено"
+
+#: src/lib/dashboard.ts:91
+msgid "День програми, який іде далі, або тренування, що триває. Старт одним дотиком."
+msgstr "День програми, який іде далі, або тренування, що триває. Старт одним дотиком."
+
+#: src/lib/groq.ts:917
+msgid "День: минулий, вже завершений."
+msgstr "День: минулий, вже завершений."
+
+#: src/lib/groq.ts:916
+msgid "День: сьогодні, зараз {time}."
+msgstr "День: сьогодні, зараз {time}."
+
+#: src/components/food-photo-scanner.tsx:80
+msgid "деталі"
+msgstr "деталі"
+
+#: src/app/settings/food.tsx:597
+msgid "дефіцит/день"
+msgstr "дефіцит/день"
+
+#: src/app/exercise/[id].tsx:114
+msgid "Дивитись техніку на YouTube"
+msgstr "Дивитись техніку на YouTube"
+
+#: src/components/day-review-card.tsx:165
+msgid "Дивлюся, як минає день…"
+msgstr "Дивлюся, як минає день…"
+
+#: src/lib/labels.ts:24
+msgid "Дистанція + час"
+msgstr "Дистанція + час"
+
+#: src/components/activity-calendar.tsx:58
+msgid "дн."
+msgstr "дн."
+
+#. placeholder {0}: result.weights
+#: src/components/health-card.tsx:39
+msgid "Днів з вагою: {0}."
+msgstr "Днів з вагою: {0}."
+
+#: src/components/dashboard/widgets.tsx:768
+msgid "днів з виконаною ціллю"
+msgstr "днів з виконаною ціллю"
+
+#: src/app/recap.tsx:351
+msgid "днів з нормою"
+msgstr "днів з нормою"
+
+#: src/lib/dashboard.ts:73
+msgid "Днів з ціллю"
+msgstr "Днів з ціллю"
+
+#: src/lib/dashboard.ts:74
+msgid "Днів поспіль"
+msgstr "Днів поспіль"
+
+#: src/app/recap.tsx:317
+msgid "днів у межах цілі"
+msgstr "днів у межах цілі"
+
+#: src/lib/dashboard.ts:69
+msgid "Днів у межах цілі"
+msgstr "Днів у межах цілі"
+
+#: src/components/dashboard/widgets.tsx:1099
+#: src/components/targets-editor.tsx:69
+msgid "до"
+msgstr "до"
+
+#: src/components/water-pour-modal.tsx:288
+msgctxt "up to"
+msgid "до"
+msgstr "до"
+
+#: src/app/progress-photos.tsx:127
+#: src/app/progress-photos.tsx:190
+msgid "До"
+msgstr "До"
+
+#. placeholder {0}: kg(toKg!)
+#: src/app/settings/food.tsx:243
+msgid "до {0}"
+msgstr "до {0}"
+
+#. placeholder {0}: formatClock(min)
+#. placeholder {1}: formatVolume(roundUp(expected))
+#. placeholder {2}: formatVolume(deficit)
+#: src/lib/reminders.ts:115
+msgid "До {0} варто випити {1} {VOLUME_UNIT} — бракує {2} {VOLUME_UNIT}."
+msgstr "До {0} варто випити {1} {VOLUME_UNIT} — бракує {2} {VOLUME_UNIT}."
+
+#: src/lib/achievements.ts:195
+msgid "до 7:00"
+msgstr "до 7:00"
+
+#: src/components/training/overview-view.tsx:160
+msgid "До програм"
+msgstr "До програм"
+
+#: src/app/workout/[id].tsx:157
+msgid "Додай вагу тіла, щоб рахувати калорії."
+msgstr "Додай вагу тіла, щоб рахувати калорії."
+
+#: src/app/body-weight.tsx:113
+msgid "Додай вагу, і тут з’явиться графік."
+msgstr "Додай вагу, і тут з’явиться графік."
+
+#: src/app/program/day/[id].tsx:80
+msgid "Додай вправи в цей день"
+msgstr "Додай вправи в цей день"
+
+#: src/db/home-widget.ts:76
+msgid "Додай зважування"
+msgstr "Додай зважування"
+
+#: src/components/dashboard/widgets.tsx:1025
+msgid "Додай перше зважування"
+msgstr "Додай перше зважування"
+
+#: src/app/program/[id].tsx:89
+msgid "Додай перший день"
+msgstr "Додай перший день"
+
+#: src/app/(tabs)/index.tsx:97
+msgid "Додай плитки з тренуваннями, харчуванням, водою чи вагою."
+msgstr "Додай плитки з тренуваннями, харчуванням, водою чи вагою."
+
+#: src/app/progress-photos.tsx:134
+msgid "Додай ще одне фото в цій позі, і тут з’явиться порівняння «до / після»."
+msgstr "Додай ще одне фото в цій позі, і тут з’явиться порівняння «до / після»."
+
+#: src/app/(tabs)/food.tsx:165
+#: src/app/(tabs)/water.tsx:97
+#: src/app/add-food.tsx:596
+#: src/app/profile.tsx:95
+msgid "Додати"
+msgstr "Додати"
+
+#. placeholder {0}: formatVolume(QUICK_GLASS.ml)
+#: src/components/dashboard/widgets.tsx:687
+msgid "Додати {0} {ML}"
+msgstr "Додати {0} {ML}"
+
+#. placeholder {0}: formatVolume(ml)
+#: src/components/water-pour-modal.tsx:326
+msgid "Додати {0} {VOLUME_UNIT}"
+msgstr "Додати {0} {VOLUME_UNIT}"
+
+#. placeholder {0}: glass.label.toLowerCase()
+#. placeholder {1}: formatVolume(glass.ml)
+#: src/components/water-card.tsx:29
+msgid "Додати {0}, {1} {VOLUME_UNIT}"
+msgstr "Додати {0}, {1} {VOLUME_UNIT}"
+
+#: src/app/(tabs)/index.tsx:135
+#: src/app/widgets.tsx:51
+msgid "Додати віджет"
+msgstr "Додати віджет"
+
+#: src/app/pick-exercise.tsx:40
+#: src/app/program/day/[id].tsx:120
+msgid "Додати вправу"
+msgstr "Додати вправу"
+
+#. placeholder {0}: pending.length
+#: src/app/add-food.tsx:595
+msgid "Додати все ({0})"
+msgstr "Додати все ({0})"
+
+#: src/app/(tabs)/food.tsx:260
+#: src/app/add-food.tsx:415
+msgid "Додати їжу"
+msgstr "Додати їжу"
+
+#: src/app/widgets.tsx:90
+msgid "Додати на головну"
+msgstr "Додати на головну"
+
+#: src/app/workout/[id].tsx:280
+msgid "Додати підхід"
+msgstr "Додати підхід"
+
+#. placeholder {0}: STAT_INFO[type].title
+#: src/app/widgets.tsx:116
+msgid "Додати плитку «{0}»"
+msgstr "Додати плитку «{0}»"
+
+#. placeholder {0}: formatVolume(QUICK_ML)
+#: src/app/(tabs)/water.tsx:195
+msgid "Додати склянку {0} {VOLUME_UNIT}"
+msgstr "Додати склянку {0} {VOLUME_UNIT}"
+
+#: src/components/pose-camera.tsx:181
+msgid "Дозволити"
+msgstr "Дозволити"
+
+#: src/components/pose-camera.tsx:178
+msgid "Дозволь доступ до камери, щоб фотографувати прогрес."
+msgstr "Дозволь доступ до камери, щоб фотографувати прогрес."
+
+#: src/app/settings/notifications.tsx:131
+msgid "Дозволь сповіщення для застосунку в налаштуваннях телефону."
+msgstr "Дозволь сповіщення для застосунку в налаштуваннях телефону."
+
+#: src/components/health-card.tsx:31
+msgid "Дозволь читання для FitKit у налаштуваннях Health Connect."
+msgstr "Дозволь читання для FitKit у налаштуваннях Health Connect."
+
+#: src/lib/program-ai.ts:231
+msgid "Долоні легко лягають на підлогу"
+msgstr "Долоні легко лягають на підлогу"
+
+#: src/lib/program-ai.ts:256
+msgid "Досвідчений"
+msgstr "Досвідчений"
+
+#. placeholder {0}: parseVersion(latestApk.version).join('.')
+#: src/components/app-update.tsx:116
+msgid "Доступна версія {0} — потрібно встановити новий APK"
+msgstr "Доступна версія {0} — потрібно встановити новий APK"
+
+#: src/components/app-update.tsx:114
+msgid "Доступна нова версія"
+msgstr "Доступна нова версія"
+
+#: src/app/achievements.tsx:47
+#: src/app/settings/index.tsx:58
+msgid "Досягнення"
+msgstr "Досягнення"
+
+#: src/lib/program-ai.ts:225
+msgid "Дотягуюся до пальців з прямими ногами"
+msgstr "Дотягуюся до пальців з прямими ногами"
+
+#: src/lib/profile.ts:47
+msgid "Дуже висока"
+msgstr "Дуже висока"
+
+#: src/lib/units.ts:64
+msgid "дюйм"
+msgstr "дюйм"
+
+#: src/components/report-ai.tsx:22
+msgid "Дякуємо"
+msgstr "Дякуємо"
+
+#: src/app/settings/backup.tsx:149
+msgid "Експорт"
+msgstr "Експорт"
+
+#: src/app/add-food.tsx:669
+msgid "Етикетка"
+msgstr "Етикетка"
+
+#: src/app/(tabs)/food.tsx:218
+#: src/app/add-food.tsx:131
+#: src/components/dashboard/widgets.tsx:470
+#: src/components/day-review-card.tsx:42
+#: src/components/meal-advice.tsx:107
+#: src/lib/groq.ts:893
+#: src/lib/groq.ts:1091
+msgid "Ж"
+msgstr "Ж"
+
+#: src/lib/groq.ts:379
+msgid "жири"
+msgstr "жири"
+
+#: src/components/calorie-summary.tsx:22
+#: src/components/dashboard/widgets.tsx:517
+#: src/lib/groq.ts:910
+msgid "Жири"
+msgstr "Жири"
+
+#: src/lib/groq.ts:979
+msgid "жирів"
+msgstr "жирів"
+
+#: src/lib/profile.ts:8
+msgid "Жінка"
+msgstr "Жінка"
+
+#: src/components/activity-calendar.tsx:21
+msgid "Жовтень"
+msgstr "Жовтень"
+
+#: src/lib/groq.ts:925
+msgid "Журнал (однакові страви за день об’єднані, кількість і поживність підсумовані):"
+msgstr "Журнал (однакові страви за день об’єднані, кількість і поживність підсумовані):"
+
+#: src/app/macro.tsx:64
+#: src/components/calorie-summary.tsx:110
+#: src/components/dashboard/widgets.tsx:738
+#: src/components/workout-player.tsx:438
+#: src/components/workout-player.tsx:460
+#: src/components/workout-player.tsx:464
+msgid "з"
+msgstr "з"
+
+#: src/app/add-food.tsx:673
+msgid "З бази"
+msgstr "З бази"
+
+#: src/app/onboarding.tsx:57
+msgid "З віком базовий обмін сповільнюється, тож вік потрібен для норми калорій."
+msgstr "З віком базовий обмін сповільнюється, тож вік потрібен для норми калорій."
+
+#: src/app/add-food.tsx:107
+msgid "З етикетки"
+msgstr "З етикетки"
+
+#: src/components/dashboard/widgets.tsx:978
+msgid "З нормою"
+msgstr "З нормою"
+
+#: src/lib/achievements.ts:242
+msgid "з нормою води"
+msgstr "з нормою води"
+
+#: src/lib/groq.ts:922
+#: src/lib/groq.ts:1004
+msgid "з’їдено"
+msgstr "з’їдено"
+
+#: src/lib/dashboard.ts:101
+msgid "З’їдено за сьогодні проти цілі, білки, жири й вуглеводи."
+msgstr "З’їдено за сьогодні проти цілі, білки, жири й вуглеводи."
+
+#: src/lib/metrics.ts:156
+msgid "за"
+msgstr "за"
+
+#: src/app/settings/food.tsx:590
+msgid "за місяць"
+msgstr "за місяць"
+
+#: src/app/body-weight.tsx:259
+msgid "За поточного темпу {pace}/тиж"
+msgstr "За поточного темпу {pace}/тиж"
+
+#: src/app/body-weight.tsx:258
+msgid "За темпу {pace}/тиж — більше ніж 2 роки."
+msgstr "За темпу {pace}/тиж — більше ніж 2 роки."
+
+#: src/app/settings/food.tsx:584
+msgid "за тиждень"
+msgstr "за тиждень"
+
+#: src/components/dashboard/widgets.tsx:405
+msgctxt "this week"
+msgid "за тиждень"
+msgstr "за тиждень"
+
+#: src/app/body-weight.tsx:128
+msgid "За тиждень"
+msgstr "За тиждень"
+
+#: src/components/dashboard/widgets.tsx:844
+#: src/components/training/overview-view.tsx:126
+msgctxt "This week"
+msgid "За тиждень"
+msgstr "За тиждень"
+
+#: src/app/macro.tsx:86
+msgid "За цей день ще нічого"
+msgstr "За цей день ще нічого"
+
+#: src/app/settings/food.tsx:503
+msgid "Забагато"
+msgstr "Забагато"
+
+#: src/lib/account.ts:49
+msgid "Забагато спроб. Запроси новий код."
+msgstr "Забагато спроб. Запроси новий код."
+
+#: src/components/auth-form.tsx:24
+msgid "Забули пароль"
+msgstr "Забули пароль"
+
+#: src/components/auth-form.tsx:150
+msgid "Забули пароль?"
+msgstr "Забули пароль?"
+
+#: src/app/exercise/edit.tsx:186
+msgid "Завантажити"
+msgstr "Завантажити"
+
+#: src/components/app-update.tsx:141
+msgid "Завантажити APK"
+msgstr "Завантажити APK"
+
+#: src/components/workout-player.tsx:172
+#: src/components/workout-player.tsx:213
+#: src/components/workout-player.tsx:534
+msgid "Завершити"
+msgstr "Завершити"
+
+#: src/components/workout-player.tsx:162
+msgid "Завершити тренування?"
+msgstr "Завершити тренування?"
+
+#: src/lib/achievements.ts:138
+msgid "Завсідник"
+msgstr "Завсідник"
+
+#: src/app/settings/notifications.tsx:79
+msgid "завтра"
+msgstr "завтра"
+
+#: src/lib/program-ai.ts:97
+msgid "Загальна форма, сила й витривалість"
+msgstr "Загальна форма, сила й витривалість"
+
+#: src/app/body-weight.tsx:243
+msgid "Задай ціль, і побачиш, коли досягнеш її за поточним темпом"
+msgstr "Задай ціль, і побачиш, коли досягнеш її за поточним темпом"
+
+#: src/app/add-food.tsx:661
+msgid "Зазвичай"
+msgstr "Зазвичай"
+
+#: src/components/bottom-sheet.tsx:135
+#: src/components/food-photo-scanner.tsx:232
+#: src/components/pose-camera.tsx:184
+msgid "Закрити"
+msgstr "Закрити"
+
+#: src/app/body-weight.tsx:275
+msgid "залишилось"
+msgstr "залишилось"
+
+#: src/app/(tabs)/water.tsx:236
+#: src/components/rest-ring.tsx:59
+msgid "ЗАЛИШИЛОСЬ"
+msgstr "ЗАЛИШИЛОСЬ"
+
+#: src/lib/program-ai.ts:82
+msgid "Заминка"
+msgstr "Заминка"
+
+#: src/app/program/ai.tsx:56
+msgid "Заминка готова"
+msgstr "Заминка готова"
+
+#: src/app/settings/backup.tsx:139
+msgid "Замінити"
+msgstr "Замінити"
+
+#: src/components/plan-exercise-sheet.tsx:95
+msgid "Замінити вправу"
+msgstr "Замінити вправу"
+
+#: src/app/settings/backup.tsx:134
+msgid "Замінити всі дані?"
+msgstr "Замінити всі дані?"
+
+#: src/lib/program-ai.ts:380
+msgid "Зап’ястя"
+msgstr "Зап’ястя"
+
+#: src/components/training/history-view.tsx:69
+msgid "Запис залишиться в застосунку здоров’я, але сюди більше не потрапить."
+msgstr "Запис залишиться в застосунку здоров’я, але сюди більше не потрапить."
+
+#: src/app/food-entry/[id].tsx:47
+msgid "Запис не знайдено"
+msgstr "Запис не знайдено"
+
+#: src/app/body-weight.tsx:182
+msgid "Записи"
+msgstr "Записи"
+
+#: src/app/settings/backup.tsx:126
+msgid "записів їжі"
+msgstr "записів їжі"
+
+#: src/app/settings/food.tsx:872
+msgid "Заповни профіль"
+msgstr "Заповни профіль"
+
+#: src/app/program/ai.tsx:493
+msgid "Заповни профіль, щоб програма була точнішою"
+msgstr "Заповни профіль, щоб програма була точнішою"
+
+#: src/app/settings/food.tsx:215
+msgid "зараз"
+msgstr "зараз"
+
+#: src/lib/program-ai.ts:83
+msgid "Заспокоїти пульс і розтягнутися після"
+msgstr "Заспокоїти пульс і розтягнутися після"
+
+#: src/app/settings/app.tsx:31
+#: src/app/settings/index.tsx:84
+msgid "Застосунок"
+msgstr "Застосунок"
+
+#: src/lib/program-ai.ts:419
+msgid "Затерплі спина й шия"
+msgstr "Затерплі спина й шия"
+
+#: src/app/add-food.tsx:911
+#: src/app/exercise/edit.tsx:231
+#: src/app/food-entry/[id].tsx:181
+#: src/app/settings/food.tsx:438
+#: src/components/weight-ruler.tsx:206
+msgid "Зберегти"
+msgstr "Зберегти"
+
+#. placeholder {0}: formatVolume(ml)
+#: src/components/water-pour-modal.tsx:325
+msgid "Зберегти {0} {VOLUME_UNIT}"
+msgstr "Зберегти {0} {VOLUME_UNIT}"
+
+#: src/app/settings/backup.tsx:195
+msgid "Зберегти зараз"
+msgstr "Зберегти зараз"
+
+#: src/components/auth-form.tsx:141
+msgid "Зберегти пароль"
+msgstr "Зберегти пароль"
+
+#: src/app/program/ai.tsx:622
+msgid "Зберегти програму"
+msgstr "Зберегти програму"
+
+#: src/lib/backup.ts:78
+msgid "Зберегти резервну копію"
+msgstr "Зберегти резервну копію"
+
+#: src/app/(tabs)/food.tsx:79
+msgid "Збережено як шаблон"
+msgstr "Збережено як шаблон"
+
+#: src/app/settings/backup.tsx:152
+msgid "Збережи копію у файл: у Google Drive, Telegram чи інше місце. Фото прогресу й вправ теж потрапляють у копію."
+msgstr "Збережи копію у файл: у Google Drive, Telegram чи інше місце. Фото прогресу й вправ теж потрапляють у копію."
+
+#: src/app/settings/food.tsx:106
+msgid "Зберігати прийом їжі закладкою й додавати його в один тап."
+msgstr "Зберігати прийом їжі закладкою й додавати його в один тап."
+
+#: src/lib/progress-photos.ts:10
+msgid "Збоку"
+msgstr "Збоку"
+
+#: src/app/body-weight.tsx:162
+msgid "зважування"
+msgstr "зважування"
+
+#: src/app/settings/backup.tsx:127
+msgid "зважувань"
+msgstr "зважувань"
+
+#: src/components/pose-camera.tsx:245
+msgid "Зведи чи розведи пальці, щоб змінити розмір силуету, тягни, щоб зсунути. Подвійний дотик скидає."
+msgstr "Зведи чи розведи пальці, щоб змінити розмір силуету, тягни, щоб зсунути. Подвійний дотик скидає."
+
+#: src/lib/achievements.ts:220
+msgid "Звичка"
+msgstr "Звичка"
+
+#: src/app/macro.tsx:82
+msgid "Звідки за день"
+msgstr "Звідки за день"
+
+#: src/app/settings/integrations.tsx:9
+msgid "Здоров’я"
+msgstr "Здоров’я"
+
+#: src/lib/progress-photos.ts:11
+msgid "Ззаду"
+msgstr "Ззаду"
+
+#: src/app/(tabs)/index.tsx:75
+msgid "Змінити"
+msgstr "Змінити"
+
+#: src/app/program/ai.tsx:633
+msgid "Змінити відповіді"
+msgstr "Змінити відповіді"
+
+#: src/app/add-food.tsx:108
+msgid "Знайдено в інтернеті"
+msgstr "Знайдено в інтернеті"
+
+#: src/lib/groq.ts:649
+msgid "Знайди харчову цінність кожної позиції з меню ресторану. Спершу шукай на сайті/меню саме цього закладу. Якщо даних там немає, шукай цю саму страву в інтернеті; коли точних даних немає, поверни found=false, не вигадуй. Потрібні ккал, білки, жири та вуглеводи для зазначеної порції. Відповідай стислими фактами й посиланнями."
+msgstr "Знайди харчову цінність кожної позиції з меню ресторану. Спершу шукай на сайті/меню саме цього закладу. Якщо даних там немає, шукай цю саму страву в інтернеті; коли точних даних немає, поверни found=false, не вигадуй. Потрібні ккал, білки, жири та вуглеводи для зазначеної порції. Відповідай стислими фактами й посиланнями."
+
+#: src/components/plan-exercise-sheet.tsx:88
+msgid "Знайти техніку на YouTube"
+msgstr "Знайти техніку на YouTube"
+
+#: src/components/food-photo-scanner.tsx:59
+msgid "Знайшов етикетку"
+msgstr "Знайшов етикетку"
+
+#: src/app/add-food.tsx:116
+msgid "Знайшов страви"
+msgstr "Знайшов страви"
+
+#: src/lib/profile.ts:229
+msgid "зріст"
+msgstr "зріст"
+
+#: src/app/onboarding.tsx:61
+#: src/app/profile.tsx:104
+msgid "Зріст"
+msgstr "Зріст"
+
+#: src/app/onboarding.tsx:63
+msgid "Зріст потрібен для норми калорій та індексу маси тіла."
+msgstr "Зріст потрібен для норми калорій та індексу маси тіла."
+
+#: src/app/progress-photos.tsx:180
+#: src/lib/reminders.ts:150
+msgid "Зроби перше фото, щоб потім бачити, як змінюється тіло."
+msgstr "Зроби перше фото, щоб потім бачити, як змінюється тіло."
+
+#: src/app/program/[id].tsx:80
+msgid "Зробити активною"
+msgstr "Зробити активною"
+
+#: src/components/pose-camera.tsx:266
+msgid "Зробити фото"
+msgstr "Зробити фото"
+
+#. placeholder {0}: format(goal)
+#: src/components/settings.tsx:134
+msgid "Зробити ціллю (зараз {0})"
+msgstr "Зробити ціллю (зараз {0})"
+
+#: src/app/settings/account.tsx:45
+#: src/components/report-ai.tsx:25
+#: src/components/report-ai.tsx:32
+msgid "Зрозуміло"
+msgstr "Зрозуміло"
+
+#: src/app/settings/app.tsx:61
+msgid "Їжа й макроси завжди в грамах, енергія — в ккал."
+msgstr "Їжа й макроси завжди в грамах, енергія — в ккал."
+
+#: src/app/recap.tsx:321
+msgid "із записами"
+msgstr "із записами"
+
+#: src/lib/achievements.ts:213
+msgid "із записами їжі"
+msgstr "із записами їжі"
+
+#: src/app/settings/app.tsx:20
+msgid "Імперська"
+msgstr "Імперська"
+
+#: src/app/settings/food.tsx:240
+msgid "ІМТ"
+msgstr "ІМТ"
+
+#. placeholder {0}: c.from
+#: src/app/settings/food.tsx:239
+msgid "ІМТ від {0}"
+msgstr "ІМТ від {0}"
+
+#: src/app/settings/food.tsx:237
+msgid "ІМТ до {next}"
+msgstr "ІМТ до {next}"
+
+#: src/app/settings/food.tsx:160
+#: src/app/settings/food.tsx:213
+msgid "Індекс маси тіла"
+msgstr "Індекс маси тіла"
+
+#: src/app/settings/index.tsx:77
+#: src/app/settings/integrations.tsx:8
+msgid "Інтеграції"
+msgstr "Інтеграції"
+
+#: src/lib/program-ai.ts:146
+#: src/lib/program-ai.ts:178
+msgid "Інтенсивне тренування"
+msgstr "Інтенсивне тренування"
+
+#: src/lib/labels.ts:34
+msgid "Інтервальне тренування"
+msgstr "Інтервальне тренування"
+
+#: src/app/add-food.tsx:671
+msgid "Інтернет"
+msgstr "Інтернет"
+
+#: src/lib/dashboard.ts:148
+msgid "Інше"
+msgstr "Інше"
+
+#: src/app/(tabs)/training.tsx:24
+#: src/app/exercise/[id].tsx:168
+msgid "Історія"
+msgstr "Історія"
+
+#: src/components/training/history-view.tsx:111
+msgid "Історія порожня"
+msgstr "Історія порожня"
+
+#: src/lib/labels.ts:35
+msgid "Йога та розтяжка"
+msgstr "Йога та розтяжка"
+
+#: src/components/dashboard/widgets.tsx:478
+#: src/db/home-widget.ts:158
+#: src/lib/dashboard.ts:100
+#: src/lib/groq.ts:908
+msgid "Калорії"
+msgstr "Калорії"
+
+#: src/components/dashboard/widgets.tsx:522
+msgid "Калорії сьогодні"
+msgstr "Калорії сьогодні"
+
+#: src/app/add-food.tsx:351
+#: src/app/exercise/edit.tsx:163
+#: src/app/progress-photos.tsx:159
+msgid "Камера"
+msgstr "Камера"
+
+#: src/lib/labels.ts:16
+#: src/lib/program-ai.ts:366
+msgid "Кардіо"
+msgstr "Кардіо"
+
+#: src/lib/program-ai.ts:121
+msgid "Кардіо й робота в багатьох повтореннях"
+msgstr "Кардіо й робота в багатьох повтореннях"
+
+#: src/app/settings/backup.tsx:29
+msgid "КБ"
+msgstr "КБ"
+
+#: src/components/activity-calendar.tsx:15
+msgid "Квітень"
+msgstr "Квітень"
+
+#: src/lib/units.ts:31
+msgid "кг"
+msgstr "кг"
+
+#: src/app/settings/app.tsx:24
+msgid "кг, км, мл, см"
+msgstr "кг, км, мл, см"
+
+#: src/app/onboarding.tsx:152
+msgid "Кілька даних про тебе"
+msgstr "Кілька даних про тебе"
+
+#: src/components/training/programs-view.tsx:39
+msgid "Кілька питань — і AI підбере дні, вправи й підходи під тебе"
+msgstr "Кілька питань — і AI підбере дні, вправи й підходи під тебе"
+
+#: src/app/add-food.tsx:696
+#: src/app/food-entry/[id].tsx:144
+msgid "Кількість"
+msgstr "Кількість"
+
+#: src/app/settings/notifications.tsx:165
+msgid "Кінець"
+msgstr "Кінець"
+
+#: src/app/(tabs)/food.tsx:153
+#: src/app/(tabs)/food.tsx:213
+#: src/app/(tabs)/food.tsx:316
+#: src/app/add-food.tsx:119
+#: src/app/add-food.tsx:130
+#: src/app/add-food.tsx:470
+#: src/app/add-food.tsx:614
+#: src/app/add-food.tsx:656
+#: src/app/add-food.tsx:663
+#: src/app/add-food.tsx:680
+#: src/app/add-food.tsx:946
+#: src/app/food-entry/[id].tsx:136
+#: src/app/macro.tsx:258
+#: src/app/recap.tsx:306
+#: src/app/settings/food.tsx:55
+#: src/components/activity-card.tsx:34
+#: src/components/dashboard/widgets.tsx:52
+#: src/components/day-review-card.tsx:38
+#: src/components/food-card-inputs.tsx:80
+#: src/components/meal-advice.tsx:82
+#: src/components/meal-advice.tsx:107
+#: src/components/training/overview-view.tsx:131
+#: src/db/home-widget.ts:123
+#: src/db/home-widget.ts:160
+#: src/lib/calories.ts:86
+#: src/lib/groq.ts:377
+#: src/lib/groq.ts:891
+#: src/lib/groq.ts:905
+#: src/lib/groq.ts:1091
+msgid "ккал"
+msgstr "ккал"
+
+#: src/app/workout/[id].tsx:148
+msgid "ККАЛ"
+msgstr "ККАЛ"
+
+#: src/components/calorie-summary.tsx:78
+msgid "ккал залишилось"
+msgstr "ккал залишилось"
+
+#: src/components/calorie-summary.tsx:78
+msgid "ккал понад ціль"
+msgstr "ккал понад ціль"
+
+#: src/lib/dashboard.ts:68
+msgid "Ккал у середньому"
+msgstr "Ккал у середньому"
+
+#: src/app/profile.tsx:160
+msgid "ккал/день"
+msgstr "ккал/день"
+
+#: src/lib/groq.ts:895
+msgid "клітковина"
+msgstr "клітковина"
+
+#: src/app/add-food.tsx:686
+msgid "Клітковина"
+msgstr "Клітковина"
+
+#: src/lib/units.ts:37
+msgid "км"
+msgstr "км"
+
+#: src/components/auth-form.tsx:111
+msgid "Код із листа"
+msgstr "Код із листа"
+
+#. placeholder {0}: email.trim()
+#: src/components/auth-form.tsx:92
+msgid "Код надіслано на {0}. Він діє 15 хвилин. Не бачиш листа — заглянь у спам."
+msgstr "Код надіслано на {0}. Він діє 15 хвилин. Не бачиш листа — заглянь у спам."
+
+#: src/lib/account.ts:47
+msgid "Код неправильний або застарів. Запроси новий."
+msgstr "Код неправильний або застарів. Запроси новий."
+
+#: src/lib/program-ai.ts:377
+msgid "Коліна"
+msgstr "Коліна"
+
+#: src/components/food-photo-scanner.tsx:76
+msgid "колір"
+msgstr "колір"
+
+#: src/components/food-photo-scanner.tsx:78
+msgid "контур"
+msgstr "контур"
+
+#: src/app/settings/index.tsx:98
+msgid "Конфіденційність"
+msgstr "Конфіденційність"
+
+#: src/app/settings/backup.tsx:176
+msgid "Копій ще немає."
+msgstr "Копій ще немає."
+
+#: src/lib/backup.ts:185
+msgid "Копію створено в новішій версії застосунку. Онови застосунок і спробуй ще раз."
+msgstr "Копію створено в новішій версії застосунку. Онови застосунок і спробуй ще раз."
+
+#. placeholder {0}: new Date(s.exportedAt).toLocaleString(locale)
+#: src/app/settings/backup.tsx:122
+msgid "Копія від {0}"
+msgstr "Копія від {0}"
+
+#: src/lib/server-backup.ts:69
+msgid "Копія завелика для сервера."
+msgstr "Копія завелика для сервера."
+
+#: src/app/add-food.tsx:731
+msgid "Корисно"
+msgstr "Корисно"
+
+#: src/lib/groq.ts:684
+msgid "Користувач сфотографував упаковку продукту з магазину, але харчової цінності на фото не видно. Знайди в інтернеті харчову цінність саме цього продукту: той самий бренд і вид, а також смак і жирність, якщо вони відомі. Найкраще — сайт виробника чи магазину.\n"
+"Відповідай коротко: ккал, білки, жири, вуглеводи, клітковина й цукор на 100 г (чи 100 мл) і сайт, де це знайдено. Якщо саме цього продукту не знайшов, так і напиши, не підставляй схожий."
+msgstr "Користувач сфотографував упаковку продукту з магазину, але харчової цінності на фото не видно. Знайди в інтернеті харчову цінність саме цього продукту: той самий бренд і вид, а також смак і жирність, якщо вони відомі. Найкраще — сайт виробника чи магазину.\n"
+"Відповідай коротко: ккал, білки, жири, вуглеводи, клітковина й цукор на 100 г (чи 100 мл) і сайт, де це знайдено. Якщо саме цього продукту не знайшов, так і напиши, не підставляй схожий."
+
+#: src/app/program/ai.tsx:373
+#: src/components/settings.tsx:75
+msgid "Крок"
+msgstr "Крок"
+
+#: src/lib/units.ts:60
+msgid "л"
+msgstr "л"
+
+#: src/lib/program-ai.ts:344
+msgid "Лава"
+msgstr "Лава"
+
+#: src/lib/profile.ts:29
+msgid "Легка"
+msgstr "Легка"
+
+#: src/lib/program-ai.ts:320
+msgid "Легкі гантелі"
+msgstr "Легкі гантелі"
+
+#: src/components/activity-calendar.tsx:18
+msgid "Липень"
+msgstr "Липень"
+
+#: src/components/activity-calendar.tsx:22
+msgid "Листопад"
+msgstr "Листопад"
+
+#: src/components/module-settings.tsx:85
+msgid "Лишився один розділ, тож меню внизу не буде"
+msgstr "Лишився один розділ, тож меню внизу не буде"
+
+#: src/lib/groq.ts:922
+#: src/lib/groq.ts:1004
+msgid "лишилось"
+msgstr "лишилось"
+
+#: src/components/dashboard/widgets.tsx:912
+msgid "Лишилось"
+msgstr "Лишилось"
+
+#. placeholder {0}: formatGrams(Math.round(left))
+#: src/app/macro.tsx:66
+msgid "лишилось {0} {g}"
+msgstr "лишилось {0} {g}"
+
+#: src/lib/dashboard.ts:66
+msgid "Лишилось ккал"
+msgstr "Лишилось ккал"
+
+#: src/components/activity-calendar.tsx:13
+msgid "Лютий"
+msgstr "Лютий"
+
+#: src/lib/groq.ts:1003
+msgid "Макронутрієнт"
+msgstr "Макронутрієнт"
+
+#: src/lib/metrics.ts:33
+msgid "Макс. повторень"
+msgstr "Макс. повторень"
+
+#: src/lib/metrics.ts:34
+msgid "Макс. час"
+msgstr "Макс. час"
+
+#: src/lib/dashboard.ts:8
+msgid "Малий"
+msgstr "Малий"
+
+#: src/lib/program-ai.ts:317
+msgid "Масажний ролик"
+msgstr "Масажний ролик"
+
+#: src/app/settings/backup.tsx:30
+msgid "МБ"
+msgstr "МБ"
+
+#: src/lib/program-ai.ts:245
+msgid "Менше пів року або давно не тренувався"
+msgstr "Менше пів року або давно не тренувався"
+
+#: src/app/onboarding.tsx:248
+#: src/app/profile.tsx:146
+#: src/lib/groq.ts:918
+msgid "Мета"
+msgstr "Мета"
+
+#: src/app/settings/app.tsx:19
+msgid "Метрична"
+msgstr "Метрична"
+
+#: src/lib/reminders.ts:151
+msgid "Минув тиждень від останнього фото. Зроби нове в тій самій позі й при тому ж світлі."
+msgstr "Минув тиждень від останнього фото. Зроби нове в тій самій позі й при тому ж світлі."
+
+#: src/app/program/day/[id].tsx:53
+msgid "Минулі тренування цього дня залишаться в історії."
+msgstr "Минулі тренування цього дня залишаться в історії."
+
+#: src/app/workout/[id].tsx:256
+#: src/app/workout/[id].tsx:257
+#: src/components/workout-player.tsx:472
+msgid "Минулого разу"
+msgstr "Минулого разу"
+
+#: src/components/workout-player.tsx:572
+msgid "МИНУЛОГО РАЗУ"
+msgstr "МИНУЛОГО РАЗУ"
+
+#: src/lib/units.ts:37
+msgid "мі"
+msgstr "мі"
+
+#: src/app/progress-photos.tsx:273
+msgid "Між фото"
+msgstr "Між фото"
+
+#: src/app/settings/notifications.tsx:151
+msgid "Мій день"
+msgstr "Мій день"
+
+#: src/app/settings/index.tsx:69
+msgid "Мій день, фото"
+msgstr "Мій день, фото"
+
+#: src/lib/profile.ts:23
+msgid "Мінімальна"
+msgstr "Мінімальна"
+
+#: src/app/recap.tsx:43
+msgid "Місяць"
+msgstr "Місяць"
+
+#: src/app/settings/index.tsx:53
+msgid "Місяць і рік у цифрах, щоб поділитися"
+msgstr "Місяць і рік у цифрах, щоб поділитися"
+
+#: src/app/add-food.tsx:321
+#: src/app/food-entry/[id].tsx:70
+#: src/app/food-entry/[id].tsx:79
+#: src/lib/food.ts:202
+#: src/lib/groq.ts:635
+#: src/lib/groq.ts:1150
+#: src/lib/units.ts:43
+msgid "мл"
+msgstr "мл"
+
+#: src/app/settings/app.tsx:35
+msgid "Мова"
+msgstr "Мова"
+
+#: src/app/settings/index.tsx:85
+msgid "Мова, одиниці, розділи"
+msgstr "Мова, одиниці, розділи"
+
+#: src/lib/program-ai.ts:360
+msgid "Можна пропустити — тоді все рівномірно"
+msgstr "Можна пропустити — тоді все рівномірно"
+
+#: src/lib/program-ai.ts:194
+#: src/lib/program-ai.ts:204
+msgid "Можна пропустити — тоді все тіло"
+msgstr "Можна пропустити — тоді все тіло"
+
+#: src/components/training/programs-view.tsx:44
+msgid "Мої програми"
+msgstr "Мої програми"
+
+#: src/lib/dashboard.ts:86
+msgid "Мотиваційна фраза, щодня нова."
+msgstr "Мотиваційна фраза, щодня нова."
+
+#: src/app/add-food.tsx:893
+msgid "На"
+msgstr "На"
+
+#: src/db/home-widget.ts:126
+msgid "На {over} більше"
+msgstr "На {over} більше"
+
+#: src/lib/achievements.ts:268
+msgid "На вагах"
+msgstr "На вагах"
+
+#: src/app/(tabs)/index.tsx:96
+msgid "На головній ще немає віджетів"
+msgstr "На головній ще немає віджетів"
+
+#: src/components/dashboard/widgets.tsx:276
+#: src/db/home-widget.ts:41
+msgid "На паузі"
+msgstr "На паузі"
+
+#: src/components/workout-player.tsx:131
+msgid "НА ПАУЗІ · "
+msgstr "НА ПАУЗІ · "
+
+#: src/app/settings/backup.tsx:165
+msgid "На сервері"
+msgstr "На сервері"
+
+#: src/lib/groq.ts:192
+msgid "На сьогодні запити до AI вичерпано. Спробуй завтра."
+msgstr "На сьогодні запити до AI вичерпано. Спробуй завтра."
+
+#: src/app/program/ai.tsx:346
+msgid "на тиждень"
+msgstr "на тиждень"
+
+#: src/lib/program-ai.ts:359
+msgid "На що зробити акцент?"
+msgstr "На що зробити акцент?"
+
+#: src/lib/program-ai.ts:108
+msgid "Набір м’язів"
+msgstr "Набір м’язів"
+
+#: src/lib/profile.ts:61
+msgid "Набір маси"
+msgstr "Набір маси"
+
+#: src/app/settings/food.tsx:611
+msgid "Набір піде переважно в жир."
+msgstr "Набір піде переважно в жир."
+
+#: src/app/settings/notifications.tsx:237
+msgid "Нагадаємо зранку, коли мине тиждень від останнього фото."
+msgstr "Нагадаємо зранку, коли мине тиждень від останнього фото."
+
+#: src/app/settings/notifications.tsx:179
+msgid "Нагадування пити воду"
+msgstr "Нагадування пити воду"
+
+#: src/app/settings/notifications.tsx:154
+msgid "Нагадування приходять лише в ці години ({hours}). До кінця дня має бути випита вся норма."
+msgstr "Нагадування приходять лише в ці години ({hours}). До кінця дня має бути випита вся норма."
+
+#: src/lib/notifications.ts:61
+msgid "Нагадування про воду"
+msgstr "Нагадування про воду"
+
+#: src/lib/notifications.ts:65
+msgid "Нагадування про фото прогресу"
+msgstr "Нагадування про фото прогресу"
+
+#: src/components/auth-form.tsx:140
+msgid "Надіслати код"
+msgstr "Надіслати код"
+
+#: src/components/auth-form.tsx:167
+msgid "Надіслати код ще раз"
+msgstr "Надіслати код ще раз"
+
+#: src/components/auth-form.tsx:90
+msgid "Надішлемо на пошту код, щоб задати новий пароль."
+msgstr "Надішлемо на пошту код, щоб задати новий пароль."
+
+#: src/lib/profile.ts:196
+msgid "Надлишкова вага"
+msgstr "Надлишкова вага"
+
+#: src/app/settings/food.tsx:503
+msgid "Надто мало"
+msgstr "Надто мало"
+
+#: src/app/onboarding.tsx:262
+#: src/app/program/ai.tsx:265
+msgid "Назад"
+msgstr "Назад"
+
+#: src/components/food-photo-scanner.tsx:85
+msgid "назва"
+msgstr "назва"
+
+#: src/app/exercise/edit.tsx:115
+msgid "Назва"
+msgstr "Назва"
+
+#: src/app/program/day/[id].tsx:138
+msgid "Назва дня"
+msgstr "Назва дня"
+
+#: src/lib/groq.ts:718
+msgid "Назва на упаковці"
+msgstr "Назва на упаковці"
+
+#: src/app/program/[id].tsx:164
+msgid "Назва програми"
+msgstr "Назва програми"
+
+#: src/app/recap.tsx:355
+msgid "найбільше за день"
+msgstr "найбільше за день"
+
+#: src/lib/metrics.ts:36
+msgid "Найкращий темп"
+msgstr "Найкращий темп"
+
+#: src/app/recap.tsx:326
+msgid "Найчастіша страва"
+msgstr "Найчастіша страва"
+
+#: src/app/settings/index.tsx:21
+msgid "Налаштування"
+msgstr "Налаштування"
+
+#: src/app/program/ai.tsx:62
+msgid "Напиши своїми словами, що хочеш від заминки. Можна пропустити."
+msgstr "Напиши своїми словами, що хочеш від заминки. Можна пропустити."
+
+#: src/app/program/ai.tsx:61
+msgid "Напиши своїми словами, що хочеш від розминки. Можна пропустити."
+msgstr "Напиши своїми словами, що хочеш від розминки. Можна пропустити."
+
+#: src/app/program/ai.tsx:60
+msgid "Напиши своїми словами, що хочеш від тренувань. Можна пропустити."
+msgstr "Напиши своїми словами, що хочеш від тренувань. Можна пропустити."
+
+#: src/app/add-food.tsx:885
+msgid "Напр. «Сирники»"
+msgstr "Напр. «Сирники»"
+
+#: src/app/program/ai.tsx:68
+msgid "Напр. «стати гнучкішим» або «затерпла спина»"
+msgstr "Напр. «стати гнучкішим» або «затерпла спина»"
+
+#: src/app/program/ai.tsx:66
+msgid "Напр. «тримати себе в тонусі» або «уклон на силові»"
+msgstr "Напр. «тримати себе в тонусі» або «уклон на силові»"
+
+#: src/app/program/ai.tsx:67
+msgid "Напр. «усе стоячи» або «суглоби скуті зранку»"
+msgstr "Напр. «усе стоячи» або «суглоби скуті зранку»"
+
+#: src/app/exercise/edit.tsx:118
+msgid "Наприклад, Dumbbell Curl"
+msgstr "Наприклад, Dumbbell Curl"
+
+#: src/components/workout-player.tsx:522
+msgid "Наступна вправа"
+msgstr "Наступна вправа"
+
+#. placeholder {0}: dayLabel(next.at, today)
+#. placeholder {1}: clockOf(next.at)
+#: src/app/settings/notifications.tsx:215
+msgid "Наступне нагадування {0} о {1}, якщо не доп’єш."
+msgstr "Наступне нагадування {0} о {1}, якщо не доп’єш."
+
+#. placeholder {0}: photoDay(nextPhoto.at, today)
+#. placeholder {1}: clockOf(nextPhoto.at)
+#: src/app/settings/notifications.tsx:249
+msgid "Наступне нагадування {0} о {1}."
+msgstr "Наступне нагадування {0} о {1}."
+
+#: src/components/dashboard/widgets.tsx:329
+#: src/components/training/overview-view.tsx:201
+#: src/db/home-widget.ts:54
+#: src/db/home-widget.ts:62
+#: src/lib/dashboard.ts:90
+msgid "Наступне тренування"
+msgstr "Наступне тренування"
+
+#. placeholder {0}: formatSpan((PHOTO_EVERY_DAYS - daysSince) * DAY_MS)
+#: src/app/progress-photos.tsx:155
+msgid "Наступне фото — через {0}."
+msgstr "Наступне фото — через {0}."
+
+#: src/components/workout-player.tsx:511
+msgid "Наступний підхід"
+msgstr "Наступний підхід"
+
+#: src/components/workout-player.tsx:342
+msgid "Натисніть ▶, щоб почати тренування"
+msgstr "Натисніть ▶, щоб почати тренування"
+
+#: src/lib/labels.ts:62
+msgid "Нд"
+msgstr "Нд"
+
+#: src/lib/groq.ts:614
+msgid "Не бачу на фото їжі. Спробуй інше фото або опиши страву текстом."
+msgstr "Не бачу на фото їжі. Спробуй інше фото або опиши страву текстом."
+
+#: src/app/settings/account.tsx:42
+msgid "Не вдалося видалити акаунт"
+msgstr "Не вдалося видалити акаунт"
+
+#: src/app/_layout.tsx:75
+msgid "Не вдалося відкрити базу даних"
+msgstr "Не вдалося відкрити базу даних"
+
+#: src/app/settings/backup.tsx:111
+msgid "Не вдалося відкрити файл"
+msgstr "Не вдалося відкрити файл"
+
+#: src/app/settings/backup.tsx:101
+msgid "Не вдалося відновити дані"
+msgstr "Не вдалося відновити дані"
+
+#: src/app/progress-photos.tsx:97
+msgid "Не вдалося додати фото"
+msgstr "Не вдалося додати фото"
+
+#: src/app/settings/backup.tsx:75
+msgid "Не вдалося завантажити копію"
+msgstr "Не вдалося завантажити копію"
+
+#: src/components/app-update.tsx:112
+msgid "Не вдалося завантажити оновлення"
+msgstr "Не вдалося завантажити оновлення"
+
+#: src/app/program/ai.tsx:168
+msgid "Не вдалося замінити вправу"
+msgstr "Не вдалося замінити вправу"
+
+#: src/app/program/ai.tsx:182
+msgid "Не вдалося зберегти"
+msgstr "Не вдалося зберегти"
+
+#: src/app/settings/backup.tsx:63
+msgid "Не вдалося зберегти копію"
+msgstr "Не вдалося зберегти копію"
+
+#: src/app/add-food.tsx:266
+msgid "Не вдалося зробити фото"
+msgstr "Не вдалося зробити фото"
+
+#: src/components/report-ai.tsx:29
+msgid "Не вдалося надіслати"
+msgstr "Не вдалося надіслати"
+
+#: src/app/settings/backup.tsx:172
+#: src/lib/server-backup.ts:97
+msgid "Не вдалося отримати список копій."
+msgstr "Не вдалося отримати список копій."
+
+#: src/components/app-update.tsx:118
+msgid "Не вдалося перевірити оновлення"
+msgstr "Не вдалося перевірити оновлення"
+
+#: src/app/recap.tsx:124
+msgid "Не вдалося поділитися"
+msgstr "Не вдалося поділитися"
+
+#: src/app/add-food.tsx:244
+msgid "Не вдалося порахувати"
+msgstr "Не вдалося порахувати"
+
+#: src/components/food-photo-scanner.tsx:220
+msgid "Не вдалося розпізнати"
+msgstr "Не вдалося розпізнати"
+
+#: src/components/health-card.tsx:81
+msgid "Не вдалося синхронізувати"
+msgstr "Не вдалося синхронізувати"
+
+#: src/app/program/ai.tsx:132
+msgid "Не вдалося скласти програму"
+msgstr "Не вдалося скласти програму"
+
+#: src/app/settings/backup.tsx:88
+msgid "Не вдалося створити копію"
+msgstr "Не вдалося створити копію"
+
+#: src/app/add-food.tsx:238
+msgid "Не все пораховано"
+msgstr "Не все пораховано"
+
+#: src/app/add-food.tsx:328
+msgid "Не всі страви пораховано"
+msgstr "Не всі страви пораховано"
+
+#: src/app/add-food.tsx:738
+msgid "Не дуже корисно"
+msgstr "Не дуже корисно"
+
+#: src/components/dashboard/widgets.tsx:274
+#: src/db/home-widget.ts:39
+msgid "Не розпочато"
+msgstr "Не розпочато"
+
+#: src/components/workout-player.tsx:167
+msgid "Невиконані підходи ({pending}) не збережуться."
+msgstr "Невиконані підходи ({pending}) не збережуться."
+
+#: src/lib/profile.ts:194
+msgid "Недостатня вага"
+msgstr "Недостатня вага"
+
+#: src/components/auth-form.tsx:178
+msgid "Немає акаунта? Зареєструватися"
+msgstr "Немає акаунта? Зареєструватися"
+
+#: src/components/training/overview-view.tsx:156
+msgid "Немає активної програми"
+msgstr "Немає активної програми"
+
+#: src/components/health-card.tsx:46
+msgid "Немає доступу"
+msgstr "Немає доступу"
+
+#: src/components/pose-camera.tsx:175
+#: src/lib/images.ts:39
+#: src/lib/images.ts:76
+msgid "Немає доступу до камери"
+msgstr "Немає доступу до камери"
+
+#: src/lib/account.ts:51
+#: src/lib/server-backup.ts:36
+msgid "Немає з’єднання з сервером. Перевір інтернет."
+msgstr "Немає з’єднання з сервером. Перевір інтернет."
+
+#: src/lib/groq.ts:185
+msgctxt "Can’t reach the server. Check your internet."
+msgid "Немає з’єднання з сервером. Перевір інтернет."
+msgstr "Немає з’єднання з сервером. Перевір інтернет."
+
+#: src/components/remove-dialogs.ts:31
+msgid "Неможливо"
+msgstr "Неможливо"
+
+#: src/lib/account.ts:45
+msgid "Неправильна пошта або пароль."
+msgstr "Неправильна пошта або пароль."
+
+#: src/app/add-food.tsx:518
+msgid "Нещодавні"
+msgstr "Нещодавні"
+
+#: src/app/workout/[id].tsx:100
+#: src/components/training/history-view.tsx:59
+#: src/components/training/history-view.tsx:71
+#: src/components/workout-player.tsx:182
+#: src/components/workout-player.tsx:385
+msgid "Ні"
+msgstr "Ні"
+
+#: src/lib/achievements.ts:202
+msgid "Нічна сова"
+msgstr "Нічна сова"
+
+#: src/lib/groq.ts:1012
+msgid "нічого"
+msgstr "нічого"
+
+#: src/app/recap.tsx:161
+msgid "Нічого не записано"
+msgstr "Нічого не записано"
+
+#: src/app/pick-exercise.tsx:72
+#: src/components/training/exercises-view.tsx:109
+msgid "Нічого не знайдено"
+msgstr "Нічого не знайдено"
+
+#: src/lib/program-ai.ts:351
+msgid "Нічого, власна вага"
+msgstr "Нічого, власна вага"
+
+#: src/lib/program-ai.ts:311
+msgid "Нічого, лише килимок"
+msgstr "Нічого, лише килимок"
+
+#: src/app/program/ai.tsx:597
+#: src/components/plan-exercise-sheet.tsx:67
+msgid "Нова"
+msgstr "Нова"
+
+#: src/app/(tabs)/training.tsx:105
+#: src/app/exercise/edit.tsx:112
+msgid "Нова вправа"
+msgstr "Нова вправа"
+
+#: src/app/(tabs)/training.tsx:106
+#: src/db/programs.ts:71
+msgid "Нова програма"
+msgstr "Нова програма"
+
+#: src/lib/program-ai.ts:244
+msgid "Новачок"
+msgstr "Новачок"
+
+#: src/app/achievements.tsx:133
+msgid "НОВЕ"
+msgstr "НОВЕ"
+
+#: src/app/progress-photos.tsx:143
+msgid "Нове фото"
+msgstr "Нове фото"
+
+#. placeholder {0}: program.days.length + 1
+#: src/app/program/[id].tsx:137
+msgid "Новий день: День {0}"
+msgstr "Новий день: День {0}"
+
+#: src/components/auth-form.tsx:25
+msgid "Новий пароль"
+msgstr "Новий пароль"
+
+#: src/components/auth-form.tsx:125
+msgid "Новий пароль, від {MIN_PASSWORD} символів"
+msgstr "Новий пароль, від {MIN_PASSWORD} символів"
+
+#: src/app/settings/index.tsx:114
+msgid "Нових"
+msgstr "Нових"
+
+#: src/app/program/ai.tsx:573
+msgid "Нових вправ ще немає в бібліотеці — вони додадуться туди з фото, описом техніки й відео."
+msgstr "Нових вправ ще немає в бібліотеці — вони додадуться туди з фото, описом техніки й відео."
+
+#: src/components/health-card.tsx:42
+msgid "Нових даних немає"
+msgstr "Нових даних немає"
+
+#: src/lib/labels.ts:11
+#: src/lib/program-ai.ts:51
+msgid "Ноги"
+msgstr "Ноги"
+
+#: src/lib/profile.ts:195
+msgid "Норма"
+msgstr "Норма"
+
+#. placeholder {0}: formatNumber(cmToDisplay(heightCm), 0)
+#: src/app/settings/food.tsx:193
+msgid "Норма для {0} {HEIGHT_UNIT}: "
+msgstr "Норма для {0} {HEIGHT_UNIT}: "
+
+#: src/app/settings/index.tsx:38
+msgid "Норма калорій, шаблони, підказки й AI"
+msgstr "Норма калорій, шаблони, підказки й AI"
+
+#: src/components/dashboard/widgets.tsx:672
+msgid "норми"
+msgstr "норми"
+
+#: src/db/home-widget.ts:116
+msgid "Норму виконано"
+msgstr "Норму виконано"
+
+#: src/app/exercise/[id].tsx:122
+#: src/app/exercise/edit.tsx:223
+msgid "Нотатки"
+msgstr "Нотатки"
+
+#: src/components/food-photo-scanner.tsx:79
+msgid "об’єм"
+msgstr "об’єм"
+
+#: src/lib/program-ai.ts:109
+msgid "Об’єм і форма м’язів"
+msgstr "Об’єм і форма м’язів"
+
+#: src/app/exercise/edit.tsx:88
+msgid "Обери групу м’язів"
+msgstr "Обери групу м’язів"
+
+#: src/db/home-widget.ts:55
+msgid "Обери програму"
+msgstr "Обери програму"
+
+#: src/components/dashboard/widgets.tsx:310
+msgid "Обери програму тренувань"
+msgstr "Обери програму тренувань"
+
+#: src/app/(tabs)/water.tsx:140
+msgid "Обери склянку вище."
+msgstr "Обери склянку вище."
+
+#: src/app/program/ai.tsx:259
+msgid "Обери хоча б один варіант"
+msgstr "Обери хоча б один варіант"
+
+#: src/lib/meals.ts:9
+msgid "Обід"
+msgstr "Обід"
+
+#: src/lib/modules.ts:36
+msgid "Облік випитого, денна ціль і нагадування пити."
+msgstr "Облік випитого, денна ціль і нагадування пити."
+
+#: src/components/training/overview-view.tsx:202
+msgid "Обраний день"
+msgstr "Обраний день"
+
+#: src/app/settings/app.tsx:49
+msgid "Одиниці виміру"
+msgstr "Одиниці виміру"
+
+#: src/app/widgets.tsx:106
+msgid "Одне число на третину ширини. Торкнись плитки, щоб додати."
+msgstr "Одне число на третину ширини. Торкнись плитки, щоб додати."
+
+#: src/lib/profile.ts:197
+msgid "Ожиріння I ст."
+msgstr "Ожиріння I ст."
+
+#: src/lib/profile.ts:198
+msgid "Ожиріння II ст."
+msgstr "Ожиріння II ст."
+
+#: src/lib/profile.ts:199
+msgid "Ожиріння III ст."
+msgstr "Ожиріння III ст."
+
+#: src/lib/achievements.ts:258
+msgid "Океан"
+msgstr "Океан"
+
+#: src/components/health-card.tsx:50
+msgid "Онови {healthName} у Google Play і спробуй ще раз."
+msgstr "Онови {healthName} у Google Play і спробуй ще раз."
+
+#: src/components/app-update.tsx:133
+msgid "Оновити"
+msgstr "Оновити"
+
+#: src/components/app-update.tsx:108
+msgid "Оновлення працюють лише в зібраному застосунку"
+msgstr "Оновлення працюють лише в зібраному застосунку"
+
+#: src/app/recap.tsx:275
+msgid "Особисті рекорди"
+msgstr "Особисті рекорди"
+
+#: src/components/dashboard/widgets.tsx:436
+msgid "Останнє"
+msgstr "Останнє"
+
+#. placeholder {0}: formatSpan(daysSince * DAY_MS)
+#: src/app/progress-photos.tsx:154
+msgid "Останнє фото було {0} тому — час для нового."
+msgstr "Останнє фото було {0} тому — час для нового."
+
+#: src/components/dashboard/widgets.tsx:1098
+msgid "Останні"
+msgstr "Останні"
+
+#: src/app/(tabs)/food.tsx:233
+#: src/app/(tabs)/water.tsx:107
+msgid "Останні 7 днів"
+msgstr "Останні 7 днів"
+
+#: src/components/training/overview-view.tsx:226
+msgid "Останні тренування"
+msgstr "Останні тренування"
+
+#: src/app/exercise/[id].tsx:145
+msgid "Останній"
+msgstr "Останній"
+
+#: src/lib/dashboard.ts:121
+msgid "Остання вага, зміна з попереднього зважування і графік."
+msgstr "Остання вага, зміна з попереднього зважування і графік."
+
+#: src/components/health-card.tsx:125
+msgid "Остання синхронізація"
+msgstr "Остання синхронізація"
+
+#: src/lib/groq.ts:687
+msgid "Ось результат пошуку харчової цінності продукту в інтернеті. Перепиши числа на 100 г (чи 100 мл):\n"
+"- found: true, лише якщо знайдено калорійність або білки, жири й вуглеводи саме цього продукту;\n"
+"- kcal — у ккал (кДж поділи на 4,184); protein_g, fat_g, carbs_g, fiber_g, sugar_g — у грамах; чого немає — 0;\n"
+"- source: домен сайту, звідки числа (напр. \"silpo.ua\"), \"\" якщо невідомо."
+msgstr "Ось результат пошуку харчової цінності продукту в інтернеті. Перепиши числа на 100 г (чи 100 мл):\n"
+"- found: true, лише якщо знайдено калорійність або білки, жири й вуглеводи саме цього продукту;\n"
+"- kcal — у ккал (кДж поділи на 4,184); protein_g, fat_g, carbs_g, fiber_g, sugar_g — у грамах; чого немає — 0;\n"
+"- source: домен сайту, звідки числа (напр. \"silpo.ua\"), \"\" якщо невідомо."
+
+#: src/app/add-food.tsx:116
+#~ msgid "Ось що на тарілці"
+#~ msgstr "Ось що на тарілці"
+
+#: src/app/add-food.tsx:447
+msgid "Ось що я бачу. Виправ назви чи вагу, якщо треба, і порахуй."
+msgstr "Ось що я бачу. Виправ назви чи вагу, якщо треба, і порахуй."
+
+#: src/app/add-food.tsx:661
+msgid "Оцінка AI"
+msgstr "Оцінка AI"
+
+#: src/app/add-food.tsx:109
+msgid "Оцінка AI за назвою"
+msgstr "Оцінка AI за назвою"
+
+#: src/app/settings/food.tsx:120
+msgid "Оцінка з’їденого за день і що варто додати."
+msgstr "Оцінка з’їденого за день і що варто додати."
+
+#: src/components/day-review-card.tsx:209
+msgid "Оцінка страв"
+msgstr "Оцінка страв"
+
+#: src/app/add-food.tsx:768
+msgid "Оцінюю корисність…"
+msgstr "Оцінюю корисність…"
+
+#: src/components/food-photo-scanner.tsx:68
+msgid "Оцінюю порції"
+msgstr "Оцінюю порції"
+
+#: src/components/auth-form.tsx:124
+msgid "Пароль"
+msgstr "Пароль"
+
+#: src/lib/account.ts:41
+msgid "Пароль має бути щонайменше {MIN_PASSWORD} символів."
+msgstr "Пароль має бути щонайменше {MIN_PASSWORD} символів."
+
+#: src/components/workout-player.tsx:332
+msgid "Пауза"
+msgstr "Пауза"
+
+#: src/lib/account.ts:39
+msgid "Перевір адресу пошти."
+msgstr "Перевір адресу пошти."
+
+#: src/app/profile.tsx:126
+msgid "Перевір дату: формат ДД.ММ.РРРР."
+msgstr "Перевір дату: формат ДД.ММ.РРРР."
+
+#: src/components/health-card.tsx:30
+msgid "Перевір доступ у застосунку Здоров’я: Профіль → Застосунки → FitKit."
+msgstr "Перевір доступ у застосунку Здоров’я: Профіль → Застосунки → FitKit."
+
+#: src/components/app-update.tsx:148
+msgid "Перевірити"
+msgstr "Перевірити"
+
+#. placeholder {0}: formatVolume(goal)
+#: src/app/settings/notifications.tsx:189
+msgid "Перевіряємо, чи випито стільки, скільки треба на цю годину, щоб дійти до {0} {VOLUME_UNIT}. Якщо ні — нагадаємо."
+msgstr "Перевіряємо, чи випито стільки, скільки треба на цю годину, щоб дійти до {0} {VOLUME_UNIT}. Якщо ні — нагадаємо."
+
+#: src/app/settings/notifications.tsx:193
+msgid "Перевіряти кожні"
+msgstr "Перевіряти кожні"
+
+#: src/components/app-update.tsx:110
+msgid "Перевіряю оновлення…"
+msgstr "Перевіряю оновлення…"
+
+#: src/app/program/ai.tsx:362
+msgid "Перевіряю план"
+msgstr "Перевіряю план"
+
+#: src/lib/program-ai.ts:129
+msgid "Перед чим розминка?"
+msgstr "Перед чим розминка?"
+
+#: src/lib/groq.ts:719
+msgid "Переклад"
+msgstr "Переклад"
+
+#: src/lib/meals.ts:11
+msgid "Перекуси"
+msgstr "Перекуси"
+
+#. placeholder {0}: info.title
+#: src/components/module-settings.tsx:168
+msgid "Перемістити «{0}»"
+msgstr "Перемістити «{0}»"
+
+#: src/components/dashboard/widgets.tsx:903
+msgid "Перерва"
+msgstr "Перерва"
+
+#: src/app/program/ai.tsx:352
+msgid "Підбираю вправи"
+msgstr "Підбираю вправи"
+
+#: src/app/macro.tsx:209
+msgid "Підбираю продукти…"
+msgstr "Підбираю продукти…"
+
+#: src/components/meal-advice.tsx:67
+msgid "Підбираю страву…"
+msgstr "Підбираю страву…"
+
+#: src/app/settings/notifications.tsx:158
+msgid "Підйом"
+msgstr "Підйом"
+
+#: src/app/macro.tsx:213
+msgid "Підказати продукти"
+msgstr "Підказати продукти"
+
+#: src/app/settings/food.tsx:112
+msgid "Підказки"
+msgstr "Підказки"
+
+#: src/components/health-card.tsx:122
+msgid "Підключено"
+msgstr "Підключено"
+
+#: src/components/health-card.tsx:147
+msgid "Підключити {healthName}"
+msgstr "Підключити {healthName}"
+
+#: src/app/exercise/edit.tsx:216
+msgid "Підставити пошук на YouTube"
+msgstr "Підставити пошук на YouTube"
+
+#: src/app/recap.tsx:217
+msgid "підсумки"
+msgstr "підсумки"
+
+#: src/app/recap.tsx:134
+#: src/app/settings/index.tsx:52
+msgid "Підсумки"
+msgstr "Підсумки"
+
+#: src/app/recap.tsx:162
+msgid "Підсумки з’являться, щойно за цей період буде тренування, їжа чи вода."
+msgstr "Підсумки з’являться, щойно за цей період буде тренування, їжа чи вода."
+
+#: src/app/settings/food.tsx:728
+msgid "Підтримка"
+msgstr "Підтримка"
+
+#: src/lib/profile.ts:60
+msgctxt "Maintain"
+msgid "Підтримка"
+msgstr "Підтримка"
+
+#: src/app/settings/food.tsx:506
+msgid "Підтримка ваги"
+msgstr "Підтримка ваги"
+
+#: src/components/health-card.tsx:111
+msgid "Підтягує вагу з розумних ваг у журнал ваги. Оновлюється щоразу, коли відкриваєш застосунок."
+msgstr "Підтягує вагу з розумних ваг у журнал ваги. Оновлюється щоразу, коли відкриваєш застосунок."
+
+#: src/components/workout-player.tsx:412
+#: src/components/workout-summary-card.tsx:45
+#: src/lib/labels.ts:102
+msgid "підх."
+msgstr "підх."
+
+#: src/components/set-row.tsx:150
+#: src/components/workout-player.tsx:438
+#: src/components/workout-player.tsx:460
+#: src/components/workout-player.tsx:486
+msgid "Підхід"
+msgstr "Підхід"
+
+#: src/components/targets-editor.tsx:60
+msgid "Підходи"
+msgstr "Підходи"
+
+#: src/app/workout/[id].tsx:140
+msgid "ПІДХОДИ"
+msgstr "ПІДХОДИ"
+
+#: src/app/settings/notifications.tsx:80
+msgid "пізніше"
+msgstr "пізніше"
+
+#: src/app/progress-photos.tsx:128
+#: src/app/progress-photos.tsx:192
+msgid "Після"
+msgstr "Після"
+
+#: src/lib/achievements.ts:204
+msgid "після 21:00"
+msgstr "після 21:00"
+
+#: src/lib/program-ai.ts:161
+msgid "Після чого заминка?"
+msgstr "Після чого заминка?"
+
+#: src/lib/labels.ts:32
+msgid "Плавання"
+msgstr "Плавання"
+
+#: src/components/program-ai-loader.tsx:109
+msgid "План вийшов неповним, AI складає ще раз · спроба {attempt} з {attempts}"
+msgstr "План вийшов неповним, AI складає ще раз · спроба {attempt} з {attempts}"
+
+#: src/lib/labels.ts:12
+#: src/lib/program-ai.ts:53
+#: src/lib/program-ai.ts:379
+msgid "Плечі"
+msgstr "Плечі"
+
+#: src/app/widgets.tsx:102
+msgid "Плитки"
+msgstr "Плитки"
+
+#: src/lib/water.ts:20
+msgid "Пляшка"
+msgstr "Пляшка"
+
+#: src/lib/labels.ts:62
+msgid "Пн"
+msgstr "Пн"
+
+#: src/components/workout-player.tsx:386
+msgid "Повернути"
+msgstr "Повернути"
+
+#: src/components/workout-player.tsx:381
+msgid "Повернути підхід?"
+msgstr "Повернути підхід?"
+
+#: src/app/settings/food.tsx:507
+msgid "Повільний набір"
+msgstr "Повільний набір"
+
+#: src/lib/program-ai.ts:339
+msgid "Повний спортзал"
+msgstr "Повний спортзал"
+
+#: src/components/set-row.tsx:63
+#: src/lib/metrics.ts:23
+msgid "повт"
+msgstr "повт"
+
+#: src/components/workout-player.tsx:69
+#: src/lib/labels.ts:94
+msgid "повт."
+msgstr "повт."
+
+#: src/components/targets-editor.tsx:64
+msgid "Повт. від"
+msgstr "Повт. від"
+
+#: src/lib/labels.ts:22
+msgid "Повторення + додаткова вага"
+msgstr "Повторення + додаткова вага"
+
+#: src/app/body-weight.tsx:103
+msgid "Повторне зважування того ж дня замінить запис."
+msgstr "Повторне зважування того ж дня замінить запис."
+
+#: src/app/recap.tsx:171
+msgid "Поділитися"
+msgstr "Поділитися"
+
+#: src/app/recap.tsx:120
+msgid "Поділитися підсумками"
+msgstr "Поділитися підсумками"
+
+#: src/lib/program-ai.ts:305
+#: src/lib/program-ai.ts:333
+msgid "Познач усе, що маєш"
+msgstr "Познач усе, що маєш"
+
+#: src/components/auth-form.tsx:158
+msgid "Політика конфіденційності"
+msgstr "Політика конфіденційності"
+
+#: src/app/exercise/edit.tsx:75
+#: src/components/food-photo-scanner.tsx:206
+#: src/components/training/overview-view.tsx:109
+msgid "Помилка"
+msgstr "Помилка"
+
+#: src/lib/profile.ts:35
+msgid "Помірна"
+msgstr "Помірна"
+
+#: src/lib/program-ai.ts:257
+msgid "Понад 2 роки регулярних тренувань"
+msgstr "Понад 2 роки регулярних тренувань"
+
+#: src/components/dashboard/widgets.tsx:912
+msgid "Понад ціль"
+msgstr "Понад ціль"
+
+#. placeholder {0}: formatGrams(Math.round(-left))
+#: src/app/macro.tsx:67
+msgid "понад ціль {0} {g}"
+msgstr "понад ціль {0} {g}"
+
+#. placeholder {0}: formatKcal(-left)
+#: src/components/dashboard/widgets.tsx:538
+msgid "понад ціль на {0}"
+msgstr "понад ціль на {0}"
+
+#: src/components/workout-player.tsx:318
+msgid "Попередній підхід"
+msgstr "Попередній підхід"
+
+#: src/components/workout-player.tsx:319
+msgid "Попередня вправа"
+msgstr "Попередня вправа"
+
+#: src/lib/program-ai.ts:378
+msgid "Поперек"
+msgstr "Поперек"
+
+#: src/components/meal-advice.tsx:82
+msgid "Порада AI"
+msgstr "Порада AI"
+
+#: src/app/settings/food.tsx:127
+msgid "Порада AI для сніданку, обіду й вечері під залишок дня."
+msgstr "Порада AI для сніданку, обіду й вечері під залишок дня."
+
+#: src/app/add-food.tsx:475
+msgid "Порахувати"
+msgstr "Порахувати"
+
+#: src/app/body-weight.tsx:312
+msgid "Порівнюй «до / після» щотижня"
+msgstr "Порівнюй «до / після» щотижня"
+
+#: src/lib/images.ts:47
+msgid "Посилання має починатися з http:// або https://"
+msgstr "Посилання має починатися з http:// або https://"
+
+#: src/components/report-ai.tsx:46
+msgid "Поскаржитися"
+msgstr "Поскаржитися"
+
+#: src/components/report-ai.tsx:41
+msgid "Поскаржитися на відповідь AI?"
+msgstr "Поскаржитися на відповідь AI?"
+
+#: src/app/program/day/[id].tsx:75
+msgid "Послідовність вправ"
+msgstr "Послідовність вправ"
+
+#: src/app/program/[id].tsx:86
+msgid "Послідовність днів"
+msgstr "Послідовність днів"
+
+#: src/components/dashboard/widgets.tsx:881
+#: src/components/dashboard/widgets.tsx:987
+msgid "Поспіль"
+msgstr "Поспіль"
+
+#: src/lib/achievements.ts:251
+msgid "поспіль з нормою води"
+msgstr "поспіль з нормою води"
+
+#: src/lib/achievements.ts:150
+msgid "поспіль з тренуванням"
+msgstr "поспіль з тренуванням"
+
+#: src/lib/achievements.ts:222
+msgid "поспіль із записами їжі"
+msgstr "поспіль із записами їжі"
+
+#: src/app/body-weight.tsx:88
+#: src/app/profile.tsx:84
+msgid "Поточна вага"
+msgstr "Поточна вага"
+
+#: src/components/health-card.tsx:49
+msgid "Потрібне оновлення"
+msgstr "Потрібне оновлення"
+
+#: src/app/settings/food.tsx:574
+msgid "Потягни повзунок, щоб змінити норму"
+msgstr "Потягни повзунок, щоб змінити норму"
+
+#: src/lib/labels.ts:31
+msgid "Похід"
+msgstr "Похід"
+
+#: src/components/workout-player.tsx:329
+msgid "Почати"
+msgstr "Почати"
+
+#: src/app/settings/notifications.tsx:157
+msgid "Початок"
+msgstr "Початок"
+
+#: src/components/auth-form.tsx:99
+msgid "Пошта"
+msgstr "Пошта"
+
+#: src/app/pick-exercise.tsx:49
+#: src/components/training/exercises-view.tsx:46
+msgid "Пошук вправ…"
+msgstr "Пошук вправ…"
+
+#: src/components/health-card.tsx:115
+msgid "Працює лише в зібраному застосунку, не в Expo Go."
+msgstr "Працює лише в зібраному застосунку, не в Expo Go."
+
+#: src/lib/labels.ts:15
+#: src/lib/program-ai.ts:55
+msgid "Прес"
+msgstr "Прес"
+
+#: src/app/add-food.tsx:401
+#: src/components/training/history-view.tsx:73
+msgid "Прибрати"
+msgstr "Прибрати"
+
+#. placeholder {0}: food.name
+#: src/app/add-food.tsx:983
+msgid "Прибрати «{0}» з нещодавніх"
+msgstr "Прибрати «{0}» з нещодавніх"
+
+#: src/components/training/history-view.tsx:68
+msgid "Прибрати з історії?"
+msgstr "Прибрати з історії?"
+
+#: src/app/add-food.tsx:396
+msgid "Прибрати з нещодавніх?"
+msgstr "Прибрати з нещодавніх?"
+
+#: src/app/exercise/edit.tsx:200
+msgid "Прибрати фото"
+msgstr "Прибрати фото"
+
+#: src/lib/groq.ts:1084
+msgid "Прийом їжі"
+msgstr "Прийом їжі"
+
+#: src/components/dashboard/widgets.tsx:571
+#: src/components/dashboard/widgets.tsx:581
+#: src/components/dashboard/widgets.tsx:597
+#: src/lib/dashboard.ts:105
+msgid "Прийоми їжі"
+msgstr "Прийоми їжі"
+
+#: src/app/body-weight.tsx:256
+msgid "Прогноз з’явиться, коли зважування охоплять хоча б тиждень."
+msgstr "Прогноз з’явиться, коли зважування охоплять хоча б тиждень."
+
+#: src/components/training/programs-view.tsx:50
+msgid "Програм ще немає"
+msgstr "Програм ще немає"
+
+#: src/app/program/[id].tsx:39
+msgid "Програма"
+msgstr "Програма"
+
+#: src/components/training/programs-view.tsx:51
+msgid "Програма — це набір днів (наприклад, Push / Pull / Legs), які йдуть по колу."
+msgstr "Програма — це набір днів (наприклад, Push / Pull / Legs), які йдуть по колу."
+
+#: src/lib/program-ai.ts:786
+msgid "Програма від AI"
+msgstr "Програма від AI"
+
+#: src/app/program/ai.tsx:54
+msgid "Програма готова"
+msgstr "Програма готова"
+
+#: src/components/program-ai-loader.tsx:101
+msgid "Програма готова!"
+msgstr "Програма готова!"
+
+#: src/app/program/ai.tsx:202
+msgid "Програма з AI"
+msgstr "Програма з AI"
+
+#: src/lib/program-ai.ts:71
+msgid "Програма на тиждень під твою мету"
+msgstr "Програма на тиждень під твою мету"
+
+#: src/app/(tabs)/training.tsx:22
+msgid "Програми"
+msgstr "Програми"
+
+#: src/lib/modules.ts:24
+msgid "Програми, вправи, плеєр тренувань та історія."
+msgstr "Програми, вправи, плеєр тренувань та історія."
+
+#: src/app/program/[id].tsx:40
+msgid "Програму не знайдено"
+msgstr "Програму не знайдено"
+
+#: src/app/exercise/[id].tsx:127
+msgid "Прогрес"
+msgstr "Прогрес"
+
+#: src/lib/achievements.ts:281
+msgid "прогресу"
+msgstr "прогресу"
+
+#: src/lib/labels.ts:28
+msgid "Прогулянка"
+msgstr "Прогулянка"
+
+#: src/components/workout-player.tsx:331
+msgid "Продовжити"
+msgstr "Продовжити"
+
+#: src/components/day-review-card.tsx:169
+msgid "Прокоментувати день"
+msgstr "Прокоментувати день"
+
+#: src/app/settings/food.tsx:113
+msgid "Пропонувати повторити прийом їжі, як минулого разу."
+msgstr "Пропонувати повторити прийом їжі, як минулого разу."
+
+#: src/app/program/ai.tsx:277
+msgid "Пропустити"
+msgstr "Пропустити"
+
+#: src/components/workout-player.tsx:444
+msgid "Пропустити відпочинок"
+msgstr "Пропустити відпочинок"
+
+#: src/components/workout-player.tsx:619
+msgid "Пропустити вправу"
+msgstr "Пропустити вправу"
+
+#: src/components/workout-player.tsx:266
+msgid "Пропустити вправу?"
+msgstr "Пропустити вправу?"
+
+#: src/components/workout-player.tsx:272
+msgid "Пропустити зовсім"
+msgstr "Пропустити зовсім"
+
+#: src/app/workout/[id].tsx:246
+#: src/components/workout-player.tsx:662
+msgid "Пропущено"
+msgstr "Пропущено"
+
+#: src/components/workout-summary-card.tsx:57
+msgid "Пропущено вправ"
+msgstr "Пропущено вправ"
+
+#: src/lib/program-ai.ts:153
+msgid "Просто прокинутися й розім’ятися"
+msgstr "Просто прокинутися й розім’ятися"
+
+#: src/lib/program-ai.ts:184
+msgid "Просто розтягнутися"
+msgstr "Просто розтягнутися"
+
+#: src/app/profile.tsx:79
+#: src/app/settings/index.tsx:30
+msgid "Профіль"
+msgstr "Профіль"
+
+#: src/app/settings/food.tsx:597
+msgid "профіцит/день"
+msgstr "профіцит/день"
+
+#: src/lib/labels.ts:62
+msgid "Пт"
+msgstr "Пт"
+
+#: src/app/settings/food.tsx:850
+msgid "р."
+msgstr "р."
+
+#: src/app/settings/backup.tsx:168
+msgid "Раз на добу, коли відкриваєш застосунок, копія сама зберігається у твоєму акаунті. Сервер тримає копії за останні 7 днів. Торкнись копії, щоб відновити з неї дані."
+msgstr "Раз на добу, коли відкриваєш застосунок, копія сама зберігається у твоєму акаунті. Сервер тримає копії за останні 7 днів. Торкнись копії, щоб відновити з неї дані."
+
+#: src/app/add-food.tsx:611
+msgid "Разом"
+msgstr "Разом"
+
+#. placeholder {0}: formatKcal(total)
+#: src/app/settings/food.tsx:334
+msgid "Разом {0} {KCAL}"
+msgstr "Разом {0} {KCAL}"
+
+#. placeholder {0}: formatKcal(total)
+#. placeholder {1}: formatKcal(goal)
+#: src/app/settings/food.tsx:321
+msgid "Разом {0} {KCAL}, а норма {1} {KCAL}"
+msgstr "Разом {0} {KCAL}, а норма {1} {KCAL}"
+
+#: src/lib/program-ai.ts:152
+msgid "Ранкова зарядка"
+msgstr "Ранкова зарядка"
+
+#: src/lib/achievements.ts:193
+msgid "Рання пташка"
+msgstr "Рання пташка"
+
+#: src/components/food-photo-scanner.tsx:69
+msgid "Рахую вагу"
+msgstr "Рахую вагу"
+
+#: src/app/add-food.tsx:475
+msgid "Рахую…"
+msgstr "Рахую…"
+
+#: src/app/exercise/edit.tsx:112
+msgid "Редагувати вправу"
+msgstr "Редагувати вправу"
+
+#: src/components/training/overview-view.tsx:172
+msgid "Редагувати програму"
+msgstr "Редагувати програму"
+
+#: src/app/food-entry/[id].tsx:127
+msgid "Редагувати страву"
+msgstr "Редагувати страву"
+
+#: src/app/add-food.tsx:889
+msgid "Редагую"
+msgstr "Редагую"
+
+#: src/components/auth-form.tsx:23
+msgid "Реєстрація"
+msgstr "Реєстрація"
+
+#: src/app/settings/backup.tsx:145
+#: src/app/settings/index.tsx:91
+msgid "Резервна копія"
+msgstr "Резервна копія"
+
+#: src/lib/program-ai.ts:314
+#: src/lib/program-ai.ts:348
+msgid "Резинки"
+msgstr "Резинки"
+
+#: src/app/profile.tsx:155
+msgid "Рекомендована калорійність"
+msgstr "Рекомендована калорійність"
+
+#: src/app/settings/food.tsx:696
+#: src/components/settings.tsx:119
+msgid "Рекомендовано"
+msgstr "Рекомендовано"
+
+#: src/app/exercise/[id].tsx:140
+msgid "Рекорд"
+msgstr "Рекорд"
+
+#: src/lib/achievements.ts:183
+msgid "Рекордсмен"
+msgstr "Рекордсмен"
+
+#: src/app/achievements.tsx:171
+msgid "Рівень"
+msgstr "Рівень"
+
+#: src/app/settings/index.tsx:110
+msgid "Рівні за тренування, їжу й воду"
+msgstr "Рівні за тренування, їжу й воду"
+
+#: src/app/recap.tsx:44
+msgid "Рік"
+msgstr "Рік"
+
+#: src/components/module-settings.tsx:58
+msgid "Розділи"
+msgstr "Розділи"
+
+#: src/lib/program-ai.ts:77
+msgid "Розігріти тіло й суглоби перед тренуванням"
+msgstr "Розігріти тіло й суглоби перед тренуванням"
+
+#: src/lib/program-ai.ts:76
+msgid "Розминка"
+msgstr "Розминка"
+
+#: src/app/program/ai.tsx:55
+msgid "Розминка готова"
+msgstr "Розминка готова"
+
+#: src/components/food-photo-scanner.tsx:67
+msgid "Розпізнаю, що на фото"
+msgstr "Розпізнаю, що на фото"
+
+#: src/app/add-food.tsx:446
+msgid "Розпізнаю, що на фото…"
+msgstr "Розпізнаю, що на фото…"
+
+#: src/app/program/ai.tsx:346
+msgid "Розподіляю"
+msgstr "Розподіляю"
+
+#: src/app/program/ai.tsx:358
+msgid "Розраховую підходи й відпочинок"
+msgstr "Розраховую підходи й відпочинок"
+
+#: src/app/program/ai.tsx:357
+msgid "Розраховую час на вправи"
+msgstr "Розраховую час на вправи"
+
+#: src/lib/metrics.ts:26
+msgid "Розрахунковий 1ПМ"
+msgstr "Розрахунковий 1ПМ"
+
+#: src/lib/program-ai.ts:54
+msgid "Руки"
+msgstr "Руки"
+
+#: src/components/pose-camera.tsx:259
+#: src/components/workout-player.tsx:449
+#: src/lib/metrics.ts:34
+msgid "с"
+msgstr "с"
+
+#: src/lib/labels.ts:62
+msgid "Сб"
+msgstr "Сб"
+
+#: src/lib/server-backup.ts:70
+msgid "Сервер не прийняв копію. Спробуй пізніше."
+msgstr "Сервер не прийняв копію. Спробуй пізніше."
+
+#: src/app/settings/index.tsx:92
+msgid "Сервер, експорт, імпорт"
+msgstr "Сервер, експорт, імпорт"
+
+#: src/components/dashboard/widgets.tsx:928
+#: src/components/dashboard/widgets.tsx:969
+msgid "Середнє"
+msgstr "Середнє"
+
+#: src/lib/dashboard.ts:9
+msgid "Середній"
+msgstr "Середній"
+
+#: src/lib/program-ai.ts:250
+msgctxt "Intermediate"
+msgid "Середній"
+msgstr "Середній"
+
+#: src/lib/program-ai.ts:224
+msgid "Середня"
+msgstr "Середня"
+
+#: src/components/activity-calendar.tsx:19
+msgid "Серпень"
+msgstr "Серпень"
+
+#: src/app/exercise/[id].tsx:150
+msgid "Сесій"
+msgstr "Сесій"
+
+#: src/lib/groq.ts:160
+msgid "Сесія завершилась. Увійди в акаунт знову, щоб користуватися AI."
+msgstr "Сесія завершилась. Увійди в акаунт знову, щоб користуватися AI."
+
+#: src/lib/profile.ts:24
+msgid "Сидяча робота, без тренувань"
+msgstr "Сидяча робота, без тренувань"
+
+#: src/lib/program-ai.ts:102
+msgid "Сила"
+msgstr "Сила"
+
+#: src/lib/labels.ts:33
+#: src/lib/program-ai.ts:134
+#: src/lib/program-ai.ts:166
+msgid "Силове тренування"
+msgstr "Силове тренування"
+
+#: src/components/health-card.tsx:38
+msgid "Синхронізовано"
+msgstr "Синхронізовано"
+
+#: src/components/health-card.tsx:138
+msgid "Синхронізувати зараз"
+msgstr "Синхронізувати зараз"
+
+#: src/lib/program-ai.ts:52
+msgid "Сідниці"
+msgstr "Сідниці"
+
+#: src/components/activity-calendar.tsx:12
+msgid "Січень"
+msgstr "Січень"
+
+#: src/components/report-ai.tsx:23
+msgid "Скаргу надіслано. Ми переглянемо цю відповідь."
+msgstr "Скаргу надіслано. Ми переглянемо цю відповідь."
+
+#: src/app/add-food.tsx:207
+#: src/app/add-food.tsx:350
+#: src/app/add-food.tsx:384
+#: src/app/add-food.tsx:399
+#: src/app/add-food.tsx:587
+#: src/app/add-food.tsx:905
+#: src/app/body-weight.tsx:73
+#: src/app/food-entry/[id].tsx:175
+#: src/app/program/ai.tsx:114
+#: src/app/program/day/[id].tsx:55
+#: src/app/progress-photos.tsx:357
+#: src/app/settings/account.tsx:30
+#: src/app/settings/account.tsx:55
+#: src/app/settings/backup.tsx:138
+#: src/app/settings/notifications.tsx:134
+#: src/components/health-card.tsx:95
+#: src/components/remove-dialogs.ts:22
+#: src/components/remove-dialogs.ts:54
+#: src/components/report-ai.tsx:45
+#: src/components/workout-player.tsx:171
+#: src/components/workout-player.tsx:286
+msgid "Скасувати"
+msgstr "Скасувати"
+
+#: src/components/workout-player.tsx:184
+msgctxt "Discard"
+msgid "Скасувати"
+msgstr "Скасувати"
+
+#: src/components/workout-player.tsx:215
+#: src/components/workout-player.tsx:684
+msgid "Скасувати тренування"
+msgstr "Скасувати тренування"
+
+#: src/components/workout-player.tsx:179
+msgid "Скасувати тренування?"
+msgstr "Скасувати тренування?"
+
+#: src/lib/dashboard.ts:116
+msgid "Скільки випито в кожен з останніх 7 днів і в які дні ціль виконано."
+msgstr "Скільки випито в кожен з останніх 7 днів і в які дні ціль виконано."
+
+#: src/components/water-pour-modal.tsx:233
+msgid "Скільки налити"
+msgstr "Скільки налити"
+
+#: src/lib/program-ai.ts:265
+msgid "Скільки разів на тиждень?"
+msgstr "Скільки разів на тиждень?"
+
+#: src/lib/dashboard.ts:96
+msgid "Скільки тренувань цього тижня, спалені калорії та дні активності."
+msgstr "Скільки тренувань цього тижня, спалені калорії та дні активності."
+
+#: src/lib/program-ai.ts:276
+msgid "Скільки триває тренування?"
+msgstr "Скільки триває тренування?"
+
+#: src/lib/program-ai.ts:293
+msgid "Скільки часу є?"
+msgstr "Скільки часу є?"
+
+#: src/components/food-photo-scanner.tsx:87
+msgid "склад"
+msgstr "склад"
+
+#: src/components/food-photo-scanner.tsx:63
+#: src/components/food-photo-scanner.tsx:70
+msgid "Складаю опис"
+msgstr "Складаю опис"
+
+#: src/app/program/ai.tsx:290
+msgid "Скласти"
+msgstr "Скласти"
+
+#: src/app/program/[id].tsx:91
+msgid "Скласти з AI"
+msgstr "Скласти з AI"
+
+#: src/app/program/ai.tsx:628
+msgid "Скласти інакше"
+msgstr "Скласти інакше"
+
+#: src/components/training/programs-view.tsx:37
+msgid "Скласти програму з AI"
+msgstr "Скласти програму з AI"
+
+#: src/lib/water.ts:19
+msgid "Склянка"
+msgstr "Склянка"
+
+#: src/lib/program-ai.ts:218
+msgid "Скутий"
+msgstr "Скутий"
+
+#: src/lib/units.ts:64
+msgid "см"
+msgstr "см"
+
+#: src/lib/meals.ts:8
+msgid "Сніданок"
+msgstr "Сніданок"
+
+#: src/components/dashboard/widgets.tsx:409
+msgid "спалено"
+msgstr "спалено"
+
+#: src/components/dashboard/widgets.tsx:852
+#: src/components/training/overview-view.tsx:132
+msgid "Спалено"
+msgstr "Спалено"
+
+#: src/lib/dashboard.ts:54
+msgid "Спалено за тиждень"
+msgstr "Спалено за тиждень"
+
+#: src/lib/progress-photos.ts:9
+msgid "Спереду"
+msgstr "Спереду"
+
+#: src/components/remove-dialogs.ts:32
+msgid "Спершу заверши або скасуй поточне тренування за цією програмою."
+msgstr "Спершу заверши або скасуй поточне тренування за цією програмою."
+
+#. placeholder {0}: result.blockedBy.join(', ')
+#: src/components/remove-dialogs.ts:64
+msgid "Спершу прибери її з програм: {0}."
+msgstr "Спершу прибери її з програм: {0}."
+
+#: src/lib/labels.ts:10
+#: src/lib/program-ai.ts:50
+msgid "Спина"
+msgstr "Спина"
+
+#: src/app/settings/index.tsx:65
+#: src/app/settings/notifications.tsx:147
+msgid "Сповіщення"
+msgstr "Сповіщення"
+
+#: src/app/settings/notifications.tsx:130
+msgid "Сповіщення вимкнені"
+msgstr "Сповіщення вимкнені"
+
+#: src/app/settings/notifications.tsx:208
+#: src/app/settings/notifications.tsx:242
+msgid "Сповіщення заборонені — відкрити налаштування"
+msgstr "Сповіщення заборонені — відкрити налаштування"
+
+#: src/lib/program-ai.ts:420
+msgid "Спокійно, щоб розслабитися"
+msgstr "Спокійно, щоб розслабитися"
+
+#: src/lib/program-ai.ts:324
+msgid "Спортзал"
+msgstr "Спортзал"
+
+#: src/lib/labels.ts:62
+msgid "Ср"
+msgstr "Ср"
+
+#: src/components/pose-camera.tsx:66
+msgid "Стань боком у силует, руки вздовж тіла, дивись прямо."
+msgstr "Стань боком у силует, руки вздовж тіла, дивись прямо."
+
+#: src/components/pose-camera.tsx:65
+msgid "Стань обличчям до камери в силует: ноги на ширині плечей, руки трохи від тіла."
+msgstr "Стань обличчям до камери в силует: ноги на ширині плечей, руки трохи від тіла."
+
+#: src/components/pose-camera.tsx:67
+msgid "Стань спиною до камери в силует: ноги на ширині плечей, руки трохи від тіла."
+msgstr "Стань спиною до камери в силует: ноги на ширині плечей, руки трохи від тіла."
+
+#: src/lib/profile.ts:231
+msgid "стать"
+msgstr "стать"
+
+#: src/app/onboarding.tsx:49
+#: src/app/profile.tsx:135
+msgid "Стать"
+msgstr "Стать"
+
+#: src/components/training/overview-view.tsx:157
+msgid "Створи програму з днями тренувань, щоб почати."
+msgstr "Створи програму з днями тренувань, щоб почати."
+
+#: src/components/auth-form.tsx:139
+msgid "Створити акаунт"
+msgstr "Створити акаунт"
+
+#: src/app/settings/backup.tsx:155
+msgid "Створити копію"
+msgstr "Створити копію"
+
+#: src/app/pick-exercise.tsx:54
+msgid "Створити нову вправу"
+msgstr "Створити нову вправу"
+
+#: src/app/food-entry/[id].tsx:46
+msgid "Страва"
+msgstr "Страва"
+
+#: src/lib/groq.ts:1006
+msgid "Страви дня:"
+msgstr "Страви дня:"
+
+#: src/lib/program-ai.ts:413
+msgid "Суглоби скуті зранку"
+msgstr "Суглоби скуті зранку"
+
+#. placeholder {0}: Math.round(part('kcal') * 0.9)
+#. placeholder {1}: Math.round(part('kcal') * 1.1)
+#: src/lib/groq.ts:1089
+msgid "Сума ккал усіх страв має бути від {0} до {1} ккал."
+msgstr "Сума ккал усіх страв має бути від {0} до {1} ккал."
+
+#: src/lib/achievements.ts:159
+msgid "сумарного тоннажу"
+msgstr "сумарного тоннажу"
+
+#: src/lib/groq.ts:326
+msgid "Схоже, це не страва. Опиши, що саме ти з’їв."
+msgstr "Схоже, це не страва. Опиши, що саме ти з’їв."
+
+#: src/app/settings/food.tsx:507
+msgid "Схуднення"
+msgstr "Схуднення"
+
+#: src/lib/program-ai.ts:114
+msgctxt "Lose fat"
+msgid "Схуднення"
+msgstr "Схуднення"
+
+#: src/lib/profile.ts:59
+msgctxt "Lose weight"
+msgid "Схуднення"
+msgstr "Схуднення"
+
+#: src/app/settings/notifications.tsx:77
+msgid "сьогодні"
+msgstr "сьогодні"
+
+#: src/app/(tabs)/food.tsx:114
+#: src/app/(tabs)/training.tsx:21
+#: src/app/(tabs)/water.tsx:55
+#: src/components/dashboard/widgets.tsx:896
+msgid "Сьогодні"
+msgstr "Сьогодні"
+
+#: src/lib/metrics.ts:123
+msgid "т"
+msgstr "т"
+
+#: src/components/food-photo-scanner.tsx:88
+msgid "таблиця"
+msgstr "таблиця"
+
+#: src/components/pose-camera.tsx:259
+msgid "Таймер"
+msgstr "Таймер"
+
+#: src/components/module-settings.tsx:86
+msgid "Так виглядатиме меню навігації"
+msgstr "Так виглядатиме меню навігації"
+
+#: src/app/program/ai.tsx:472
+msgid "Твої побажання"
+msgstr "Твої побажання"
+
+#: src/components/food-photo-scanner.tsx:84
+msgid "текст"
+msgstr "текст"
+
+#: src/components/food-photo-scanner.tsx:75
+msgid "текстура"
+msgstr "текстура"
+
+#: src/app/body-weight.tsx:257
+msgid "Темп {pace}/тиж зараз не веде до цілі."
+msgstr "Темп {pace}/тиж зараз не веде до цілі."
+
+#: src/components/plan-exercise-sheet.tsx:82
+msgid "Техніка"
+msgstr "Техніка"
+
+#: src/app/exercise/edit.tsx:227
+msgid "Техніка, налаштування тренажера…"
+msgstr "Техніка, налаштування тренажера…"
+
+#: src/lib/groq.ts:983
+msgid "Ти нутриціолог у застосунку для тренувань. Користувач дивиться, звідки за день у нього береться один макронутрієнт, і хоче знати, у чому його багато. Дано: макронутрієнт, ціль, з'їдено, лишилось і страви дня з його вмістом.\n"
+"- Бери числа лише з підсумку, не рахуй їх заново.\n"
+"Поля:\n"
+"- comment: 1–2 речення до 180 символів, дружньо й конкретно: що з журналу дало найбільше і що з цим робити далі (добрати чи притримати); без моралізування;\n"
+"- foods: рівно 6 різних простих продуктів чи страв, у яких цього макронутрієнту найбільше на звичайну порцію і які легко купити в Україні; не повторюй страви з журналу; text — як користувач написав би сам, з малої літери і з кількістю звичайної порції в грамах чи мл (не в штуках), напр. «куряче філе 150 г»; kcal, protein_g, fat_g, carbs_g — для цієї порції; is_drink — true для напоїв; health — наскільки продукт корисний: \"healthy\", \"moderate\" чи \"unhealthy\". Від найбагатшого до найбіднішого."
+msgstr "Ти нутриціолог у застосунку для тренувань. Користувач дивиться, звідки за день у нього береться один макронутрієнт, і хоче знати, у чому його багато. Дано: макронутрієнт, ціль, з'їдено, лишилось і страви дня з його вмістом.\n"
+"- Бери числа лише з підсумку, не рахуй їх заново.\n"
+"Поля:\n"
+"- comment: 1–2 речення до 180 символів, дружньо й конкретно: що з журналу дало найбільше і що з цим робити далі (добрати чи притримати); без моралізування;\n"
+"- foods: рівно 6 різних простих продуктів чи страв, у яких цього макронутрієнту найбільше на звичайну порцію і які легко купити в Україні; не повторюй страви з журналу; text — як користувач написав би сам, з малої літери і з кількістю звичайної порції в грамах чи мл (не в штуках), напр. «куряче філе 150 г»; kcal, protein_g, fat_g, carbs_g — для цієї порції; is_drink — true для напоїв; health — наскільки продукт корисний: \"healthy\", \"moderate\" чи \"unhealthy\". Від найбагатшого до найбіднішого."
+
+#: src/lib/groq.ts:1047
+msgid "Ти нутриціолог у застосунку для тренувань. Користувач хоче знати, що з'їсти на конкретний прийом їжі, щоб добрати решту денної норми. Дано: ціль, з'їдено, лишилось за день, журнал і частка залишку на цей прийом.\n"
+"- Бери числа лише з підсумку, не рахуй їх заново.\n"
+"- Не повторюй страви, які вже були сьогодні в журналі: день має бути різноманітним.\n"
+"- Запропонуй 1–3 готові страви, які зазвичай їдять саме на цей прийом (сніданок, обід чи вечеря), напр. омлет з овочами, сирники, вівсянка з ягодами, гречка з курячим філе, борщ, салат з тунцем, запечена риба з картоплею. Це справжні страви з рецептом, які легко приготувати вдома, а не окремі інгредієнти: не пропонуй олію, спеції, окремі овочі чи сирі продукти. Можна додати гарнір, салат чи напій окремою стравою, але не склеюй різні страви в одну (не «шейк з рисом і салатом»).\n"
+"- Разом страви закривають частку залишку на цей прийом: сума ккал — у межах ±10% від частки (не менше!), білок якомога ближче до частки, потім жири й вуглеводи. Підбери порції так, щоб сума сходилась. Віддавай перевагу корисним стравам з цільних продуктів, які легко купити в Україні; зважай на мету.\n"
+"- Якщо частка залишку на цей прийом невелика чи від'ємна, запропонуй легкий варіант, багатий на те, чого бракує, з мінімумом калорій.\n"
+"Поля:\n"
+"- comment: одне речення до 140 символів: чому саме такі страви, з огляду на те, чого бракує; без чисел з підсумку;\n"
+"- dishes: 1–3 страви, кожна — окремий елемент: text — рівно одна страва з малої літери і лише одна вага — всієї порції, в кінці, в грамах чи мл (не в штуках); інгредієнти — через «з» і без ваги, без ком і «+», напр. «гречка з курячим філе 350 г», а не «гречка 200 г з філе 150 г»; kcal, protein_g, fat_g, carbs_g — для цієї порції; is_drink — true для напоїв; health — наскільки продукт корисний: \"healthy\", \"moderate\" чи \"unhealthy\"."
+msgstr "Ти нутриціолог у застосунку для тренувань. Користувач хоче знати, що з'їсти на конкретний прийом їжі, щоб добрати решту денної норми. Дано: ціль, з'їдено, лишилось за день, журнал і частка залишку на цей прийом.\n"
+"- Бери числа лише з підсумку, не рахуй їх заново.\n"
+"- Не повторюй страви, які вже були сьогодні в журналі: день має бути різноманітним.\n"
+"- Запропонуй 1–3 готові страви, які зазвичай їдять саме на цей прийом (сніданок, обід чи вечеря), напр. омлет з овочами, сирники, вівсянка з ягодами, гречка з курячим філе, борщ, салат з тунцем, запечена риба з картоплею. Це справжні страви з рецептом, які легко приготувати вдома, а не окремі інгредієнти: не пропонуй олію, спеції, окремі овочі чи сирі продукти. Можна додати гарнір, салат чи напій окремою стравою, але не склеюй різні страви в одну (не «шейк з рисом і салатом»).\n"
+"- Разом страви закривають частку залишку на цей прийом: сума ккал — у межах ±10% від частки (не менше!), білок якомога ближче до частки, потім жири й вуглеводи. Підбери порції так, щоб сума сходилась. Віддавай перевагу корисним стравам з цільних продуктів, які легко купити в Україні; зважай на мету.\n"
+"- Якщо частка залишку на цей прийом невелика чи від'ємна, запропонуй легкий варіант, багатий на те, чого бракує, з мінімумом калорій.\n"
+"Поля:\n"
+"- comment: одне речення до 140 символів: чому саме такі страви, з огляду на те, чого бракує; без чисел з підсумку;\n"
+"- dishes: 1–3 страви, кожна — окремий елемент: text — рівно одна страва з малої літери і лише одна вага — всієї порції, в кінці, в грамах чи мл (не в штуках); інгредієнти — через «з» і без ваги, без ком і «+», напр. «гречка з курячим філе 350 г», а не «гречка 200 г з філе 150 г»; kcal, protein_g, fat_g, carbs_g — для цієї порції; is_drink — true для напоїв; health — наскільки продукт корисний: \"healthy\", \"moderate\" чи \"unhealthy\"."
+
+#: src/lib/groq.ts:392
+#~ msgid "Ти нутриціолог. На фото або їжа чи напій (найчастіше тарілка зверху або збоку), або упаковка продукту чи її етикетка.\n"
+#~ "Спершу визнач kind:\n"
+#~ "- \"label\" — упаковка, етикетка чи таблиця харчової цінності продукту з магазину;\n"
+#~ "- \"dish\" — приготована їжа, тарілка, фрукти чи напій без етикетки;\n"
+#~ "- \"none\" — на фото немає їжі.\n"
+#~ "Для \"dish\" заповни items, а product залиш порожнім (рядки \"\", числа 0, false):\n"
+#~ "- назви все, що видно, і оціни кількість кожного за розміром тарілки, приборів, рук і упаковок;\n"
+#~ "- страву з кількох інгредієнтів (борщ, салат, піца, бутерброд) називай однією позицією;\n"
+#~ "- окремі страви на тарілці (гарнір, м'ясо, овочі, хліб, соус) — окремими позиціями;\n"
+#~ "- напиши, як приготовано, якщо це видно: смажене, варене, запечене;\n"
+#~ "- name — коротко українською з малої літери, без кількості; amount — число більше 0; unit — \"g\" для їжі, \"ml\" для напоїв і рідких страв у склянці.\n"
+#~ "Для \"label\" заповни product, а items залиш порожнім:\n"
+#~ "- name — назва продукту українською з великої літери, без бренду й ваги (напр. \"Йогурт полуничний 2,5%\");\n"
+#~ "- original_name — назва так, як надрукована на упаковці, без бренду;\n"
+#~ "- brand — торгова марка, \"\" якщо не видно;\n"
+#~ "- barcode — цифри штрихкоду, якщо їх видно повністю, інакше \"\";\n"
+#~ "- is_drink — true для напоїв;\n"
+#~ "- net_amount — вага чи об'єм нетто всієї упаковки в г чи мл, 0 якщо не видно;\n"
+#~ "- serving_amount — порція, вказана на етикетці, в г чи мл, 0 якщо не вказано;\n"
+#~ "- nutrition_visible — true, лише якщо на фото чітко видно калорійність або білки, жири й вуглеводи;\n"
+#~ "- kcal, protein_g, fat_g, carbs_g, fiber_g, sugar_g — саме з етикетки, на 100 г (чи 100 мл). Якщо вказано лише на порцію, перерахуй на 100 г. Калорії — в ккал, не в кДж. Чого не видно — 0.\n"
+#~ "Не вигадуй цифр: переписуй лише ті, що видно на фото."
+#~ msgstr "Ти нутриціолог. На фото або їжа чи напій (найчастіше тарілка зверху або збоку), або упаковка продукту чи її етикетка.\n"
+#~ "Спершу визнач kind:\n"
+#~ "- \"label\" — упаковка, етикетка чи таблиця харчової цінності продукту з магазину;\n"
+#~ "- \"dish\" — приготована їжа, тарілка, фрукти чи напій без етикетки;\n"
+#~ "- \"none\" — на фото немає їжі.\n"
+#~ "Для \"dish\" заповни items, а product залиш порожнім (рядки \"\", числа 0, false):\n"
+#~ "- назви все, що видно, і оціни кількість кожного за розміром тарілки, приборів, рук і упаковок;\n"
+#~ "- страву з кількох інгредієнтів (борщ, салат, піца, бутерброд) називай однією позицією;\n"
+#~ "- окремі страви на тарілці (гарнір, м'ясо, овочі, хліб, соус) — окремими позиціями;\n"
+#~ "- напиши, як приготовано, якщо це видно: смажене, варене, запечене;\n"
+#~ "- name — коротко українською з малої літери, без кількості; amount — число більше 0; unit — \"g\" для їжі, \"ml\" для напоїв і рідких страв у склянці.\n"
+#~ "Для \"label\" заповни product, а items залиш порожнім:\n"
+#~ "- name — назва продукту українською з великої літери, без бренду й ваги (напр. \"Йогурт полуничний 2,5%\");\n"
+#~ "- original_name — назва так, як надрукована на упаковці, без бренду;\n"
+#~ "- brand — торгова марка, \"\" якщо не видно;\n"
+#~ "- barcode — цифри штрихкоду, якщо їх видно повністю, інакше \"\";\n"
+#~ "- is_drink — true для напоїв;\n"
+#~ "- net_amount — вага чи об'єм нетто всієї упаковки в г чи мл, 0 якщо не видно;\n"
+#~ "- serving_amount — порція, вказана на етикетці, в г чи мл, 0 якщо не вказано;\n"
+#~ "- nutrition_visible — true, лише якщо на фото чітко видно калорійність або білки, жири й вуглеводи;\n"
+#~ "- kcal, protein_g, fat_g, carbs_g, fiber_g, sugar_g — саме з етикетки, на 100 г (чи 100 мл). Якщо вказано лише на порцію, перерахуй на 100 г. Калорії — в ккал, не в кДж. Чого не видно — 0.\n"
+#~ "Не вигадуй цифр: переписуй лише ті, що видно на фото."
+
+#: src/lib/groq.ts:392
+msgid "Ти нутриціолог. На фото може бути їжа чи напій, упаковка/етикетка, меню, чек або скриншот з харчовою цінністю.\n"
+"Спершу визнач kind:\n"
+"- \"label\" — упаковка, етикетка чи таблиця харчової цінності продукту з магазину;\n"
+"- \"dish\" — приготована їжа, тарілка, фрукти чи напій, меню, ресторанний чек або зображення страв;\n"
+"- \"none\" — на фото немає їжі.\n"
+"Для \"dish\" заповни items, context та visible_restaurant, а product залиш порожнім (рядки \"\", числа 0, false):\n"
+"- зчитай назву ресторану/закладу, якщо її видно, та інші корисні підказки з меню чи чека в context;\n"
+"- для кожної страви зчитай КБЖВ, якщо вони надруковані поруч або на зображенні; nutrition_visible=true лише коли дані чітко видно. Числа в kcal, protein_g, fat_g, carbs_g мають бути для вказаної порції; якщо позначено \"на 100 г\", переведи до кількості amount;\n"
+"- назви все, що видно, і оціни кількість кожного за розміром тарілки, приборів, рук і упаковок;\n"
+"- у меню чи чеку кожна окрема позиція — окрема страва, її кількість/вага — з тексту, якщо вказано, інакше звичайна порція;\n"
+"- страву з кількох інгредієнтів (борщ, салат, піца, бутерброд) називай однією позицією;\n"
+"- окремі страви на тарілці (гарнір, м'ясо, овочі, хліб, соус) — окремими позиціями;\n"
+"- напиши, як приготовано, якщо це видно: смажене, варене, запечене;\n"
+"- name — коротко українською з малої літери, без кількості; amount — число більше 0; unit — \"g\" для їжі, \"ml\" для напоїв і рідких страв у склянці.\n"
+"Для \"label\" заповни product, а items залиш порожнім:\n"
+"- name — назва продукту українською з великої літери, без бренду й ваги (напр. \"Йогурт полуничний 2,5%\");\n"
+"- original_name — назва так, як надрукована на упаковці, без бренду;\n"
+"- brand — торгова марка, \"\" якщо не видно;\n"
+"- barcode — цифри штрихкоду, якщо їх видно повністю, інакше \"\";\n"
+"- is_drink — true для напоїв;\n"
+"- net_amount — вага чи об'єм нетто всієї упаковки в г чи мл, 0 якщо не видно;\n"
+"- serving_amount — порція, вказана на етикетці, в г чи мл, 0 якщо не вказано;\n"
+"- nutrition_visible — true, лише якщо на фото чітко видно калорійність або білки, жири й вуглеводи;\n"
+"- kcal, protein_g, fat_g, carbs_g, fiber_g, sugar_g — саме з етикетки, на 100 г (чи 100 мл). Якщо вказано лише на порцію, перерахуй на 100 г. Калорії — в ккал, не в кДж. Чого не видно — 0.\n"
+"Не вигадуй цифр з фото: переписуй лише ті, що видно. Якщо даних немає, залиш nutrition_visible=false і числа 0."
+msgstr "Ти нутриціолог. На фото може бути їжа чи напій, упаковка/етикетка, меню, чек або скриншот з харчовою цінністю.\n"
+"Спершу визнач kind:\n"
+"- \"label\" — упаковка, етикетка чи таблиця харчової цінності продукту з магазину;\n"
+"- \"dish\" — приготована їжа, тарілка, фрукти чи напій, меню, ресторанний чек або зображення страв;\n"
+"- \"none\" — на фото немає їжі.\n"
+"Для \"dish\" заповни items, context та visible_restaurant, а product залиш порожнім (рядки \"\", числа 0, false):\n"
+"- зчитай назву ресторану/закладу, якщо її видно, та інші корисні підказки з меню чи чека в context;\n"
+"- для кожної страви зчитай КБЖВ, якщо вони надруковані поруч або на зображенні; nutrition_visible=true лише коли дані чітко видно. Числа в kcal, protein_g, fat_g, carbs_g мають бути для вказаної порції; якщо позначено \"на 100 г\", переведи до кількості amount;\n"
+"- назви все, що видно, і оціни кількість кожного за розміром тарілки, приборів, рук і упаковок;\n"
+"- у меню чи чеку кожна окрема позиція — окрема страва, її кількість/вага — з тексту, якщо вказано, інакше звичайна порція;\n"
+"- страву з кількох інгредієнтів (борщ, салат, піца, бутерброд) називай однією позицією;\n"
+"- окремі страви на тарілці (гарнір, м'ясо, овочі, хліб, соус) — окремими позиціями;\n"
+"- напиши, як приготовано, якщо це видно: смажене, варене, запечене;\n"
+"- name — коротко українською з малої літери, без кількості; amount — число більше 0; unit — \"g\" для їжі, \"ml\" для напоїв і рідких страв у склянці.\n"
+"Для \"label\" заповни product, а items залиш порожнім:\n"
+"- name — назва продукту українською з великої літери, без бренду й ваги (напр. \"Йогурт полуничний 2,5%\");\n"
+"- original_name — назва так, як надрукована на упаковці, без бренду;\n"
+"- brand — торгова марка, \"\" якщо не видно;\n"
+"- barcode — цифри штрихкоду, якщо їх видно повністю, інакше \"\";\n"
+"- is_drink — true для напоїв;\n"
+"- net_amount — вага чи об'єм нетто всієї упаковки в г чи мл, 0 якщо не видно;\n"
+"- serving_amount — порція, вказана на етикетці, в г чи мл, 0 якщо не вказано;\n"
+"- nutrition_visible — true, лише якщо на фото чітко видно калорійність або білки, жири й вуглеводи;\n"
+"- kcal, protein_g, fat_g, carbs_g, fiber_g, sugar_g — саме з етикетки, на 100 г (чи 100 мл). Якщо вказано лише на порцію, перерахуй на 100 г. Калорії — в ккал, не в кДж. Чого не видно — 0.\n"
+"Не вигадуй цифр з фото: переписуй лише ті, що видно. Якщо даних немає, залиш nutrition_visible=false і числа 0."
+
+#: src/app/settings/food.tsx:252
+msgid "ти тут"
+msgstr "ти тут"
+
+#: src/lib/groq.ts:805
+msgid "Ти уважний нутриціолог у застосунку для тренувань. Користувач дає підсумок харчування за день: ціль, що з'їв і скільки лишилось. Напиши короткий коментар до дня.\n"
+"- Бери числа лише з підсумку, не рахуй їх заново. «Лишилось» додатне — ще треба добрати, від'ємне — перебір.\n"
+"- Знайди головне: найбільший недобір чи перебір відносно цілі (білок важливіший за жири й вуглеводи) або похвали, якщо все в межах 10% від цілі.\n"
+"- Якщо це сьогодні, зважай на час: зранку чи вдень недобір нормальний, тож підкажи, на що звернути увагу далі, а не дорікай.\n"
+"- Оціни якість їжі з журналу з огляду на мету: що пішло на користь (білок, клітковина, овочі, цільні продукти), а що ні (багато цукру, смажене, фастфуд, солодощі, солодкі напої, порожні калорії).\n"
+"Поля:\n"
+"- headline: одне речення до 70 символів з головним числом, напр. «Мало білка — до цілі ще 40 г»; слово «сьогодні» лише якщо це сьогодні;\n"
+"- comment: одне речення до 140 символів, дружньо й конкретно, без моралізування; не повторюй числа з headline, не називай поточний час і не перелічуй продуктів, які радиш у snacks — краще скажи, що змінити, згадавши страви з журналу;\n"
+"- foods: до 4 найпомітніших страв із журналу — і корисні, і ні; name — назва страви так, як у журналі; good — true, якщо страва пішла на користь меті, false, якщо варто обмежити; note — чому, до 60 символів, напр. «багато білка й мало жиру» чи «майже весь цукор за день». Спершу корисні. Порожній список, якщо журнал порожній;\n"
+"- lacking: чого найбільше бракує до цілі: \"protein\", \"fat\", \"carbs\" чи \"kcal\"; \"none\", якщо нічого помітно не бракує;\n"
+"- snacks: якщо лишилось щонайменше 150 ккал і є помітний недобір — до 3 різних простих продуктів, які найкраще закривають головну нестачу (при недоборі білка — щонайменше 15 г білка на продукт) і разом не перевищують залишку ккал; для сьогодні — що з'їсти далі, для минулого дня — що можна було б з'їсти; прості продукти, які легко купити в Україні; text — рівно один продукт, як користувач написав би сам, з малої літери і з кількістю в грамах чи мл (не в штуках), без ком і переліків, напр. «грецький йогурт 200 г» чи «яйця варені 120 г»; kcal, protein_g, fat_g, carbs_g — для цієї кількості; is_drink — true для напоїв; health — наскільки продукт корисний: \"healthy\", \"moderate\" чи \"unhealthy\". Інакше порожній список."
+msgstr "Ти уважний нутриціолог у застосунку для тренувань. Користувач дає підсумок харчування за день: ціль, що з'їв і скільки лишилось. Напиши короткий коментар до дня.\n"
+"- Бери числа лише з підсумку, не рахуй їх заново. «Лишилось» додатне — ще треба добрати, від'ємне — перебір.\n"
+"- Знайди головне: найбільший недобір чи перебір відносно цілі (білок важливіший за жири й вуглеводи) або похвали, якщо все в межах 10% від цілі.\n"
+"- Якщо це сьогодні, зважай на час: зранку чи вдень недобір нормальний, тож підкажи, на що звернути увагу далі, а не дорікай.\n"
+"- Оціни якість їжі з журналу з огляду на мету: що пішло на користь (білок, клітковина, овочі, цільні продукти), а що ні (багато цукру, смажене, фастфуд, солодощі, солодкі напої, порожні калорії).\n"
+"Поля:\n"
+"- headline: одне речення до 70 символів з головним числом, напр. «Мало білка — до цілі ще 40 г»; слово «сьогодні» лише якщо це сьогодні;\n"
+"- comment: одне речення до 140 символів, дружньо й конкретно, без моралізування; не повторюй числа з headline, не називай поточний час і не перелічуй продуктів, які радиш у snacks — краще скажи, що змінити, згадавши страви з журналу;\n"
+"- foods: до 4 найпомітніших страв із журналу — і корисні, і ні; name — назва страви так, як у журналі; good — true, якщо страва пішла на користь меті, false, якщо варто обмежити; note — чому, до 60 символів, напр. «багато білка й мало жиру» чи «майже весь цукор за день». Спершу корисні. Порожній список, якщо журнал порожній;\n"
+"- lacking: чого найбільше бракує до цілі: \"protein\", \"fat\", \"carbs\" чи \"kcal\"; \"none\", якщо нічого помітно не бракує;\n"
+"- snacks: якщо лишилось щонайменше 150 ккал і є помітний недобір — до 3 різних простих продуктів, які найкраще закривають головну нестачу (при недоборі білка — щонайменше 15 г білка на продукт) і разом не перевищують залишку ккал; для сьогодні — що з'їсти далі, для минулого дня — що можна було б з'їсти; прості продукти, які легко купити в Україні; text — рівно один продукт, як користувач написав би сам, з малої літери і з кількістю в грамах чи мл (не в штуках), без ком і переліків, напр. «грецький йогурт 200 г» чи «яйця варені 120 г»; kcal, protein_g, fat_g, carbs_g — для цієї кількості; is_drink — true для напоїв; health — наскільки продукт корисний: \"healthy\", \"moderate\" чи \"unhealthy\". Інакше порожній список."
+
+#: src/components/dashboard/widgets.tsx:403
+#: src/lib/dashboard.ts:95
+msgid "Тиждень тренувань"
+msgstr "Тиждень тренувань"
+
+#: src/db/home-widget.ts:107
+#: src/lib/dashboard.ts:61
+msgid "Тижнів поспіль"
+msgstr "Тижнів поспіль"
+
+#: src/lib/metrics.ts:119
+msgid "тис. фн"
+msgstr "тис. фн"
+
+#: src/lib/program-ai.ts:414
+msgid "Тихо, щоб не заважати сусідам"
+msgstr "Тихо, щоб не заважати сусідам"
+
+#: src/lib/achievements.ts:290
+#: src/lib/dashboard.ts:147
+msgid "Тіло"
+msgstr "Тіло"
+
+#: src/lib/labels.ts:21
+msgid "Тільки повторення"
+msgstr "Тільки повторення"
+
+#: src/lib/progress-photos.ts:87
+msgid "той самий день"
+msgstr "той самий день"
+
+#: src/app/recap.tsx:250
+msgid "тоннаж"
+msgstr "тоннаж"
+
+#: src/components/dashboard/widgets.tsx:871
+msgid "Тоннаж"
+msgstr "Тоннаж"
+
+#: src/lib/dashboard.ts:60
+msgid "Тоннаж за тиждень"
+msgstr "Тоннаж за тиждень"
+
+#: src/app/workout/[id].tsx:180
+msgid "Торкнись підходу, щоб змінити його, або свайпни вліво, щоб видалити."
+msgstr "Торкнись підходу, щоб змінити його, або свайпни вліво, щоб видалити."
+
+#: src/components/activity-calendar.tsx:16
+msgid "Травень"
+msgstr "Травень"
+
+#: src/app/body-weight.tsx:166
+msgid "тренд"
+msgstr "тренд"
+
+#: src/app/body-weight.tsx:122
+msgid "Тренд"
+msgstr "Тренд"
+
+#: src/app/body-weight.tsx:177
+msgid "Тренд згладжує денні коливання води й солі."
+msgstr "Тренд згладжує денні коливання води й солі."
+
+#: src/components/activity-calendar.tsx:145
+msgid "Тренувальних днів"
+msgstr "Тренувальних днів"
+
+#: src/app/(tabs)/training.tsx:74
+#: src/lib/achievements.ts:287
+#: src/lib/dashboard.ts:133
+#: src/lib/modules.ts:23
+#: src/lib/program-ai.ts:70
+msgid "Тренування"
+msgstr "Тренування"
+
+#: src/app/workout/[id].tsx:69
+#: src/app/workout/[id].tsx:117
+#: src/components/dashboard/widgets.tsx:897
+#: src/lib/labels.ts:36
+msgctxt "Workout"
+msgid "Тренування"
+msgstr "Тренування"
+
+#: src/components/workout-player.tsx:165
+msgid "Тренування коротше 30 с не збережеться в історії."
+msgstr "Тренування коротше 30 с не збережеться в історії."
+
+#: src/components/training/overview-view.tsx:143
+msgid "Тренування на паузі"
+msgstr "Тренування на паузі"
+
+#: src/app/workout/[id].tsx:70
+msgid "Тренування не знайдено"
+msgstr "Тренування не знайдено"
+
+#: src/components/training/overview-view.tsx:141
+#: src/components/training/overview-view.tsx:199
+msgid "Тренування не розпочато"
+msgstr "Тренування не розпочато"
+
+#: src/components/training/overview-view.tsx:144
+msgid "Тренування триває"
+msgstr "Тренування триває"
+
+#: src/app/settings/backup.tsx:125
+msgid "тренувань"
+msgstr "тренувань"
+
+#: src/db/home-widget.ts:104
+#: src/lib/dashboard.ts:51
+msgid "Тренувань за тиждень"
+msgstr "Тренувань за тиждень"
+
+#: src/lib/program-ai.ts:408
+msgid "Тренуюся вдома"
+msgstr "Тренуюся вдома"
+
+#: src/components/dashboard/widgets.tsx:277
+#: src/db/home-widget.ts:42
+msgid "Триває"
+msgstr "Триває"
+
+#: src/app/workout/[id].tsx:132
+msgid "ТРИВАЛІСТЬ"
+msgstr "ТРИВАЛІСТЬ"
+
+#: src/lib/program-ai.ts:96
+msgid "Тримати себе в тонусі"
+msgstr "Тримати себе в тонусі"
+
+#: src/lib/program-ai.ts:405
+msgctxt "Stay in shape"
+msgid "Тримати себе в тонусі"
+msgstr "Тримати себе в тонусі"
+
+#: src/lib/labels.ts:14
+msgid "Трицепс"
+msgstr "Трицепс"
+
+#: src/lib/program-ai.ts:345
+msgid "Турнік"
+msgstr "Турнік"
+
+#: src/components/training/history-view.tsx:112
+msgid "Тут з’являться завершені тренування та активності з застосунку здоров’я."
+msgstr "Тут з’являться завершені тренування та активності з застосунку здоров’я."
+
+#: src/components/module-settings.tsx:110
+msgid "Тягни за ручку праворуч, щоб змінити порядок у меню. Вимкнений розділ зникає з меню, головної, налаштувань і сповіщень. Дані нікуди не діваються: увімкни його знову, і все повернеться."
+msgstr "Тягни за ручку праворуч, щоб змінити порядок у меню. Вимкнений розділ зникає з меню, головної, налаштувань і сповіщень. Дані нікуди не діваються: увімкни його знову, і все повернеться."
+
+#. placeholder {0}: program.name
+#: src/components/dashboard/widgets.tsx:309
+msgid "У «{0}» ще немає днів"
+msgstr "У «{0}» ще немає днів"
+
+#: src/app/recap.tsx:251
+msgid "у залі"
+msgstr "у залі"
+
+#: src/lib/achievements.ts:229
+msgid "У межах"
+msgstr "У межах"
+
+#: src/lib/achievements.ts:231
+msgid "у межах норми калорій"
+msgstr "у межах норми калорій"
+
+#: src/components/dashboard/widgets.tsx:940
+msgid "У межах цілі"
+msgstr "У межах цілі"
+
+#: src/app/add-food.tsx:733
+msgid "У міру"
+msgstr "У міру"
+
+#. placeholder {0}: program.name
+#: src/components/training/overview-view.tsx:169
+msgid "У програмі «{0}» ще немає днів"
+msgstr "У програмі «{0}» ще немає днів"
+
+#. placeholder {0}: formatVolume(average)
+#: src/components/dashboard/widgets.tsx:806
+msgid "У середньому {0} {ML} на день"
+msgstr "У середньому {0} {ML} на день"
+
+#: src/app/recap.tsx:307
+#: src/app/recap.tsx:346
+msgid "у середньому за день"
+msgstr "у середньому за день"
+
+#: src/components/app-update.tsx:119
+msgid "У тебе остання версія"
+msgstr "У тебе остання версія"
+
+#: src/components/workout-player.tsx:210
+msgid "У цьому дні немає вправ"
+msgstr "У цьому дні немає вправ"
+
+#: src/app/onboarding.tsx:51
+msgid "У чоловіків і жінок різний базовий обмін, тож від статі залежить норма калорій."
+msgstr "У чоловіків і жінок різний базовий обмін, тож від статі залежить норма калорій."
+
+#: src/lib/program-ai.ts:185
+msgid "Увечері чи після дня за столом"
+msgstr "Увечері чи після дня за столом"
+
+#: src/lib/server-backup.ts:28
+msgid "Увійди в акаунт, щоб зберігати копії на сервері."
+msgstr "Увійди в акаунт, щоб зберігати копії на сервері."
+
+#: src/components/auth-form.tsx:138
+msgid "Увійти"
+msgstr "Увійти"
+
+#: src/components/auth-form.tsx:179
+msgid "Уже є акаунт? Увійти"
+msgstr "Уже є акаунт? Увійти"
+
+#: src/lib/program-ai.ts:406
+msgid "Уклон на силові"
+msgstr "Уклон на силові"
+
+#: src/app/recap.tsx:260
+msgid "Улюблена вправа"
+msgstr "Улюблена вправа"
+
+#: src/lib/units.ts:43
+msgid "унц"
+msgstr "унц"
+
+#: src/components/health-card.tsx:43
+msgid "Усе з {healthName} уже тут. {STORE_HINT}"
+msgstr "Усе з {healthName} уже тут. {STORE_HINT}"
+
+#: src/app/settings/food.tsx:336
+msgid "Усе рахується з норми калорій."
+msgstr "Усе рахується з норми калорій."
+
+#: src/lib/program-ai.ts:412
+msgid "Усе стоячи, без підлоги"
+msgstr "Усе стоячи, без підлоги"
+
+#: src/components/auth-form.tsx:93
+msgid "Усе, що вже є на цьому телефоні, залишиться на ньому."
+msgstr "Усе, що вже є на цьому телефоні, залишиться на ньому."
+
+#: src/components/training/exercises-view.tsx:53
+#: src/components/training/overview-view.tsx:230
+msgid "Усі"
+msgstr "Усі"
+
+#: src/components/training/exercises-view.tsx:67
+msgid "Усі вправи"
+msgstr "Усі вправи"
+
+#: src/app/workout/[id].tsx:98
+#: src/components/training/history-view.tsx:57
+#: src/components/workout-player.tsx:180
+msgid "Усі записані підходи буде видалено."
+msgstr "Усі записані підходи буде видалено."
+
+#: src/components/workout-player.tsx:168
+msgid "Усі підходи виконано."
+msgstr "Усі підходи виконано."
+
+#: src/app/settings/backup.tsx:131
+msgid "Усі поточні дані на цьому телефоні буде замінено. Це не можна скасувати."
+msgstr "Усі поточні дані на цьому телефоні буде замінено. Це не можна скасувати."
+
+#: src/app/recap.tsx:179
+msgid "Усі рекорди"
+msgstr "Усі рекорди"
+
+#: src/app/achievements.tsx:137
+msgid "Усі рівні відкрито"
+msgstr "Усі рівні відкрито"
+
+#: src/app/progress-photos.tsx:184
+msgid "Усі фото"
+msgstr "Усі фото"
+
+#: src/components/dashboard/widgets.tsx:391
+#: src/components/dashboard/widgets.tsx:411
+msgid "усього"
+msgstr "усього"
+
+#: src/components/dashboard/widgets.tsx:857
+#: src/components/training/overview-view.tsx:134
+msgid "Усього"
+msgstr "Усього"
+
+#: src/lib/dashboard.ts:55
+msgid "Усього тренувань"
+msgstr "Усього тренувань"
+
+#: src/components/food-photo-scanner.tsx:62
+msgid "Уточнюю дані про продукт"
+msgstr "Уточнюю дані про продукт"
+
+#: src/app/(tabs)/index.tsx:88
+msgid "Утримуй і тягни плитку, щоб перемістити. Розмір змінює кнопка внизу плитки."
+msgstr "Утримуй і тягни плитку, щоб перемістити. Розмір змінює кнопка внизу плитки."
+
+#: src/components/workout-player.tsx:343
+msgid "Утримуйте кнопку, щоб завершити тренування"
+msgstr "Утримуйте кнопку, щоб завершити тренування"
+
+#: src/lib/profile.ts:48
+msgid "Фізична робота або 2 тренування на день"
+msgstr "Фізична робота або 2 тренування на день"
+
+#: src/lib/units.ts:31
+msgid "фн"
+msgstr "фн"
+
+#: src/components/food-photo-scanner.tsx:77
+msgid "форма"
+msgstr "форма"
+
+#: src/app/profile.tsx:166
+msgid "Формула Міффліна — Сан-Жеора, орієнтовне значення."
+msgstr "Формула Міффліна — Сан-Жеора, орієнтовне значення."
+
+#: src/app/add-food.tsx:483
+#: src/app/exercise/edit.tsx:144
+msgid "Фото"
+msgstr "Фото"
+
+#: src/app/settings/backup.tsx:129
+msgid "фото вправ"
+msgstr "фото вправ"
+
+#: src/app/add-food.tsx:346
+#~ msgid "Фото їжі чи етикетки"
+#~ msgstr "Фото їжі чи етикетки"
+
+#: src/app/add-food.tsx:346
+msgid "Фото їжі, меню чи етикетки"
+msgstr "Фото їжі, меню чи етикетки"
+
+#: src/app/settings/backup.tsx:128
+msgid "фото прогресу"
+msgstr "фото прогресу"
+
+#: src/app/body-weight.tsx:308
+#: src/app/progress-photos.tsx:121
+#: src/app/settings/notifications.tsx:227
+msgid "Фото прогресу"
+msgstr "Фото прогресу"
+
+#: src/app/progress-photos.tsx:152
+msgid "Фотографуйся раз на тиждень: те саме місце, світло й час доби, наприклад зранку натщесерце."
+msgstr "Фотографуйся раз на тиждень: те саме місце, світло й час доби, наприклад зранку натщесерце."
+
+#: src/lib/achievements.ts:278
+msgid "Фотохроніка"
+msgstr "Фотохроніка"
+
+#: src/app/settings/app.tsx:25
+msgid "фунти, милі, унції, дюйми"
+msgstr "фунти, милі, унції, дюйми"
+
+#: src/app/(tabs)/food.tsx:94
+#: src/app/settings/food.tsx:84
+#: src/app/settings/index.tsx:37
+#: src/lib/achievements.ts:288
+#: src/lib/dashboard.ts:138
+#: src/lib/modules.ts:29
+msgid "Харчування"
+msgstr "Харчування"
+
+#: src/app/recap.tsx:84
+#: src/components/dashboard/widgets.tsx:825
+#: src/lib/metrics.ts:37
+msgid "хв"
+msgstr "хв"
+
+#: src/components/set-row.tsx:64
+msgid "хв:с"
+msgstr "хв:с"
+
+#: src/components/module-settings.tsx:152
+msgid "Хоча б один розділ має лишитися."
+msgstr "Хоча б один розділ має лишитися."
+
+#: src/lib/program-ai.ts:409
+msgid "Хочу більше підтягуватися"
+msgstr "Хочу більше підтягуватися"
+
+#: src/lib/program-ai.ts:418
+msgid "Хочу стати гнучкішим"
+msgstr "Хочу стати гнучкішим"
+
+#: src/lib/backup.ts:177
+msgid "Це не файл резервної копії цього застосунку."
+msgstr "Це не файл резервної копії цього застосунку."
+
+#: src/lib/groq.ts:1087
+msgid "Це останній прийом за день: на нього — весь залишок."
+msgstr "Це останній прийом за день: на нього — весь залишок."
+
+#: src/components/health-card.tsx:57
+msgid "Цей пристрій не підтримує Apple Health."
+msgstr "Цей пристрій не підтримує Apple Health."
+
+#: src/components/activity-calendar.tsx:54
+#: src/components/dashboard/widgets.tsx:386
+msgid "Цей тиждень"
+msgstr "Цей тиждень"
+
+#: src/components/dashboard/widgets.tsx:259
+#: src/lib/dashboard.ts:85
+msgid "Цитата дня"
+msgstr "Цитата дня"
+
+#: src/components/workout-player.tsx:439
+msgid "ціль"
+msgstr "ціль"
+
+#: src/lib/groq.ts:922
+msgctxt "goal"
+msgid "ціль"
+msgstr "ціль"
+
+#: src/app/settings/food.tsx:866
+#: src/lib/groq.ts:1004
+msgid "Ціль"
+msgstr "Ціль"
+
+#: src/app/body-weight.tsx:273
+#: src/components/workout-player.tsx:470
+msgctxt "Target"
+msgid "Ціль"
+msgstr "Ціль"
+
+#: src/app/(tabs)/water.tsx:228
+msgid "ЦІЛЬ"
+msgstr "ЦІЛЬ"
+
+#: src/app/(tabs)/water.tsx:217
+msgid "Ціль виконано!"
+msgstr "Ціль виконано!"
+
+#: src/app/body-weight.tsx:255
+msgid "Ціль досягнута, тепер утримуй вагу."
+msgstr "Ціль досягнута, тепер утримуй вагу."
+
+#: src/app/(tabs)/water.tsx:216
+msgid "Ціль на сьогодні виконано!"
+msgstr "Ціль на сьогодні виконано!"
+
+#: src/app/body-weight.tsx:209
+#: src/app/body-weight.tsx:241
+msgid "Цільова вага"
+msgstr "Цільова вага"
+
+#: src/lib/groq.ts:381
+#: src/lib/groq.ts:896
+msgid "цукор"
+msgstr "цукор"
+
+#: src/app/add-food.tsx:690
+msgid "Цукор"
+msgstr "Цукор"
+
+#: src/app/recap.tsx:279
+msgid "Цього разу без нових рекордів"
+msgstr "Цього разу без нових рекордів"
+
+#: src/app/progress-photos.tsx:147
+msgid "Час"
+msgstr "Час"
+
+#: src/components/dashboard/widgets.tsx:860
+#: src/lib/labels.ts:23
+msgctxt "Time"
+msgid "Час"
+msgstr "Час"
+
+#: src/lib/reminders.ts:112
+msgid "Час випити води"
+msgstr "Час випити води"
+
+#: src/lib/reminders.ts:147
+msgid "Час для фото прогресу"
+msgstr "Час для фото прогресу"
+
+#: src/lib/achievements.ts:167
+msgid "Час під штангою"
+msgstr "Час під штангою"
+
+#: src/lib/dashboard.ts:57
+msgid "Час тренувань за тиждень"
+msgstr "Час тренувань за тиждень"
+
+#: src/components/targets-editor.tsx:74
+msgid "Час, с"
+msgstr "Час, с"
+
+#: src/app/settings/food.tsx:608
+msgid "Частина набору піде в жир."
+msgstr "Частина набору піде в жир."
+
+#: src/lib/groq.ts:1091
+msgid "Частка на цей прийом"
+msgstr "Частка на цей прийом"
+
+#: src/lib/water.ts:18
+msgid "Чашка"
+msgstr "Чашка"
+
+#: src/components/activity-calendar.tsx:17
+msgid "Червень"
+msgstr "Червень"
+
+#: src/components/day-review-card.tsx:143
+msgid "Чим можна було добрати"
+msgstr "Чим можна було добрати"
+
+#: src/components/food-photo-scanner.tsx:60
+msgid "Читаю текст"
+msgstr "Читаю текст"
+
+#: src/lib/profile.ts:7
+msgid "Чоловік"
+msgstr "Чоловік"
+
+#: src/lib/labels.ts:62
+msgid "Чт"
+msgstr "Чт"
+
+#: src/app/add-food.tsx:503
+#: src/app/settings/food.tsx:105
+msgid "Шаблони"
+msgstr "Шаблони"
+
+#: src/app/settings/food.tsx:505
+msgid "Швидкий набір"
+msgstr "Швидкий набір"
+
+#: src/app/settings/food.tsx:610
+msgid "Швидше за 1% ваги на тиждень: разом із жиром підуть мʼязи."
+msgstr "Швидше за 1% ваги на тиждень: разом із жиром підуть мʼязи."
+
+#: src/lib/program-ai.ts:381
+msgid "Шия"
+msgstr "Шия"
+
+#: src/lib/program-ai.ts:343
+msgid "Штанга"
+msgstr "Штанга"
+
+#: src/lib/program-ai.ts:135
+#: src/lib/program-ai.ts:167
+msgid "Штанга, гантелі, тренажери"
+msgstr "Штанга, гантелі, тренажери"
+
+#: src/components/food-photo-scanner.tsx:90
+msgid "штрихкод"
+msgstr "штрихкод"
+
+#: src/lib/groq.ts:720
+msgid "Штрихкод"
+msgstr "Штрихкод"
+
+#: src/components/food-photo-scanner.tsx:66
+msgid "Шукаю їжу чи етикетку"
+msgstr "Шукаю їжу чи етикетку"
+
+#: src/components/food-photo-scanner.tsx:61
+msgid "Шукаю харчову цінність"
+msgstr "Шукаю харчову цінність"
+
+#: src/components/dashboard/widgets.tsx:354
+#: src/components/dashboard/widgets.tsx:614
+#: src/components/training/overview-view.tsx:306
+msgid "ще"
+msgstr "ще"
+
+#. placeholder {0}: formatKcal(left)
+#: src/components/dashboard/widgets.tsx:537
+msgid "ще {0} ккал"
+msgstr "ще {0} ккал"
+
+#: src/db/home-widget.ts:118
+#: src/db/home-widget.ts:129
+msgid "Ще {amount}"
+msgstr "Ще {amount}"
+
+#: src/components/dashboard/widgets.tsx:890
+msgid "Ще без тренувань"
+msgstr "Ще без тренувань"
+
+#: src/app/exercise/[id].tsx:131
+msgid "Ще немає даних"
+msgstr "Ще немає даних"
+
+#: src/components/dashboard/widgets.tsx:437
+#: src/components/training/overview-view.tsx:241
+msgid "Ще немає завершених тренувань"
+msgstr "Ще немає завершених тренувань"
+
+#: src/app/body-weight.tsx:112
+msgid "Ще немає записів"
+msgstr "Ще немає записів"
+
+#: src/app/progress-photos.tsx:179
+msgid "Ще немає фото"
+msgstr "Ще немає фото"
+
+#: src/app/(tabs)/food.tsx:154
+msgid "Ще нічого"
+msgstr "Ще нічого"
+
+#: src/app/(tabs)/water.tsx:139
+msgid "Ще нічого не випито"
+msgstr "Ще нічого не випито"
+
+#: src/components/dashboard/widgets.tsx:572
+msgid "Ще нічого не з’їдено"
+msgstr "Ще нічого не з’їдено"
+
+#: src/components/workout-player.tsx:528
+msgid "Ще підхід"
+msgstr "Ще підхід"
+
+#: src/app/macro.tsx:226
+#: src/components/day-review-card.tsx:182
+#: src/components/meal-advice.tsx:122
+msgid "Ще раз"
+msgstr "Ще раз"
+
+#: src/lib/dashboard.ts:106
+msgid "Що вже з’їдено сьогодні, з калоріями кожної страви."
+msgstr "Що вже з’їдено сьогодні, з калоріями кожної страви."
+
+#: src/components/day-review-card.tsx:142
+msgid "Що додати"
+msgstr "Що додати"
+
+#: src/lib/program-ai.ts:332
+msgid "Що є з обладнання?"
+msgstr "Що є з обладнання?"
+
+#: src/lib/program-ai.ts:304
+msgid "Що є під рукою?"
+msgstr "Що є під рукою?"
+
+#: src/app/add-food.tsx:455
+msgid "Що з’їв чи випив? Напр. «2 яйця і тост з маслом»"
+msgstr "Що з’їв чи випив? Напр. «2 яйця і тост з маслом»"
+
+#: src/components/meal-advice.tsx:18
+msgid "Що з’їсти на вечерю?"
+msgstr "Що з’їсти на вечерю?"
+
+#: src/components/meal-advice.tsx:17
+msgid "Що з’їсти на обід?"
+msgstr "Що з’їсти на обід?"
+
+#: src/components/meal-advice.tsx:19
+msgid "Що з’їсти на перекус?"
+msgstr "Що з’їсти на перекус?"
+
+#: src/components/meal-advice.tsx:16
+msgid "Що з’їсти на сніданок?"
+msgstr "Що з’їсти на сніданок?"
+
+#: src/app/exercise/edit.tsx:129
+msgid "Що записуємо"
+msgstr "Що записуємо"
+
+#: src/app/exercise/[id].tsx:107
+#: src/components/plan-exercise-sheet.tsx:75
+msgid "Що качає"
+msgstr "Що качає"
+
+#: src/lib/groq.ts:599
+msgid "Що на фото?"
+msgstr "Що на фото?"
+
+#: src/lib/program-ai.ts:203
+msgid "Що найбільше втомилося?"
+msgstr "Що найбільше втомилося?"
+
+#: src/app/settings/food.tsx:126
+msgid "Що поїсти"
+msgstr "Що поїсти"
+
+#: src/lib/program-ai.ts:193
+msgid "Що працюватиме найбільше?"
+msgstr "Що працюватиме найбільше?"
+
+#: src/lib/program-ai.ts:65
+msgid "Що складаємо?"
+msgstr "Що складаємо?"
+
+#. placeholder {0}: missing.join(', ')
+#: src/app/profile.tsx:171
+msgid "Щоб порахувати, вкажи {0}."
+msgstr "Щоб порахувати, вкажи {0}."
+
+#: src/lib/achievements.ts:211
+msgid "Щоденник"
+msgstr "Щоденник"
+
+#: src/lib/modules.ts:30
+msgid "Щоденник їжі, калорії, макроси та AI-поради."
+msgstr "Щоденник їжі, калорії, макроси та AI-поради."
+
+#: src/lib/program-ai.ts:371
+msgid "Щось обмежує?"
+msgstr "Щось обмежує?"
+
+#: src/lib/account.ts:53
+msgid "Щось пішло не так. Спробуй ще раз."
+msgstr "Щось пішло не так. Спробуй ще раз."
+
+#: src/app/progress-photos.tsx:339
+msgid "Як «до»"
+msgstr "Як «до»"
+
+#: src/app/progress-photos.tsx:346
+msgid "Як «після»"
+msgstr "Як «після»"
+
+#. placeholder {0}: formatShortDate(from)
+#: src/app/(tabs)/food.tsx:283
+msgid "Як {0}"
+msgstr "Як {0}"
+
+#: src/app/(tabs)/food.tsx:281
+msgid "Як {when}"
+msgstr "Як {when}"
+
+#: src/lib/achievements.ts:249
+msgid "Як годинник"
+msgstr "Як годинник"
+
+#: src/app/settings/app.tsx:12
+msgid "Як у системі"
+msgstr "Як у системі"
+
+#: src/app/(tabs)/food.tsx:276
+msgid "Як учора"
+msgstr "Як учора"
+
+#: src/lib/program-ai.ts:213
+msgid "Яка в тебе гнучкість?"
+msgstr "Яка в тебе гнучкість?"
+
+#: src/lib/program-ai.ts:91
+msgid "Яка головна мета?"
+msgstr "Яка головна мета?"
+
+#: src/lib/program-ai.ts:239
+msgid "Який у тебе досвід?"
+msgstr "Який у тебе досвід?"
+
+#: src/app/settings/index.tsx:99
+msgid "Які дані й куди"
+msgstr "Які дані й куди"
+
+#: src/components/report-ai.tsx:42
+msgid "Якщо відповідь образлива, небезпечна чи недоречна, надішли її нам, і ми її переглянемо."
+msgstr "Якщо відповідь образлива, небезпечна чи недоречна, надішли її нам, і ми її переглянемо."
+
+#: src/components/remove-dialogs.ts:20
+msgid "Якщо за нею вже були тренування, програма піде в архів, а історія залишиться."
+msgstr "Якщо за нею вже були тренування, програма піде в архів, а історія залишиться."

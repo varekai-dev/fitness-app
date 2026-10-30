@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
@@ -6,7 +7,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 
 import { Button, Card, Row, Text } from '@/components/ui';
-import { tr } from '@/lib/i18n';
 import { colors } from '@/theme';
 
 /** Release APKs are published here by .github/workflows/release.yml. */
@@ -105,35 +105,32 @@ export function AppUpdateCard() {
   };
 
   const status = !updatesAvailable
-    ? tr('Оновлення працюють лише в зібраному застосунку', 'Updates work only in a built app')
+    ? t`Оновлення працюють лише в зібраному застосунку`
     : isChecking || isCheckingApk
-      ? tr('Перевіряю оновлення…', 'Checking for updates…')
+      ? t`Перевіряю оновлення…`
       : downloadError
-        ? tr('Не вдалося завантажити оновлення', 'Couldn’t download the update')
+        ? t`Не вдалося завантажити оновлення`
         : hasOtaUpdate
-          ? tr('Доступна нова версія', 'A new version is available')
+          ? t`Доступна нова версія`
           : hasApkUpdate
-            ? tr(
-                `Доступна версія ${parseVersion(latestApk.version).join('.')} — потрібно встановити новий APK`,
-                `Version ${parseVersion(latestApk.version).join('.')} is available as a new APK`,
-              )
+            ? t`Доступна версія ${parseVersion(latestApk.version).join('.')} — потрібно встановити новий APK`
             : checkError || apkCheckError
-              ? tr('Не вдалося перевірити оновлення', 'Couldn’t check for updates')
-              : tr('У тебе остання версія', 'You’re on the latest version');
+              ? t`Не вдалося перевірити оновлення`
+              : t`У тебе остання версія`;
 
   return (
     <Card>
       <Row>
         <Ionicons name="cloud-download-outline" size={20} color={colors.accent} />
         <Text variant="heading">
-          {tr('Версія', 'Version')} {currentVersion}
+          {t`Версія`} {currentVersion}
         </Text>
       </Row>
       <Text variant="muted">{status}</Text>
       {updatesAvailable &&
         (hasOtaUpdate ? (
           <Button
-            title={tr('Оновити', 'Update')}
+            title={t`Оновити`}
             icon="refresh"
             small
             loading={isDownloading}
@@ -141,14 +138,14 @@ export function AppUpdateCard() {
           />
         ) : hasApkUpdate ? (
           <Button
-            title={tr('Завантажити APK', 'Download APK')}
+            title={t`Завантажити APK`}
             icon="download"
             small
             onPress={downloadApk}
           />
         ) : (
           <Button
-            title={tr('Перевірити', 'Check')}
+            title={t`Перевірити`}
             variant="secondary"
             small
             loading={isChecking || isCheckingApk}

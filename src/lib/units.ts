@@ -1,5 +1,6 @@
+import { t } from '@lingui/core/macro';
 import { readSettingSync, reloadApp, writeSettingSync } from '@/lib/app-settings';
-import { locale, tr } from '@/lib/i18n';
+import { locale } from '@/lib/i18n';
 
 /**
  * Data is always stored in metric (kg, km, ml, cm); the chosen system only
@@ -27,19 +28,19 @@ const CM_PER_IN = 2.54;
 
 // ---------- weight ----------
 
-export const WEIGHT_UNIT = imperial ? tr('фн', 'lb') : tr('кг', 'kg');
+export const WEIGHT_UNIT = imperial ? t`фн` : t`кг`;
 export const kgToDisplay = (kg: number) => (imperial ? kg / KG_PER_LB : kg);
 export const displayToKg = (v: number) => (imperial ? v * KG_PER_LB : v);
 
 // ---------- distance ----------
 
-export const DISTANCE_UNIT = imperial ? tr('мі', 'mi') : tr('км', 'km');
+export const DISTANCE_UNIT = imperial ? t`мі` : t`км`;
 export const kmToDisplay = (km: number) => (imperial ? km / KM_PER_MI : km);
 export const displayToKm = (v: number) => (imperial ? v * KM_PER_MI : v);
 
 // ---------- volume ----------
 
-export const VOLUME_UNIT = imperial ? tr('унц', 'fl oz') : tr('мл', 'ml');
+export const VOLUME_UNIT = imperial ? t`унц` : t`мл`;
 export const mlToDisplay = (ml: number) => (imperial ? ml / ML_PER_FL_OZ : ml);
 /** Water is stored in whole millilitres. */
 export const displayToMl = (v: number) => Math.round(imperial ? v * ML_PER_FL_OZ : v);
@@ -56,10 +57,10 @@ export const formatVolume = (ml: number) => groupedFormatter.format(Math.round(m
 export const formatVolumeCompact = (ml: number) =>
   imperial
     ? `${formatVolume(ml)} ${VOLUME_UNIT}`
-    : `${compactFormatter.format(ml / 1000)} ${tr('л', 'L')}`;
+    : `${compactFormatter.format(ml / 1000)} ${t`л`}`;
 
 // ---------- height ----------
 
-export const HEIGHT_UNIT = imperial ? tr('дюйм', 'in') : tr('см', 'cm');
+export const HEIGHT_UNIT = imperial ? t`дюйм` : t`см`;
 export const cmToDisplay = (cm: number) => (imperial ? cm / CM_PER_IN : cm);
 export const displayToCm = (v: number) => (imperial ? v * CM_PER_IN : v);

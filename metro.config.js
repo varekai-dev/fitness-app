@@ -2,7 +2,9 @@ const path = require('path');
 const { getDefaultConfig } = require('expo/metro-config');
 
 const config = getDefaultConfig(__dirname);
-config.resolver.sourceExts.push('sql');
+config.resolver.sourceExts.push('sql', 'po');
+// Translation catalogs (src/locales/*.po) are imported as modules and compiled on the fly.
+config.transformer.babelTransformerPath = require.resolve('@lingui/metro-transformer/expo');
 
 // expo-notifications requires its FCM topic module at import time, and Expo Go on
 // Android doesn't ship it, so the whole app would crash there. The app only uses

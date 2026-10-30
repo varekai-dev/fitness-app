@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -9,14 +10,13 @@ import { Button, IconButton, Row, Text } from '@/components/ui';
 import { adviseMeal, type StoredMealAdvice } from '@/db/food';
 import type { Meal } from '@/db/schema';
 import { formatKcal } from '@/lib/food';
-import { tr } from '@/lib/i18n';
 import { colors, radius, spacing } from '@/theme';
 
 const ASK: Record<Meal, string> = {
-  breakfast: tr('Що з’їсти на сніданок?', 'What to eat for breakfast?'),
-  lunch: tr('Що з’їсти на обід?', 'What to eat for lunch?'),
-  dinner: tr('Що з’їсти на вечерю?', 'What to eat for dinner?'),
-  snack: tr('Що з’їсти на перекус?', 'What to eat for a snack?'),
+  breakfast: t`Що з’їсти на сніданок?`,
+  lunch: t`Що з’їсти на обід?`,
+  dinner: t`Що з’їсти на вечерю?`,
+  snack: t`Що з’їсти на перекус?`,
 };
 
 /**
@@ -64,7 +64,7 @@ export function MealAdvice({
           style={({ pressed }) => [styles.ask, pressed && styles.pressed]}>
           <Ionicons name="sparkles" size={18} color={colors.accent} />
           <Text variant="body" style={[styles.flex, styles.askLabel]}>
-            {loading ? tr('Підбираю страву…', 'Picking a meal…') : ASK[meal]}
+            {loading ? t`Підбираю страву…` : ASK[meal]}
           </Text>
           {loading && <Spinner color={colors.textSecondary} />}
         </Pressable>
@@ -79,7 +79,7 @@ export function MealAdvice({
       <Row style={styles.header}>
         <Ionicons name="sparkles" size={16} color={colors.accent} />
         <Text variant="caption" style={styles.flex}>
-          {tr('Порада AI', 'AI suggests')} · {formatKcal(kcal)} {tr('ккал', 'kcal')}
+          {t`Порада AI`} · {formatKcal(kcal)} {t`ккал`}
         </Text>
         {loading ? (
           <Spinner color={colors.textSecondary} />
@@ -104,7 +104,7 @@ export function MealAdvice({
             food={dish}
             day={day}
             meal={meal}
-            meta={`${formatKcal(dish.kcal)} ${tr('ккал', 'kcal')} · ${tr('Б', 'P')} ${Math.round(dish.proteinG)} · ${tr('Ж', 'F')} ${Math.round(dish.fatG ?? 0)} · ${tr('В', 'C')} ${Math.round(dish.carbsG ?? 0)}`}
+            meta={`${formatKcal(dish.kcal)} ${t`ккал`} · ${t`Б`} ${Math.round(dish.proteinG)} · ${t`Ж`} ${Math.round(dish.fatG ?? 0)} · ${t`В`} ${Math.round(dish.carbsG ?? 0)}`}
           />
         ))}
       </View>
@@ -119,7 +119,7 @@ function Error({ message, onRetry }: { message: string; onRetry: () => void }) {
       <Text variant="muted" style={styles.flex}>
         {message}
       </Text>
-      <Button title={tr('Ще раз', 'Retry')} variant="secondary" small onPress={onRetry} />
+      <Button title={t`Ще раз`} variant="secondary" small onPress={onRetry} />
     </Row>
   );
 }

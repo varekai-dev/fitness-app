@@ -1,8 +1,9 @@
+import { t } from '@lingui/core/macro';
 import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
 import { useSyncExternalStore } from 'react';
 
-import { lang, tr } from '@/lib/i18n';
+import { lang } from '@/lib/i18n';
 
 /** The Cloudflare Worker in `server/`. EXPO_PUBLIC_API_URL points at `wrangler dev` instead. */
 export const API_URL =
@@ -35,33 +36,21 @@ export class AccountError extends Error {
 function accountErrorMessage(code: ErrorCode) {
   switch (code) {
     case 'invalid_email':
-      return tr('Перевір адресу пошти.', 'Check the email address.');
+      return t`Перевір адресу пошти.`;
     case 'weak_password':
-      return tr(
-        `Пароль має бути щонайменше ${MIN_PASSWORD} символів.`,
-        `The password needs at least ${MIN_PASSWORD} characters.`,
-      );
+      return t`Пароль має бути щонайменше ${MIN_PASSWORD} символів.`;
     case 'email_taken':
-      return tr(
-        'Акаунт із цією поштою вже є. Увійди або віднови пароль.',
-        'There’s already an account with this email. Sign in or reset the password.',
-      );
+      return t`Акаунт із цією поштою вже є. Увійди або віднови пароль.`;
     case 'wrong_credentials':
-      return tr('Неправильна пошта або пароль.', 'Wrong email or password.');
+      return t`Неправильна пошта або пароль.`;
     case 'invalid_code':
-      return tr(
-        'Код неправильний або застарів. Запроси новий.',
-        'The code is wrong or expired. Request a new one.',
-      );
+      return t`Код неправильний або застарів. Запроси новий.`;
     case 'too_many_attempts':
-      return tr('Забагато спроб. Запроси новий код.', 'Too many attempts. Request a new code.');
+      return t`Забагато спроб. Запроси новий код.`;
     case 'network':
-      return tr(
-        'Немає з’єднання з сервером. Перевір інтернет.',
-        'Can’t reach the server. Check your connection.',
-      );
+      return t`Немає з’єднання з сервером. Перевір інтернет.`;
     default:
-      return tr('Щось пішло не так. Спробуй ще раз.', 'Something went wrong. Try again.');
+      return t`Щось пішло не так. Спробуй ще раз.`;
   }
 }
 

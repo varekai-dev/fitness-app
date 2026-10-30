@@ -1,3 +1,4 @@
+import { plural, t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -29,7 +30,6 @@ import { saveProgramPlan } from '@/db/programs';
 import type { Exercise } from '@/db/schema';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { GROQ_ATTEMPTS, GroqError } from '@/lib/groq';
-import { plural, tr } from '@/lib/i18n';
 import { formatTargets, MUSCLE_GROUP_LABELS } from '@/lib/labels';
 import { formatNumber, formatWeight } from '@/lib/metrics';
 import { ACTIVITY, ageOn, SEX_LABELS, WEIGHT_GOAL, type Profile } from '@/lib/profile';
@@ -51,39 +51,21 @@ import { colors, radius, spacing } from '@/theme';
 
 /** What a finished plan is called, by kind. */
 const READY_LABEL: Record<ProgramKind, string> = {
-  training: tr('Програма готова', 'Your program'),
-  warmup: tr('Розминка готова', 'Your warm-up'),
-  cooldown: tr('Заминка готова', 'Your cool-down'),
+  training: t`Програма готова`,
+  warmup: t`Розминка готова`,
+  cooldown: t`Заминка готова`,
 };
 
 const WISHES_HINT: Record<ProgramKind, string> = {
-  training: tr(
-    'Напиши своїми словами, що хочеш від тренувань. Можна пропустити.',
-    'Tell in your own words what you want from training. You can skip it.',
-  ),
-  warmup: tr(
-    'Напиши своїми словами, що хочеш від розминки. Можна пропустити.',
-    'Tell in your own words what you want from the warm-up. You can skip it.',
-  ),
-  cooldown: tr(
-    'Напиши своїми словами, що хочеш від заминки. Можна пропустити.',
-    'Tell in your own words what you want from the cool-down. You can skip it.',
-  ),
+  training: t`Напиши своїми словами, що хочеш від тренувань. Можна пропустити.`,
+  warmup: t`Напиши своїми словами, що хочеш від розминки. Можна пропустити.`,
+  cooldown: t`Напиши своїми словами, що хочеш від заминки. Можна пропустити.`,
 };
 
 const WISHES_PLACEHOLDER: Record<ProgramKind, string> = {
-  training: tr(
-    'Напр. «тримати себе в тонусі» або «уклон на силові»',
-    'E.g. “stay in shape” or “lean towards strength”',
-  ),
-  warmup: tr(
-    'Напр. «усе стоячи» або «суглоби скуті зранку»',
-    'E.g. “all standing” or “stiff joints in the morning”',
-  ),
-  cooldown: tr(
-    'Напр. «стати гнучкішим» або «затерпла спина»',
-    'E.g. “get more flexible” or “tight back”',
-  ),
+  training: t`Напр. «тримати себе в тонусі» або «уклон на силові»`,
+  warmup: t`Напр. «усе стоячи» або «суглоби скуті зранку»`,
+  cooldown: t`Напр. «стати гнучкішим» або «затерпла спина»`,
 };
 
 /**
@@ -129,9 +111,9 @@ export default function AiProgramScreen() {
       icon: 'alert-circle',
       buttons: signedOut
         ? [
-            { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
+            { text: t`Скасувати`, style: 'cancel' },
             {
-              text: tr('Акаунт', 'Account'),
+              text: t`Акаунт`,
               onPress: () => router.push('/settings/account'),
             },
           ]
@@ -147,7 +129,7 @@ export default function AiProgramScreen() {
       setReadyPlan(await askProgramPlan({ ...request, onAttempt: setAttempt }));
     } catch (e) {
       setGenerating(false);
-      showError(tr('Не вдалося скласти програму', 'Couldn’t build the program'), e);
+      showError(t`Не вдалося скласти програму`, e);
     }
   };
 
@@ -183,7 +165,7 @@ export default function AiProgramScreen() {
           : p,
       );
     } catch (e) {
-      showError(tr('Не вдалося замінити вправу', 'Couldn’t replace the exercise'), e);
+      showError(t`Не вдалося замінити вправу`, e);
     } finally {
       setReplacing((r) => r.filter((k) => k !== key));
     }
@@ -197,7 +179,7 @@ export default function AiProgramScreen() {
       id = saveProgramPlan(await downloadPlanPhotos(plan), intoProgramId);
     } catch (e) {
       dialog.show({
-        title: tr('Не вдалося зберегти', 'Couldn’t save'),
+        title: t`Не вдалося зберегти`,
         message: (e as Error).message,
         icon: 'alert-circle',
       });
@@ -217,7 +199,7 @@ export default function AiProgramScreen() {
   const needsAnswer = !!question?.multi && !question.optional && answers[question.key].length === 0;
 
   return (
-    <Screen title={tr('Програма з AI', 'AI program')} mode="modal">
+    <Screen title={t`Програма з AI`} mode="modal">
       {generating ? (
         <ProgramAiLoader
           stages={loaderStages(
@@ -274,13 +256,13 @@ export default function AiProgramScreen() {
           )}
           {needsAnswer && (
             <Text variant="muted" style={styles.center}>
-              {tr('Обери хоча б один варіант', 'Pick at least one')}
+              {t`Обери хоча б один варіант`}
             </Text>
           )}
           <Row>
             {step > 0 && (
               <Button
-                title={tr('Назад', 'Back')}
+                title={t`Назад`}
                 icon="chevron-back"
                 variant="secondary"
                 onPress={() => setStep(step - 1)}
@@ -292,8 +274,8 @@ export default function AiProgramScreen() {
                 <Button
                   title={
                     question.optional && answers[question.key].length === 0
-                      ? tr('Пропустити', 'Skip')
-                      : tr('Далі', 'Next')
+                      ? t`Пропустити`
+                      : t`Далі`
                   }
                   trailingIcon="chevron-forward"
                   onPress={() => setStep(step + 1)}
@@ -305,7 +287,7 @@ export default function AiProgramScreen() {
               )
             ) : (
               <Button
-                title={tr('Скласти', 'Build')}
+                title={t`Скласти`}
                 icon="sparkles"
                 onPress={generate}
                 style={styles.flex}
@@ -324,10 +306,10 @@ function profileFacts(profile: Profile, weightKg: number | undefined) {
   return [
     profile.sex && SEX_LABELS[profile.sex],
     profile.birthDate &&
-      `${ageOn(profile.birthDate)} ${plural(ageOn(profile.birthDate), ['рік', 'роки', 'років'], ['year', 'years'])}`,
+      `${ageOn(profile.birthDate)} ${plural(ageOn(profile.birthDate), { one: 'рік', few: 'роки', many: 'років', other: 'роки' })}`,
     profile.heightCm && `${formatNumber(cmToDisplay(profile.heightCm), 0)} ${HEIGHT_UNIT}`,
     weightKg && `${formatWeight(weightKg, 1)} ${WEIGHT_UNIT}`,
-    `${tr('активність', 'activity')}: ${ACTIVITY[profile.activity].label.toLowerCase()}`,
+    `${t`активність`}: ${ACTIVITY[profile.activity].label.toLowerCase()}`,
     WEIGHT_GOAL[profile.goal].label.toLowerCase(),
   ].filter(Boolean) as string[];
 }
@@ -351,36 +333,33 @@ function loaderStages(
   const days = Number(answers.days[0]) || 3;
   const routine = programKind(answers) !== 'training';
   return [
-    { title: tr('Аналізую профіль', 'Reading your profile'), detail: facts.join(' · ') },
+    { title: t`Аналізую профіль`, detail: facts.join(' · ') },
     {
       title: routine
-        ? tr('Враховую побажання', 'Weighing your wishes')
-        : tr('Враховую мету й побажання', 'Weighing your goal and wishes'),
+        ? t`Враховую побажання`
+        : t`Враховую мету й побажання`,
       detail: [picked(answers, 'goal'), wishes.trim()].filter(Boolean).join(' · '),
     },
     {
       title: routine
-        ? `${tr('Вкладаю в', 'Fitting it into')} ${picked(answers, 'duration')}`
-        : `${tr('Розподіляю', 'Spreading')} ${days} ${plural(days, ['тренування', 'тренування', 'тренувань'], ['workout', 'workouts'])} ${tr('на тиждень', 'over the week')}`,
+        ? `${t`Вкладаю в`} ${picked(answers, 'duration')}`
+        : `${t`Розподіляю`} ${days} ${plural(days, { one: 'тренування', few: 'тренування', many: 'тренувань', other: 'тренування' })} ${t`на тиждень`}`,
       detail: [routine ? '' : picked(answers, 'duration'), picked(answers, 'focus')]
         .filter(Boolean)
         .join(' · '),
     },
     {
-      title: tr('Підбираю вправи', 'Picking exercises'),
-      detail: tr(
-        `${libraryCount} у бібліотеці · ${picked(answers, 'equipment')}`,
-        `${libraryCount} in the library · ${picked(answers, 'equipment')}`,
-      ),
+      title: t`Підбираю вправи`,
+      detail: t`${libraryCount} у бібліотеці · ${picked(answers, 'equipment')}`,
     },
     {
       title: routine
-        ? tr('Розраховую час на вправи', 'Timing the exercises')
-        : tr('Розраховую підходи й відпочинок', 'Setting sets and rest'),
+        ? t`Розраховую час на вправи`
+        : t`Розраховую підходи й відпочинок`,
       detail: picked(answers, 'level'),
     },
     {
-      title: tr('Перевіряю план', 'Checking the plan'),
+      title: t`Перевіряю план`,
       detail: picked(answers, 'limits') || undefined,
     },
   ];
@@ -391,7 +370,7 @@ function Progress({ step, steps }: { step: number; steps: number }) {
     <View style={styles.progress}>
       <Text variant="overline">
         {/* "з" in capitals reads like a 3, so a slash instead. */}
-        {tr('Крок', 'Step')} {step + 1}/{steps}
+        {t`Крок`} {step + 1}/{steps}
       </Text>
       <View style={styles.progressBar}>
         {Array.from({ length: steps }, (_, i) => (
@@ -490,7 +469,7 @@ function WishesStep({
   return (
     <View style={styles.step}>
       <View style={styles.stepHeader}>
-        <Text variant="title">{tr('Твої побажання', 'Your wishes')}</Text>
+        <Text variant="title">{t`Твої побажання`}</Text>
         <Text variant="secondary">{WISHES_HINT[kind]}</Text>
       </View>
       <Field
@@ -507,14 +486,11 @@ function WishesStep({
       <Card onPress={() => router.push('/profile')} style={styles.profile}>
         <Ionicons name="person-circle-outline" size={28} color={colors.accent} />
         <View style={styles.flex}>
-          <Text variant="body">{tr('AI врахує профіль', 'AI uses your profile')}</Text>
+          <Text variant="body">{t`AI врахує профіль`}</Text>
           <Text variant="muted">{facts.join(' · ')}</Text>
           {incomplete && (
             <Text variant="muted" style={styles.warning}>
-              {tr(
-                'Заповни профіль, щоб програма була точнішою',
-                'Fill in your profile for a better fit',
-              )}
+              {t`Заповни профіль, щоб програма була точнішою`}
             </Text>
           )}
         </View>
@@ -578,26 +554,23 @@ function PlanPreview({
       <Row style={styles.badges}>
         {kind === 'training' && (
           <Badge
-            label={`${plan.days.length} ${tr('дн.', plan.days.length === 1 ? 'day' : 'days')}`}
+            label={`${plan.days.length} ${plural(plan.days.length, { one: 'дн.', other: 'дн.' })}`}
             tone="muted"
           />
         )}
         <Badge
-          label={`${total} ${plural(total, ['вправа', 'вправи', 'вправ'], ['exercise', 'exercises'])}`}
+          label={`${total} ${plural(total, { one: 'вправа', few: 'вправи', many: 'вправ', other: 'вправи' })}`}
           tone="muted"
         />
         {newCount > 0 && (
           <Badge
-            label={`${newCount} ${plural(newCount, ['нова', 'нові', 'нових'], ['new', 'new'])}`}
+            label={`${newCount} ${plural(newCount, { one: 'нова', few: 'нові', many: 'нових', other: 'нові' })}`}
           />
         )}
       </Row>
       {newCount > 0 && (
         <Text variant="muted">
-          {tr(
-            'Нових вправ ще немає в бібліотеці — вони додадуться туди з фото, описом техніки й відео.',
-            'New exercises aren’t in your library yet; they’ll be added with a photo, technique notes and a video.',
-          )}
+          {t`Нових вправ ще немає в бібліотеці — вони додадуться туди з фото, описом техніки й відео.`}
         </Text>
       )}
 
@@ -621,7 +594,7 @@ function PlanPreview({
                     <Text variant="body" style={styles.flexShrink} numberOfLines={2}>
                       {e.name}
                     </Text>
-                    {e.exerciseId === null && <Badge label={tr('Нова', 'New')} />}
+                    {e.exerciseId === null && <Badge label={t`Нова`} />}
                   </Row>
                   <Text variant="muted">
                     {MUSCLE_GROUP_LABELS[e.muscleGroup]} · {formatTargets(e.targets)}
@@ -646,18 +619,18 @@ function PlanPreview({
       ))}
 
       <Button
-        title={tr('Зберегти програму', 'Save program')}
+        title={t`Зберегти програму`}
         icon="checkmark-circle"
         loading={saving}
         onPress={onSave}
       />
       <Button
-        title={tr('Скласти інакше', 'Try another')}
+        title={t`Скласти інакше`}
         icon="refresh"
         variant="secondary"
         onPress={onRegenerate}
       />
-      <Button title={tr('Змінити відповіді', 'Change answers')} variant="ghost" onPress={onEdit} />
+      <Button title={t`Змінити відповіді`} variant="ghost" onPress={onEdit} />
     </>
   );
 }

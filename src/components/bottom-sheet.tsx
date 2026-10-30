@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import {
@@ -17,7 +18,6 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { tr } from '@/lib/i18n';
 import { colors, radius, spacing } from '@/theme';
 
 const SPRING = { damping: 22, stiffness: 200, mass: 0.8 };
@@ -132,7 +132,7 @@ function Sheet({
           style={styles.flex}
           onPress={onClose}
           accessibilityRole="button"
-          accessibilityLabel={tr('Закрити', 'Close')}
+          accessibilityLabel={t`Закрити`}
         />
       </Animated.View>
       <GestureDetector gesture={pan}>

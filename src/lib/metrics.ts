@@ -1,5 +1,5 @@
+import { t } from '@lingui/core/macro';
 import type { TrackingType, WorkoutSet } from '@/db/schema';
-import { tr } from '@/lib/i18n';
 import { DISTANCE_UNIT, kgToDisplay, kmToDisplay, unitSystem, WEIGHT_UNIT } from '@/lib/units';
 
 export type SetValues = Pick<WorkoutSet, 'weightKg' | 'reps' | 'durationSec' | 'distanceKm'>;
@@ -20,21 +20,21 @@ export type MetricInfo = {
 
 const KG = WEIGHT_UNIT;
 const KM = DISTANCE_UNIT;
-const REPS = tr('повт', 'reps');
+const REPS = t`повт`;
 
 export const METRIC_INFO: Record<TrackingType, MetricInfo> = {
-  weight_reps: { label: tr('Розрахунковий 1ПМ', 'Estimated 1RM'), unit: KG, higherIsBetter: true },
+  weight_reps: { label: t`Розрахунковий 1ПМ`, unit: KG, higherIsBetter: true },
   // Body weight is not tracked, so the estimate covers only the added weight.
   weighted_reps: {
-    label: tr('1ПМ додаткової ваги', 'Added-weight 1RM'),
+    label: t`1ПМ додаткової ваги`,
     unit: KG,
     higherIsBetter: true,
   },
-  reps: { label: tr('Макс. повторень', 'Max reps'), unit: REPS, higherIsBetter: true },
-  duration: { label: tr('Макс. час', 'Max time'), unit: tr('с', 's'), higherIsBetter: true },
+  reps: { label: t`Макс. повторень`, unit: REPS, higherIsBetter: true },
+  duration: { label: t`Макс. час`, unit: t`с`, higherIsBetter: true },
   distance_duration: {
-    label: tr('Найкращий темп', 'Best pace'),
-    unit: `${tr('хв', 'min')}/${DISTANCE_UNIT}`,
+    label: t`Найкращий темп`,
+    unit: `${t`хв`}/${DISTANCE_UNIT}`,
     higherIsBetter: false,
   },
 };
@@ -116,11 +116,11 @@ export function formatTonnage(kg: number): { value: string; unit: string } {
     const lb = kgToDisplay(kg);
     return lb < 10_000
       ? { value: formatNumber(lb, 0), unit: KG }
-      : { value: formatNumber(lb / 1000, 1), unit: tr('тис. фн', 'k lb') };
+      : { value: formatNumber(lb / 1000, 1), unit: t`тис. фн` };
   }
   return kg < 1000
     ? { value: formatNumber(kg, 0), unit: KG }
-    : { value: formatNumber(kg / 1000, 1), unit: tr('т', 't') };
+    : { value: formatNumber(kg / 1000, 1), unit: t`т` };
 }
 
 /** Kilograms shown in the chosen unit, without the unit. */
@@ -153,7 +153,7 @@ export function formatSet(type: TrackingType, s: SetValues): string {
     case 'duration':
       return formatDuration(s.durationSec ?? 0);
     case 'distance_duration':
-      return `${formatDistance(s.distanceKm ?? 0)} ${KM} ${tr('за', 'in')} ${formatDuration(s.durationSec ?? 0)}`;
+      return `${formatDistance(s.distanceKm ?? 0)} ${KM} ${t`за`} ${formatDuration(s.durationSec ?? 0)}`;
   }
 }
 

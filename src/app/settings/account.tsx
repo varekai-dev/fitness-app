@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 import { useState } from 'react';
@@ -6,14 +7,14 @@ import { StyleSheet } from 'react-native';
 import { useDialog } from '@/components/dialog';
 import { Button, Card, Loading, Row, Screen, Text } from '@/components/ui';
 import { deleteAccount, logout, useAccount, type User } from '@/lib/account';
-import { locale, tr } from '@/lib/i18n';
+import { locale } from '@/lib/i18n';
 import { colors } from '@/theme';
 
 /** Signed-out users never get here: the root layout shows the sign-in screen instead. */
 export default function AccountScreen() {
   const user = useAccount();
   return (
-    <Screen title={tr('Акаунт', 'Account')}>{user ? <SignedIn user={user} /> : <Loading />}</Screen>
+    <Screen title={t`Акаунт`}>{user ? <SignedIn user={user} /> : <Loading />}</Screen>
   );
 }
 
@@ -22,15 +23,12 @@ function SignedIn({ user }: { user: User }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const confirmLogout = () =>
     dialog.show({
-      title: tr('Вийти з акаунта?', 'Sign out?'),
-      message: tr(
-        'Дані на цьому телефоні залишаться.',
-        'The data on this phone stays where it is.',
-      ),
+      title: t`Вийти з акаунта?`,
+      message: t`Дані на цьому телефоні залишаться.`,
       icon: 'log-out-outline',
       buttons: [
-        { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
-        { text: tr('Вийти', 'Sign out'), style: 'destructive', onPress: logout },
+        { text: t`Скасувати`, style: 'cancel' },
+        { text: t`Вийти`, style: 'destructive', onPress: logout },
       ],
     });
   const remove = async () => {
@@ -41,24 +39,21 @@ function SignedIn({ user }: { user: User }) {
     } catch (e) {
       setIsDeleting(false);
       dialog.show({
-        title: tr('Не вдалося видалити акаунт', 'Couldn’t delete the account'),
+        title: t`Не вдалося видалити акаунт`,
         message: e instanceof Error ? e.message : undefined,
         icon: 'alert-circle-outline',
-        buttons: [{ text: tr('Зрозуміло', 'OK') }],
+        buttons: [{ text: t`Зрозуміло` }],
       });
     }
   };
   const confirmDelete = () =>
     dialog.show({
-      title: tr('Видалити акаунт?', 'Delete the account?'),
-      message: tr(
-        'Акаунт і всі його резервні копії на сервері зникнуть назавжди. Дані на цьому телефоні залишаться.',
-        'The account and all its backups on the server are gone for good. The data on this phone stays where it is.',
-      ),
+      title: t`Видалити акаунт?`,
+      message: t`Акаунт і всі його резервні копії на сервері зникнуть назавжди. Дані на цьому телефоні залишаться.`,
       icon: 'trash-outline',
       buttons: [
-        { text: tr('Скасувати', 'Cancel'), style: 'cancel' },
-        { text: tr('Видалити', 'Delete'), style: 'destructive', onPress: remove },
+        { text: t`Скасувати`, style: 'cancel' },
+        { text: t`Видалити`, style: 'destructive', onPress: remove },
       ],
     });
   return (
@@ -71,11 +66,11 @@ function SignedIn({ user }: { user: User }) {
           </Text>
         </Row>
         <Text variant="muted">
-          {tr('Акаунт від', 'Account since')}{' '}
+          {t`Акаунт від`}{' '}
           {new Date(user.createdAt).toLocaleDateString(locale, { dateStyle: 'long' })}
         </Text>
         <Button
-          title={tr('Вийти', 'Sign out')}
+          title={t`Вийти`}
           icon="log-out-outline"
           variant="danger"
           onPress={confirmLogout}
@@ -84,13 +79,10 @@ function SignedIn({ user }: { user: User }) {
       </Card>
       <Card>
         <Text variant="muted">
-          {tr(
-            'Видаляє акаунт і резервні копії на сервері. Тренування, їжа й інші дані на телефоні залишаться.',
-            'Deletes the account and its backups on the server. Workouts, food and the rest of the data on the phone stay.',
-          )}
+          {t`Видаляє акаунт і резервні копії на сервері. Тренування, їжа й інші дані на телефоні залишаться.`}
         </Text>
         <Button
-          title={tr('Видалити акаунт', 'Delete account')}
+          title={t`Видалити акаунт`}
           icon="trash-outline"
           variant="destructive"
           loading={isDeleting}

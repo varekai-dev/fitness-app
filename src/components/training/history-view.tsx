@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import { useRef } from 'react';
 import { FlatList, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -16,7 +17,6 @@ import { estimateKcal } from '@/lib/calories';
 import { useDbQuery } from '@/hooks/use-db-query';
 import { useScrollResetOnTabLeave } from '@/hooks/use-scroll-reset-on-tab-leave';
 import { useToday } from '@/hooks/use-today';
-import { tr } from '@/lib/i18n';
 import { spacing } from '@/theme';
 
 type Workout = Awaited<ReturnType<typeof listFinishedWorkouts>>[number];
@@ -53,27 +53,24 @@ export function HistoryView({ bottomSpace }: { bottomSpace: number }) {
     dialog.show(
       item.kind === 'workout'
         ? {
-            title: tr('Видалити тренування?', 'Delete workout?'),
-            message: tr('Усі записані підходи буде видалено.', 'All logged sets will be deleted.'),
+            title: t`Видалити тренування?`,
+            message: t`Усі записані підходи буде видалено.`,
             buttons: [
-              { text: tr('Ні', 'No'), style: 'cancel', onPress: close },
+              { text: t`Ні`, style: 'cancel', onPress: close },
               {
-                text: tr('Видалити', 'Delete'),
+                text: t`Видалити`,
                 style: 'destructive',
                 onPress: () => deleteWorkout(item.workout.id),
               },
             ],
           }
         : {
-            title: tr('Прибрати з історії?', 'Remove from history?'),
-            message: tr(
-              'Запис залишиться в застосунку здоров’я, але сюди більше не потрапить.',
-              'The record stays in the health app but won’t come back here.',
-            ),
+            title: t`Прибрати з історії?`,
+            message: t`Запис залишиться в застосунку здоров’я, але сюди більше не потрапить.`,
             buttons: [
-              { text: tr('Ні', 'No'), style: 'cancel', onPress: close },
+              { text: t`Ні`, style: 'cancel', onPress: close },
               {
-                text: tr('Прибрати', 'Remove'),
+                text: t`Прибрати`,
                 style: 'destructive',
                 onPress: () => hideActivity(item.activity.id),
               },
@@ -111,11 +108,8 @@ export function HistoryView({ bottomSpace }: { bottomSpace: number }) {
         ListEmptyComponent={
           <EmptyState
             icon="time"
-            title={tr('Історія порожня', 'History is empty')}
-            hint={tr(
-              'Тут з’являться завершені тренування та активності з застосунку здоров’я.',
-              'Finished workouts and activities from the health app will appear here.',
-            )}
+            title={t`Історія порожня`}
+            hint={t`Тут з’являться завершені тренування та активності з застосунку здоров’я.`}
           />
         }
       />

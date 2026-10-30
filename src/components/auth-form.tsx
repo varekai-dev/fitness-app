@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { StyleSheet } from 'react-native';
@@ -12,17 +13,16 @@ import {
   requestPasswordReset,
   resetPassword,
 } from '@/lib/account';
-import { tr } from '@/lib/i18n';
 import { openPrivacyPolicy } from '@/lib/legal';
 import { colors, spacing } from '@/theme';
 
 type Mode = 'login' | 'register' | 'forgot' | 'reset';
 
 const TITLES: Record<Mode, () => string> = {
-  login: () => tr('Вхід', 'Sign in'),
-  register: () => tr('Реєстрація', 'Create account'),
-  forgot: () => tr('Забули пароль', 'Forgot password'),
-  reset: () => tr('Новий пароль', 'New password'),
+  login: () => t`Вхід`,
+  register: () => t`Реєстрація`,
+  forgot: () => t`Забули пароль`,
+  reset: () => t`Новий пароль`,
 };
 
 /** Sign in, create an account, or reset a forgotten password with an emailed code. */
@@ -87,25 +87,16 @@ export function AuthForm() {
         </Row>
         <Text variant="muted">
           {mode === 'forgot'
-            ? tr(
-                'Надішлемо на пошту код, щоб задати новий пароль.',
-                'We’ll email you a code to set a new password.',
-              )
+            ? t`Надішлемо на пошту код, щоб задати новий пароль.`
             : mode === 'reset'
-              ? tr(
-                  `Код надіслано на ${email.trim()}. Він діє 15 хвилин. Не бачиш листа — заглянь у спам.`,
-                  `The code was sent to ${email.trim()}. It works for 15 minutes. No email? Check spam.`,
-                )
-              : tr(
-                  'Усе, що вже є на цьому телефоні, залишиться на ньому.',
-                  'Everything already on this phone stays on it.',
-                )}
+              ? t`Код надіслано на ${email.trim()}. Він діє 15 хвилин. Не бачиш листа — заглянь у спам.`
+              : t`Усе, що вже є на цьому телефоні, залишиться на ньому.`}
         </Text>
         {mode !== 'reset' && (
           <Field
             value={email}
             onChangeText={setEmail}
-            placeholder={tr('Пошта', 'Email')}
+            placeholder={t`Пошта`}
             autoCapitalize="none"
             autoCorrect={false}
             autoComplete="email"
@@ -117,7 +108,7 @@ export function AuthForm() {
           <Field
             value={code}
             onChangeText={(text) => setCode(text.replace(/\D/g, '').slice(0, 6))}
-            placeholder={tr('Код із листа', 'Code from the email')}
+            placeholder={t`Код із листа`}
             keyboardType="number-pad"
             autoComplete="one-time-code"
             textContentType="oneTimeCode"
@@ -130,11 +121,8 @@ export function AuthForm() {
             onChangeText={setPassword}
             placeholder={
               mode === 'login'
-                ? tr('Пароль', 'Password')
-                : tr(
-                    `Новий пароль, від ${MIN_PASSWORD} символів`,
-                    `New password, ${MIN_PASSWORD}+ characters`,
-                  )
+                ? t`Пароль`
+                : t`Новий пароль, від ${MIN_PASSWORD} символів`
             }
             secureTextEntry
             autoCapitalize="none"
@@ -147,10 +135,10 @@ export function AuthForm() {
         <Button
           title={
             {
-              login: tr('Увійти', 'Sign in'),
-              register: tr('Створити акаунт', 'Create account'),
-              forgot: tr('Надіслати код', 'Send code'),
-              reset: tr('Зберегти пароль', 'Save password'),
+              login: t`Увійти`,
+              register: t`Створити акаунт`,
+              forgot: t`Надіслати код`,
+              reset: t`Зберегти пароль`,
             }[mode]
           }
           onPress={submit}
@@ -159,7 +147,7 @@ export function AuthForm() {
         />
         {mode === 'login' && (
           <Button
-            title={tr('Забули пароль?', 'Forgot password?')}
+            title={t`Забули пароль?`}
             variant="ghost"
             small
             onPress={() => switchTo('forgot')}
@@ -167,7 +155,7 @@ export function AuthForm() {
         )}
         {mode === 'register' && (
           <Button
-            title={tr('Політика конфіденційності', 'Privacy policy')}
+            title={t`Політика конфіденційності`}
             variant="ghost"
             small
             trailingIcon="open-outline"
@@ -176,7 +164,7 @@ export function AuthForm() {
         )}
         {mode === 'reset' && (
           <Button
-            title={tr('Надіслати код ще раз', 'Send the code again')}
+            title={t`Надіслати код ще раз`}
             variant="ghost"
             small
             disabled={busy}
@@ -187,8 +175,8 @@ export function AuthForm() {
       <Button
         title={
           mode === 'login'
-            ? tr('Немає акаунта? Зареєструватися', 'No account? Create one')
-            : tr('Уже є акаунт? Увійти', 'Have an account? Sign in')
+            ? t`Немає акаунта? Зареєструватися`
+            : t`Уже є акаунт? Увійти`
         }
         variant="ghost"
         onPress={() => switchTo(mode === 'login' ? 'register' : 'login')}

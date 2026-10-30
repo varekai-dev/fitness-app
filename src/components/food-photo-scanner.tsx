@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,7 +22,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Spinner } from '@/components/spinner';
 import { Button, CircleButton, Text } from '@/components/ui';
-import { tr } from '@/lib/i18n';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 /** What the scan found, shown as a title over chips before `onFinish`. */
@@ -56,38 +56,38 @@ const GRID = 44;
 const stages = (label: boolean) =>
   label
     ? [
-        tr('Знайшов етикетку', 'Found a label'),
-        tr('Читаю текст', 'Reading the text'),
-        tr('Шукаю харчову цінність', 'Finding the nutrition facts'),
-        tr('Уточнюю дані про продукт', 'Checking the product'),
-        tr('Складаю опис', 'Writing it up'),
+        t`Знайшов етикетку`,
+        t`Читаю текст`,
+        t`Шукаю харчову цінність`,
+        t`Уточнюю дані про продукт`,
+        t`Складаю опис`,
       ]
     : [
-        tr('Шукаю їжу чи етикетку', 'Finding food or a label'),
-        tr('Розпізнаю, що на фото', 'Recognizing the photo'),
-        tr('Оцінюю порції', 'Estimating portions'),
-        tr('Рахую вагу', 'Working out the weight'),
-        tr('Складаю опис', 'Writing it up'),
+        t`Шукаю їжу чи етикетку`,
+        t`Розпізнаю, що на фото`,
+        t`Оцінюю порції`,
+        t`Рахую вагу`,
+        t`Складаю опис`,
       ];
 
 // Neutral, since the photo may turn out to be a label rather than food.
 const markerLabels = () => [
-  tr('текстура', 'texture'),
-  tr('колір', 'color'),
-  tr('форма', 'shape'),
-  tr('контур', 'outline'),
-  tr('об’єм', 'volume'),
-  tr('деталі', 'details'),
+  t`текстура`,
+  t`колір`,
+  t`форма`,
+  t`контур`,
+  t`об’єм`,
+  t`деталі`,
 ];
 
 const textLabels = () => [
-  tr('текст', 'text'),
-  tr('назва', 'name'),
-  tr('бренд', 'brand'),
-  tr('склад', 'ingredients'),
-  tr('таблиця', 'table'),
-  tr('вага нетто', 'net weight'),
-  tr('штрихкод', 'barcode'),
+  t`текст`,
+  t`назва`,
+  t`бренд`,
+  t`склад`,
+  t`таблиця`,
+  t`вага нетто`,
+  t`штрихкод`,
 ];
 
 /**
@@ -203,10 +203,10 @@ function ScanContent({
         <Blink active={scanning} />
         <Text variant="secondary" style={styles.badgeText}>
           {failed
-            ? tr('Помилка', 'Error')
+            ? t`Помилка`
             : finished
-              ? tr('Готово', 'Done')
-              : tr('AI сканує', 'AI scanning')}
+              ? t`Готово`
+              : t`AI сканує`}
         </Text>
       </View>
 
@@ -217,19 +217,19 @@ function ScanContent({
         {failed ? (
           <Animated.View entering={FadeInDown} style={styles.gap}>
             <Row icon="alert-circle" color={colors.danger}>
-              <Text variant="title">{tr('Не вдалося розпізнати', 'Couldn’t recognize')}</Text>
+              <Text variant="title">{t`Не вдалося розпізнати`}</Text>
             </Row>
             <Text variant="secondary">{scan.error!.message}</Text>
             <View style={styles.buttons}>
               {scan.error!.settings && (
                 <Button
-                  title={tr('Акаунт', 'Account')}
+                  title={t`Акаунт`}
                   variant="secondary"
                   onPress={onSettings}
                   style={styles.flex}
                 />
               )}
-              <Button title={tr('Закрити', 'Close')} onPress={onClose} style={styles.flex} />
+              <Button title={t`Закрити`} onPress={onClose} style={styles.flex} />
             </View>
           </Animated.View>
         ) : finished ? (

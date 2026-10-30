@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import { Image } from 'expo-image';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -14,7 +15,6 @@ import {
 } from '@/db/exercises';
 import { MUSCLE_GROUPS, TRACKING_TYPES, type MuscleGroup, type TrackingType } from '@/db/schema';
 import { youtubeSearchUrl } from '@/lib/exercise-videos';
-import { tr } from '@/lib/i18n';
 import { deleteStoredImage, downloadImage, pickImageFromLibrary, takePhoto } from '@/lib/images';
 import { MUSCLE_GROUP_LABELS, TRACKING_TYPE_LABELS } from '@/lib/labels';
 import { radius } from '@/theme';
@@ -72,7 +72,7 @@ export default function EditExerciseScreen() {
       await fn();
     } catch (e) {
       dialog.show({
-        title: tr('Помилка', 'Error'),
+        title: t`Помилка`,
         message: (e as Error).message,
         icon: 'alert-circle',
       });
@@ -84,15 +84,12 @@ export default function EditExerciseScreen() {
   const save = () =>
     withBusy(async () => {
       const trimmed = name.trim();
-      if (!trimmed) throw new Error(tr('Вкажи назву', 'Enter a name'));
-      if (!muscleGroup) throw new Error(tr('Обери групу м’язів', 'Choose a muscle group'));
+      if (!trimmed) throw new Error(t`Вкажи назву`);
+      if (!muscleGroup) throw new Error(t`Обери групу м’язів`);
       const yt = youtubeUrl.trim();
       if (yt && !/^https?:\/\//i.test(yt))
         throw new Error(
-          tr(
-            'YouTube-посилання має починатися з https://',
-            'The YouTube link must start with https://',
-          ),
+          t`YouTube-посилання має починатися з https://`,
         );
       const input = {
         name: trimmed,
@@ -112,16 +109,16 @@ export default function EditExerciseScreen() {
     <Screen
       mode="modal"
       title={
-        id === null ? tr('Нова вправа', 'New exercise') : tr('Редагувати вправу', 'Edit exercise')
+        id === null ? t`Нова вправа` : t`Редагувати вправу`
       }>
       <Field
-        label={tr('Назва', 'Name')}
+        label={t`Назва`}
         value={name}
         onChangeText={setName}
-        placeholder={tr('Наприклад, Dumbbell Curl', 'For example, Dumbbell Curl')}
+        placeholder={t`Наприклад, Dumbbell Curl`}
       />
 
-      <Text variant="caption">{tr('Група м’язів', 'Muscle group')}</Text>
+      <Text variant="caption">{t`Група м’язів`}</Text>
       <ChipGroup
         options={MUSCLE_GROUPS}
         value={muscleGroup}
@@ -129,14 +126,11 @@ export default function EditExerciseScreen() {
         labels={MUSCLE_GROUP_LABELS}
       />
 
-      <Text variant="caption">{tr('Що записуємо', 'What to track')}</Text>
+      <Text variant="caption">{t`Що записуємо`}</Text>
       {typeLocked ? (
         <Text variant="muted">
           {TRACKING_TYPE_LABELS[trackingType]}
-          {tr(
-            ' — не можна змінити, бо вправа вже використовується в програмі чи історії.',
-            ': can’t be changed because the exercise is already used in a program or the history.',
-          )}
+          {t` — не можна змінити, бо вправа вже використовується в програмі чи історії.`}
         </Text>
       ) : (
         <ChipGroup
@@ -147,13 +141,13 @@ export default function EditExerciseScreen() {
         />
       )}
 
-      <Text variant="caption">{tr('Фото', 'Photo')}</Text>
+      <Text variant="caption">{t`Фото`}</Text>
       {imageUri && (
         <Image source={exerciseImageSource(imageUri)} style={styles.image} contentFit="cover" />
       )}
       <Row>
         <Button
-          title={tr('Галерея', 'Gallery')}
+          title={t`Галерея`}
           icon="images"
           variant="secondary"
           style={styles.flex}
@@ -166,7 +160,7 @@ export default function EditExerciseScreen() {
           }
         />
         <Button
-          title={tr('Камера', 'Camera')}
+          title={t`Камера`}
           icon="camera"
           variant="secondary"
           style={styles.flex}
@@ -184,12 +178,12 @@ export default function EditExerciseScreen() {
           containerStyle={styles.flex}
           value={imageUrlInput}
           onChangeText={setImageUrlInput}
-          placeholder={tr('або URL картинки', 'or an image URL')}
+          placeholder={t`або URL картинки`}
           autoCapitalize="none"
           keyboardType="url"
         />
         <Button
-          title={tr('Завантажити', 'Download')}
+          title={t`Завантажити`}
           small
           variant="secondary"
           disabled={busy || !imageUrlInput.trim()}
@@ -203,7 +197,7 @@ export default function EditExerciseScreen() {
       </Row>
       {imageUri && (
         <Button
-          title={tr('Прибрати фото', 'Remove photo')}
+          title={t`Прибрати фото`}
           variant="danger"
           onPress={() => replaceImage(null)}
         />
@@ -219,22 +213,22 @@ export default function EditExerciseScreen() {
       />
       {!youtubeUrl && name.trim() !== '' && (
         <Button
-          title={tr('Підставити пошук на YouTube', 'Use a YouTube search')}
+          title={t`Підставити пошук на YouTube`}
           variant="ghost"
           onPress={() => setYoutubeUrl(youtubeSearchUrl(name.trim()))}
         />
       )}
 
       <Field
-        label={tr('Нотатки', 'Notes')}
+        label={t`Нотатки`}
         value={notes}
         onChangeText={setNotes}
         multiline
-        placeholder={tr('Техніка, налаштування тренажера…', 'Technique, machine settings…')}
+        placeholder={t`Техніка, налаштування тренажера…`}
       />
 
       <Button
-        title={tr('Зберегти', 'Save')}
+        title={t`Зберегти`}
         trailingIcon="checkmark"
         onPress={save}
         loading={busy}

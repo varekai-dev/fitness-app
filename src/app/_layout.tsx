@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator';
 import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -16,7 +17,6 @@ import { useHomeWidgetSync } from '@/hooks/use-home-widget-sync';
 import { useNotifications } from '@/hooks/use-notifications';
 import { useServerBackup } from '@/hooks/use-server-backup';
 import { useAccount } from '@/lib/account';
-import { tr } from '@/lib/i18n';
 import { colors } from '@/theme';
 import migrations from '../../drizzle/migrations';
 
@@ -72,7 +72,7 @@ export default function RootLayout() {
     return (
       <View style={styles.error}>
         <Text variant="heading">
-          {tr('Не вдалося відкрити базу даних', 'Couldn’t open the database')}
+          {t`Не вдалося відкрити базу даних`}
         </Text>
         <Text variant="secondary">{error.message}</Text>
       </View>

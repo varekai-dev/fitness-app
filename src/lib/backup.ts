@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Constants from 'expo-constants';
 import * as DocumentPicker from 'expo-document-picker';
 import { Directory, File, Paths } from 'expo-file-system';
@@ -6,7 +7,6 @@ import { backupDatabaseAsync, openDatabaseAsync, type SQLiteDatabase } from 'exp
 import { Platform } from 'react-native';
 
 import { sqlite } from '@/db/client';
-import { tr } from '@/lib/i18n';
 import { imagesDir } from '@/lib/images';
 import { photosDir } from '@/lib/progress-photos';
 import journal from '../../drizzle/meta/_journal.json';
@@ -75,7 +75,7 @@ export async function exportBackup() {
   await Sharing.shareAsync(file.uri, {
     mimeType: 'application/octet-stream',
     UTI: 'public.database',
-    dialogTitle: tr('Зберегти резервну копію', 'Save the backup'),
+    dialogTitle: t`Зберегти резервну копію`,
   });
 }
 
@@ -174,7 +174,7 @@ async function readSummary(db: SQLiteDatabase): Promise<BackupSummary> {
   }
   if (info.format !== FORMAT) {
     throw new BackupError(
-      tr('Це не файл резервної копії цього застосунку.', 'This isn’t a backup file from this app.'),
+      t`Це не файл резервної копії цього застосунку.`,
     );
   }
   const migrated = await db.getFirstAsync<{ at: number | null }>(
@@ -182,10 +182,7 @@ async function readSummary(db: SQLiteDatabase): Promise<BackupSummary> {
   );
   if ((migrated?.at ?? 0) > LATEST_MIGRATION) {
     throw new BackupError(
-      tr(
-        'Копію створено в новішій версії застосунку. Онови застосунок і спробуй ще раз.',
-        'The backup was made in a newer version of the app. Update the app and try again.',
-      ),
+      t`Копію створено в новішій версії застосунку. Онови застосунок і спробуй ще раз.`,
     );
   }
   return {

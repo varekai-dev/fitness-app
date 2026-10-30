@@ -1,10 +1,11 @@
-import { tr } from '@/lib/i18n';
+import { t } from '@lingui/core/macro';
+
 
 export const SEXES = ['male', 'female'] as const;
 export type Sex = (typeof SEXES)[number];
 export const SEX_LABELS: Record<Sex, string> = {
-  male: tr('Чоловік', 'Male'),
-  female: tr('Жінка', 'Female'),
+  male: t`Чоловік`,
+  female: t`Жінка`,
 };
 
 export const ACTIVITY_LEVELS = ['sedentary', 'light', 'moderate', 'high', 'extreme'] as const;
@@ -19,32 +20,32 @@ export const ACTIVITY: Record<
   { label: string; hint: string; factor: number; waterMl: number }
 > = {
   sedentary: {
-    label: tr('Мінімальна', 'Minimal'),
-    hint: tr('Сидяча робота, без тренувань', 'Desk job, no workouts'),
+    label: t`Мінімальна`,
+    hint: t`Сидяча робота, без тренувань`,
     factor: 1.2,
     waterMl: 0,
   },
   light: {
-    label: tr('Легка', 'Light'),
-    hint: tr('1–3 тренування на тиждень', '1–3 workouts a week'),
+    label: t`Легка`,
+    hint: t`1–3 тренування на тиждень`,
     factor: 1.375,
     waterMl: 250,
   },
   moderate: {
-    label: tr('Помірна', 'Moderate'),
-    hint: tr('3–5 тренувань на тиждень', '3–5 workouts a week'),
+    label: t`Помірна`,
+    hint: t`3–5 тренувань на тиждень`,
     factor: 1.55,
     waterMl: 500,
   },
   high: {
-    label: tr('Висока', 'High'),
-    hint: tr('6–7 тренувань на тиждень', '6–7 workouts a week'),
+    label: t`Висока`,
+    hint: t`6–7 тренувань на тиждень`,
     factor: 1.725,
     waterMl: 750,
   },
   extreme: {
-    label: tr('Дуже висока', 'Very high'),
-    hint: tr('Фізична робота або 2 тренування на день', 'Physical job or 2 workouts a day'),
+    label: t`Дуже висока`,
+    hint: t`Фізична робота або 2 тренування на день`,
     factor: 1.9,
     waterMl: 1000,
   },
@@ -55,9 +56,9 @@ export type WeightGoal = (typeof WEIGHT_GOALS)[number];
 
 /** Moderate deficit and surplus, as fractions of maintenance. */
 export const WEIGHT_GOAL: Record<WeightGoal, { label: string; factor: number }> = {
-  lose: { label: tr('Схуднення', 'Lose weight'), factor: 0.8 },
-  maintain: { label: tr('Підтримка', 'Maintain'), factor: 1 },
-  gain: { label: tr('Набір маси', 'Gain weight'), factor: 1.1 },
+  lose: { label: t({ message: 'Схуднення', context: 'Lose weight' }), factor: 0.8 },
+  maintain: { label: t({ message: 'Підтримка', context: 'Maintain' }), factor: 1 },
+  gain: { label: t`Набір маси`, factor: 1.1 },
 };
 
 export const GOAL_LABELS = Object.fromEntries(
@@ -190,12 +191,12 @@ export const bmi = (weightKg: number, heightCm: number) => weightKg / (heightCm 
 
 /** The WHO classes of BMI, each up to the next one's start. */
 export const BMI_CLASSES: { from: number; label: string; zone: CalorieZone }[] = [
-  { from: 0, label: tr('Недостатня вага', 'Underweight'), zone: 'warning' },
-  { from: 18.5, label: tr('Норма', 'Normal'), zone: 'ok' },
-  { from: 25, label: tr('Надлишкова вага', 'Overweight'), zone: 'warning' },
-  { from: 30, label: tr('Ожиріння I ст.', 'Obesity I'), zone: 'danger' },
-  { from: 35, label: tr('Ожиріння II ст.', 'Obesity II'), zone: 'danger' },
-  { from: 40, label: tr('Ожиріння III ст.', 'Obesity III'), zone: 'danger' },
+  { from: 0, label: t`Недостатня вага`, zone: 'warning' },
+  { from: 18.5, label: t`Норма`, zone: 'ok' },
+  { from: 25, label: t`Надлишкова вага`, zone: 'warning' },
+  { from: 30, label: t`Ожиріння I ст.`, zone: 'danger' },
+  { from: 35, label: t`Ожиріння II ст.`, zone: 'danger' },
+  { from: 40, label: t`Ожиріння III ст.`, zone: 'danger' },
 ];
 
 export const bmiClass = (value: number) => BMI_CLASSES.findLast((c) => value >= c.from)!;
@@ -224,9 +225,9 @@ export function recommendWater(
 /** Which inputs are still missing, in the order the profile screen shows them. */
 export function missingForRecommendation(profile: Profile, weightKg: number | null | undefined) {
   const missing: string[] = [];
-  if (!weightKg) missing.push(tr('вагу', 'weight'));
-  if (!profile.heightCm) missing.push(tr('зріст', 'height'));
-  if (!profile.birthDate) missing.push(tr('дату народження', 'date of birth'));
-  if (!profile.sex) missing.push(tr('стать', 'sex'));
+  if (!weightKg) missing.push(t`вагу`);
+  if (!profile.heightCm) missing.push(t`зріст`);
+  if (!profile.birthDate) missing.push(t`дату народження`);
+  if (!profile.sex) missing.push(t`стать`);
   return missing;
 }

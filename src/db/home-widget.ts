@@ -1,8 +1,8 @@
+import { plural, t } from '@lingui/core/macro';
 import { gte, isNotNull, sum } from 'drizzle-orm';
 import * as Linking from 'expo-linking';
 
 import { formatKcal } from '@/lib/food';
-import { plural, tr } from '@/lib/i18n';
 import { formatShortDate, formatWeightDelta, startOfWeek } from '@/lib/labels';
 import { formatWeight, notStarted } from '@/lib/metrics';
 import { weekStreak } from '@/lib/stats';
@@ -36,10 +36,10 @@ async function loadWorkout() {
   if (active) {
     return {
       label: notStarted(active)
-        ? tr('Не розпочато', 'Not started')
+        ? t`Не розпочато`
         : active.pausedAt
-          ? tr('На паузі', 'Paused')
-          : tr('Триває', 'In progress'),
+          ? t`На паузі`
+          : t`Триває`,
       title: active.dayName,
       subtitle: active.programName,
       url: Linking.createURL(`workout/${active.id}`),
@@ -51,17 +51,17 @@ async function loadWorkout() {
   const url = Linking.createURL('training', { queryParams: { view: 'programs' } });
   if (!program || !day) {
     return {
-      label: tr('Наступне тренування', 'Next workout'),
-      title: tr('Обери програму', 'Choose a program'),
+      label: t`Наступне тренування`,
+      title: t`Обери програму`,
       subtitle: '',
       url,
     };
   }
   const count = day.exercises.length;
   return {
-    label: tr('Наступне тренування', 'Next workout'),
+    label: t`Наступне тренування`,
     title: day.name,
-    subtitle: `${program.name} · ${count} ${plural(count, ['вправа', 'вправи', 'вправ'], ['exercise', 'exercises'])}`,
+    subtitle: `${program.name} · ${count} ${plural(count, { one: 'вправа', few: 'вправи', many: 'вправ', other: 'вправи' })}`,
     url,
   };
 }
@@ -70,10 +70,10 @@ async function loadWeight() {
   const weights = await listBodyWeights();
   const latest = weights.at(-1);
   const first = weights[0];
-  const label = tr('Вага тіла', 'Body weight');
+  const label = t`Вага тіла`;
   const url = Linking.createURL('body-weight');
   if (!latest) {
-    return { label, value: '—', unit: '', subtitle: tr('Додай зважування', 'Log a weigh-in'), url };
+    return { label, value: '—', unit: '', subtitle: t`Додай зважування`, url };
   }
   // Change since the first weigh-in, as on the Home tab's weight tile.
   const delta =
@@ -101,10 +101,10 @@ async function loadWeek(now: number) {
     rows.map((w) => w.startedAt),
   );
   return {
-    label: tr('Тренувань за тиждень', 'Workouts this week'),
+    label: t`Тренувань за тиждень`,
     value: String(count),
     unit: '',
-    subtitle: `${tr('Тижнів поспіль', 'Weeks in a row')}: ${streak}`,
+    subtitle: `${t`Тижнів поспіль`}: ${streak}`,
     url: Linking.createURL('training', { queryParams: { view: 'history' } }),
     // The widget shows 0 from next Monday on, even if the app isn't opened.
     resetAt: addDays(weekStart, 7),
@@ -113,20 +113,20 @@ async function loadWeek(now: number) {
 
 /** What is left to drink today, for the widget's spare room under the total. */
 function waterNote(leftMl: number) {
-  if (leftMl <= 0) return tr('Норму виконано', 'Goal reached');
+  if (leftMl <= 0) return t`Норму виконано`;
   const amount = `${formatVolume(leftMl)} ${VOLUME_UNIT}`;
-  return tr(`Ще ${amount}`, `${amount} to go`);
+  return t`Ще ${amount}`;
 }
 
 /** What is left to eat today, or how far past the goal. */
 function kcalNote(leftKcal: number) {
-  const unit = tr('ккал', 'kcal');
+  const unit = t`ккал`;
   if (leftKcal < 0) {
     const over = `${formatKcal(-leftKcal)} ${unit}`;
-    return tr(`На ${over} більше`, `${over} over`);
+    return t`На ${over} більше`;
   }
   const amount = `${formatKcal(leftKcal)} ${unit}`;
-  return tr(`Ще ${amount}`, `${amount} to go`);
+  return t`Ще ${amount}`;
 }
 
 /**
@@ -146,7 +146,7 @@ export async function loadHomeWidgetData(now = Date.now()) {
   return {
     day,
     water: {
-      label: tr('Вода', 'Water'),
+      label: t`Вода`,
       value: formatVolume(waterMl),
       total: `/ ${formatVolume(waterGoal)} ${VOLUME_UNIT}`,
       progress: waterMl / waterGoal,
@@ -155,9 +155,9 @@ export async function loadHomeWidgetData(now = Date.now()) {
       url: Linking.createURL('water'),
     },
     calories: {
-      label: tr('Калорії', 'Calories'),
+      label: t`Калорії`,
       value: formatKcal(kcal),
-      total: `/ ${formatKcal(kcalGoal)} ${tr('ккал', 'kcal')}`,
+      total: `/ ${formatKcal(kcalGoal)} ${t`ккал`}`,
       progress: kcal / kcalGoal,
       over: kcal > kcalGoal,
       note: kcalNote(kcalGoal - kcal),

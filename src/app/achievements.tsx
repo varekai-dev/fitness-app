@@ -1,3 +1,4 @@
+import { plural, t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useState } from 'react';
 import { Text as RNText, StyleSheet, View } from 'react-native';
@@ -13,7 +14,6 @@ import {
   GROUP_INFO,
   type AchievementProgress,
 } from '@/lib/achievements';
-import { plural, tr } from '@/lib/i18n';
 import { formatShortDate } from '@/lib/labels';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
@@ -44,7 +44,7 @@ export default function AchievementsScreen() {
   const totals = achievementTotals(list);
 
   return (
-    <Screen title={tr('Досягнення', 'Achievements')}>
+    <Screen title={t`Досягнення`}>
       <Card style={styles.summary}>
         <View style={styles.glow} />
         <Row style={styles.summaryRow}>
@@ -55,11 +55,7 @@ export default function AchievementsScreen() {
               <RNText style={styles.summaryOf}> / {totals.total}</RNText>
             </RNText>
             <Text variant="muted">
-              {plural(
-                totals.unlocked,
-                ['рівень відкрито', 'рівні відкрито', 'рівнів відкрито'],
-                ['level unlocked', 'levels unlocked'],
-              )}
+              {plural(totals.unlocked, { one: 'рівень відкрито', few: 'рівні відкрито', many: 'рівнів відкрито', other: 'рівні відкрито' })}
             </Text>
           </View>
         </Row>
@@ -134,11 +130,11 @@ function AchievementCard({
             <Text variant="heading" numberOfLines={1} style={styles.shrink}>
               {p.achievement.title}
             </Text>
-            {isNew && <Badge label={tr('НОВЕ', 'NEW')} />}
+            {isNew && <Badge label={t`НОВЕ`} />}
           </Row>
           <Text variant="muted" numberOfLines={2}>
             {next === undefined
-              ? tr('Усі рівні відкрито', 'Every level unlocked')
+              ? t`Усі рівні відкрито`
               : p.achievement.goal(next)}
           </Text>
           <Row style={styles.pips}>
@@ -172,7 +168,7 @@ function LevelsSheet({ progress: p }: { progress: AchievementProgress }) {
         <AchievementIcon progress={p} size={64} />
         <Text variant="title">{p.achievement.title}</Text>
         <Text variant="muted">
-          {tr('Рівень', 'Level')} {p.level} / {p.achievement.levels.length}
+          {t`Рівень`} {p.level} / {p.achievement.levels.length}
         </Text>
       </View>
       {p.achievement.levels.map((target, i) => {

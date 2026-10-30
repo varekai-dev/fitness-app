@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -11,17 +12,16 @@ import { OverviewView } from '@/components/training/overview-view';
 import { ProgramsView } from '@/components/training/programs-view';
 import { CircleButton, ScreenHeader } from '@/components/ui';
 import { createProgram, NEW_PROGRAM_NAME } from '@/db/programs';
-import { tr } from '@/lib/i18n';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 const SECTIONS = ['today', 'programs', 'exercises', 'history'] as const;
 export type TrainingSection = (typeof SECTIONS)[number];
 
 const LABELS: Record<TrainingSection, string> = {
-  today: tr('Сьогодні', 'Today'),
-  programs: tr('Програми', 'Programs'),
-  exercises: tr('Вправи', 'Exercises'),
-  history: tr('Історія', 'History'),
+  today: t`Сьогодні`,
+  programs: t`Програми`,
+  exercises: t`Вправи`,
+  history: t`Історія`,
 };
 
 const SEGMENT_SPRING = { damping: 18, stiffness: 220, mass: 0.7 };
@@ -71,7 +71,7 @@ export default function TrainingScreen() {
     <View style={styles.root}>
       <Backdrop />
       <ScreenHeader
-        title={tr('Тренування', 'Training')}
+        title={t`Тренування`}
         mode="root"
         right={<CircleButton icon="settings-outline" onPress={() => router.push('/settings')} />}
       />
@@ -102,8 +102,8 @@ export default function TrainingScreen() {
         <TabBarFab
           label={
             section === 'exercises'
-              ? tr('Нова вправа', 'New exercise')
-              : tr('Нова програма', 'New program')
+              ? t`Нова вправа`
+              : t`Нова програма`
           }
           onPress={section === 'exercises' ? () => router.push('/exercise/edit') : newProgram}
         />

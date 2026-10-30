@@ -1,37 +1,38 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 import { ModuleSettings } from '@/components/module-settings';
 import { Card, ChipGroup, Row, Screen, Text } from '@/components/ui';
-import { languagePreference, setLanguage, tr, type LanguagePreference } from '@/lib/i18n';
+import { languagePreference, setLanguage, type LanguagePreference } from '@/lib/i18n';
 import { setUnitSystem, UNIT_SYSTEMS, unitSystem, type UnitSystem } from '@/lib/units';
 import { colors } from '@/theme';
 
 const LANGUAGE_OPTIONS = ['system', 'uk', 'en'] as const;
 const LANGUAGE_LABELS: Record<LanguagePreference, string> = {
-  system: tr('Як у системі', 'System'),
+  system: t`Як у системі`,
   // Each language is named in itself, so it can be found from either one.
   uk: 'Українська',
   en: 'English',
 };
 
 const UNIT_LABELS: Record<UnitSystem, string> = {
-  metric: tr('Метрична', 'Metric'),
-  imperial: tr('Імперська', 'Imperial'),
+  metric: t`Метрична`,
+  imperial: t`Імперська`,
 };
 
 const UNIT_HINTS: Record<UnitSystem, string> = {
-  metric: tr('кг, км, мл, см', 'kg, km, ml, cm'),
-  imperial: tr('фунти, милі, унції, дюйми', 'lb, mi, fl oz, in'),
+  metric: t`кг, км, мл, см`,
+  imperial: t`фунти, милі, унції, дюйми`,
 };
 
 /** App-wide preferences: language, units and which sections the app has. */
 export default function AppSettingsScreen() {
   return (
-    <Screen title={tr('Застосунок', 'App')}>
+    <Screen title={t`Застосунок`}>
       <Card>
         <Row>
           <Ionicons name="language-outline" size={20} color={colors.accent} />
-          <Text variant="heading">{tr('Мова', 'Language')}</Text>
+          <Text variant="heading">{t`Мова`}</Text>
         </Row>
         <ChipGroup
           options={LANGUAGE_OPTIONS}
@@ -45,7 +46,7 @@ export default function AppSettingsScreen() {
       <Card>
         <Row>
           <Ionicons name="speedometer-outline" size={20} color={colors.accent} />
-          <Text variant="heading">{tr('Одиниці виміру', 'Units')}</Text>
+          <Text variant="heading">{t`Одиниці виміру`}</Text>
         </Row>
         <ChipGroup
           options={UNIT_SYSTEMS}
@@ -57,10 +58,7 @@ export default function AppSettingsScreen() {
         />
         <Text variant="muted">
           {UNIT_HINTS[unitSystem]}.{' '}
-          {tr(
-            'Їжа й макроси завжди в грамах, енергія — в ккал.',
-            'Food and macros are always in grams, energy in kcal.',
-          )}
+          {t`Їжа й макроси завжди в грамах, енергія — в ккал.`}
         </Text>
       </Card>
       <ModuleSettings />

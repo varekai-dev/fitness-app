@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -26,7 +27,6 @@ import {
 import { getExercise } from '@/db/exercises';
 import { getExerciseHistory } from '@/db/workouts';
 import { useDbQuery } from '@/hooks/use-db-query';
-import { tr } from '@/lib/i18n';
 import {
   formatDate,
   formatShortDate,
@@ -57,8 +57,8 @@ export default function ExerciseDetailScreen() {
   const { exercise, history } = data;
   if (!exercise) {
     return (
-      <Screen title={tr('Вправа', 'Exercise')}>
-        <EmptyState icon="alert-circle" title={tr('Вправу не знайдено', 'Exercise not found')} />
+      <Screen title={t`Вправа`}>
+        <EmptyState icon="alert-circle" title={t`Вправу не знайдено`} />
       </Screen>
     );
   }
@@ -93,7 +93,7 @@ export default function ExerciseDetailScreen() {
               <Badge label={MUSCLE_GROUP_LABELS[exercise.muscleGroup]} />
               <Badge label={TRACKING_TYPE_LABELS[type]} tone="muted" />
               {exercise.archivedAt !== null && (
-                <Badge label={tr('В архіві', 'Archived')} tone="warning" />
+                <Badge label={t`В архіві`} tone="warning" />
               )}
             </Row>
           </View>
@@ -104,14 +104,14 @@ export default function ExerciseDetailScreen() {
             <Row style={styles.muscles}>
               <MuscleIcon group={exercise.muscleGroup} size={72} />
               <View>
-                <Text variant="overline">{tr('Що качає', 'Works')}</Text>
+                <Text variant="overline">{t`Що качає`}</Text>
                 <Text variant="heading">{MUSCLE_GROUP_LABELS[exercise.muscleGroup]}</Text>
               </View>
             </Row>
           </Card>
           {exercise.youtubeUrl && (
             <Button
-              title={tr('Дивитись техніку на YouTube', 'Watch technique on YouTube')}
+              title={t`Дивитись техніку на YouTube`}
               icon="logo-youtube"
               variant="secondary"
               onPress={() => WebBrowser.openBrowserAsync(exercise.youtubeUrl!)}
@@ -119,20 +119,17 @@ export default function ExerciseDetailScreen() {
           )}
           {exercise.notes && (
             <Card>
-              <Text variant="overline">{tr('Нотатки', 'Notes')}</Text>
+              <Text variant="overline">{t`Нотатки`}</Text>
               <Text variant="secondary">{exercise.notes}</Text>
             </Card>
           )}
 
-          <SectionHeader title={tr('Прогрес', 'Progress')} />
+          <SectionHeader title={t`Прогрес`} />
           {progress.length === 0 ? (
             <EmptyState
               icon="trending-up"
-              title={tr('Ще немає даних', 'No data yet')}
-              hint={tr(
-                'Графік з’явиться після першого тренування з цією вправою.',
-                'The chart appears after your first workout with this exercise.',
-              )}
+              title={t`Ще немає даних`}
+              hint={t`Графік з’явиться після першого тренування з цією вправою.`}
             />
           ) : (
             <>
@@ -140,17 +137,17 @@ export default function ExerciseDetailScreen() {
                 <StatTile
                   icon="trophy"
                   value={record ? formatMetric(type, record.best) : '—'}
-                  label={tr('Рекорд', 'Record')}
+                  label={t`Рекорд`}
                 />
                 <StatTile
                   icon="pulse"
                   value={latest ? formatMetric(type, latest.best) : '—'}
-                  label={tr('Останній', 'Latest')}
+                  label={t`Останній`}
                 />
                 <StatTile
                   icon="calendar"
                   value={String(progress.length)}
-                  label={tr('Сесій', 'Sessions')}
+                  label={t`Сесій`}
                 />
               </Row>
               <Card>
@@ -168,7 +165,7 @@ export default function ExerciseDetailScreen() {
             </>
           )}
 
-          {history.length > 0 && <SectionHeader title={tr('Історія', 'History')} />}
+          {history.length > 0 && <SectionHeader title={t`Історія`} />}
           {[...history].reverse().map((h) => (
             <Card
               key={h.workoutId}
@@ -194,7 +191,7 @@ export default function ExerciseDetailScreen() {
           ))}
 
           <Button
-            title={tr('Видалити вправу', 'Delete exercise')}
+            title={t`Видалити вправу`}
             variant="danger"
             icon="trash-outline"
             onPress={remove}

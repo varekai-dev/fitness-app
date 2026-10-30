@@ -1,10 +1,10 @@
+import { t } from '@lingui/core/macro';
 import type * as NotificationsModule from 'expo-notifications';
 import { LogBox, Platform } from 'react-native';
 
 import { listProgressPhotos } from '@/db/progress-photos';
 import { getDayWindow, getPhotoReminders, getWaterReminders } from '@/db/reminders';
 import { loadWater } from '@/db/water';
-import { tr } from '@/lib/i18n';
 import { isModuleEnabled } from '@/lib/modules';
 import { planPhotoReminder, planWaterReminders } from '@/lib/reminders';
 
@@ -58,11 +58,11 @@ async function ensureChannels(N: typeof NotificationsModule) {
   if (Platform.OS !== 'android') return false;
   try {
     await N.setNotificationChannelAsync(WATER_CHANNEL, {
-      name: tr('Нагадування про воду', 'Water reminders'),
+      name: t`Нагадування про воду`,
       importance: N.AndroidImportance.HIGH,
     });
     await N.setNotificationChannelAsync(PHOTO_CHANNEL, {
-      name: tr('Нагадування про фото прогресу', 'Progress photo reminders'),
+      name: t`Нагадування про фото прогресу`,
       importance: N.AndroidImportance.DEFAULT,
     });
     return true;

@@ -1,4 +1,19 @@
+import { setupI18n } from '@lingui/core';
+
 import { readSettingSync, reloadApp, writeSettingSync } from '@/lib/app-settings';
+import { messages as enMessages } from '@/locales/en.po';
+import { messages as ukMessages } from '@/locales/uk.po';
+
+// Lingui's plurals need Intl.PluralRules, which Hermes may lack. Required only
+// when missing: the polyfills are slow to load on low-end phones.
+/* eslint-disable @typescript-eslint/no-require-imports */
+if (typeof Intl.Locale === 'undefined') require('@formatjs/intl-locale/polyfill-force.js');
+if (typeof Intl.PluralRules === 'undefined') {
+  require('@formatjs/intl-pluralrules/polyfill-force.js');
+  require('@formatjs/intl-pluralrules/locale-data/uk.js');
+  require('@formatjs/intl-pluralrules/locale-data/en.js');
+}
+/* eslint-enable @typescript-eslint/no-require-imports */
 
 export const LANGUAGES = ['uk', 'en'] as const;
 export type Language = (typeof LANGUAGES)[number];
@@ -34,25 +49,20 @@ export const lang: Language =
 /** BCP 47 tag for `Intl` formatters. British English keeps 24-hour time and day-first dates. */
 export const locale = lang === 'uk' ? 'uk-UA' : 'en-GB';
 
-/** Picks the text (or any value, e.g. a formatter function) for the current language. */
+/**
+ * Lingui instance the `t` / `plural` macros translate with (see lingui.config.ts).
+ * Ukrainian is the source language; other languages live in src/locales/*.po.
+ */
+export const i18n = setupI18n({
+  locale: lang,
+  messages: { uk: ukMessages, en: enMessages },
+});
+
+/**
+ * Picks a value for the current language. Only for content too big for the
+ * catalogs (AI prompts, phrase lists, demo data); interface texts use the macros.
+ */
 export const tr = <T>(uk: T, en: T): T => (lang === 'uk' ? uk : en);
-
-/** Ukrainian plural form: 1 день, 2 дні, 5 днів. */
-export function ukPlural(n: number, one: string, few: string, many: string) {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (!Number.isInteger(n)) return few;
-  if (mod10 === 1 && mod100 !== 11) return one;
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
-  return many;
-}
-
-/** The noun for `n` in the current language: plural(5, ['день', 'дні', 'днів'], ['day', 'days']). */
-export const plural = (
-  n: number,
-  uk: [one: string, few: string, many: string],
-  en: [one: string, other: string],
-) => (lang === 'uk' ? ukPlural(n, ...uk) : n === 1 ? en[0] : en[1]);
 
 export async function setLanguage(preference: LanguagePreference) {
   if (preference === languagePreference) return;

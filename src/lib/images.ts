@@ -1,8 +1,8 @@
+import { t } from '@lingui/core/macro';
 import { Directory, File, Paths } from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 
-import { tr } from '@/lib/i18n';
 
 export const imagesDir = () => {
   const dir = new Directory(Paths.document, 'exercise-images');
@@ -36,7 +36,7 @@ export async function pickImageFromLibrary() {
 export async function takePhoto() {
   const permission = await ImagePicker.requestCameraPermissionsAsync();
   if (!permission.granted)
-    throw new Error(tr('Немає доступу до камери', 'No access to the camera'));
+    throw new Error(t`Немає доступу до камери`);
   return persistPicked(await ImagePicker.launchCameraAsync(PICKER_OPTIONS));
 }
 
@@ -44,10 +44,7 @@ export async function takePhoto() {
 export async function downloadImage(url: string) {
   if (!/^https?:\/\//i.test(url.trim()))
     throw new Error(
-      tr(
-        'Посилання має починатися з http:// або https://',
-        'The link must start with http:// or https://',
-      ),
+      t`Посилання має починатися з http:// або https://`,
     );
   const file = await File.downloadFileAsync(url.trim(), newImageFile());
   return file.uri;
@@ -76,7 +73,7 @@ export async function captureForAi(source: 'camera' | 'library') {
   if (source === 'camera') {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted)
-      throw new Error(tr('Немає доступу до камери', 'No access to the camera'));
+      throw new Error(t`Немає доступу до камери`);
     result = await ImagePicker.launchCameraAsync(options);
   } else {
     result = await ImagePicker.launchImageLibraryAsync(options);

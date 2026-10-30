@@ -1,9 +1,9 @@
+import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Card, CircleButton, Row, Text, type IconName } from '@/components/ui';
-import { tr } from '@/lib/i18n';
 import { colors, fontSize, spacing } from '@/theme';
 
 /** A row on the settings menu that opens one of its sections. */
@@ -72,7 +72,7 @@ export function GoalStepper({
         <View>
           <Text variant="heading">{title}</Text>
           <Text variant="muted">
-            {tr('Крок', 'Step')} {step} {unit}
+            {t`Крок`} {step} {unit}
           </Text>
         </View>
         <Row style={styles.stepper}>
@@ -116,7 +116,7 @@ export function RecommendationCard({
   return (
     <Card onPress={() => router.push('/profile')}>
       <Row style={styles.spaceBetween}>
-        <Text variant="overline">{tr('Рекомендовано', 'Recommended')}</Text>
+        <Text variant="overline">{t`Рекомендовано`}</Text>
         <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
       </Row>
       {value !== null ? (
@@ -125,16 +125,13 @@ export function RecommendationCard({
             {format(value)}
             <Text style={styles.recUnit}>
               {' '}
-              {unit}/{tr('день', 'day')}
+              {unit}/{t`день`}
             </Text>
           </Text>
           <Text variant="muted">{details}</Text>
           {value !== goal && (
             <Button
-              title={tr(
-                `Зробити ціллю (зараз ${format(goal)})`,
-                `Set as goal (now ${format(goal)})`,
-              )}
+              title={t`Зробити ціллю (зараз ${format(goal)})`}
               variant="secondary"
               small
               onPress={() => {
@@ -145,10 +142,7 @@ export function RecommendationCard({
         </>
       ) : (
         <Text variant="muted">
-          {tr(
-            `Вкажи в профілі ${missing}, щоб отримати рекомендацію.`,
-            `Enter your ${missing} in the profile to get a recommendation.`,
-          )}
+          {t`Вкажи в профілі ${missing}, щоб отримати рекомендацію.`}
         </Text>
       )}
     </Card>

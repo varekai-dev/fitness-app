@@ -1,38 +1,39 @@
+import { t } from '@lingui/core/macro';
 import type { ActivityKind, MuscleGroup, Targets, TrackingType } from '@/db/schema';
 
-import { locale, tr } from '@/lib/i18n';
+import { locale } from '@/lib/i18n';
 import { DISTANCE_UNIT, kgToDisplay } from '@/lib/units';
 import { formatDistance, formatDuration, formatNumber } from './metrics';
 
 export const MUSCLE_GROUP_LABELS: Record<MuscleGroup, string> = {
-  chest: tr('Груди', 'Chest'),
-  back: tr('Спина', 'Back'),
-  legs: tr('Ноги', 'Legs'),
-  shoulders: tr('Плечі', 'Shoulders'),
-  biceps: tr('Біцепс', 'Biceps'),
-  triceps: tr('Трицепс', 'Triceps'),
-  abs: tr('Прес', 'Abs'),
-  cardio: tr('Кардіо', 'Cardio'),
+  chest: t`Груди`,
+  back: t`Спина`,
+  legs: t`Ноги`,
+  shoulders: t`Плечі`,
+  biceps: t`Біцепс`,
+  triceps: t`Трицепс`,
+  abs: t`Прес`,
+  cardio: t`Кардіо`,
 };
 
 export const TRACKING_TYPE_LABELS: Record<TrackingType, string> = {
-  weight_reps: tr('Вага × повторення', 'Weight × reps'),
-  reps: tr('Тільки повторення', 'Reps only'),
-  weighted_reps: tr('Повторення + додаткова вага', 'Reps + added weight'),
-  duration: tr('Час', 'Time'),
-  distance_duration: tr('Дистанція + час', 'Distance + time'),
+  weight_reps: t`Вага × повторення`,
+  reps: t`Тільки повторення`,
+  weighted_reps: t`Повторення + додаткова вага`,
+  duration: t({ message: 'Час', context: 'Time' }),
+  distance_duration: t`Дистанція + час`,
 };
 
 export const ACTIVITY_KIND_LABELS: Record<ActivityKind, string> = {
-  walking: tr('Прогулянка', 'Walk'),
-  running: tr('Біг', 'Run'),
-  cycling: tr('Велосипед', 'Cycling'),
-  hiking: tr('Похід', 'Hike'),
-  swimming: tr('Плавання', 'Swimming'),
-  strength: tr('Силове тренування', 'Strength training'),
-  hiit: tr('Інтервальне тренування', 'Interval training'),
-  yoga: tr('Йога та розтяжка', 'Yoga and stretching'),
-  other: tr('Тренування', 'Workout'),
+  walking: t`Прогулянка`,
+  running: t`Біг`,
+  cycling: t`Велосипед`,
+  hiking: t`Похід`,
+  swimming: t`Плавання`,
+  strength: t`Силове тренування`,
+  hiit: t`Інтервальне тренування`,
+  yoga: t`Йога та розтяжка`,
+  other: t({ message: 'Тренування', context: 'Workout' }),
 };
 
 const dateFormatter = new Intl.DateTimeFormat(locale, {
@@ -58,10 +59,7 @@ export const formatLongDate = (ms: number) => {
   return s.charAt(0).toUpperCase() + s.slice(1);
 };
 
-export const WEEKDAY_SHORT = tr(
-  ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'],
-  ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'],
-);
+export const WEEKDAY_SHORT = [t`Пн`, t`Вт`, t`Ср`, t`Чт`, t`Пт`, t`Сб`, t`Нд`];
 
 /** Local midnight of the Monday that starts the week containing `ms`. */
 export function startOfWeek(ms: number) {
@@ -90,18 +88,20 @@ function targetValue(t: Targets) {
 }
 
 /** Per-set target: "8–12 reps", a duration or a distance; empty when none is set. */
-export function formatSetTarget(t: Targets) {
-  const what = targetValue(t);
-  return what && (t.targetRepsMin !== null || t.targetRepsMax !== null)
-    ? `${what} ${tr('повт.', 'reps')}`
+export function formatSetTarget(targets: Targets) {
+  const what = targetValue(targets);
+  return what && (targets.targetRepsMin !== null || targets.targetRepsMax !== null)
+    ? `${what} ${t`повт.`}`
     : what;
 }
 
-export function formatTargets(t: Targets) {
-  const what = targetValue(t);
-  const sets = what ? `${t.targetSets} × ${what}` : `${t.targetSets} ${tr('підх.', 'sets')}`;
-  return t.restSec > 0
-    ? `${sets} · ${tr('відпочинок', 'rest')} ${formatDuration(t.restSec)}`
+export function formatTargets(targets: Targets) {
+  const what = targetValue(targets);
+  const sets = what
+    ? `${targets.targetSets} × ${what}`
+    : `${targets.targetSets} ${t`підх.`}`;
+  return targets.restSec > 0
+    ? `${sets} · ${t`відпочинок`} ${formatDuration(targets.restSec)}`
     : sets;
 }
 
