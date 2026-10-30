@@ -17,13 +17,13 @@ import {
 } from '@/components/ui';
 import { listExercises } from '@/db/exercises';
 import { addDayExercise } from '@/db/programs';
-import { useDbQuery } from '@/hooks/use-db-query';
+import { useFocusedDbQuery } from '@/hooks/use-db-query';
 import { MUSCLE_GROUP_LABELS } from '@/lib/labels';
 import { colors, spacing } from '@/theme';
 
 export default function PickExerciseScreen() {
   const dayId = Number(useLocalSearchParams<{ dayId: string }>().dayId);
-  const { data } = useDbQuery(listExercises);
+  const { data } = useFocusedDbQuery(listExercises);
   const [search, setSearch] = useState('');
 
   if (!data) return <Loading />;

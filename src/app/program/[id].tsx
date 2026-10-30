@@ -23,13 +23,13 @@ import {
 import { addDay, getProgram, moveDay, renameProgram, setActiveProgram } from '@/db/programs';
 import { useDialog } from '@/components/dialog';
 import { confirmRemoveProgram } from '@/components/remove-dialogs';
-import { useDbQuery } from '@/hooks/use-db-query';
+import { useFocusedDbQuery } from '@/hooks/use-db-query';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 export default function ProgramScreen() {
   const params = useLocalSearchParams<{ id: string; isNew?: string }>();
   const id = Number(params.id);
-  const { data: program } = useDbQuery(() => getProgram(id).then((p) => p ?? null), [id]);
+  const { data: program } = useFocusedDbQuery(() => getProgram(id).then((p) => p ?? null), [id]);
   const [dayName, setDayName] = useState('');
   const dialog = useDialog();
 

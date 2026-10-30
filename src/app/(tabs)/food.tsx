@@ -29,7 +29,7 @@ import {
   saveMealTemplate,
 } from '@/db/food';
 import type { FoodEntry, Meal } from '@/db/schema';
-import { useDbQuery } from '@/hooks/use-db-query';
+import { useFocusedDbQuery } from '@/hooks/use-db-query';
 import { useToday } from '@/hooks/use-today';
 import { describeDishes, formatGrams, formatKcal } from '@/lib/food';
 import { lang, locale } from '@/lib/i18n';
@@ -47,7 +47,7 @@ export default function FoodScreen() {
   // Counted back from today, so the selection follows the day rolling over.
   const [daysAgo, setDaysAgo] = useState(0);
   const day = addDays(today, -daysAgo);
-  const { data } = useDbQuery(() => loadFood(Date.now(), day), [day]);
+  const { data } = useFocusedDbQuery(() => loadFood(Date.now(), day), [day]);
   const dialog = useDialog();
 
   if (!data) return <Loading />;

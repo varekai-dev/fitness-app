@@ -7,7 +7,7 @@ import { StyleSheet, View } from 'react-native';
 import { ActivityPicker } from '@/components/activity-picker';
 import { Card, ChipGroup, Field, Loading, Row, Screen, Text } from '@/components/ui';
 import { loadProfile, setProfileField } from '@/db/profile';
-import { useDbQuery } from '@/hooks/use-db-query';
+import { useFocusedDbQuery } from '@/hooks/use-db-query';
 import { formatKcal } from '@/lib/food';
 import { formatShortDate } from '@/lib/labels';
 import { formatNumber, formatWeight, parseDecimal } from '@/lib/metrics';
@@ -34,7 +34,7 @@ const heightValidCm = (cm: number | null): cm is number =>
 const HEIGHT_RANGE = [MIN_HEIGHT_CM, MAX_HEIGHT_CM].map((cm) => Math.round(cmToDisplay(cm)));
 
 export default function ProfileScreen() {
-  const { data } = useDbQuery(loadProfile);
+  const { data } = useFocusedDbQuery(loadProfile);
   // null until the user types, so the fields show the saved values.
   const [heightInput, setHeightInput] = useState<string | null>(null);
   const [birthInput, setBirthInput] = useState<string | null>(null);

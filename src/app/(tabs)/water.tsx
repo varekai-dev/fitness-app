@@ -24,7 +24,7 @@ import { drinkWater, GlassButton } from '@/components/water-card';
 import { type PourRequest, WaterPourModal } from '@/components/water-pour-modal';
 import { deleteWater, loadWater, updateWater } from '@/db/water';
 import { useAnimatedNumber } from '@/hooks/use-animated-number';
-import { useDbQuery } from '@/hooks/use-db-query';
+import { useFocusedDbQuery } from '@/hooks/use-db-query';
 import { useNow } from '@/hooks/use-now';
 import { useToday } from '@/hooks/use-today';
 import { locale } from '@/lib/i18n';
@@ -47,7 +47,7 @@ export default function WaterScreen() {
   const [daysAgo, setDaysAgo] = useState(0);
   const day = addDays(today, -daysAgo);
   const isToday = daysAgo === 0;
-  const { data } = useDbQuery(() => loadWater(Date.now(), day), [day]);
+  const { data } = useFocusedDbQuery(() => loadWater(Date.now(), day), [day]);
   const [pouring, setPouring] = useState<(PourRequest & { editId?: number }) | null>(null);
 
   if (!data) return <Loading />;

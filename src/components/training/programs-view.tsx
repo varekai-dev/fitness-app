@@ -2,7 +2,7 @@ import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useRef } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import { LayoutAnimationConfig } from 'react-native-reanimated';
 
 import { Badge, Card, EmptyState, Loading, SectionHeader, Text } from '@/components/ui';
@@ -11,14 +11,14 @@ import { ListRow } from '@/components/motion';
 import { confirmRemoveProgram } from '@/components/remove-dialogs';
 import { SwipeToDelete } from '@/components/swipe-to-delete';
 import { listPrograms } from '@/db/programs';
-import { useDbQuery } from '@/hooks/use-db-query';
+import { useFocusedDbQuery } from '@/hooks/use-db-query';
 import { useScrollResetOnTabLeave } from '@/hooks/use-scroll-reset-on-tab-leave';
 import { colors, radius, spacing } from '@/theme';
 
 /** The Programs section of the Training tab. */
 export function ProgramsView({ bottomSpace }: { bottomSpace: number }) {
-  const { data } = useDbQuery(listPrograms);
-  const scrollRef = useRef<ScrollView>(null);
+  const { data } = useFocusedDbQuery(listPrograms);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   useScrollResetOnTabLeave(scrollRef);
   const dialog = useDialog();
 

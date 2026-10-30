@@ -6,7 +6,7 @@ import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { TILE_GAP, tileWidth, WidgetView } from '@/components/dashboard/widgets';
 import { Button, Card, ChipGroup, goBack, Loading, Row, Screen, Text } from '@/components/ui';
 import { addWidget, getDashboard, loadDashboardData } from '@/db/dashboard';
-import { useDbQuery } from '@/hooks/use-db-query';
+import { useFocusedDbQuery } from '@/hooks/use-db-query';
 import { useToday } from '@/hooks/use-today';
 import {
   isFixedSize,
@@ -29,8 +29,8 @@ export default function WidgetsScreen() {
   const { width } = useWindowDimensions();
   const rowWidth = width - spacing.lg * 2 - PREVIEW_INSET;
   const today = useToday();
-  const { data } = useDbQuery(loadDashboardData, [today]);
-  const { data: widgets } = useDbQuery(getDashboard);
+  const { data } = useFocusedDbQuery(loadDashboardData, [today]);
+  const { data: widgets } = useFocusedDbQuery(getDashboard);
   const [sizes, setSizes] = useState<Partial<Record<WidgetType, WidgetSize>>>({});
   useEnabledModules();
   // Widgets from switched-off sections aren't offered.

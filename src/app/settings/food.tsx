@@ -19,7 +19,7 @@ import {
   setMacroGoal,
 } from '@/db/food';
 import { loadProfile } from '@/db/profile';
-import { useDbQuery } from '@/hooks/use-db-query';
+import { useFocusedDbQuery } from '@/hooks/use-db-query';
 import {
   formatKcal,
   KCAL_GOAL_STEP,
@@ -66,7 +66,7 @@ const PLAIN_SCALE: CalorieScale = {
  * whether the meals offer templates and "same as last time".
  */
 export default function FoodSettingsScreen() {
-  const { data } = useDbQuery(() =>
+  const { data } = useFocusedDbQuery(() =>
     Promise.all([getKcalGoal(), loadProfile(), getFoodShortcuts(), getMacroGoals()]),
   );
   // The value under the finger while the scale is dragged, saved on release. It

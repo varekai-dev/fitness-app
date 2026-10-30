@@ -29,7 +29,7 @@ import {
   type ProgressPhoto,
 } from '@/db/progress-photos';
 import { PHOTO_POSES, type PhotoPose } from '@/db/schema';
-import { useDbQuery } from '@/hooks/use-db-query';
+import { useFocusedDbQuery } from '@/hooks/use-db-query';
 import { useToday } from '@/hooks/use-today';
 import { formatDate, formatShortDate, formatWeightDelta } from '@/lib/labels';
 import { formatWeight } from '@/lib/metrics';
@@ -52,7 +52,7 @@ const COLUMNS = 3;
 type Weights = Awaited<ReturnType<typeof listBodyWeights>>;
 
 export default function ProgressPhotosScreen() {
-  const { data } = useDbQuery(() => Promise.all([listProgressPhotos(), listBodyWeights()]));
+  const { data } = useFocusedDbQuery(() => Promise.all([listProgressPhotos(), listBodyWeights()]));
   const [chosenPose, setChosenPose] = useState<PhotoPose | null>(null);
   // Photos picked for the comparison; null falls back to the first and the latest.
   const [beforeId, setBeforeId] = useState<number | null>(null);

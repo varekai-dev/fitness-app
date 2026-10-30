@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { TextInput } from 'react-native';
+import type { TextInputInstance } from 'react-native';
 
 /**
  * Focuses a text field shortly after it mounts, in place of `autoFocus`.
@@ -11,7 +11,7 @@ import type { TextInput } from 'react-native';
  * place avoids it.
  */
 export function useDeferredFocus(enabled: boolean | undefined) {
-  const ref = useRef<TextInput>(null);
+  const ref = useRef<TextInputInstance>(null);
 
   useEffect(() => {
     if (!enabled) return;

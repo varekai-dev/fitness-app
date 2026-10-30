@@ -3,7 +3,7 @@ import { GoalStepper, RecommendationCard } from '@/components/settings';
 import { Loading, Screen } from '@/components/ui';
 import { loadProfile } from '@/db/profile';
 import { getWaterGoal, setWaterGoal } from '@/db/water';
-import { useDbQuery } from '@/hooks/use-db-query';
+import { useFocusedDbQuery } from '@/hooks/use-db-query';
 import { formatWeight } from '@/lib/metrics';
 import { ACTIVITY, recommendWater } from '@/lib/profile';
 import { displayToMl, formatVolume, mlToDisplay, VOLUME_UNIT, WEIGHT_UNIT } from '@/lib/units';
@@ -11,7 +11,7 @@ import { MAX_WATER_GOAL, MIN_WATER_GOAL, WATER_GOAL_STEP } from '@/lib/water';
 
 /** The daily water goal with its weight-based recommendation. */
 export default function WaterSettingsScreen() {
-  const { data } = useDbQuery(() => Promise.all([getWaterGoal(), loadProfile()]));
+  const { data } = useFocusedDbQuery(() => Promise.all([getWaterGoal(), loadProfile()]));
   if (!data) return <Loading />;
   const [waterGoal, { profile, latestWeight }] = data;
   const weightKg = latestWeight?.weightKg;

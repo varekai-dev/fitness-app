@@ -26,7 +26,7 @@ import {
 } from '@/components/ui';
 import { getExercise } from '@/db/exercises';
 import { getExerciseHistory } from '@/db/workouts';
-import { useDbQuery } from '@/hooks/use-db-query';
+import { useFocusedDbQuery } from '@/hooks/use-db-query';
 import {
   formatDate,
   formatShortDate,
@@ -47,7 +47,7 @@ import { exerciseImageSource } from '@/lib/exercise-images';
 export default function ExerciseDetailScreen() {
   const id = Number(useLocalSearchParams<{ id: string }>().id);
   const insets = useSafeAreaInsets();
-  const { data } = useDbQuery(async () => {
+  const { data } = useFocusedDbQuery(async () => {
     const [exercise, history] = await Promise.all([getExercise(id), getExerciseHistory(id)]);
     return { exercise, history };
   }, [id]);

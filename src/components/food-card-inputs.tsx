@@ -1,7 +1,13 @@
 import { t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRef, useState } from 'react';
-import { Pressable, StyleSheet, TextInput, type TextInputProps } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  TextInput,
+  type TextInputInstance,
+  type TextInputProps,
+} from 'react-native';
 
 import { MACROS } from '@/components/calorie-summary';
 import { Row, Text } from '@/components/ui';
@@ -118,7 +124,7 @@ function MacroTile({
   onChangeText: (text: string) => void;
 }) {
   const [focused, setFocused] = useState(false);
-  const input = useRef<TextInput>(null);
+  const input = useRef<TextInputInstance>(null);
   return (
     <Pressable
       onPress={() => input.current?.focus()}

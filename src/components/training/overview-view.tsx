@@ -2,7 +2,7 @@ import { plural, t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useRef, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 
 import { useDialog } from '@/components/dialog';
 import { Elapsed } from '@/components/elapsed';
@@ -28,7 +28,7 @@ import {
   listFinishedWorkouts,
   startWorkout,
 } from '@/db/workouts';
-import { useDbQuery } from '@/hooks/use-db-query';
+import { useFocusedDbQuery } from '@/hooks/use-db-query';
 import { useScrollResetOnTabLeave } from '@/hooks/use-scroll-reset-on-tab-leave';
 import { useToday } from '@/hooks/use-today';
 import { estimateKcal } from '@/lib/calories';
@@ -69,8 +69,8 @@ export function OverviewView({
   onSection: (section: 'programs' | 'history') => void;
 }) {
   const today = useToday();
-  const { data } = useDbQuery(loadOverview, [today]);
-  const scrollRef = useRef<ScrollView>(null);
+  const { data } = useFocusedDbQuery(loadOverview, [today]);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   useScrollResetOnTabLeave(scrollRef);
   const [pickedDayId, setPickedDayId] = useState<number | null>(null);
   const [starting, setStarting] = useState(false);

@@ -9,6 +9,7 @@ import {
   Text as RNText,
   TextInput,
   View,
+  type ScrollViewInstance,
   type StyleProp,
   type TextInputProps,
   type TextStyle,
@@ -156,7 +157,7 @@ export function Screen({
   bottomSpace?: number;
 }) {
   const insets = useSafeAreaInsets();
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   useScrollResetOnTabLeave(scrollRef);
   return (
     <View style={styles.screenRoot}>

@@ -19,7 +19,7 @@ import {
   Text,
 } from '@/components/ui';
 import { adviseMacro, loadMacro, type StoredMacroTips } from '@/db/food';
-import { useDbQuery } from '@/hooks/use-db-query';
+import { useFocusedDbQuery } from '@/hooks/use-db-query';
 import { useToday } from '@/hooks/use-today';
 import { formatGrams, formatKcal } from '@/lib/food';
 import { type MacroFood, type MacroKey } from '@/lib/groq';
@@ -46,7 +46,7 @@ export default function MacroScreen() {
   const today = useToday();
   const parsedDay = Number(params.day);
   const day = Number.isFinite(parsedDay) && params.day ? parsedDay : today;
-  const { data } = useDbQuery(() => loadMacro(macro.key, day), [macro.key, day]);
+  const { data } = useFocusedDbQuery(() => loadMacro(macro.key, day), [macro.key, day]);
 
   if (!data) return <Loading />;
   const { entries, total, target, tips, signature } = data;

@@ -31,7 +31,7 @@ import {
   type WorkoutDetail,
 } from '@/db/workouts';
 import { listBodyWeights } from '@/db/body-weight';
-import { useDbQuery } from '@/hooks/use-db-query';
+import { useFocusedDbQuery } from '@/hooks/use-db-query';
 import { bodyWeightAt, exerciseKcal, formatKcal, workoutKcal } from '@/lib/calories';
 import { formatDate, formatTargets } from '@/lib/labels';
 import { formatDuration, formatSet, isBetter, setMetric, workoutDurationMs } from '@/lib/metrics';
@@ -60,7 +60,7 @@ async function loadWorkout(id: number) {
 
 export default function WorkoutScreen() {
   const id = Number(useLocalSearchParams<{ id: string }>().id);
-  const { data } = useDbQuery(() => loadWorkout(id), [id]);
+  const { data } = useFocusedDbQuery(() => loadWorkout(id), [id]);
 
   if (data === undefined) return <Loading />;
   if (data === null) {

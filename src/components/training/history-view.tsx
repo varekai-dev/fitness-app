@@ -14,7 +14,7 @@ import { hideActivity, listActivities } from '@/db/activities';
 import { listBodyWeights } from '@/db/body-weight';
 import { deleteWorkout, listFinishedWorkouts } from '@/db/workouts';
 import { estimateKcal } from '@/lib/calories';
-import { useDbQuery } from '@/hooks/use-db-query';
+import { useFocusedDbQuery } from '@/hooks/use-db-query';
 import { useScrollResetOnTabLeave } from '@/hooks/use-scroll-reset-on-tab-leave';
 import { useToday } from '@/hooks/use-today';
 import { spacing } from '@/theme';
@@ -34,7 +34,7 @@ export function HistoryView({ bottomSpace }: { bottomSpace: number }) {
   const listRef = useRef<FlatList<Item>>(null);
   useScrollResetOnTabLeave(listRef);
   const today = useToday();
-  const { data } = useDbQuery(async () => {
+  const { data } = useFocusedDbQuery(async () => {
     const [workouts, activities, weights] = await Promise.all([
       listFinishedWorkouts(),
       listActivities(),

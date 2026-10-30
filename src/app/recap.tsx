@@ -2,7 +2,7 @@ import { plural, t } from '@lingui/core/macro';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Sharing from 'expo-sharing';
 import { useRef, useState } from 'react';
-import { Text as RNText, StyleSheet, View } from 'react-native';
+import { Text as RNText, StyleSheet, View, type ViewInstance } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 
 import { useDialog } from '@/components/dialog';
@@ -19,7 +19,7 @@ import {
   Text,
 } from '@/components/ui';
 import { loadRecapData, type RecapData } from '@/db/recap';
-import { useDbQuery } from '@/hooks/use-db-query';
+import { useFocusedDbQuery } from '@/hooks/use-db-query';
 import { formatGrams, formatKcal } from '@/lib/food';
 import { formatShortDate } from '@/lib/labels';
 import { formatMetric, formatTonnage } from '@/lib/metrics';
@@ -90,7 +90,7 @@ function formatHours(ms: number) {
  * the usual dish, water drunk. Sections follow the tabs that are switched on.
  */
 export default function RecapScreen() {
-  const { data } = useDbQuery(loadRecapData);
+  const { data } = useFocusedDbQuery(loadRecapData);
   const enabled = useEnabledModules();
   const modules = useModuleOrder().filter(
     (m): m is RecapModule => isRecapModule(m) && enabled.includes(m),
@@ -99,7 +99,7 @@ export default function RecapScreen() {
   // 0 is the current month or year, 1 the one before…
   const [offset, setOffset] = useState(0);
   const [sharing, setSharing] = useState(false);
-  const cardRef = useRef<View>(null);
+  const cardRef = useRef<ViewInstance>(null);
   const dialog = useDialog();
 
   if (!data) return <Loading />;

@@ -12,14 +12,14 @@ import { SwipeToDelete } from '@/components/swipe-to-delete';
 import { Card, Chip, ChipScroller, EmptyState, Loading, SearchField, Text } from '@/components/ui';
 import { listExercises } from '@/db/exercises';
 import { MUSCLE_GROUPS, type Exercise, type MuscleGroup } from '@/db/schema';
-import { useDbQuery } from '@/hooks/use-db-query';
+import { useFocusedDbQuery } from '@/hooks/use-db-query';
 import { useScrollResetOnTabLeave } from '@/hooks/use-scroll-reset-on-tab-leave';
 import { MUSCLE_GROUP_LABELS, TRACKING_TYPE_LABELS } from '@/lib/labels';
 import { colors, spacing } from '@/theme';
 
 /** The Exercises section of the Training tab: the searchable exercise library. */
 export function ExercisesView({ bottomSpace }: { bottomSpace: number }) {
-  const { data } = useDbQuery(listExercises);
+  const { data } = useFocusedDbQuery(listExercises);
   const listRef = useRef<FlatList<Exercise>>(null);
   useScrollResetOnTabLeave(listRef);
   const [group, setGroup] = useState<MuscleGroup | null>(null);

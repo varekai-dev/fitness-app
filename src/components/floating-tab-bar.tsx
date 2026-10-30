@@ -94,7 +94,8 @@ export function TabBarFab({ label, onPress }: { label: string; onPress: () => vo
 export function FloatingTabBar({
   state,
   descriptors,
-  navigation,
+  emitter,
+  navigateToTab,
   icons,
 }: BottomTabBarProps & { icons: Record<string, IconName> }) {
   const insets = useSafeAreaInsets();
@@ -123,13 +124,13 @@ export function FloatingTabBar({
             const { options } = descriptors[route.key];
             const icon = icons[route.name] ?? 'ellipse';
             const onPress = () => {
-              const event = navigation.emit({
+              const event = emitter.emit({
                 type: 'tabPress',
                 target: route.key,
                 canPreventDefault: true,
               });
               if (!focused && !event.defaultPrevented) {
-                navigation.navigate(route.name, route.params);
+                navigateToTab(route.key);
               }
             };
             return (

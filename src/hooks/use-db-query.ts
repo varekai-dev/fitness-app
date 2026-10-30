@@ -1,34 +1,27 @@
 import { addDatabaseChangeListener } from 'expo-sqlite';
-import { NavigationContext } from 'expo-router/react-navigation';
-import { useContext, useEffect, useState } from 'react';
+import { useIsFocused } from 'expo-router';
+import { useEffect, useState } from 'react';
 
 /**
- * Runs `query` and re-runs it whenever any table in the database changes.
+ * Runs `query` and re-runs it whenever any table in the database changes while enabled.
  *
  * Drizzle's `useLiveQuery` only watches the root table, so nested relational
  * queries (workout -> exercises -> sets) would go stale. The dataset is small
  * and single-user, so re-running on every change is cheap enough.
  *
- * Screens left mounted out of sight (other tabs, screens under a modal) don't
- * re-run on every change: they note it and catch up once they're focused again,
- * so ticking off a set doesn't reload the whole history on the Home tab.
- * A result equal to the previous one keeps the old object, so nothing re-renders.
+ * A result equal to the previous one keeps its object, so nothing re-renders.
  *
  * `query` is captured when `deps` change, so list every value it closes over.
  */
-export function useDbQuery<T>(query: () => Promise<T>, deps: unknown[] = []) {
+export function useDbQuery<T>(query: () => Promise<T>, deps: unknown[] = [], enabled = true) {
   const [data, setData] = useState<T | undefined>(undefined);
   const [error, setError] = useState<Error | undefined>(undefined);
-  // Undefined outside a navigator (the root layout), which counts as always focused.
-  const navigation = useContext(NavigationContext);
-
   useEffect(() => {
+    if (!enabled) return;
     let cancelled = false;
     let scheduled = false;
-    let stale = false;
     let latest = 0;
     const run = () => {
-      stale = false;
       const id = ++latest;
       query()
         .then((result) => {
@@ -40,13 +33,8 @@ export function useDbQuery<T>(query: () => Promise<T>, deps: unknown[] = []) {
           if (!cancelled && id === latest) setError(e);
         });
     };
-    const focused = () => navigation?.isFocused() ?? true;
     run();
     const sub = addDatabaseChangeListener(() => {
-      if (!focused()) {
-        stale = true;
-        return;
-      }
       // Coalesce bursts of row changes (e.g. a transaction) into one re-run.
       if (scheduled) return;
       scheduled = true;
@@ -55,18 +43,20 @@ export function useDbQuery<T>(query: () => Promise<T>, deps: unknown[] = []) {
         if (!cancelled) run();
       }, 0);
     });
-    const unfocus = navigation?.addListener('focus', () => {
-      if (stale) run();
-    });
     return () => {
       cancelled = true;
       sub.remove();
-      unfocus?.();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigation, ...deps]);
+  }, [enabled, ...deps]);
 
   return { data, error, loading: data === undefined && !error };
+}
+
+/** Re-runs its query when a route becomes focused and skips updates while it is hidden. */
+export function useFocusedDbQuery<T>(query: () => Promise<T>, deps: unknown[] = []) {
+  const focused = useIsFocused();
+  return useDbQuery(query, deps, focused);
 }
 
 /**

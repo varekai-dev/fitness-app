@@ -23,7 +23,7 @@ import { WeightRulerModal } from '@/components/weight-ruler';
 import { deleteBodyWeight, listBodyWeights, saveBodyWeight } from '@/db/body-weight';
 import { getProfile, setProfileField } from '@/db/profile';
 import { listProgressPhotos } from '@/db/progress-photos';
-import { useDbQuery } from '@/hooks/use-db-query';
+import { useFocusedDbQuery } from '@/hooks/use-db-query';
 import { formatDate, formatShortDate, formatWeightDelta } from '@/lib/labels';
 import { formatNumber, formatWeight } from '@/lib/metrics';
 import { photoUri } from '@/lib/progress-photos';
@@ -35,9 +35,9 @@ import { colors, fontSize, radius, spacing } from '@/theme';
 const START_WEIGHT = unitSystem === 'imperial' ? 160 : 70;
 
 export default function BodyWeightScreen() {
-  const { data } = useDbQuery(listBodyWeights);
-  const { data: photos } = useDbQuery(listProgressPhotos);
-  const { data: profile } = useDbQuery(getProfile);
+  const { data } = useFocusedDbQuery(listBodyWeights);
+  const { data: photos } = useFocusedDbQuery(listProgressPhotos);
+  const { data: profile } = useFocusedDbQuery(getProfile);
   // The weight the ruler opens on, in the display unit; null keeps it closed.
   const [editing, setEditing] = useState<number | null>(null);
   const [editingTarget, setEditingTarget] = useState<number | null>(null);

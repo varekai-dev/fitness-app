@@ -3,10 +3,9 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import { useKeepAwake } from 'expo-keep-awake';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from 'expo-router';
-import { usePreventRemove } from 'expo-router/react-navigation';
+import { usePreventRemove } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { useRef, useState, type ComponentProps, type ReactNode } from 'react';
+import { useState, type ComponentProps, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { interpolate, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -137,14 +136,10 @@ export function WorkoutPlayer({
   const videoOpen = videoFor !== null && videoFor === current?.id;
   // Back (button, gesture or Android's key) closes the video first instead of leaving
   // the workout; finishing or discarding still leaves.
-  const navigation = useNavigation();
-  const leaving = useRef(false);
-  usePreventRemove(videoOpen, ({ data }) => {
-    if (leaving.current) navigation.dispatch(data.action);
-    else setVideoFor(null);
-  });
+  const disableRemovalPrevention = usePreventRemove(videoOpen, () => setVideoFor(null));
   const leave = () => {
-    leaving.current = true;
+    setVideoFor(null);
+    disableRemovalPrevention();
     goBack();
   };
   const allSets = exercises.flatMap((e) => e.sets);

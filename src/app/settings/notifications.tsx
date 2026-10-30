@@ -14,7 +14,7 @@ import {
   setWaterReminders,
 } from '@/db/reminders';
 import { loadWater } from '@/db/water';
-import { useDbQuery } from '@/hooks/use-db-query';
+import { useFocusedDbQuery } from '@/hooks/use-db-query';
 import { useNow } from '@/hooks/use-now';
 import { isModuleEnabled } from '@/lib/modules';
 import { formatShortDate } from '@/lib/labels';
@@ -93,7 +93,7 @@ export default function NotificationsScreen() {
   const dialog = useDialog();
   const now = useNow();
   // Re-run with the clock too: the next check moves on and permission may change in system settings.
-  const { data } = useDbQuery(
+  const { data } = useFocusedDbQuery(
     () =>
       Promise.all([
         getDayWindow(),

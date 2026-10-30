@@ -28,7 +28,7 @@ import { listExercises } from '@/db/exercises';
 import { loadProfile } from '@/db/profile';
 import { saveProgramPlan } from '@/db/programs';
 import type { Exercise } from '@/db/schema';
-import { useDbQuery } from '@/hooks/use-db-query';
+import { useFocusedDbQuery } from '@/hooks/use-db-query';
 import { GROQ_ATTEMPTS, GroqError } from '@/lib/groq';
 import { formatTargets, MUSCLE_GROUP_LABELS } from '@/lib/labels';
 import { formatNumber, formatWeight } from '@/lib/metrics';
@@ -76,8 +76,8 @@ const WISHES_PLACEHOLDER: Record<ProgramKind, string> = {
 export default function AiProgramScreen() {
   const params = useLocalSearchParams<{ programId?: string }>();
   const intoProgramId = params.programId ? Number(params.programId) : undefined;
-  const { data: profileData } = useDbQuery(loadProfile);
-  const { data: library } = useDbQuery(listExercises);
+  const { data: profileData } = useFocusedDbQuery(loadProfile);
+  const { data: library } = useFocusedDbQuery(listExercises);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<ProgramAnswers>(EMPTY_ANSWERS);
   const [wishes, setWishes] = useState('');

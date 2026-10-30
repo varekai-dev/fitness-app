@@ -52,7 +52,7 @@ import {
   type ProductSource,
 } from '@/db/food';
 import type { Food, HealthRating, MealTemplate } from '@/db/schema';
-import { useDbQuery } from '@/hooks/use-db-query';
+import { useFocusedDbQuery } from '@/hooks/use-db-query';
 import {
   amountUnit,
   formatGrams,
@@ -167,9 +167,9 @@ export default function AddFoodScreen() {
   const [meal, setMeal] = useState<Meal>(
     () => MEALS.find((m) => m === params.meal) ?? mealAt(Date.now()),
   );
-  const { data } = useDbQuery(() => loadFood());
+  const { data } = useFocusedDbQuery(() => loadFood());
   const [input, setInput] = useState(params.text ?? '');
-  const { data: suggestions } = useDbQuery(() => searchFoods(input), [input]);
+  const { data: suggestions } = useFocusedDbQuery(() => searchFoods(input), [input]);
   // On from the start when a dish was passed in, calculated on mount.
   const [looking, setLooking] = useState(!!params.text);
   // Preview of the photo the text was recognized from, while it's being checked.

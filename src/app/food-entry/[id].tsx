@@ -24,7 +24,7 @@ import {
 } from '@/components/ui';
 import { deleteFoodEntry, getFoodEntry, updateFoodEntry } from '@/db/food';
 import type { FoodEntry } from '@/db/schema';
-import { useDbQuery } from '@/hooks/use-db-query';
+import { useFocusedDbQuery } from '@/hooks/use-db-query';
 import { formatGrams, formatKcal } from '@/lib/food';
 import { mealAt, type Meal } from '@/lib/meals';
 import { parseDecimal } from '@/lib/metrics';
@@ -39,7 +39,7 @@ const fieldText = (n: number) => String(n >= 10 ? Math.round(n) : Math.round(n *
 
 export default function FoodEntryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data: entry } = useDbQuery(() => getFoodEntry(Number(id)), [id]);
+  const { data: entry } = useFocusedDbQuery(() => getFoodEntry(Number(id)), [id]);
   if (entry === undefined) return <Loading />;
   if (entry === null) {
     return (

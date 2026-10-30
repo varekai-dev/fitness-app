@@ -30,12 +30,12 @@ import {
   renameDay,
   updateDayExercise,
 } from '@/db/programs';
-import { useDbQuery } from '@/hooks/use-db-query';
+import { useFocusedDbQuery } from '@/hooks/use-db-query';
 import { colors, spacing } from '@/theme';
 
 export default function ProgramDayScreen() {
   const id = Number(useLocalSearchParams<{ id: string }>().id);
-  const { data: day } = useDbQuery(() => getProgramDay(id).then((d) => d ?? null), [id]);
+  const { data: day } = useFocusedDbQuery(() => getProgramDay(id).then((d) => d ?? null), [id]);
   const dialog = useDialog();
 
   if (day === undefined) return <Loading />;

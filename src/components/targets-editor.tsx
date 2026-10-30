@@ -1,6 +1,6 @@
 import { t } from '@lingui/core/macro';
 import { useRef, useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View, type TextInputInstance } from 'react-native';
 
 import { Text } from '@/components/ui';
 import type { Targets, TrackingType } from '@/db/schema';
@@ -104,7 +104,7 @@ function Cell({
   onSave: () => void;
   decimal?: boolean;
 }) {
-  const input = useRef<TextInput>(null);
+  const input = useRef<TextInputInstance>(null);
   return (
     <View style={styles.cell}>
       <TextInput

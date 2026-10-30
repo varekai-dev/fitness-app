@@ -2,7 +2,7 @@
   "expo": {
     "name": "FitKit",
     "slug": "fitness",
-    "version": "1.96.2",
+    "version": "1.96.3",
     "runtimeVersion": {
       "policy": "fingerprint"
     },

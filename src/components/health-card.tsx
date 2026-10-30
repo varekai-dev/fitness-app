@@ -6,7 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { useDialog } from '@/components/dialog';
 import { Button, Card, Row, Text } from '@/components/ui';
 import { getHealthSettings } from '@/db/health';
-import { useDbQuery } from '@/hooks/use-db-query';
+import { useFocusedDbQuery } from '@/hooks/use-db-query';
 import {
   disconnectHealth,
   healthName,
@@ -67,7 +67,7 @@ async function loadHealth() {
 
 /** Connects Apple Health or Health Connect: weight syncs from there. */
 export function HealthCard() {
-  const { data } = useDbQuery(loadHealth);
+  const { data } = useFocusedDbQuery(loadHealth);
   const [syncing, setSyncing] = useState(false);
   const dialog = useDialog();
 
