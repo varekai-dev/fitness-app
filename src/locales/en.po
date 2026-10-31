@@ -122,7 +122,7 @@ msgid "{0} дн. по колу"
 msgstr "{0}-day cycle"
 
 #. placeholder {0}: current.exercise.name
-#: src/components/workout-player.tsx:267
+#: src/components/workout-player.tsx:262
 msgid "{0}: можна виконати пізніше або пропустити зовсім."
 msgstr "{0}: do it later or skip it entirely."
 
@@ -146,7 +146,7 @@ msgstr "{daySets, plural, one {set} other {sets}}"
 msgid "{healthName} недоступний"
 msgstr "{healthName} unavailable"
 
-#: src/components/workout-player.tsx:382
+#: src/components/workout-player.tsx:377
 msgid "{label} — знову стане невиконаним."
 msgstr "{label} will be marked as not done."
 
@@ -715,12 +715,12 @@ msgstr "Sign out"
 msgid "Вийти з акаунта?"
 msgstr "Sign out?"
 
-#: src/components/workout-player.tsx:665
-#: src/components/workout-player.tsx:666
+#: src/components/workout-player.tsx:660
+#: src/components/workout-player.tsx:661
 msgid "Виконано"
 msgstr "Done"
 
-#: src/components/workout-player.tsx:270
+#: src/components/workout-player.tsx:265
 msgid "Виконати пізніше"
 msgstr "Do it later"
 
@@ -803,7 +803,7 @@ msgstr "Rest, s"
 msgid "відпочинок"
 msgstr "rest"
 
-#: src/components/workout-player.tsx:432
+#: src/components/workout-player.tsx:427
 msgid "ВІДПОЧИНОК"
 msgstr "REST"
 
@@ -880,7 +880,7 @@ msgid "Водний баланс"
 msgstr "Hydrated"
 
 #: src/app/exercise/[id].tsx:60
-#: src/components/workout-player.tsx:464
+#: src/components/workout-player.tsx:459
 msgid "Вправа"
 msgstr "Exercise"
 
@@ -892,7 +892,7 @@ msgstr "Exercise in use"
 msgid "Вправи"
 msgstr "Exercises"
 
-#: src/components/workout-player.tsx:462
+#: src/components/workout-player.tsx:457
 msgid "Вправу виконано"
 msgstr "Exercise done"
 
@@ -900,7 +900,7 @@ msgstr "Exercise done"
 msgid "Вправу не знайдено"
 msgstr "Exercise not found"
 
-#: src/components/workout-player.tsx:463
+#: src/components/workout-player.tsx:458
 msgid "Вправу пропущено"
 msgstr "Exercise skipped"
 
@@ -965,7 +965,7 @@ msgstr "Sign in, sign up"
 #: src/components/calorie-summary.tsx:110
 #: src/components/dashboard/widgets.tsx:55
 #: src/components/day-review-card.tsx:39
-#: src/components/food-card-inputs.tsx:144
+#: src/components/food-card-inputs.tsx:150
 #: src/components/macro-row.tsx:17
 #: src/lib/food.ts:202
 #: src/lib/groq.ts:635
@@ -1053,7 +1053,7 @@ msgstr "Muscle group"
 msgid "Далі"
 msgstr "Next"
 
-#: src/components/workout-player.tsx:638
+#: src/components/workout-player.tsx:633
 msgctxt "Up next"
 msgid "Далі"
 msgstr "Up next"
@@ -1323,8 +1323,8 @@ msgid "Дозволь сповіщення для застосунку в нал
 msgstr "Allow notifications for the app in your phone settings."
 
 #: src/components/health-card.tsx:31
-msgid "Дозволь читання для FitKit у налаштуваннях Health Connect."
-msgstr "Allow FitKit to read data in Health Connect settings."
+msgid "Дозволь читання для GetFit у налаштуваннях Health Connect."
+msgstr "Allow GetFit to read data in Health Connect settings."
 
 #: src/lib/program-ai.ts:231
 msgid "Долоні легко лягають на підлогу"
@@ -1411,9 +1411,9 @@ msgstr "Log (the same dishes of the day merged, amounts and nutrition summed):"
 #: src/app/macro.tsx:64
 #: src/components/calorie-summary.tsx:110
 #: src/components/dashboard/widgets.tsx:738
-#: src/components/workout-player.tsx:438
-#: src/components/workout-player.tsx:460
-#: src/components/workout-player.tsx:464
+#: src/components/workout-player.tsx:433
+#: src/components/workout-player.tsx:455
+#: src/components/workout-player.tsx:459
 msgid "з"
 msgstr "of"
 
@@ -1509,13 +1509,13 @@ msgstr "Download"
 msgid "Завантажити APK"
 msgstr "Download APK"
 
-#: src/components/workout-player.tsx:172
-#: src/components/workout-player.tsx:213
-#: src/components/workout-player.tsx:534
+#: src/components/workout-player.tsx:167
+#: src/components/workout-player.tsx:208
+#: src/components/workout-player.tsx:529
 msgid "Завершити"
 msgstr "Finish"
 
-#: src/components/workout-player.tsx:162
+#: src/components/workout-player.tsx:157
 msgid "Завершити тренування?"
 msgstr "Finish workout?"
 
@@ -1903,7 +1903,7 @@ msgstr "End"
 #: src/components/activity-card.tsx:34
 #: src/components/dashboard/widgets.tsx:52
 #: src/components/day-review-card.tsx:38
-#: src/components/food-card-inputs.tsx:80
+#: src/components/food-card-inputs.tsx:86
 #: src/components/meal-advice.tsx:82
 #: src/components/meal-advice.tsx:107
 #: src/components/training/overview-view.tsx:131
@@ -2108,11 +2108,11 @@ msgstr "Past workouts of this day stay in the history."
 
 #: src/app/workout/[id].tsx:256
 #: src/app/workout/[id].tsx:257
-#: src/components/workout-player.tsx:472
+#: src/components/workout-player.tsx:467
 msgid "Минулого разу"
 msgstr "Last time"
 
-#: src/components/workout-player.tsx:572
+#: src/components/workout-player.tsx:567
 msgid "МИНУЛОГО РАЗУ"
 msgstr "LAST TIME"
 
@@ -2200,7 +2200,7 @@ msgstr "No widgets on the home screen yet"
 msgid "На паузі"
 msgstr "Paused"
 
-#: src/components/workout-player.tsx:131
+#: src/components/workout-player.tsx:130
 msgid "НА ПАУЗІ · "
 msgstr "PAUSED · "
 
@@ -2345,7 +2345,7 @@ msgstr "E.g. “all standing” or “stiff joints in the morning”"
 msgid "Наприклад, Dumbbell Curl"
 msgstr "For example, Dumbbell Curl"
 
-#: src/components/workout-player.tsx:522
+#: src/components/workout-player.tsx:517
 msgid "Наступна вправа"
 msgstr "Next exercise"
 
@@ -2374,11 +2374,11 @@ msgstr "Next workout"
 msgid "Наступне фото — через {0}."
 msgstr "Next photo in {0}."
 
-#: src/components/workout-player.tsx:511
+#: src/components/workout-player.tsx:506
 msgid "Наступний підхід"
 msgstr "Next set"
 
-#: src/components/workout-player.tsx:342
+#: src/components/workout-player.tsx:337
 msgid "Натисніть ▶, щоб почати тренування"
 msgstr "Tap ▶ to start the workout"
 
@@ -2488,7 +2488,7 @@ msgstr "Not so healthy"
 msgid "Не розпочато"
 msgstr "Not started"
 
-#: src/components/workout-player.tsx:167
+#: src/components/workout-player.tsx:162
 msgid "Невиконані підходи ({pending}) не збережуться."
 msgstr "Unfinished sets ({pending}) won’t be saved."
 
@@ -2539,8 +2539,8 @@ msgstr "Recent"
 #: src/app/workout/[id].tsx:100
 #: src/components/training/history-view.tsx:59
 #: src/components/training/history-view.tsx:71
-#: src/components/workout-player.tsx:182
-#: src/components/workout-player.tsx:385
+#: src/components/workout-player.tsx:177
+#: src/components/workout-player.tsx:380
 msgid "Ні"
 msgstr "No"
 
@@ -2816,7 +2816,7 @@ msgstr "Password"
 msgid "Пароль має бути щонайменше {MIN_PASSWORD} символів."
 msgstr "The password needs at least {MIN_PASSWORD} characters."
 
-#: src/components/workout-player.tsx:332
+#: src/components/workout-player.tsx:327
 msgid "Пауза"
 msgstr "Pause"
 
@@ -2829,8 +2829,8 @@ msgid "Перевір дату: формат ДД.ММ.РРРР."
 msgstr "Check the date: the format is DD.MM.YYYY."
 
 #: src/components/health-card.tsx:30
-msgid "Перевір доступ у застосунку Здоров’я: Профіль → Застосунки → FitKit."
-msgstr "Check access in the Health app: Profile → Apps → FitKit."
+msgid "Перевір доступ у застосунку Здоров’я: Профіль → Застосунки → GetFit."
+msgstr "Check access in the Health app: Profile → Apps → GetFit."
 
 #: src/components/app-update.tsx:148
 msgid "Перевірити"
@@ -2940,16 +2940,16 @@ msgstr "Maintenance"
 msgid "Підтягує вагу з розумних ваг у журнал ваги. Оновлюється щоразу, коли відкриваєш застосунок."
 msgstr "Brings weight from smart scales into the weight log. Updates every time you open the app."
 
-#: src/components/workout-player.tsx:412
+#: src/components/workout-player.tsx:407
 #: src/components/workout-summary-card.tsx:45
 #: src/lib/labels.ts:102
 msgid "підх."
 msgstr "sets"
 
 #: src/components/set-row.tsx:150
-#: src/components/workout-player.tsx:438
-#: src/components/workout-player.tsx:460
-#: src/components/workout-player.tsx:486
+#: src/components/workout-player.tsx:433
+#: src/components/workout-player.tsx:455
+#: src/components/workout-player.tsx:481
 msgid "Підхід"
 msgstr "Set"
 
@@ -3004,11 +3004,11 @@ msgstr "Bottle"
 msgid "Пн"
 msgstr "Mo"
 
-#: src/components/workout-player.tsx:386
+#: src/components/workout-player.tsx:381
 msgid "Повернути"
 msgstr "Undo"
 
-#: src/components/workout-player.tsx:381
+#: src/components/workout-player.tsx:376
 msgid "Повернути підхід?"
 msgstr "Undo set?"
 
@@ -3025,7 +3025,7 @@ msgstr "Full gym"
 msgid "повт"
 msgstr "reps"
 
-#: src/components/workout-player.tsx:69
+#: src/components/workout-player.tsx:68
 #: src/lib/labels.ts:94
 msgid "повт."
 msgstr "reps"
@@ -3087,11 +3087,11 @@ msgstr "{0} {g} over"
 msgid "понад ціль на {0}"
 msgstr "{0} over goal"
 
-#: src/components/workout-player.tsx:318
+#: src/components/workout-player.tsx:313
 msgid "Попередній підхід"
 msgstr "Previous set"
 
-#: src/components/workout-player.tsx:319
+#: src/components/workout-player.tsx:314
 msgid "Попередня вправа"
 msgstr "Previous exercise"
 
@@ -3169,7 +3169,7 @@ msgstr "Drag the slider to change the goal"
 msgid "Похід"
 msgstr "Hike"
 
-#: src/components/workout-player.tsx:329
+#: src/components/workout-player.tsx:324
 msgid "Почати"
 msgstr "Start"
 
@@ -3288,7 +3288,7 @@ msgstr "of progress"
 msgid "Прогулянка"
 msgstr "Walk"
 
-#: src/components/workout-player.tsx:331
+#: src/components/workout-player.tsx:326
 msgid "Продовжити"
 msgstr "Resume"
 
@@ -3304,24 +3304,24 @@ msgstr "Offer to repeat a meal the way it was last time."
 msgid "Пропустити"
 msgstr "Skip"
 
-#: src/components/workout-player.tsx:444
+#: src/components/workout-player.tsx:439
 msgid "Пропустити відпочинок"
 msgstr "Skip rest"
 
-#: src/components/workout-player.tsx:619
+#: src/components/workout-player.tsx:614
 msgid "Пропустити вправу"
 msgstr "Skip exercise"
 
-#: src/components/workout-player.tsx:266
+#: src/components/workout-player.tsx:261
 msgid "Пропустити вправу?"
 msgstr "Skip exercise?"
 
-#: src/components/workout-player.tsx:272
+#: src/components/workout-player.tsx:267
 msgid "Пропустити зовсім"
 msgstr "Skip entirely"
 
 #: src/app/workout/[id].tsx:246
-#: src/components/workout-player.tsx:662
+#: src/components/workout-player.tsx:657
 msgid "Пропущено"
 msgstr "Skipped"
 
@@ -3493,7 +3493,7 @@ msgid "Руки"
 msgstr "Arms"
 
 #: src/components/pose-camera.tsx:259
-#: src/components/workout-player.tsx:449
+#: src/components/workout-player.tsx:444
 #: src/lib/metrics.ts:34
 msgid "с"
 msgstr "s"
@@ -3593,22 +3593,22 @@ msgstr "The report is sent. We’ll review this answer."
 #: src/components/remove-dialogs.ts:22
 #: src/components/remove-dialogs.ts:54
 #: src/components/report-ai.tsx:45
-#: src/components/workout-player.tsx:171
-#: src/components/workout-player.tsx:286
+#: src/components/workout-player.tsx:166
+#: src/components/workout-player.tsx:281
 msgid "Скасувати"
 msgstr "Cancel"
 
-#: src/components/workout-player.tsx:184
+#: src/components/workout-player.tsx:179
 msgctxt "Discard"
 msgid "Скасувати"
 msgstr "Discard"
 
-#: src/components/workout-player.tsx:215
-#: src/components/workout-player.tsx:684
+#: src/components/workout-player.tsx:210
+#: src/components/workout-player.tsx:679
 msgid "Скасувати тренування"
 msgstr "Discard workout"
 
-#: src/components/workout-player.tsx:179
+#: src/components/workout-player.tsx:174
 msgid "Скасувати тренування?"
 msgstr "Discard workout?"
 
@@ -4103,7 +4103,7 @@ msgctxt "Workout"
 msgid "Тренування"
 msgstr "Workout"
 
-#: src/components/workout-player.tsx:165
+#: src/components/workout-player.tsx:160
 msgid "Тренування коротше 30 с не збережеться в історії."
 msgstr "A workout shorter than 30 s won’t be saved to history."
 
@@ -4215,7 +4215,7 @@ msgstr "a day on average"
 msgid "У тебе остання версія"
 msgstr "You’re on the latest version"
 
-#: src/components/workout-player.tsx:210
+#: src/components/workout-player.tsx:205
 msgid "У цьому дні немає вправ"
 msgstr "This day has no exercises"
 
@@ -4278,11 +4278,11 @@ msgstr "All exercises"
 
 #: src/app/workout/[id].tsx:98
 #: src/components/training/history-view.tsx:57
-#: src/components/workout-player.tsx:180
+#: src/components/workout-player.tsx:175
 msgid "Усі записані підходи буде видалено."
 msgstr "All logged sets will be deleted."
 
-#: src/components/workout-player.tsx:168
+#: src/components/workout-player.tsx:163
 msgid "Усі підходи виконано."
 msgstr "All sets done."
 
@@ -4324,7 +4324,7 @@ msgstr "Checking the product"
 msgid "Утримуй і тягни плитку, щоб перемістити. Розмір змінює кнопка внизу плитки."
 msgstr "Hold and drag a tile to move it. The button at the bottom of a tile changes its size."
 
-#: src/components/workout-player.tsx:343
+#: src/components/workout-player.tsx:338
 msgid "Утримуйте кнопку, щоб завершити тренування"
 msgstr "Hold the button to finish the workout"
 
@@ -4436,7 +4436,7 @@ msgstr "This week"
 msgid "Цитата дня"
 msgstr "Quote of the day"
 
-#: src/components/workout-player.tsx:439
+#: src/components/workout-player.tsx:434
 msgid "ціль"
 msgstr "target"
 
@@ -4451,7 +4451,7 @@ msgid "Ціль"
 msgstr "Goal"
 
 #: src/app/body-weight.tsx:273
-#: src/components/workout-player.tsx:470
+#: src/components/workout-player.tsx:465
 msgctxt "Target"
 msgid "Ціль"
 msgstr "Target"
@@ -4643,7 +4643,7 @@ msgstr "Nothing drunk yet"
 msgid "Ще нічого не з’їдено"
 msgstr "Nothing eaten yet"
 
-#: src/components/workout-player.tsx:528
+#: src/components/workout-player.tsx:523
 msgid "Ще підхід"
 msgstr "Add set"
 

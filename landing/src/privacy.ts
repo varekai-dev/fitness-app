@@ -29,8 +29,8 @@ export function policyFor(lang: Lang): Policy {
 }
 
 const uk = (date: string, deletePage: string): Policy => ({
-  title: 'Політика конфіденційності — FitKit',
-  description: 'Які дані збирає FitKit, де вони зберігаються, кому передаються і як їх видалити.',
+  title: 'Політика конфіденційності — GetFit',
+  description: 'Які дані збирає GetFit, де вони зберігаються, кому передаються і як їх видалити.',
   heading: 'Політика конфіденційності',
   updated: `Оновлено ${date}`,
   back: 'На головну',
@@ -47,7 +47,7 @@ const uk = (date: string, deletePage: string): Policy => ({
     {
       title: 'Хто ми',
       text: [
-        `FitKit — застосунок для тренувань, харчування, води й ваги. Його розробляє приватна особа, Сергій Савюк (${link(DEVELOPER_URL, 'serhiisaviuk.com')}). Він відповідає за обробку даних, описану тут.`,
+        `GetFit — застосунок для тренувань, харчування, води й ваги. Його розробляє приватна особа, Сергій Савюк (${link(DEVELOPER_URL, 'serhiisaviuk.com')}). Він відповідає за обробку даних, описану тут.`,
       ],
     },
     {
@@ -140,8 +140,8 @@ const uk = (date: string, deletePage: string): Policy => ({
 });
 
 const en = (date: string, deletePage: string): Policy => ({
-  title: 'Privacy policy — FitKit',
-  description: 'What data FitKit collects, where it’s kept, who it’s shared with and how to delete it.',
+  title: 'Privacy policy — GetFit',
+  description: 'What data GetFit collects, where it’s kept, who it’s shared with and how to delete it.',
   heading: 'Privacy policy',
   updated: `Updated ${date}`,
   back: 'Home',
@@ -158,7 +158,7 @@ const en = (date: string, deletePage: string): Policy => ({
     {
       title: 'Who we are',
       text: [
-        `FitKit is an app for workouts, food, water and weight, made by an individual developer, Serhii Saviuk (${link(DEVELOPER_URL, 'serhiisaviuk.com')}), who is responsible for the data handling described here.`,
+        `GetFit is an app for workouts, food, water and weight, made by an individual developer, Serhii Saviuk (${link(DEVELOPER_URL, 'serhiisaviuk.com')}), who is responsible for the data handling described here.`,
       ],
     },
     {

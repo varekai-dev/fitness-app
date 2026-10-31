@@ -19,7 +19,7 @@
   "vars": {
     "SMTP_HOST": "smtp.gmail.com",
     "SMTP_PORT": "465",
-    "MAIL_FROM_NAME": "FitKit",
+    "MAIL_FROM_NAME": "GetFit",
     // The admin page (/admin): an OAuth client ID of type "Web application" from
     // console.cloud.google.com/apis/credentials, with this Worker's URL (and
     // http://localhost:8787 for `wrangler dev`) as authorized JavaScript origins,

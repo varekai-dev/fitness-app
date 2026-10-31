@@ -214,7 +214,7 @@ function RecapCard({
       <View style={styles.glow} />
       <Row style={styles.brand}>
         <Ionicons name="barbell" size={16} color={colors.accent} />
-        <RNText style={styles.brandText}>FitKit · {t`підсумки`}</RNText>
+        <RNText style={styles.brandText}>GetFit · {t`підсумки`}</RNText>
       </Row>
       <RNText style={styles.period}>{label}</RNText>
       {modules.map((m) => (

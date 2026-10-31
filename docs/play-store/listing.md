@@ -9,7 +9,7 @@
 ### Назва (30)
 
 ```
-FitKit: тренування та їжа
+GetFit: тренування та їжа
 ```
 
 ### Короткий опис (80)
@@ -21,7 +21,7 @@ FitKit: тренування та їжа
 ### Повний опис (4000)
 
 ```
-FitKit — щоденник тренувань, харчування й води в одному застосунку. Записати підхід між вправами, порахувати калорії за фото тарілки й побачити, куди рухається вага, — кілька тапів.
+GetFit — щоденник тренувань, харчування й води в одному застосунку. Записати підхід між вправами, порахувати калорії за фото тарілки й побачити, куди рухається вага, — кілька тапів.
 
 ТРЕНУВАННЯ
 • Свої програми з днями, що йдуть по колу: застосунок сам знає, яке тренування наступне.
@@ -74,7 +74,7 @@ FitKit — щоденник тренувань, харчування й води
 ### Title (30)
 
 ```
-FitKit: Workouts & Food
+GetFit: Workouts & Food
 ```
 
 ### Short description (80)
@@ -86,7 +86,7 @@ Workout programs, AI calorie counter from photos, water, weight, progress photos
 ### Full description (4000)
 
 ```
-FitKit is a workout, food and water log in one app. Logging a set between exercises, counting calories from a photo of your plate and seeing where your weight is heading takes a few taps.
+GetFit is a workout, food and water log in one app. Logging a set between exercises, counting calories from a photo of your plate and seeing where your weight is heading takes a few taps.
 
 WORKOUTS
 • Your own programs with days that cycle: the app knows which workout is next.
